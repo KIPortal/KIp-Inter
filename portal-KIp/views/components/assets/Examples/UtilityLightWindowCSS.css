@@ -1,0 +1,338 @@
+.figma-examples-utilitylightwindowcss__utility-panel {
+    width: 300px;
+    height: 300px;
+    --figma-muted-fill: #FFFFFF;
+    @apply figma-surface-muted;
+    --figma-panel-shadow: 0px 5px 20px rgba(0, 0, 0, 0.3);
+    @apply figma-shadow-panel;
+    border-radius: 15px;
+}
+
+.figma-examples-utilitylightwindowcss__frame {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 7px 7px 5px;
+    gap: 4px;
+    height: 65px;
+    border-bottom: 1px solid rgba(60, 60, 67, 0.12);
+}
+
+.figma-examples-utilitylightwindowcss__title-bar {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 5px;
+    gap: 77px;
+    isolation: isolate;
+    width: 286px;
+    height: 18px;
+    flex: none;
+    order: 0;
+    align-self: stretch;
+    flex-grow: 0;
+}
+
+.figma-examples-utilitylightwindowcss__window-controls {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0px;
+    gap: 7px;
+    width: 44px;
+    height: 10px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+    z-index: 0;
+}
+
+.figma-examples-utilitylightwindowcss__close {
+    box-sizing: border-box;
+    width: 10px;
+    height: 10px;
+    --figma-muted-fill: #FF5C60;
+    @apply figma-surface-muted;
+    --figma-subtle-border: rgba(0, 0, 0, 0.45);
+    @apply figma-border-subtle;
+    border-width: 0.5px;
+    border-style: solid;
+    border-radius: 100px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-examples-utilitylightwindowcss__minimize {
+    box-sizing: border-box;
+    width: 10px;
+    height: 10px;
+    --figma-muted-fill: #FAC800;
+    @apply figma-surface-muted;
+    --figma-subtle-border: rgba(0, 0, 0, 0.45);
+    @apply figma-border-subtle;
+    border-width: 0.5px;
+    border-style: solid;
+    border-radius: 100px;
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+}
+
+.figma-examples-utilitylightwindowcss__zoom {
+    box-sizing: border-box;
+    width: 10px;
+    height: 10px;
+    --figma-muted-fill: #35C759;
+    @apply figma-surface-muted;
+    --figma-subtle-border: rgba(0, 0, 0, 0.45);
+    @apply figma-border-subtle;
+    border-width: 0.5px;
+    border-style: solid;
+    border-radius: 100px;
+    flex: none;
+    order: 2;
+    flex-grow: 0;
+}
+
+.figma-examples-utilitylightwindowcss__title {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 0px;
+    gap: 3px;
+    width: 48px;
+    height: 16px;
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+    z-index: 1;
+}
+
+.figma-examples-utilitylightwindowcss__symbol {
+    width: 15px;
+    height: 16px;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 700;
+    font-size: 13px;
+    line-height: 16px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    font-feature-settings: 'ss15' on;
+    --figma-ink: rgba(0, 0, 0, 0.85);
+    @apply figma-text-ink;
+    mix-blend-mode: normal;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-examples-utilitylightwindowcss__title-2 {
+    width: 30px;
+    height: 16px;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 700;
+    font-size: 13px;
+    line-height: 16px;
+    --figma-ink: rgba(0, 0, 0, 0.85);
+    @apply figma-text-ink;
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+}
+
+.figma-examples-utilitylightwindowcss__tabs {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 0px 0px 1px;
+    width: 286px;
+    height: 31px;
+    flex: none;
+    order: 1;
+    align-self: stretch;
+    flex-grow: 0;
+}
+
+.figma-examples-utilitylightwindowcss__color-wheel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 1px 2px;
+    isolation: isolate;
+    width: 44px;
+    height: 30px;
+    border-radius: 6px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-examples-utilitylightwindowcss__liquid-glass-small {
+    width: 44px;
+    height: 30px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+    z-index: 0;
+}
+
+.figma-examples-utilitylightwindowcss__fill-shadow {
+    background: linear-gradient(0deg, rgba(248, 248, 248, 0.2), rgba(248, 248, 248, 0.2)), linear-gradient(0deg, rgba(68, 68, 68, 0.6), rgba(68, 68, 68, 0.6)), linear-gradient(0deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.25)), rgba(0, 0, 0, 0.25);
+    background-blend-mode: luminosity, plus-lighter, normal, normal;
+    --figma-panel-shadow: 1.25px 0px 0px -0.75px #D0D0D0, -1.25px 0px 0px -0.75px #D0D0D0, 0px 0px 0px 0.5px #E8E8E8, 0px 8px 15px rgba(0, 0, 0, 0.02);
+    @apply figma-shadow-panel;
+    border-radius: 9px;
+}
+
+.figma-examples-utilitylightwindowcss__glass-effect {
+    --figma-muted-fill: #FFFFFF;
+    @apply figma-surface-muted;
+    background-blend-mode: multiply;
+    --figma-panel-shadow: inset 0px 40px 10px -40px #282828, inset 0px -40px 10px -40px #282828, inset 0px 40px 30px -40px #E6E6E6;
+    @apply figma-shadow-panel;
+    border-radius: 9px;
+}
+
+.figma-examples-utilitylightwindowcss__image {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 0px;
+    gap: 10px;
+    width: 24px;
+    height: 24px;
+    background: url(image.png);
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+    z-index: 1;
+}
+
+.figma-examples-utilitylightwindowcss__sliders {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 1px 2px;
+    width: 44px;
+    height: 30px;
+    border-radius: 6px;
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+}
+
+.figma-examples-utilitylightwindowcss__image-2 {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 0px;
+    gap: 10px;
+    width: 24px;
+    height: 24px;
+    background: url(image.png);
+    border-radius: 0px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-examples-utilitylightwindowcss__swatches {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 1px 2px;
+    width: 44px;
+    height: 30px;
+    border-radius: 6px;
+    flex: none;
+    order: 2;
+    flex-grow: 0;
+}
+
+.figma-examples-utilitylightwindowcss__image-3 {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 0px;
+    gap: 10px;
+    width: 24px;
+    height: 24px;
+    background: url(image.png);
+    border-radius: 0px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-examples-utilitylightwindowcss__images {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 1px 2px;
+    width: 44px;
+    height: 30px;
+    border-radius: 6px;
+    flex: none;
+    order: 3;
+    flex-grow: 0;
+}
+
+.figma-examples-utilitylightwindowcss__image-4 {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 0px;
+    gap: 10px;
+    width: 24px;
+    height: 24px;
+    background: url(image.png);
+    border-radius: 0px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-examples-utilitylightwindowcss__crayons {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 1px 2px;
+    width: 44px;
+    height: 30px;
+    border-radius: 6px;
+    flex: none;
+    order: 4;
+    flex-grow: 0;
+}
+
+.figma-examples-utilitylightwindowcss__image-5 {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 0px;
+    gap: 10px;
+    width: 24px;
+    height: 24px;
+    background: url(image.png);
+    border-radius: 0px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}

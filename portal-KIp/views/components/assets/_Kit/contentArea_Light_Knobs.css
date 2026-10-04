@@ -1,0 +1,7 @@
+.figma-kit-contentarea-light-knobs__content-area-light-knobs-sliders-01-idle {
+    position: relative;
+    width: 20px;
+    height: 20px;
+    --figma-muted-fill: #FFFFFF;
+    @apply figma-surface-muted;
+}

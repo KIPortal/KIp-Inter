@@ -1,0 +1,93 @@
+.figma-combo-box-combobox__combo-box {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 2px 2px 2px 0px;
+    isolation: isolate;
+    position: relative;
+    width: 100px;
+    height: 24px;
+}
+
+.figma-combo-box-combobox__text-field {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0px 28px 0px 8px;
+    isolation: isolate;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+    z-index: 0;
+}
+
+.figma-combo-box-combobox__bg {
+    border-radius: 6px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+    z-index: 0;
+}
+
+.figma-combo-box-combobox__border {
+    --figma-muted-fill: #FFFFFF;
+    @apply figma-surface-muted;
+    background-blend-mode: multiply;
+    --figma-panel-shadow: 0px 0px 0px 1px rgba(0, 0, 0, 0.08);
+    @apply figma-shadow-panel;
+    border-radius: 6px;
+}
+
+.figma-combo-box-combobox__fill {
+    --figma-muted-fill: #FFFFFF;
+    @apply figma-surface-muted;
+    border-radius: 6px;
+}
+
+.figma-combo-box-combobox__placeholder {
+    width: 64px;
+    height: 16px;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 510;
+    font-size: 13px;
+    line-height: 16px;
+    --figma-ink: rgba(0, 0, 0, 0.85);
+    @apply figma-text-ink;
+    flex: none;
+    order: 1;
+    flex-grow: 1;
+    z-index: 1;
+}
+
+.figma-combo-box-combobox__combo-box-button {
+    width: 24px;
+    height: 20px;
+    border-radius: 4.5px;
+    flex: none;
+    order: 1;
+    align-self: stretch;
+    flex-grow: 0;
+    z-index: 1;
+}
+
+.figma-combo-box-combobox__button-bg {
+    --figma-muted-fill: rgba(0, 0, 0, 0.08);
+    @apply figma-surface-muted;
+    border-radius: 0px;
+}
+
+.figma-combo-box-combobox__label {
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 700;
+    font-size: 11px;
+    line-height: 16px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    font-feature-settings: 'ss15' on;
+    --figma-ink: rgba(0, 0, 0, 0.85);
+    @apply figma-text-ink;
+}

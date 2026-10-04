@@ -1,0 +1,27 @@
+.figma-progress-indicators-linear-determinate__linear-determinate {
+    box-sizing: border-box;
+    position: relative;
+    width: 100px;
+    height: 10px;
+    --figma-subtle-border: rgba(0, 0, 0, 0.07);
+    @apply figma-border-subtle;
+    border-width: 0.5px;
+    border-style: solid;
+    border-radius: 100px;
+}
+
+.figma-progress-indicators-linear-determinate__unfilled {
+    height: 10px;
+    --figma-muted-fill: rgba(0, 0, 0, 0.85);
+    @apply figma-surface-muted;
+    opacity: 0.1;
+    border-radius: 100px;
+}
+
+.figma-progress-indicators-linear-determinate__fill {
+    width: 10px;
+    height: 10px;
+    --figma-muted-fill: #0088FF;
+    @apply figma-surface-muted;
+    border-radius: 100px;
+}

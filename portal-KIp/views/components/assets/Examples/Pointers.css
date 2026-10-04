@@ -1,0 +1,18 @@
+.figma-examples-pointers__pointers {
+    width: 28px;
+    height: 28px;
+}
+
+.figma-examples-pointers__path {
+    width: 10.38px;
+    height: 17.26px;
+    --figma-muted-fill: #FFFFFF;
+    @apply figma-surface-muted;
+}
+
+.figma-examples-pointers__path-2 {
+    width: 8.36px;
+    height: 14.88px;
+    --figma-muted-fill: #000000;
+    @apply figma-surface-muted;
+}

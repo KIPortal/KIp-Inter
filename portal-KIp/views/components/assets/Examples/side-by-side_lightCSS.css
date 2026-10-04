@@ -1,0 +1,188 @@
+.figma-examples-side-by-side-lightcss__alert {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 16px 16px;
+    gap: 14px;
+    isolation: isolate;
+    width: 260px;
+    height: 152px;
+    border-radius: 10px;
+}
+
+.figma-examples-side-by-side-lightcss__bg {
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+    z-index: 0;
+}
+
+.figma-examples-side-by-side-lightcss__fill-shadow {
+    background: linear-gradient(0deg, rgba(191, 191, 191, 0.1), rgba(191, 191, 191, 0.1)), rgba(255, 255, 255, 0.7);
+    background-blend-mode: darken, lighten;
+    --figma-panel-shadow: 1.25px 0px 0px -0.75px #DBDBDB, -1.25px 0px 0px -0.75px #DBDBDB, 0px 0px 0px 0.5px #DBDBDB, 0px 18px 48px rgba(0, 0, 0, 0.25);
+    @apply figma-shadow-panel;
+    border-radius: 34px;
+}
+
+.figma-examples-side-by-side-lightcss__glass-effect {
+    --figma-muted-fill: #FFFFFF;
+    @apply figma-surface-muted;
+    background-blend-mode: multiply;
+    --figma-panel-shadow: inset 0px 40px 10px -40px #282828, inset 0px -40px 10px -40px #282828;
+    @apply figma-shadow-panel;
+    border-radius: 34px;
+}
+
+.figma-examples-side-by-side-lightcss__icon {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0px 6px;
+    gap: 10px;
+    display: none;
+    width: 228px;
+    height: 64px;
+    flex: none;
+    order: 1;
+    align-self: stretch;
+    flex-grow: 0;
+    z-index: 1;
+}
+
+.figma-examples-side-by-side-lightcss__title-description {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0px 6px 2px;
+    gap: 10px;
+    width: 228px;
+    height: 70px;
+    flex: none;
+    order: 2;
+    align-self: stretch;
+    flex-grow: 0;
+    z-index: 2;
+}
+
+.figma-examples-side-by-side-lightcss__title {
+    width: 216px;
+    height: 16px;
+}
+
+.figma-examples-side-by-side-lightcss__headline-regular {
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 700;
+    font-size: 13px;
+    line-height: 16px;
+    --figma-ink: rgba(0, 0, 0, 0.85);
+    @apply figma-text-ink;
+    flex: none;
+    order: 0;
+    align-self: stretch;
+    flex-grow: 0;
+}
+
+.figma-examples-side-by-side-lightcss__description {
+    width: 216px;
+    height: 42px;
+}
+
+.figma-examples-side-by-side-lightcss__subheadline-regular {
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 400;
+    font-size: 11px;
+    line-height: 14px;
+    --figma-ink: rgba(0, 0, 0, 0.85);
+    @apply figma-text-ink;
+    flex: none;
+    order: 1;
+    align-self: stretch;
+    flex-grow: 0;
+}
+
+.figma-examples-side-by-side-lightcss__buttons {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0px;
+    gap: 8px;
+    width: 228px;
+    height: 32px;
+    flex: none;
+    order: 3;
+    align-self: stretch;
+    flex-grow: 0;
+    z-index: 3;
+}
+
+.figma-examples-side-by-side-lightcss__secondary {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 0px 8px;
+    width: 110px;
+    height: 32px;
+    --figma-muted-fill: #E6E6E6;
+    @apply figma-surface-muted;
+    mix-blend-mode: plus-darker;
+    border-radius: 100px;
+    flex: none;
+    order: 0;
+    flex-grow: 1;
+}
+
+.figma-examples-side-by-side-lightcss__label {
+    width: 44px;
+    height: 16px;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 510;
+    font-size: 13px;
+    line-height: 16px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    --figma-ink: rgba(0, 0, 0, 0.85);
+    @apply figma-text-ink;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-examples-side-by-side-lightcss__primary {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 0px 8px;
+    width: 110px;
+    height: 32px;
+    --figma-muted-fill: #0088FF;
+    @apply figma-surface-muted;
+    border-radius: 100px;
+    flex: none;
+    order: 1;
+    flex-grow: 1;
+}
+
+.figma-examples-side-by-side-lightcss__label-2 {
+    width: 19px;
+    height: 16px;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 510;
+    font-size: 13px;
+    line-height: 16px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    --figma-ink: #FFFFFF;
+    @apply figma-text-ink;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}

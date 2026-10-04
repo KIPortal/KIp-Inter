@@ -1,0 +1,29 @@
+.figma-menu-headers__headers {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 5px 0px 4px 20px;
+    gap: 10px;
+    position: relative;
+    width: 100px;
+    height: 25px;
+}
+
+.figma-menu-headers__header {
+    width: 48px;
+    height: 16px;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 700;
+    font-size: 13px;
+    line-height: 16px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    --figma-ink: #727272;
+    @apply figma-text-ink;
+    mix-blend-mode: plus-darker;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}

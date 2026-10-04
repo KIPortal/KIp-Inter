@@ -1,0 +1,12 @@
+.figma-menu-separators__separators {
+    position: relative;
+    width: 100px;
+    height: 11px;
+}
+
+.figma-menu-separators__separator {
+    height: 1px;
+    --figma-muted-fill: #E6E6E6;
+    @apply figma-surface-muted;
+    mix-blend-mode: plus-darker;
+}

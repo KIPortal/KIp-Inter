@@ -1,0 +1,6 @@
+.figma-kit-knobs__knobs {
+    position: relative;
+    width: 20px;
+    height: 20px;
+    background: linear-gradient(0deg, rgba(255, 255, 255, 0.34902), rgba(255, 255, 255, 0.34902)), linear-gradient(0deg, rgba(255, 255, 255, 0.45098), rgba(255, 255, 255, 0.45098)), rgba(255, 255, 255, 0.65098);
+}

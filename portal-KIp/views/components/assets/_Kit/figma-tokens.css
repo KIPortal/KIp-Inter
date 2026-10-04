@@ -1,0 +1,25 @@
+:root {
+    --figma-ink: rgba(0, 0, 0, 0.85);
+    --figma-muted-fill: rgba(0, 0, 0, 0.08);
+    --figma-subtle-border: rgba(0, 0, 0, 0.05);
+    --figma-panel-shadow: 0 0 1px rgba(0, 0, 0, 0.8), 0 18px 54px rgba(0, 0, 0, 0.3);
+}
+
+@layer components {
+    .figma-text-ink {
+        @apply text-[color:var(--figma-ink)];
+    }
+
+    .figma-surface-muted {
+        @apply bg-[color:var(--figma-muted-fill)];
+    }
+
+    .figma-border-subtle {
+        @apply border border-solid;
+        border-color: var(--figma-subtle-border);
+    }
+
+    .figma-shadow-panel {
+        @apply shadow-[var(--figma-panel-shadow)];
+    }
+}

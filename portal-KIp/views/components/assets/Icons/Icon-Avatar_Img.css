@@ -1,0 +1,45 @@
+.figma-icons-icon-avatar-img__icons-avatar {
+    position: relative;
+    width: 128px;
+    height: 128px;
+    background: url(Alejandra Delgado.png);
+    border-radius: 100px;
+}
+
+.figma-icons-icon-avatar-img__app-badge {
+    width: 36px;
+    height: 36px;
+}
+
+.figma-icons-icon-avatar-img__colors-red {
+    --figma-muted-fill: #FF4245;
+    @apply figma-surface-muted;
+    border-radius: 100px;
+}
+
+.figma-icons-icon-avatar-img__app-icon {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 0px;
+    background: url(AirDrop.png);
+    border-radius: 500px;
+}
+
+.figma-icons-icon-avatar-img__notification-badge {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 0px;
+    visibility: hidden;
+    width: 36px;
+    height: 36px;
+}
+
+.figma-icons-icon-avatar-img__colors-red-2 {
+    --figma-muted-fill: #FF4245;
+    @apply figma-surface-muted;
+    border-radius: 100px;
+}

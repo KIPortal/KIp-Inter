@@ -1,0 +1,7 @@
+.figma-kit-glyphs__glyphs {
+    position: relative;
+    width: 20px;
+    height: 20px;
+    --figma-muted-fill: #FFFFFF;
+    @apply figma-surface-muted;
+}

@@ -1,0 +1,42 @@
+.figma-buttons-disclosure-button__disclosure-button {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 0px;
+    isolation: isolate;
+    position: relative;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+}
+
+.figma-buttons-disclosure-button__bg {
+    --figma-muted-fill: rgba(0, 0, 0, 0.08);
+    @apply figma-surface-muted;
+    border-radius: 0px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+    z-index: 0;
+}
+
+.figma-buttons-disclosure-button__layer {
+    width: 24px;
+    height: 25px;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 700;
+    font-size: 13px;
+    line-height: 16px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    --figma-ink: rgba(0, 0, 0, 0.85);
+    @apply figma-text-ink;
+    flex: none;
+    order: 1;
+    align-self: stretch;
+    flex-grow: 0;
+    z-index: 1;
+}

@@ -1,0 +1,462 @@
+.figma-menu-bar-and-dock-menubar__menu-bar {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 20px 5px 10px;
+    gap: 98px;
+    position: relative;
+    width: 1008px;
+    height: 34px;
+}
+
+.figma-menu-bar-and-dock-menubar__group-leading {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0px;
+    margin: 0 auto;
+    width: 421px;
+    height: 24px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-menu-bar-and-dock-menubar__apple-logo {
+    width: 33px;
+    height: 24px;
+    border-radius: 4px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-menu-bar-and-dock-menubar__apple-logo-2 {
+    width: 15px;
+    height: 20px;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 400;
+    font-size: 16.3px;
+    line-height: 20px;
+    text-align: center;
+    --figma-ink: #FFFFFF;
+    @apply figma-text-ink;
+}
+
+.figma-menu-bar-and-dock-menubar__app-name {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 4px 9px 4px 11px;
+    gap: 10px;
+    width: 90px;
+    height: 24px;
+    border-radius: 4px;
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+}
+
+.figma-menu-bar-and-dock-menubar__app-name-2 {
+    width: 70px;
+    height: 16px;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 860;
+    font-size: 13px;
+    line-height: 16px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    --figma-ink: #FFFFFF;
+    @apply figma-text-ink;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-menu-bar-and-dock-menubar__menu-items {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0px;
+    width: 298px;
+    height: 24px;
+    flex: none;
+    order: 2;
+    flex-grow: 0;
+}
+
+.figma-menu-bar-and-dock-menubar__file {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 4px 9px;
+    gap: 10px;
+    width: 41px;
+    height: 24px;
+    border-radius: 4px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-menu-bar-and-dock-menubar__menu-label {
+    width: 23px;
+    height: 16px;
+}
+
+.figma-menu-bar-and-dock-menubar__body-emphasized {
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 590;
+    font-size: 13px;
+    line-height: 16px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    --figma-ink: #FFFFFF;
+    @apply figma-text-ink;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-menu-bar-and-dock-menubar__edit {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 4px 9px;
+    gap: 10px;
+    width: 43px;
+    height: 24px;
+    border-radius: 4px;
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+}
+
+.figma-menu-bar-and-dock-menubar__menu-label-2 {
+    width: 25px;
+    height: 16px;
+}
+
+.figma-menu-bar-and-dock-menubar__body-emphasized-2 {
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 590;
+    font-size: 13px;
+    line-height: 16px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    --figma-ink: #FFFFFF;
+    @apply figma-text-ink;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-menu-bar-and-dock-menubar__view {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 4px 9px;
+    gap: 10px;
+    width: 49px;
+    height: 24px;
+    border-radius: 4px;
+    flex: none;
+    order: 2;
+    flex-grow: 0;
+}
+
+.figma-menu-bar-and-dock-menubar__menu-label-3 {
+    width: 31px;
+    height: 16px;
+}
+
+.figma-menu-bar-and-dock-menubar__body-emphasized-3 {
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 590;
+    font-size: 13px;
+    line-height: 16px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    --figma-ink: #FFFFFF;
+    @apply figma-text-ink;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-menu-bar-and-dock-menubar__menu-item {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 4px 9px;
+    gap: 10px;
+    width: 47px;
+    height: 24px;
+    border-radius: 4px;
+    flex: none;
+    order: 3;
+    flex-grow: 0;
+}
+
+.figma-menu-bar-and-dock-menubar__menu-label-4 {
+    width: 29px;
+    height: 16px;
+}
+
+.figma-menu-bar-and-dock-menubar__body-emphasized-4 {
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 590;
+    font-size: 13px;
+    line-height: 16px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    --figma-ink: #FFFFFF;
+    @apply figma-text-ink;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-menu-bar-and-dock-menubar__window {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 4px 9px;
+    gap: 10px;
+    width: 70px;
+    height: 24px;
+    border-radius: 4px;
+    flex: none;
+    order: 4;
+    flex-grow: 0;
+}
+
+.figma-menu-bar-and-dock-menubar__menu-label-5 {
+    width: 52px;
+    height: 16px;
+}
+
+.figma-menu-bar-and-dock-menubar__body-emphasized-5 {
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 590;
+    font-size: 13px;
+    line-height: 16px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    --figma-ink: #FFFFFF;
+    @apply figma-text-ink;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-menu-bar-and-dock-menubar__help {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 4px 9px;
+    gap: 10px;
+    width: 48px;
+    height: 24px;
+    border-radius: 4px;
+    flex: none;
+    order: 5;
+    flex-grow: 0;
+}
+
+.figma-menu-bar-and-dock-menubar__menu-label-6 {
+    width: 30px;
+    height: 16px;
+}
+
+.figma-menu-bar-and-dock-menubar__body-emphasized-6 {
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 590;
+    font-size: 13px;
+    line-height: 16px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    --figma-ink: #FFFFFF;
+    @apply figma-text-ink;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-menu-bar-and-dock-menubar__frame-trailing {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 0px;
+    margin: 0 auto;
+    width: 234.65px;
+    height: 24px;
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+}
+
+.figma-menu-bar-and-dock-menubar__wifi {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 4px 9px;
+    gap: 10px;
+    width: 34.5px;
+    height: 20px;
+    border-radius: 4px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-menu-bar-and-dock-menubar__vector {
+    width: 16.5px;
+    height: 12px;
+    --figma-muted-fill: #FFFFFF;
+    @apply figma-surface-muted;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-menu-bar-and-dock-menubar__spotlight {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 4px 9px;
+    gap: 10px;
+    width: 34px;
+    height: 24px;
+    border-radius: 4px;
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+}
+
+.figma-menu-bar-and-dock-menubar__menu-label-7 {
+    width: 16px;
+    height: 16px;
+}
+
+.figma-menu-bar-and-dock-menubar__body-emphasized-7 {
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 590;
+    font-size: 13px;
+    line-height: 16px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    --figma-ink: #FFFFFF;
+    @apply figma-text-ink;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-menu-bar-and-dock-menubar__control-center {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 4px 9px;
+    gap: 10px;
+    width: 31.15px;
+    height: 21.41px;
+    border-radius: 4px;
+    flex: none;
+    order: 2;
+    flex-grow: 0;
+}
+
+.figma-menu-bar-and-dock-menubar__union {
+    width: 13.15px;
+    height: 13.41px;
+    --figma-muted-fill: #FFFFFF;
+    @apply figma-surface-muted;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-menu-bar-and-dock-menubar__vector-2 {
+    --figma-muted-fill: #000000;
+    @apply figma-surface-muted;
+}
+
+.figma-menu-bar-and-dock-menubar__vector-3 {
+    --figma-muted-fill: #000000;
+    @apply figma-surface-muted;
+}
+
+.figma-menu-bar-and-dock-menubar__vector-4 {
+    --figma-muted-fill: #000000;
+    @apply figma-surface-muted;
+}
+
+.figma-menu-bar-and-dock-menubar__date-and-time {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 0px 0px 0px 9px;
+    gap: 8px;
+    width: 135px;
+    height: 16px;
+    border-radius: 4px;
+    flex: none;
+    order: 3;
+    flex-grow: 0;
+}
+
+.figma-menu-bar-and-dock-menubar__menu-label-8 {
+    width: 65px;
+    height: 16px;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 590;
+    font-size: 13.1px;
+    line-height: 16px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    --figma-ink: #FFFFFF;
+    @apply figma-text-ink;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-menu-bar-and-dock-menubar__menu-label-9 {
+    width: 53px;
+    height: 16px;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 590;
+    font-size: 13.1px;
+    line-height: 16px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    --figma-ink: #FFFFFF;
+    @apply figma-text-ink;
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+}

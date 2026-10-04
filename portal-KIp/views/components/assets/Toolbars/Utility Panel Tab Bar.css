@@ -1,0 +1,187 @@
+.figma-toolbars-utility-panel-tab-bar__utility-panel-tab-bar {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 0px;
+    position: relative;
+    width: 220px;
+    height: 30px;
+}
+
+.figma-toolbars-utility-panel-tab-bar__color-wheel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 1px 2px;
+    isolation: isolate;
+    width: 44px;
+    height: 30px;
+    border-radius: 6px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-toolbars-utility-panel-tab-bar__liquid-glass-small {
+    width: 44px;
+    height: 30px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+    z-index: 0;
+}
+
+.figma-toolbars-utility-panel-tab-bar__fill-shadow {
+    background: linear-gradient(0deg, rgba(248, 248, 248, 0.2), rgba(248, 248, 248, 0.2)), linear-gradient(0deg, rgba(68, 68, 68, 0.6), rgba(68, 68, 68, 0.6)), linear-gradient(0deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.25)), rgba(0, 0, 0, 0.25);
+    background-blend-mode: luminosity, plus-lighter, normal, normal;
+    --figma-panel-shadow: 1.25px 0px 0px -0.75px #D0D0D0, -1.25px 0px 0px -0.75px #D0D0D0, 0px 0px 0px 0.5px #E8E8E8, 0px 8px 15px rgba(0, 0, 0, 0.02);
+    @apply figma-shadow-panel;
+    border-radius: 9px;
+}
+
+.figma-toolbars-utility-panel-tab-bar__glass-effect {
+    --figma-muted-fill: #FFFFFF;
+    @apply figma-surface-muted;
+    background-blend-mode: multiply;
+    --figma-panel-shadow: inset 0px 40px 10px -40px #282828, inset 0px -40px 10px -40px #282828, inset 0px 40px 30px -40px #E6E6E6;
+    @apply figma-shadow-panel;
+    border-radius: 9px;
+}
+
+.figma-toolbars-utility-panel-tab-bar__image {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 0px;
+    gap: 10px;
+    width: 24px;
+    height: 24px;
+    background: url(image.png);
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+    z-index: 1;
+}
+
+.figma-toolbars-utility-panel-tab-bar__sliders {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 1px 2px;
+    width: 44px;
+    height: 30px;
+    border-radius: 6px;
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+}
+
+.figma-toolbars-utility-panel-tab-bar__image-2 {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 0px;
+    gap: 10px;
+    width: 24px;
+    height: 24px;
+    background: url(image.png);
+    border-radius: 0px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-toolbars-utility-panel-tab-bar__swatches {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 1px 2px;
+    width: 44px;
+    height: 30px;
+    border-radius: 6px;
+    flex: none;
+    order: 2;
+    flex-grow: 0;
+}
+
+.figma-toolbars-utility-panel-tab-bar__image-3 {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 0px;
+    gap: 10px;
+    width: 24px;
+    height: 24px;
+    background: url(image.png);
+    border-radius: 0px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-toolbars-utility-panel-tab-bar__images {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 1px 2px;
+    width: 44px;
+    height: 30px;
+    border-radius: 6px;
+    flex: none;
+    order: 3;
+    flex-grow: 0;
+}
+
+.figma-toolbars-utility-panel-tab-bar__image-4 {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 0px;
+    gap: 10px;
+    width: 24px;
+    height: 24px;
+    background: url(image.png);
+    border-radius: 0px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-toolbars-utility-panel-tab-bar__crayons {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 1px 2px;
+    width: 44px;
+    height: 30px;
+    border-radius: 6px;
+    flex: none;
+    order: 4;
+    flex-grow: 0;
+}
+
+.figma-toolbars-utility-panel-tab-bar__image-5 {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 0px;
+    gap: 10px;
+    width: 24px;
+    height: 24px;
+    background: url(image.png);
+    border-radius: 0px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}

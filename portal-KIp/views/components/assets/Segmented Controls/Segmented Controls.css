@@ -1,0 +1,271 @@
+.figma-segmented-controls-segmented-controls__segmented-control {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 0px;
+    isolation: isolate;
+    position: relative;
+    width: 267px;
+    height: 24px;
+    --figma-muted-fill: rgba(0, 0, 0, 0.02);
+    @apply figma-surface-muted;
+    border-radius: 6px;
+}
+
+.figma-segmented-controls-segmented-controls__bg {
+    --figma-muted-fill: rgba(0, 0, 0, 0.08);
+    @apply figma-surface-muted;
+    border-radius: 0px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+    z-index: 0;
+}
+
+.figma-segmented-controls-segmented-controls__frame {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0px;
+    width: 267px;
+    height: 24px;
+    flex: none;
+    order: 1;
+    align-self: stretch;
+    flex-grow: 1;
+    z-index: 1;
+}
+
+.figma-segmented-controls-segmented-controls__segment-1 {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 0px 10px;
+    width: 54.2px;
+    height: 24px;
+    flex: none;
+    order: 0;
+    align-self: stretch;
+    flex-grow: 1;
+    margin: 0px -1px;
+}
+
+.figma-segmented-controls-segmented-controls__label {
+    width: 34.2px;
+    height: 24px;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 510;
+    font-size: 13px;
+    line-height: 16px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    --figma-ink: rgba(0, 0, 0, 0.85);
+    @apply figma-text-ink;
+    border-radius: 6px;
+    flex: none;
+    order: 0;
+    align-self: stretch;
+    flex-grow: 1;
+}
+
+.figma-segmented-controls-segmented-controls__separator {
+    width: 1px;
+    height: 14px;
+    --figma-muted-fill: rgba(0, 0, 0, 0.25);
+    @apply figma-surface-muted;
+    border-radius: 0px;
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+    margin: 0px -1px;
+}
+
+.figma-segmented-controls-segmented-controls__segment-2 {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 0px 10px;
+    width: 54.2px;
+    height: 24px;
+    flex: none;
+    order: 2;
+    align-self: stretch;
+    flex-grow: 1;
+    margin: 0px -1px;
+}
+
+.figma-segmented-controls-segmented-controls__label-2 {
+    width: 34.2px;
+    height: 24px;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 510;
+    font-size: 13px;
+    line-height: 16px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    --figma-ink: rgba(0, 0, 0, 0.85);
+    @apply figma-text-ink;
+    border-radius: 6px;
+    flex: none;
+    order: 0;
+    align-self: stretch;
+    flex-grow: 1;
+}
+
+.figma-segmented-controls-segmented-controls__separator-2 {
+    width: 1px;
+    height: 14px;
+    border-radius: 0px;
+    flex: none;
+    order: 3;
+    flex-grow: 0;
+    margin: 0px -1px;
+}
+
+.figma-segmented-controls-segmented-controls__segment-3 {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 0px 10px;
+    isolation: isolate;
+    width: 54.2px;
+    height: 24px;
+    flex: none;
+    order: 4;
+    align-self: stretch;
+    flex-grow: 1;
+    margin: 0px -1px;
+}
+
+.figma-segmented-controls-segmented-controls__bg-2 {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 10px;
+    gap: 10px;
+    background: linear-gradient(0deg, rgba(0, 0, 0, 0.0313726), rgba(0, 0, 0, 0.0313726)), #0088FF;
+    border-radius: 6px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+    z-index: 0;
+}
+
+.figma-segmented-controls-segmented-controls__label-3 {
+    width: 34.2px;
+    height: 24px;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 510;
+    font-size: 13px;
+    line-height: 16px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    --figma-ink: #FFFFFF;
+    @apply figma-text-ink;
+    flex: none;
+    order: 1;
+    align-self: stretch;
+    flex-grow: 1;
+    z-index: 1;
+}
+
+.figma-segmented-controls-segmented-controls__separator-3 {
+    width: 1px;
+    height: 14px;
+    border-radius: 0px;
+    flex: none;
+    order: 5;
+    flex-grow: 0;
+    margin: 0px -1px;
+}
+
+.figma-segmented-controls-segmented-controls__segment-4 {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 0px 10px;
+    width: 54.2px;
+    height: 24px;
+    flex: none;
+    order: 6;
+    align-self: stretch;
+    flex-grow: 1;
+    margin: 0px -1px;
+}
+
+.figma-segmented-controls-segmented-controls__label-4 {
+    width: 34.2px;
+    height: 24px;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 510;
+    font-size: 13px;
+    line-height: 16px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    --figma-ink: rgba(0, 0, 0, 0.85);
+    @apply figma-text-ink;
+    border-radius: 6px;
+    flex: none;
+    order: 0;
+    align-self: stretch;
+    flex-grow: 1;
+}
+
+.figma-segmented-controls-segmented-controls__separator-4 {
+    width: 1px;
+    height: 14px;
+    --figma-muted-fill: rgba(0, 0, 0, 0.25);
+    @apply figma-surface-muted;
+    border-radius: 0px;
+    flex: none;
+    order: 7;
+    flex-grow: 0;
+    margin: 0px -1px;
+}
+
+.figma-segmented-controls-segmented-controls__segment-5 {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 0px 10px;
+    width: 54.2px;
+    height: 24px;
+    flex: none;
+    order: 8;
+    align-self: stretch;
+    flex-grow: 1;
+}
+
+.figma-segmented-controls-segmented-controls__label-5 {
+    width: 34.2px;
+    height: 24px;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 510;
+    font-size: 13px;
+    line-height: 16px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    --figma-ink: rgba(0, 0, 0, 0.85);
+    @apply figma-text-ink;
+    border-radius: 6px;
+    flex: none;
+    order: 0;
+    align-self: stretch;
+    flex-grow: 1;
+}

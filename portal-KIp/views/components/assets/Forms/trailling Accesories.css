@@ -1,0 +1,85 @@
+.figma-forms-trailling-accesories__trailing-accessories {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 0px;
+    gap: 8px;
+    position: relative;
+    width: 110px;
+    height: 24px;
+}
+
+.figma-forms-trailling-accesories__label {
+    width: 35px;
+    height: 16px;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 510;
+    font-size: 13px;
+    line-height: 16px;
+    text-align: right;
+    --figma-ink: rgba(0, 0, 0, 0.5);
+    @apply figma-text-ink;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-forms-trailling-accesories__buttons {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-end;
+    padding: 0px 16px;
+    isolation: isolate;
+    width: 67px;
+    height: 24px;
+    border-radius: 6px;
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+}
+
+.figma-forms-trailling-accesories__bg {
+    --figma-muted-fill: rgba(0, 0, 0, 0.08);
+    @apply figma-surface-muted;
+    border-radius: 0px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+    z-index: 0;
+}
+
+.figma-forms-trailling-accesories__label-2 {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 0px;
+    gap: 10px;
+    width: 35px;
+    height: 16px;
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+    z-index: 1;
+}
+
+.figma-forms-trailling-accesories__label-3 {
+    width: 35px;
+    height: 16px;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 510;
+    font-size: 13px;
+    line-height: 16px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    --figma-ink: rgba(0, 0, 0, 0.85);
+    @apply figma-text-ink;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}

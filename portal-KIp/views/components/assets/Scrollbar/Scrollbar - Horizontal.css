@@ -1,0 +1,16 @@
+.figma-scrollbar-scrollbar-horizontal__scrollbar-horizontal {
+    position: relative;
+    width: 64px;
+    height: 12px;
+}
+
+.figma-scrollbar-scrollbar-horizontal__frame {
+    height: 6px;
+}
+
+.figma-scrollbar-scrollbar-horizontal__thumb {
+    height: 6px;
+    --figma-muted-fill: rgba(0, 0, 0, 0.5);
+    @apply figma-surface-muted;
+    border-radius: 1000px;
+}

@@ -29,6 +29,7 @@ enum OrigenIngesta {
   CORREO
   LLAMADA
   JEFATURA
+  COORDINADOR
 }
 
 enum EstadoTicket {
@@ -73,6 +74,7 @@ model Ticket {
   codigo_incidencia  String        @unique 
   asunto             String
   descripcion        String?       @db.Text
+  remitente          String?       @db.VarChar(180)
   estado_actual      EstadoTicket  @default(NUEVO)
   puntos_complejidad Int           @default(0) // Se asigna al cerrar el ticket
   origen_ingesta     OrigenIngesta @default(CORREO)
@@ -88,6 +90,7 @@ model Ticket {
   
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
+  resueltoEn        DateTime? // Se sella automáticamente cuando el estado pasa a "REALIZADO"
   fecha_asignacion   DateTime? 
   fecha_cierre       DateTime?
 }

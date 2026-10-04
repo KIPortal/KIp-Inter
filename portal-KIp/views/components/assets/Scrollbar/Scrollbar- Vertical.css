@@ -1,0 +1,16 @@
+.figma-scrollbar-scrollbar-vertical__scrollbar-vertical {
+    position: relative;
+    width: 12px;
+    height: 64px;
+}
+
+.figma-scrollbar-scrollbar-vertical__frame {
+    width: 6px;
+}
+
+.figma-scrollbar-scrollbar-vertical__thumb {
+    width: 6px;
+    --figma-muted-fill: rgba(0, 0, 0, 0.5);
+    @apply figma-surface-muted;
+    border-radius: 1000px;
+}

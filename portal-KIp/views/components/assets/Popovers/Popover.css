@@ -1,0 +1,99 @@
+.figma-popovers-popover__popover {
+    position: relative;
+    width: 200px;
+    height: 200px;
+}
+
+.figma-popovers-popover__fill-shadow {
+    background: linear-gradient(0deg, rgba(191, 191, 191, 0.1), rgba(191, 191, 191, 0.1)), rgba(255, 255, 255, 0.7);
+    background-blend-mode: darken, lighten;
+    --figma-panel-shadow: 0.5px 0px 0px #DBDBDB, -0.5px 0px 0px #DBDBDB, 0px 8px 48px rgba(0, 0, 0, 0.25);
+    @apply figma-shadow-panel;
+    border-radius: 20px;
+}
+
+.figma-popovers-popover__body {
+    background: linear-gradient(0deg, rgba(226, 226, 226, 0.35), rgba(226, 226, 226, 0.35)), rgba(255, 255, 255, 0.0001);
+    --figma-subtle-border: rgba(0, 0, 0, 0.06);
+    @apply figma-border-subtle;
+    border-width: 0.5px;
+    border-style: solid;
+    --figma-panel-shadow: 0px 2px 4px rgba(0, 0, 0, 0.15), 0px 8px 15px 6px rgba(0, 0, 0, 0.18), inset 0px 0.5px 1px 0.5px rgba(255, 255, 255, 0.5);
+    @apply figma-shadow-panel;
+    backdrop-filter: blur(40.7742px);
+    border-radius: 20px;
+}
+
+.figma-popovers-popover__cartouche {
+    width: 39.02px;
+    height: 30.5px;
+    --figma-muted-fill: #7ACE6E;
+    @apply figma-surface-muted;
+    opacity: 0.5;
+}
+
+.figma-popovers-popover__glass-effect {
+    --figma-muted-fill: #FFFFFF;
+    @apply figma-surface-muted;
+    background-blend-mode: multiply;
+    --figma-panel-shadow: inset 0px 1px 1px #333333, inset 0px -1px 1px #333333;
+    @apply figma-shadow-panel;
+    border-radius: 20px;
+}
+
+.figma-popovers-popover__body-2 {
+    background: linear-gradient(0deg, rgba(226, 226, 226, 0.35), rgba(226, 226, 226, 0.35)), rgba(255, 255, 255, 0.0001);
+    --figma-subtle-border: rgba(0, 0, 0, 0.06);
+    @apply figma-border-subtle;
+    border-width: 0.5px;
+    border-style: solid;
+    --figma-panel-shadow: 0px 2px 4px rgba(0, 0, 0, 0.15), 0px 8px 15px 6px rgba(0, 0, 0, 0.18), inset 0px 0.5px 1px 0.5px rgba(255, 255, 255, 0.5);
+    @apply figma-shadow-panel;
+    backdrop-filter: blur(40.7742px);
+    border-radius: 20px;
+}
+
+.figma-popovers-popover__cartouche-2 {
+    width: 39.02px;
+    height: 30.5px;
+    --figma-muted-fill: #7ACE6E;
+    @apply figma-surface-muted;
+    opacity: 0.5;
+}
+
+.operator-popover-window {
+    @apply fixed right-5 top-[88px] z-[100] w-[360px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-[#DCE4EF] bg-white shadow-[0_18px_44px_rgba(15,23,42,0.2)] backdrop-blur-xl;
+    background-color: #FFFFFF;
+    max-height: calc(100vh - 7rem);
+}
+
+.operator-popover-list {
+    @apply divide-y divide-[#EEF1F5] overflow-y-auto overscroll-contain bg-white;
+    max-height: min(320px, calc(100vh - 13rem));
+    scrollbar-color: #B8C2CF transparent;
+    scrollbar-width: thin;
+}
+
+.operator-popover-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.operator-popover-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.operator-popover-list::-webkit-scrollbar-thumb {
+    background: #B8C2CF;
+    border-radius: 9999px;
+}
+
+@media (max-width: 640px) {
+    .operator-popover-window {
+        @apply right-2 top-[72px] w-[calc(100vw-1rem)] max-w-none rounded-xl;
+        max-height: calc(100vh - 5.5rem);
+    }
+
+    .operator-popover-list {
+        max-height: calc(100vh - 12rem);
+    }
+}

@@ -1,0 +1,45 @@
+.figma-sheets-sheet__sheet {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0px;
+    position: relative;
+    width: 300px;
+    height: 300px;
+    --figma-muted-fill: #FFFFFF;
+    @apply figma-surface-muted;
+    --figma-panel-shadow: 0px 0px 1px rgba(0, 0, 0, 0.8), 0px 18px 54px rgba(0, 0, 0, 0.3);
+    @apply figma-shadow-panel;
+    border-radius: 16px;
+}
+
+.figma-sheets-sheet__content-view {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0px;
+    width: 300px;
+    height: 300px;
+    flex: none;
+    order: 0;
+    align-self: stretch;
+    flex-grow: 1;
+}
+
+.figma-sheets-sheet__content-view-2 {
+    width: 139px;
+    height: 300px;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 400;
+    font-size: 24px;
+    line-height: 36px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    --figma-ink: rgba(0, 0, 0, 0.85);
+    @apply figma-text-ink;
+    flex: none;
+    order: 0;
+    flex-grow: 1;
+}

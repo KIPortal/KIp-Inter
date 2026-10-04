@@ -1,0 +1,22 @@
+.figma-notificacions-liquid-glass-notification-light__liquid-glass-notification-light {
+    position: relative;
+    width: 100px;
+    height: 100px;
+}
+
+.figma-notificacions-liquid-glass-notification-light__fill-shadow {
+    background: linear-gradient(0deg, #1A1A1A, #1A1A1A), rgba(191, 191, 191, 0.25);
+    background-blend-mode: plus-lighter, lighten;
+    --figma-panel-shadow: 1.25px 0px 0px -0.75px #DBDBDB, -1.25px 0px 0px -0.75px #DBDBDB, 0px 0px 0px 0.5px #DBDBDB, 0px 8px 48px rgba(0, 0, 0, 0.25);
+    @apply figma-shadow-panel;
+    border-radius: 20px;
+}
+
+.figma-notificacions-liquid-glass-notification-light__glass-effect {
+    --figma-muted-fill: #FFFFFF;
+    @apply figma-surface-muted;
+    background-blend-mode: multiply;
+    --figma-panel-shadow: inset 0px 40px 5px -40px #282828, inset 0px -40px 5px -40px #282828;
+    @apply figma-shadow-panel;
+    border-radius: 20px;
+}

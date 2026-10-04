@@ -1,0 +1,28 @@
+.figma-list-an-tables-group-title__group-title {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 24px 8px 7px 50px;
+    gap: 16px;
+    position: relative;
+    width: 150px;
+    height: 45px;
+}
+
+.figma-list-an-tables-group-title__label {
+    width: 92px;
+    height: 14px;
+}
+
+.figma-list-an-tables-group-title__subheadline-emphasized {
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 590;
+    font-size: 11px;
+    line-height: 14px;
+    --figma-ink: rgba(0, 0, 0, 0.5);
+    @apply figma-text-ink;
+    flex: none;
+    order: 0;
+    flex-grow: 1;
+}

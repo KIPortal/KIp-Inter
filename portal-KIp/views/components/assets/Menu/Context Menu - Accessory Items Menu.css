@@ -1,0 +1,137 @@
+.figma-menu-context-menu-accessory-items-menu__context-menu-accessory-items-menu {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 12px;
+    gap: 16px;
+    position: relative;
+    width: 248px;
+    height: 68px;
+}
+
+.figma-menu-context-menu-accessory-items-menu__windows-glass {
+    --figma-muted-fill: rgba(128, 128, 128, 0.3);
+    @apply figma-surface-muted;
+    background-blend-mode: luminosity;
+}
+
+.figma-menu-context-menu-accessory-items-menu__blur-shadow-small {
+    --figma-panel-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+    @apply figma-shadow-panel;
+    backdrop-filter: blur(50px);
+    border-radius: 100px;
+}
+
+.figma-menu-context-menu-accessory-items-menu__button-1 {
+    width: 44px;
+    height: 44px;
+    border-radius: 100px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-menu-context-menu-accessory-items-menu__symbol {
+    width: 26px;
+    height: 22px;
+}
+
+.figma-menu-context-menu-accessory-items-menu__body {
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 510;
+    font-size: 17px;
+    line-height: 22px;
+    text-align: center;
+}
+
+.figma-menu-context-menu-accessory-items-menu__labels-primary {
+    --figma-ink: rgba(255, 255, 255, 0.96);
+    @apply figma-text-ink;
+}
+
+.figma-menu-context-menu-accessory-items-menu__button-2 {
+    width: 44px;
+    height: 44px;
+    border-radius: 100px;
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+}
+
+.figma-menu-context-menu-accessory-items-menu__symbol-2 {
+    width: 22px;
+    height: 22px;
+}
+
+.figma-menu-context-menu-accessory-items-menu__body-2 {
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 510;
+    font-size: 17px;
+    line-height: 22px;
+    text-align: center;
+}
+
+.figma-menu-context-menu-accessory-items-menu__labels-primary-2 {
+    --figma-ink: rgba(255, 255, 255, 0.96);
+    @apply figma-text-ink;
+}
+
+.figma-menu-context-menu-accessory-items-menu__button-3 {
+    width: 44px;
+    height: 44px;
+    border-radius: 100px;
+    flex: none;
+    order: 2;
+    flex-grow: 0;
+}
+
+.figma-menu-context-menu-accessory-items-menu__symbol-3 {
+    width: 22px;
+    height: 22px;
+}
+
+.figma-menu-context-menu-accessory-items-menu__body-3 {
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 510;
+    font-size: 17px;
+    line-height: 22px;
+    text-align: center;
+}
+
+.figma-menu-context-menu-accessory-items-menu__labels-primary-3 {
+    --figma-ink: rgba(255, 255, 255, 0.96);
+    @apply figma-text-ink;
+}
+
+.figma-menu-context-menu-accessory-items-menu__button-4 {
+    width: 44px;
+    height: 44px;
+    border-radius: 100px;
+    flex: none;
+    order: 3;
+    flex-grow: 0;
+}
+
+.figma-menu-context-menu-accessory-items-menu__symbol-4 {
+    width: 19px;
+    height: 22px;
+}
+
+.figma-menu-context-menu-accessory-items-menu__body-4 {
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 510;
+    font-size: 17px;
+    line-height: 22px;
+    text-align: center;
+}
+
+.figma-menu-context-menu-accessory-items-menu__labels-primary-4 {
+    --figma-ink: rgba(255, 255, 255, 0.96);
+    @apply figma-text-ink;
+}

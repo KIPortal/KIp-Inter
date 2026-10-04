@@ -1,0 +1,102 @@
+.figma-steppers-steppe-no-field__stepper-no-field {
+    position: relative;
+    width: 20px;
+    height: 24px;
+    border-radius: 6px;
+}
+
+.figma-steppers-steppe-no-field__button-bg {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0px;
+}
+
+.figma-steppers-steppe-no-field__bg-top {
+    width: 20px;
+    height: 12px;
+    --figma-muted-fill: rgba(0, 0, 0, 0.08);
+    @apply figma-surface-muted;
+    border-radius: 0px;
+    flex: none;
+    order: 0;
+    align-self: stretch;
+    flex-grow: 1;
+}
+
+.figma-steppers-steppe-no-field__bg-bottom {
+    width: 20px;
+    height: 12px;
+    --figma-muted-fill: rgba(0, 0, 0, 0.08);
+    @apply figma-surface-muted;
+    border-radius: 0px;
+    flex: none;
+    order: 1;
+    align-self: stretch;
+    flex-grow: 1;
+}
+
+.figma-steppers-steppe-no-field__separator {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 0px;
+    gap: 10px;
+}
+
+.figma-steppers-steppe-no-field__separator-2 {
+    width: 14px;
+    height: 1px;
+    --figma-muted-fill: rgba(0, 0, 0, 0.12);
+    @apply figma-surface-muted;
+    border-radius: 10px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-steppers-steppe-no-field__chevrons {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0px;
+}
+
+.figma-steppers-steppe-no-field__layer {
+    width: 20px;
+    height: 12px;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 510;
+    font-size: 12px;
+    line-height: 14px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    --figma-ink: rgba(0, 0, 0, 0.85);
+    @apply figma-text-ink;
+    flex: none;
+    order: 0;
+    align-self: stretch;
+    flex-grow: 1;
+}
+
+.figma-steppers-steppe-no-field__layer-2 {
+    width: 20px;
+    height: 12px;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 510;
+    font-size: 12px;
+    line-height: 14px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    --figma-ink: rgba(0, 0, 0, 0.85);
+    @apply figma-text-ink;
+    flex: none;
+    order: 1;
+    align-self: stretch;
+    flex-grow: 1;
+}

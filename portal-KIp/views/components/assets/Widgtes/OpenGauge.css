@@ -1,0 +1,88 @@
+.figma-widgtes-opengauge__lock-screen-widget-circular-open-gauge-2 {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 7px;
+    position: relative;
+    width: 72px;
+    height: 72px;
+    backdrop-filter: blur(20px);
+}
+
+.figma-widgtes-opengauge__frame {
+    width: 58px;
+    height: 55.39px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-widgtes-opengauge__vibrant-fills-dark-vibrant-tertiary {
+    --figma-muted-fill: #121212;
+    @apply figma-surface-muted;
+    background-blend-mode: plus-lighter;
+}
+
+.figma-widgtes-opengauge__outer-ellipse {
+    box-sizing: border-box;
+    --figma-subtle-border: #000000;
+    @apply figma-border-subtle;
+    border-width: 6px;
+    border-style: solid;
+    backdrop-filter: blur(20px);
+}
+
+.figma-widgtes-opengauge__current-value-indicator {
+    --figma-muted-fill: #FFFFFF;
+    @apply figma-surface-muted;
+    transform: matrix(0.5, -0.87, -0.87, -0.5, 0, 0);
+}
+
+.figma-widgtes-opengauge__vibrant-labels-dark-vibrant-secondary {
+    --figma-muted-fill: #999999;
+    @apply figma-surface-muted;
+    background-blend-mode: plus-lighter;
+    transform: matrix(0.5, -0.87, -0.87, -0.5, 0, 0);
+}
+
+.figma-widgtes-opengauge__max-value {
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 510;
+    font-size: 11px;
+    line-height: 13px;
+}
+
+.figma-widgtes-opengauge__vibrant-labels-dark-vibrant-secondary-2 {
+    --figma-ink: #999999;
+    @apply figma-text-ink;
+}
+
+.figma-widgtes-opengauge__min-value {
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 510;
+    font-size: 11px;
+    line-height: 13px;
+}
+
+.figma-widgtes-opengauge__vibrant-labels-dark-vibrant-secondary-3 {
+    --figma-ink: #999999;
+    @apply figma-text-ink;
+}
+
+.figma-widgtes-opengauge__value {
+    width: 29px;
+    height: 29px;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 510;
+    font-size: 24px;
+    line-height: 29px;
+}
+
+.figma-widgtes-opengauge__vibrant-labels-dark-vibrant-secondary-4 {
+    --figma-ink: #999999;
+    @apply figma-text-ink;
+}

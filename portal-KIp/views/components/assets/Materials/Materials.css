@@ -1,0 +1,11 @@
+.figma-materials-materials__materials {
+    position: relative;
+    width: 100px;
+    height: 100px;
+}
+
+.figma-materials-materials__materials-ultrathick {
+    background: linear-gradient(0deg, rgba(236, 236, 236, 0.88), rgba(236, 236, 236, 0.88)), #333333;
+    background-blend-mode: normal, plus-lighter;
+    backdrop-filter: blur(30px);
+}

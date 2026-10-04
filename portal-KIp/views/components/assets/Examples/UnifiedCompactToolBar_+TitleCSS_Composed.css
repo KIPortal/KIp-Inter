@@ -1,0 +1,786 @@
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__windows-composed {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0px;
+    width: 900px;
+    height: 600px;
+    --figma-muted-fill: #FFFFFF;
+    @apply figma-surface-muted;
+    --figma-panel-shadow: 0px 0px 1px rgba(0, 0, 0, 0.8), 0px 7px 21px rgba(0, 0, 0, 0.2);
+    @apply figma-shadow-panel;
+    border-radius: 16px;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__toolbar {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 8px 8px 8px 18px;
+    gap: 8px;
+    isolation: isolate;
+    width: 900px;
+    height: 40px;
+    flex: none;
+    order: 0;
+    align-self: stretch;
+    flex-grow: 0;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__scroll-edge-effect-hard {
+    box-sizing: border-box;
+    --figma-muted-fill: rgba(255, 255, 255, 0.85);
+    @apply figma-surface-muted;
+    border-bottom: 0.67px solid rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(3px);
+    border-radius: 0px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+    z-index: 0;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__window-controls {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0px 8px 0px 0px;
+    gap: 9px;
+    width: 68px;
+    height: 14px;
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+    z-index: 1;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__close {
+    box-sizing: border-box;
+    width: 14px;
+    height: 14px;
+    --figma-muted-fill: rgba(0, 0, 0, 0.15);
+    @apply figma-surface-muted;
+    --figma-subtle-border: rgba(0, 0, 0, 0.06);
+    @apply figma-border-subtle;
+    border-width: 0.5px;
+    border-style: solid;
+    border-radius: 100px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__minimize {
+    box-sizing: border-box;
+    width: 14px;
+    height: 14px;
+    --figma-muted-fill: rgba(0, 0, 0, 0.15);
+    @apply figma-surface-muted;
+    --figma-subtle-border: rgba(0, 0, 0, 0.06);
+    @apply figma-border-subtle;
+    border-width: 0.5px;
+    border-style: solid;
+    border-radius: 100px;
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__zoom {
+    box-sizing: border-box;
+    width: 14px;
+    height: 14px;
+    --figma-muted-fill: rgba(0, 0, 0, 0.15);
+    @apply figma-surface-muted;
+    --figma-subtle-border: rgba(0, 0, 0, 0.06);
+    @apply figma-border-subtle;
+    border-width: 0.5px;
+    border-style: solid;
+    border-radius: 100px;
+    flex: none;
+    order: 2;
+    flex-grow: 0;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__segmented-control {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 2px;
+    isolation: isolate;
+    width: 121px;
+    height: 24px;
+    flex: none;
+    order: 2;
+    flex-grow: 0;
+    z-index: 2;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__bg {
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+    z-index: 0;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__fill-shadow {
+    background: linear-gradient(0deg, rgba(248, 248, 248, 0.2), rgba(248, 248, 248, 0.2)), linear-gradient(0deg, rgba(68, 68, 68, 0.6), rgba(68, 68, 68, 0.6)), linear-gradient(0deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.25)), rgba(0, 0, 0, 0.25);
+    background-blend-mode: luminosity, plus-lighter, normal, normal;
+    --figma-panel-shadow: 1.25px 0px 0px -0.75px #D0D0D0, -1.25px 0px 0px -0.75px #D0D0D0, 0px 0px 0px 0.5px #E8E8E8, 0px 8px 15px rgba(0, 0, 0, 0.02);
+    @apply figma-shadow-panel;
+    border-radius: 1000px;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__glass-effect {
+    --figma-muted-fill: #FFFFFF;
+    @apply figma-surface-muted;
+    background-blend-mode: multiply;
+    --figma-panel-shadow: inset 0px 40px 10px -40px #282828, inset 0px -40px 10px -40px #282828, inset 0px 40px 30px -40px #E6E6E6;
+    @apply figma-shadow-panel;
+    border-radius: 1000px;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__items {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0px;
+    gap: 2px;
+    width: 117px;
+    height: 20px;
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+    z-index: 1;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__button {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 3px 6px;
+    width: 24px;
+    height: 20px;
+    mix-blend-mode: plus-darker;
+    border-radius: 100px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__symbol {
+    width: 12px;
+    height: 24px;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 590;
+    font-size: 10px;
+    line-height: 12px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    font-feature-settings: 'ss16' on;
+    --figma-ink: #1A1A1A;
+    @apply figma-text-ink;
+    flex: none;
+    order: 0;
+    flex-grow: 1;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__separator {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0px 1px;
+    gap: 10px;
+    width: 3px;
+    height: 16px;
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__separator-2 {
+    width: 1px;
+    height: 16px;
+    --figma-muted-fill: #D9D9D9;
+    @apply figma-surface-muted;
+    mix-blend-mode: plus-darker;
+    border-radius: 0px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__button-2 {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 3px 6px;
+    width: 24px;
+    height: 20px;
+    mix-blend-mode: plus-darker;
+    border-radius: 100px;
+    flex: none;
+    order: 2;
+    flex-grow: 0;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__symbol-2 {
+    width: 12px;
+    height: 24px;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 590;
+    font-size: 10px;
+    line-height: 12px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    font-feature-settings: 'ss16' on;
+    --figma-ink: #1A1A1A;
+    @apply figma-text-ink;
+    flex: none;
+    order: 0;
+    flex-grow: 1;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__separator-3 {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0px 1px;
+    gap: 10px;
+    width: 3px;
+    height: 16px;
+    flex: none;
+    order: 3;
+    flex-grow: 0;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__separator-4 {
+    display: none;
+    width: 1px;
+    height: 16px;
+    --figma-muted-fill: #D9D9D9;
+    @apply figma-surface-muted;
+    mix-blend-mode: plus-darker;
+    border-radius: 0px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__button-3 {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 3px 6px;
+    width: 24px;
+    height: 20px;
+    --figma-muted-fill: #E6E6E6;
+    @apply figma-surface-muted;
+    mix-blend-mode: plus-darker;
+    border-radius: 100px;
+    flex: none;
+    order: 4;
+    flex-grow: 0;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__symbol-3 {
+    width: 12px;
+    height: 24px;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 590;
+    font-size: 10px;
+    line-height: 12px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    font-feature-settings: 'ss16' on;
+    --figma-ink: #1A1A1A;
+    @apply figma-text-ink;
+    flex: none;
+    order: 0;
+    flex-grow: 1;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__separator-5 {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0px 1px;
+    gap: 10px;
+    width: 3px;
+    height: 16px;
+    flex: none;
+    order: 5;
+    flex-grow: 0;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__separator-6 {
+    display: none;
+    width: 1px;
+    height: 16px;
+    --figma-muted-fill: #D9D9D9;
+    @apply figma-surface-muted;
+    mix-blend-mode: plus-darker;
+    border-radius: 0px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__button-4 {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 3px 6px;
+    width: 24px;
+    height: 20px;
+    mix-blend-mode: plus-darker;
+    border-radius: 100px;
+    flex: none;
+    order: 6;
+    flex-grow: 0;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__symbol-4 {
+    width: 12px;
+    height: 24px;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 590;
+    font-size: 10px;
+    line-height: 12px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    font-feature-settings: 'ss16' on;
+    --figma-ink: #1A1A1A;
+    @apply figma-text-ink;
+    flex: none;
+    order: 0;
+    flex-grow: 1;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__title {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 0px;
+    gap: 3px;
+    width: 30px;
+    height: 15px;
+    flex: none;
+    order: 3;
+    flex-grow: 0;
+    z-index: 3;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__symbol-5 {
+    display: none;
+    width: 17px;
+    height: 15px;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 590;
+    font-size: 15px;
+    line-height: 15px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    font-feature-settings: 'ss15' on;
+    --figma-ink: rgba(0, 0, 0, 0.85);
+    @apply figma-text-ink;
+    mix-blend-mode: normal;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__title-and-subtitle {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0px;
+    gap: 2px;
+    width: 30px;
+    height: 15px;
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__title-2 {
+    width: 30px;
+    height: 15px;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 700;
+    font-size: 13px;
+    line-height: 15px;
+    --figma-ink: rgba(0, 0, 0, 0.85);
+    @apply figma-text-ink;
+    mix-blend-mode: plus-darker;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__subtitle {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0px;
+    gap: 2px;
+    display: none;
+    width: 91px;
+    height: 13px;
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__spacer {
+    width: 381px;
+    height: 8px;
+    flex: none;
+    order: 4;
+    flex-grow: 1;
+    z-index: 4;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__button-group {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 2px;
+    gap: 4px;
+    isolation: isolate;
+    width: 72px;
+    height: 24px;
+    flex: none;
+    order: 5;
+    flex-grow: 0;
+    z-index: 5;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__bg-2 {
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+    z-index: 0;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__shadow {
+    --figma-muted-fill: #FFFFFF;
+    @apply figma-surface-muted;
+    background-blend-mode: multiply;
+    --figma-panel-shadow: 0.75px 0px 0.25px #F2F2F2, -0.75px 0px 0.25px #F2F2F2, 0px 0px 0px 0.5px #EBEBEB;
+    @apply figma-shadow-panel;
+    border-radius: 100px;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__fill {
+    --figma-muted-fill: #FBFBFB;
+    @apply figma-surface-muted;
+    background-blend-mode: multiply;
+    mix-blend-mode: plus-darker;
+    border-radius: 100px;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__buttons {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0px;
+    gap: 4px;
+    width: 68px;
+    height: 20px;
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+    z-index: 1;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__button-5 {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 3px 6px;
+    width: 20px;
+    height: 20px;
+    mix-blend-mode: plus-darker;
+    border-radius: 100px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__symbol-6 {
+    width: 8px;
+    height: 24px;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 590;
+    font-size: 10px;
+    line-height: 12px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    font-feature-settings: 'ss16' on;
+    --figma-ink: #1A1A1A;
+    @apply figma-text-ink;
+    flex: none;
+    order: 0;
+    flex-grow: 1;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__button-6 {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 3px 6px;
+    width: 20px;
+    height: 20px;
+    mix-blend-mode: plus-darker;
+    border-radius: 100px;
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__symbol-7 {
+    width: 8px;
+    height: 24px;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 590;
+    font-size: 10px;
+    line-height: 12px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    font-feature-settings: 'ss16' on;
+    --figma-ink: #1A1A1A;
+    @apply figma-text-ink;
+    flex: none;
+    order: 0;
+    flex-grow: 1;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__button-7 {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 3px 6px;
+    width: 20px;
+    height: 20px;
+    mix-blend-mode: plus-darker;
+    border-radius: 100px;
+    flex: none;
+    order: 2;
+    flex-grow: 0;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__symbol-8 {
+    width: 8px;
+    height: 24px;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 590;
+    font-size: 10px;
+    line-height: 12px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    font-feature-settings: 'ss16' on;
+    --figma-ink: #1A1A1A;
+    @apply figma-text-ink;
+    flex: none;
+    order: 0;
+    flex-grow: 1;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__button-8 {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 2px;
+    gap: 4px;
+    isolation: isolate;
+    width: 24px;
+    height: 24px;
+    flex: none;
+    order: 6;
+    flex-grow: 0;
+    z-index: 6;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__liquid-glass {
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+    z-index: 0;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__shadow-2 {
+    --figma-muted-fill: #FFFFFF;
+    @apply figma-surface-muted;
+    background-blend-mode: multiply;
+    --figma-panel-shadow: 0.75px 0px 0.25px #F2F2F2, -0.75px 0px 0.25px #F2F2F2, 0px 0px 0px 0.5px #EBEBEB;
+    @apply figma-shadow-panel;
+    border-radius: 100px;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__fill-2 {
+    --figma-muted-fill: #FBFBFB;
+    @apply figma-surface-muted;
+    background-blend-mode: multiply;
+    mix-blend-mode: plus-darker;
+    border-radius: 100px;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__symbol-9 {
+    width: 20px;
+    height: 20px;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 590;
+    font-size: 10px;
+    line-height: 20px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    font-feature-settings: 'ss16' on;
+    --figma-ink: #1A1A1A;
+    @apply figma-text-ink;
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+    z-index: 1;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__search {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0px 6px;
+    gap: 4px;
+    isolation: isolate;
+    width: 130px;
+    height: 24px;
+    border-radius: 100px;
+    flex: none;
+    order: 7;
+    flex-grow: 0;
+    z-index: 7;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__liquid-glass-2 {
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+    z-index: 0;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__shadow-3 {
+    --figma-muted-fill: #FFFFFF;
+    @apply figma-surface-muted;
+    background-blend-mode: multiply;
+    --figma-panel-shadow: 0.75px 0px 0.25px #F2F2F2, -0.75px 0px 0.25px #F2F2F2, 0px 0px 0px 0.5px #EBEBEB;
+    @apply figma-shadow-panel;
+    border-radius: 100px;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__fill-3 {
+    --figma-muted-fill: #FBFBFB;
+    @apply figma-surface-muted;
+    background-blend-mode: multiply;
+    mix-blend-mode: plus-darker;
+    border-radius: 100px;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__symbol-10 {
+    width: 16px;
+    height: 16px;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 510;
+    font-size: 13px;
+    line-height: 16px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    --figma-ink: #727272;
+    @apply figma-text-ink;
+    mix-blend-mode: plus-darker;
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+    z-index: 1;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__search-label {
+    width: 98px;
+    height: 16px;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 510;
+    font-size: 13px;
+    line-height: 16px;
+    --figma-ink: #727272;
+    @apply figma-text-ink;
+    mix-blend-mode: plus-darker;
+    flex: none;
+    order: 2;
+    flex-grow: 1;
+    z-index: 2;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__content-area {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 0px;
+    width: 900px;
+    height: 560px;
+    flex: none;
+    order: 1;
+    align-self: stretch;
+    flex-grow: 1;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__content-area-2 {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    width: 900px;
+    height: 560px;
+    border-radius: 0px;
+    flex: none;
+    order: 0;
+    align-self: stretch;
+    flex-grow: 1;
+}
+
+.figma-examples-unifiedcompacttoolbar-titlecss-composed__scrollbar-vertical {
+    display: none;
+    width: 12px;
+    height: 319px;
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+}

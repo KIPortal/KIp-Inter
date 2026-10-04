@@ -1,0 +1,32 @@
+.figma-text-fields-text-field__text-field {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0px 8px;
+    isolation: isolate;
+    position: relative;
+    width: 120px;
+    height: 24px;
+}
+
+.figma-text-fields-text-field__bg {
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+    z-index: 0;
+}
+
+.figma-text-fields-text-field__border {
+    --figma-muted-fill: #FFFFFF;
+    @apply figma-surface-muted;
+    background-blend-mode: multiply;
+    --figma-panel-shadow: 0px 0px 0px 1px rgba(0, 0, 0, 0.08);
+    @apply figma-shadow-panel;
+    border-radius: 6px;
+}
+
+.figma-text-fields-text-field__fill {
+    --figma-muted-fill: #FFFFFF;
+    @apply figma-surface-muted;
+    border-radius: 6px;
+}

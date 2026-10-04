@@ -1,0 +1,9 @@
+.figma-group-boxes-groupbox__group-box {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    --figma-muted-fill: rgba(0, 0, 0, 0.03);
+    @apply figma-surface-muted;
+    opacity: 0.5;
+    border-radius: 12px;
+}

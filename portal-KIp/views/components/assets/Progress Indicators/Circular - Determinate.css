@@ -1,0 +1,73 @@
+.figma-progress-indicators-circular-determinate__circular-determinate {
+    position: relative;
+    width: 16px;
+    height: 16px;
+}
+
+.figma-progress-indicators-circular-determinate__track {
+    width: 16px;
+    height: 16px;
+}
+
+.figma-progress-indicators-circular-determinate__track-2 {
+    --figma-muted-fill: #D9D9D9;
+    @apply figma-surface-muted;
+}
+
+.figma-progress-indicators-circular-determinate__outer-oval {
+    --figma-muted-fill: #D9D9D9;
+    @apply figma-surface-muted;
+}
+
+.figma-progress-indicators-circular-determinate__inner-oval {
+    --figma-muted-fill: #D9D9D9;
+    @apply figma-surface-muted;
+}
+
+.figma-progress-indicators-circular-determinate__unfilled {
+    --figma-muted-fill: rgba(0, 0, 0, 0.85);
+    @apply figma-surface-muted;
+    opacity: 0.1;
+    border-radius: 100px;
+}
+
+.figma-progress-indicators-circular-determinate__track-outline {
+    box-sizing: border-box;
+    --figma-subtle-border: rgba(0, 0, 0, 0.07);
+    @apply figma-border-subtle;
+    border-width: 0.5px;
+    border-style: solid;
+    border-radius: 100px;
+}
+
+.figma-progress-indicators-circular-determinate__outer-oval-2 {
+    --figma-muted-fill: #D9D9D9;
+    @apply figma-surface-muted;
+}
+
+.figma-progress-indicators-circular-determinate__inner-oval-2 {
+    height: 6px;
+    --figma-muted-fill: #D9D9D9;
+    @apply figma-surface-muted;
+}
+
+.figma-progress-indicators-circular-determinate__fill {
+    width: 16px;
+    height: 16px;
+}
+
+.figma-progress-indicators-circular-determinate__mask {
+    --figma-subtle-border: #000000;
+    @apply figma-border-subtle;
+    border-width: 5px;
+    border-style: solid;
+    border-radius: 10px;
+}
+
+.figma-progress-indicators-circular-determinate__fill-2 {
+    width: 16px;
+    height: 16px;
+    --figma-muted-fill: #0088FF;
+    @apply figma-surface-muted;
+    border-radius: 100px;
+}

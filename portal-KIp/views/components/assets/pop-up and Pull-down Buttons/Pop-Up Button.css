@@ -1,0 +1,60 @@
+.figma-pop-up-and-pull-down-buttons-pop-up-button__pop-up-button {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0px 0px 0px 12px;
+    gap: 8px;
+    isolation: isolate;
+    position: relative;
+    width: 100px;
+    height: 24px;
+    border-radius: 6px;
+}
+
+.figma-pop-up-and-pull-down-buttons-pop-up-button__bg {
+    --figma-muted-fill: rgba(0, 0, 0, 0.08);
+    @apply figma-surface-muted;
+    border-radius: 0px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+    z-index: 0;
+}
+
+.figma-pop-up-and-pull-down-buttons-pop-up-button__label {
+    width: 56px;
+    height: 24px;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 510;
+    font-size: 13px;
+    line-height: 16px;
+    display: flex;
+    align-items: center;
+    --figma-ink: rgba(0, 0, 0, 0.85);
+    @apply figma-text-ink;
+    flex: none;
+    order: 1;
+    align-self: stretch;
+    flex-grow: 1;
+    z-index: 1;
+}
+
+.figma-pop-up-and-pull-down-buttons-pop-up-button__double-chevron {
+    width: 24px;
+    height: 24px;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 700;
+    font-size: 11px;
+    line-height: 8px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    --figma-ink: rgba(0, 0, 0, 0.85);
+    @apply figma-text-ink;
+    flex: none;
+    order: 2;
+    flex-grow: 0;
+    z-index: 2;
+}

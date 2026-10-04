@@ -1,0 +1,22 @@
+.figma-menu-menu-background__menu-background {
+    position: relative;
+    width: 120px;
+    height: 120px;
+}
+
+.figma-menu-menu-background__fill-shadow {
+    background: linear-gradient(0deg, rgba(217, 217, 217, 0.4), rgba(217, 217, 217, 0.4)), rgba(217, 217, 217, 0.55);
+    background-blend-mode: normal, luminosity;
+    --figma-panel-shadow: 1.25px 0px 0px -0.75px #DBDBDB, -1.25px 0px 0px -0.75px #DBDBDB, 0px 0px 0px 0.5px #DBDBDB, 0px 8px 48px rgba(0, 0, 0, 0.25);
+    @apply figma-shadow-panel;
+    border-radius: 12px;
+}
+
+.figma-menu-menu-background__glass-effect {
+    --figma-muted-fill: #FFFFFF;
+    @apply figma-surface-muted;
+    background-blend-mode: multiply;
+    --figma-panel-shadow: inset 0px 40px 10px -40px #0D0D0D, inset 0px -40px 10px -40px #0D0D0D, inset 0px 0px 0px 0.5px #262626;
+    @apply figma-shadow-panel;
+    border-radius: 12px;
+}

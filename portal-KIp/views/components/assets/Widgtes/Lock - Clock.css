@@ -1,0 +1,185 @@
+.figma-widgtes-lock-clock__lock-screen-widget-clock {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 7px;
+    position: relative;
+    width: 72px;
+    height: 72px;
+    backdrop-filter: blur(20px);
+}
+
+.figma-widgtes-lock-clock__clock {
+    width: 58px;
+    height: 58px;
+}
+
+.figma-widgtes-lock-clock__vibrant-fills-dark-vibrant-tertiary {
+    --figma-muted-fill: #121212;
+    @apply figma-surface-muted;
+    background-blend-mode: plus-lighter;
+    backdrop-filter: blur(20px);
+    border-radius: 1000px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-widgtes-lock-clock__hands-and-ticks {
+    width: 52px;
+    height: 52px;
+}
+
+.figma-widgtes-lock-clock__vibrant-labels-dark-vibrant-primary {
+    --figma-muted-fill: #FFFFFF;
+    @apply figma-surface-muted;
+    background-blend-mode: plus-lighter;
+    backdrop-filter: blur(67.957px);
+}
+
+.figma-widgtes-lock-clock__fill-4 {
+    background: linear-gradient(0deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.78)), rgba(255, 255, 255, 0.34);
+    backdrop-filter: blur(67.957px);
+}
+
+.figma-widgtes-lock-clock__fill-6 {
+    background: linear-gradient(0deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.78)), rgba(255, 255, 255, 0.34);
+    backdrop-filter: blur(67.957px);
+}
+
+.figma-widgtes-lock-clock__fill-8 {
+    background: linear-gradient(0deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.78)), rgba(255, 255, 255, 0.34);
+    backdrop-filter: blur(67.957px);
+}
+
+.figma-widgtes-lock-clock__fill-10 {
+    background: linear-gradient(0deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.78)), rgba(255, 255, 255, 0.34);
+    backdrop-filter: blur(67.957px);
+}
+
+.figma-widgtes-lock-clock__fill-14 {
+    background: linear-gradient(0deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.78)), rgba(255, 255, 255, 0.34);
+    backdrop-filter: blur(67.957px);
+}
+
+.figma-widgtes-lock-clock__fill-16 {
+    background: linear-gradient(0deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.78)), rgba(255, 255, 255, 0.34);
+    backdrop-filter: blur(67.957px);
+}
+
+.figma-widgtes-lock-clock__fill-18 {
+    background: linear-gradient(0deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.78)), rgba(255, 255, 255, 0.34);
+    backdrop-filter: blur(67.957px);
+}
+
+.figma-widgtes-lock-clock__fill-20 {
+    background: linear-gradient(0deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.78)), rgba(255, 255, 255, 0.34);
+    backdrop-filter: blur(67.957px);
+}
+
+.figma-widgtes-lock-clock__fill-22 {
+    background: linear-gradient(0deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.78)), rgba(255, 255, 255, 0.34);
+    backdrop-filter: blur(67.957px);
+}
+
+.figma-widgtes-lock-clock__fill-24 {
+    background: linear-gradient(0deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.78)), rgba(255, 255, 255, 0.34);
+    backdrop-filter: blur(67.957px);
+}
+
+.figma-widgtes-lock-clock__fill-26 {
+    background: linear-gradient(0deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.78)), rgba(255, 255, 255, 0.34);
+    backdrop-filter: blur(67.957px);
+}
+
+.figma-widgtes-lock-clock__fill-28 {
+    background: linear-gradient(0deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.78)), rgba(255, 255, 255, 0.34);
+    backdrop-filter: blur(67.957px);
+}
+
+.figma-widgtes-lock-clock__fill-30 {
+    background: linear-gradient(0deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.78)), rgba(255, 255, 255, 0.34);
+    backdrop-filter: blur(67.957px);
+}
+
+.figma-widgtes-lock-clock__fill-32 {
+    background: linear-gradient(0deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.78)), rgba(255, 255, 255, 0.34);
+    backdrop-filter: blur(67.957px);
+}
+
+.figma-widgtes-lock-clock__fill-34 {
+    background: linear-gradient(0deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.78)), rgba(255, 255, 255, 0.34);
+    backdrop-filter: blur(67.957px);
+}
+
+.figma-widgtes-lock-clock__fill-36 {
+    background: linear-gradient(0deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.78)), rgba(255, 255, 255, 0.34);
+    backdrop-filter: blur(67.957px);
+}
+
+.figma-widgtes-lock-clock__fill-38 {
+    background: linear-gradient(0deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.78)), rgba(255, 255, 255, 0.34);
+    backdrop-filter: blur(67.957px);
+}
+
+.figma-widgtes-lock-clock__fill-40 {
+    background: linear-gradient(0deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.78)), rgba(255, 255, 255, 0.34);
+    backdrop-filter: blur(67.957px);
+}
+
+.figma-widgtes-lock-clock__fill-42 {
+    background: linear-gradient(0deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.78)), rgba(255, 255, 255, 0.34);
+    backdrop-filter: blur(67.957px);
+}
+
+.figma-widgtes-lock-clock__fill-44 {
+    background: linear-gradient(0deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.78)), rgba(255, 255, 255, 0.34);
+    backdrop-filter: blur(67.957px);
+}
+
+.figma-widgtes-lock-clock__fill-46 {
+    background: linear-gradient(0deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.78)), rgba(255, 255, 255, 0.34);
+    backdrop-filter: blur(67.957px);
+}
+
+.figma-widgtes-lock-clock__fill-48 {
+    background: linear-gradient(0deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.78)), rgba(255, 255, 255, 0.34);
+    backdrop-filter: blur(67.957px);
+}
+
+.figma-widgtes-lock-clock__fill-50 {
+    background: linear-gradient(0deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.78)), rgba(255, 255, 255, 0.34);
+    backdrop-filter: blur(67.957px);
+}
+
+.figma-widgtes-lock-clock__shape {
+    background: linear-gradient(0deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.78)), rgba(255, 255, 255, 0.34);
+    backdrop-filter: blur(67.957px);
+}
+
+.figma-widgtes-lock-clock__subtract {
+    width: 30.79px;
+    height: 26.64px;
+}
+
+.figma-widgtes-lock-clock__vibrant-labels-dark-vibrant-secondary {
+    --figma-muted-fill: #999999;
+    @apply figma-surface-muted;
+    background-blend-mode: plus-lighter;
+}
+
+.figma-widgtes-lock-clock__label {
+    width: 21px;
+    height: 11px;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 510;
+    font-size: 9.5px;
+    line-height: 11px;
+}
+
+.figma-widgtes-lock-clock__vibrant-labels-dark-vibrant-primary-2 {
+    --figma-ink: #FFFFFF;
+    @apply figma-text-ink;
+}

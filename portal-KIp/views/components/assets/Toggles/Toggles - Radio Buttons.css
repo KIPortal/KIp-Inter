@@ -1,0 +1,82 @@
+.figma-toggles-toggles-radio-buttons__toggles-radio-buttons {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0px;
+    gap: 3px;
+    position: relative;
+    width: 54px;
+    height: 16px;
+}
+
+.figma-toggles-toggles-radio-buttons__radio-button {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 4px 5px;
+    isolation: isolate;
+    width: 16px;
+    height: 16px;
+    border-radius: 100px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-toggles-toggles-radio-buttons__bg {
+    border-radius: 0px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+    z-index: 0;
+}
+
+.figma-toggles-toggles-radio-buttons__tint {
+    --figma-muted-fill: #0088FF;
+    @apply figma-surface-muted;
+    border-radius: 0px;
+}
+
+.figma-toggles-toggles-radio-buttons__dot {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 6px;
+    width: 16px;
+    height: 16px;
+    border-radius: 100px;
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+    z-index: 1;
+}
+
+.figma-toggles-toggles-radio-buttons__dot-2 {
+    width: 4.8px;
+    height: 4.8px;
+    --figma-muted-fill: #FFFFFF;
+    @apply figma-surface-muted;
+    border-radius: 100px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-toggles-toggles-radio-buttons__label {
+    width: 35px;
+    height: 16px;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 510;
+    font-size: 13px;
+    line-height: 16px;
+    display: flex;
+    align-items: center;
+    --figma-ink: rgba(0, 0, 0, 0.85);
+    @apply figma-text-ink;
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+}

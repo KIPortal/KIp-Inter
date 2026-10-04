@@ -1,0 +1,128 @@
+.figma-sliders-and-dials-slider__slider {
+    position: relative;
+    width: 100px;
+    height: 24px;
+}
+
+.figma-sliders-and-dials-slider__track-unfilled {
+    height: 6px;
+}
+
+.figma-sliders-and-dials-slider__ticks {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 2px 2px 0px;
+}
+
+.figma-sliders-and-dials-slider__tick {
+    margin: 0 auto;
+    width: 2px;
+    height: 2px;
+    --figma-muted-fill: rgba(0, 0, 0, 0.85);
+    @apply figma-surface-muted;
+    opacity: 0.25;
+    border-radius: 10px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.figma-sliders-and-dials-slider__tick-2 {
+    margin: 0 auto;
+    width: 2px;
+    height: 2px;
+    --figma-muted-fill: rgba(0, 0, 0, 0.85);
+    @apply figma-surface-muted;
+    opacity: 0.25;
+    border-radius: 10px;
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+}
+
+.figma-sliders-and-dials-slider__tick-3 {
+    margin: 0 auto;
+    width: 2px;
+    height: 2px;
+    --figma-muted-fill: rgba(0, 0, 0, 0.85);
+    @apply figma-surface-muted;
+    opacity: 0.25;
+    border-radius: 10px;
+    flex: none;
+    order: 2;
+    flex-grow: 0;
+}
+
+.figma-sliders-and-dials-slider__tick-4 {
+    margin: 0 auto;
+    width: 2px;
+    height: 2px;
+    --figma-muted-fill: rgba(0, 0, 0, 0.85);
+    @apply figma-surface-muted;
+    opacity: 0.25;
+    border-radius: 10px;
+    flex: none;
+    order: 3;
+    flex-grow: 0;
+}
+
+.figma-sliders-and-dials-slider__tick-5 {
+    margin: 0 auto;
+    width: 2px;
+    height: 2px;
+    --figma-muted-fill: rgba(0, 0, 0, 0.85);
+    @apply figma-surface-muted;
+    opacity: 0.25;
+    border-radius: 10px;
+    flex: none;
+    order: 4;
+    flex-grow: 0;
+}
+
+.figma-sliders-and-dials-slider__track {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 1px;
+    transform: matrix(1, 0, 0, -1, 0, 0);
+}
+
+.figma-sliders-and-dials-slider__track-filled {
+    width: 104px;
+    height: 4px;
+    --figma-muted-fill: rgba(0, 0, 0, 0.85);
+    @apply figma-surface-muted;
+    opacity: 0.1;
+    border-radius: 100px;
+    transform: matrix(1, 0, 0, -1, 0, 0);
+    flex: none;
+    order: 0;
+    align-self: stretch;
+    flex-grow: 1;
+}
+
+.figma-sliders-and-dials-slider__knob {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 0px;
+    width: 1px;
+    height: 20px;
+}
+
+.figma-sliders-and-dials-slider__knob-2 {
+    width: 20px;
+    height: 16px;
+    --figma-muted-fill: #FFFFFF;
+    @apply figma-surface-muted;
+    --figma-panel-shadow: 0px 0.5px 6px rgba(0, 0, 0, 0.12);
+    @apply figma-shadow-panel;
+    border-radius: 100px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}

@@ -1,0 +1,8 @@
+.figma-dialogs-overlay__overlay {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    --figma-muted-fill: rgba(0, 0, 0, 0.2);
+    @apply figma-surface-muted;
+    border-radius: 26px;
+}

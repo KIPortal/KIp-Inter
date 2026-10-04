@@ -1,0 +1,124 @@
+<div class="mx-auto w-full max-w-6xl">
+    <header class="flex flex-wrap items-center justify-between gap-4 border-b border-[#E5E5EA] pb-4">
+        <div class="flex items-center gap-3">
+            <button type="button" onclick="showDashboardSection('dashboard')" aria-label="Volver al dashboard"
+                class="flex h-9 w-9 items-center justify-center rounded-[9px] border border-[#E5E5EA] text-[#636366] hover:bg-[#F5F5F7] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#007AFF]/30">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6M9 12h12"></path></svg>
+            </button>
+            <div>
+                <p class="text-[10px] font-semibold uppercase tracking-wider text-[#8E8E93]">NOC · Operaciones</p>
+                <h1 class="mt-0.5 text-[17px] font-semibold">Gestión de Turno</h1>
+        </div>
+        <span class="font-mono text-[11px] text-[#636366]"><%= operadoresTurno.length %> operadores en turno</span>
+    </header>
+
+    <% const operatorsOnFieldCount = operadoresTurno.filter(operador => operador.estado_operativo === 'EN_TERRENO').length; %>
+    <% const activeAssignedTicketCount = operadoresTurno.reduce((total, operador) => total + (operador.tickets_asignados || []).length, 0); %>
+    <section aria-label="Resumen del turno" class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div class="flex items-end justify-between border-b border-[#DDE2E8] pb-3 sm:block">
+            <span class="text-[10px] font-semibold uppercase tracking-wider text-[#8E8E93]">Disponibles</span>
+            <strong class="block font-mono text-[27px] font-semibold tabular-nums text-[#16834A] sm:mt-2"><%= operadoresDisponibles %></strong>
+        </div>
+        <div class="flex items-end justify-between border-b border-[#DDE2E8] pb-3 sm:block">
+            <span class="text-[10px] font-semibold uppercase tracking-wider text-[#8E8E93]">En terreno</span>
+            <strong class="block font-mono text-[27px] font-semibold tabular-nums text-[#2563EB] sm:mt-2"><%= operatorsOnFieldCount %></strong>
+        </div>
+        <div class="flex items-end justify-between border-b border-[#DDE2E8] pb-3 sm:block">
+            <span class="text-[10px] font-semibold uppercase tracking-wider text-[#8E8E93]">Tickets activos asignados</span>
+            <strong class="block font-mono text-[27px] font-semibold tabular-nums text-[#1C1C1E] sm:mt-2"><%= activeAssignedTicketCount %></strong>
+        </div>
+    </section>
+
+    <section class="mt-7" aria-labelledby="operatorRosterTitle">
+        <div class="flex items-end justify-between gap-4 border-b border-[#D1D5DB] pb-3">
+            <div>
+                <h2 id="operatorRosterTitle" class="text-[14px] font-semibold">Operadores</h2>
+                <p class="mt-1 text-[11px] text-[#8E8E93]">Estado operativo y asignaciones vigentes</p>
+            </div>
+        </div>
+
+        <div class="divide-y divide-[#E5E7EB]">
+            <% if (operadoresTurno.length) { %>
+                <% operadoresTurno.forEach(function(operador) {
+                    const activeTickets = operador.tickets_asignados || [];
+                    const operatorParts = operador.nombre.trim().split(/\s+/);
+                    const initials = operatorParts.length > 1
+                        ? `${operatorParts[0][0]}${operatorParts[operatorParts.length - 1][0]}`.toUpperCase()
+                        : operador.nombre.slice(0, 2).toUpperCase();
+                    const areaLabels = {
+                        GENERAL: 'Operaciones IP',
+                        REDES_FTTH: 'Redes FTTH / OLT',
+                        TRAFICO_INALAMBRICO: 'Tráfico inalámbrico',
+                        WAN: 'WAN',
+                        GRANDES_CLIENTES: 'Grandes clientes',
+                        SEGURIDAD: 'Seguridad',
+                        TELEFONIA: 'Telefonía'
+                    };
+                %>
+                    <article class="grid grid-cols-1 gap-3 py-4 sm:grid-cols-[minmax(0,1fr)_220px] sm:items-center sm:gap-6">
+                        <div class="flex min-w-0 items-start gap-3">
+                            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#D8E8FF] bg-[#EFF6FF] text-[12px] font-semibold text-[#3974C6]"><%= initials %></span>
+                            <div class="min-w-0 flex-1">
+                                <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                    <h3 class="text-[12px] font-semibold"><%= operador.nombre %></h3>
+                                    <a href="mailto:<%= operador.email %>" class="text-[10px] text-[#3974C6] hover:underline"><%= operador.email %></a>
+                                </div>
+                                <p class="mt-1 text-[11px] text-[#8E8E93]"><%= areaLabels[operador.area_designada] || operador.area_designada %></p>
+                                <p class="mt-2 text-[11px] <%= activeTickets.length ? 'text-[#3974C6]' : 'text-[#8E8E93]' %>">
+                                    <% if (activeTickets.length) { %>
+                                        <%= activeTickets.length %> <%= activeTickets.length === 1 ? 'ticket activo' : 'tickets activos' %> · <%= activeTickets.slice(0, 3).map(ticket => ticket.codigo_incidencia).join(', ') %><%= activeTickets.length > 3 ? ` +${activeTickets.length - 3}` : '' %>
+                                    <% } else { %>
+                                        Sin tickets activos
+                                    <% } %>
+                                </p>
+                            </div>
+                        </div>
+
+                        <form data-operator-status-form data-operator-id="<%= operador.id %>" class="flex items-center gap-2">
+                            <label class="sr-only" for="operator-status-<%= operador.id %>">Estado de <%= operador.nombre %></label>
+                            <select id="operator-status-<%= operador.id %>" name="estadoOperativo" class="h-9 min-w-0 flex-1 rounded-[8px] border border-[#D1D5DB] bg-white px-2.5 text-[11px] focus:border-[#007AFF] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/20">
+                                <option value="DISPONIBLE" <%= operador.estado_operativo === 'DISPONIBLE' ? 'selected' : '' %>>Disponible</option>
+                                <option value="EN_TERRENO" <%= operador.estado_operativo === 'EN_TERRENO' ? 'selected' : '' %>>En terreno</option>
+                                <option value="AUSENTE" <%= operador.estado_operativo === 'AUSENTE' ? 'selected' : '' %>>Ausente</option>
+                            </select>
+                            <button type="submit" class="h-9 shrink-0 rounded-[8px] bg-[#007AFF] px-3 text-[11px] font-semibold text-white hover:bg-[#006DE6] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#007AFF]/30 disabled:cursor-wait disabled:opacity-60">Guardar</button>
+                        </form>
+                        <p data-status-message role="status" class="hidden text-[11px] text-[#D70015] sm:col-start-2"></p>
+                    </article>
+                <% }); %>
+            <% } else { %>
+                <p class="py-10 text-center text-[12px] text-[#8E8E93]">No hay operadores registrados.</p>
+            <% } %>
+        </div>
+    </section>
+</div>
+
+<script>
+    document.querySelectorAll('[data-operator-status-form]').forEach(form => {
+        form.addEventListener('submit', async event => {
+            event.preventDefault();
+            const button = form.querySelector('button[type="submit"]');
+            const message = form.parentElement.querySelector('[data-status-message]');
+            const originalLabel = button.textContent;
+            button.disabled = true;
+            button.textContent = 'Guardando...';
+            message.classList.add('hidden');
+
+            try {
+                const response = await fetch(`/api/operators/${encodeURIComponent(form.dataset.operatorId)}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ estadoOperativo: form.elements.estadoOperativo.value })
+                });
+                const result = await response.json();
+                if (!response.ok || !result.success) throw new Error(result.error || 'No se pudo actualizar el estado.');
+                window.location.reload();
+            } catch (error) {
+                message.textContent = error.message || 'No se pudo conectar con el servidor.';
+                message.classList.remove('hidden');
+                button.disabled = false;
+                button.textContent = originalLabel;
+            }
+        });
+    });
+</script>

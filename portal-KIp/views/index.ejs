@@ -12,6 +12,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
         rel="stylesheet">
+    <link href="/css/figma-assets.css" rel="stylesheet">
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -71,6 +72,12 @@
             border-left: 1px solid #E5E5EA;
         }
 
+        .priority-badge {
+            background-color: var(--prio-bg, #F2F2F7);
+            color: var(--prio-txt, #8E8E93);
+            border-color: var(--prio-border, #E5E5EA);
+        }
+
         .macos-focus-ring {
             box-shadow: 0 0 0 3px rgba(0, 136, 255, 0.35);
             border-color: #389BFF !important;
@@ -116,14 +123,16 @@
                     <span
                         class="flex-shrink-0 px-1 py-0.5 text-[9px] font-mono text-[#8E8E93] bg-white border border-[#D1D1D6] rounded pointer-events-none font-medium">⌘K</span>
                 </div>
-                <button
-                    class="flex items-center gap-1.5 px-3 py-1.5 bg-[#007AFF] hover:bg-[#0062CC] text-white rounded-[7px] font-medium text-[12px] shadow-sm transition">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                        <line x1="12" x2="12" y1="5" y2="19"></line>
-                        <line x1="5" x2="19" y1="12" y2="12"></line>
-                    </svg>
-                    <span>Nuevo Incidente</span>
-                </button>
+                <div class="flex items-center gap-2">
+                    <button id="newTicketButton" type="button"
+                        class="flex items-center gap-1.5 px-3 py-1.5 bg-[#007AFF] hover:bg-[#0062CC] text-white rounded-[7px] font-medium text-[12px] shadow-sm transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <line x1="12" x2="12" y1="5" y2="19"></line>
+                            <line x1="5" x2="19" y1="12" y2="12"></line>
+                        </svg>
+                        <span>Nuevo Ticket</span>
+                    </button>
+                </div>
                 <div class="h-5 w-[1px] bg-[#D1D1D6] mx-0.5"></div>
                 <div
                     class="flex items-center gap-2 px-2 py-1 rounded-[8px] hover:bg-[#F2F2F7] transition cursor-pointer border border-transparent hover:border-[#D1D1D6]">
@@ -150,8 +159,8 @@
                         <div class="px-2.5 pb-1.5 text-[10px] font-bold text-[#8E8E93] uppercase tracking-wider">
                             Navegación</div>
                         <nav class="space-y-0.5">
-                            <a class="flex items-center justify-between px-2.5 py-1.5 rounded-[6px] bg-black/5 text-[#007AFF] font-medium text-[12px] transition"
-                                href="#">
+                            <a id="dashboardNavLink" class="flex items-center justify-between px-2.5 py-1.5 rounded-[6px] bg-black/5 text-[#007AFF] font-medium text-[12px] transition"
+                                href="#dashboard" onclick="event.preventDefault(); showDashboardSection('dashboard')">
                                 <div class="flex items-center gap-2">
                                     <svg class="w-4 h-4 text-[#007AFF]" fill="currentColor" viewBox="0 0 24 24">
                                         <path
@@ -175,8 +184,8 @@
                                     <span>Auditoría</span>
                                 </div>
                             </a>
-                            <a class="flex items-center justify-between px-2.5 py-1.5 rounded-[6px] text-[#3A3A3C] hover:bg-black/5 text-[12px] font-medium transition"
-                                href="#">
+                            <a id="shiftManagementNavLink" class="flex items-center justify-between px-2.5 py-1.5 rounded-[6px] text-[#3A3A3C] hover:bg-black/5 text-[12px] font-medium transition"
+                                href="#gestion-turno" onclick="event.preventDefault(); showDashboardSection('shift')">
                                 <div class="flex items-center gap-2">
                                     <svg class="w-4 h-4 text-[#8E8E93]" fill="none" stroke="currentColor"
                                         stroke-width="2" viewBox="0 0 24 24">
@@ -224,6 +233,7 @@
 
             <!-- BEGIN: Content Main Area -->
             <main class="flex-1 flex flex-col min-w-0 bg-white overflow-hidden p-4 gap-3">
+                <div id="dashboardOverview" class="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
 
                 <!-- BEGIN: KPI Cards / macOS Widget Panels -->
                 <section class="grid grid-cols-4 gap-3 flex-shrink-0" data-purpose="kpi-cards">
@@ -272,8 +282,8 @@
                     </div>
 
                     <!-- Card 4: Operadores Disponibles -->
-                    <div
-                        class="bg-white border border-[#E5E5EA] rounded-[12px] p-4 flex flex-col justify-between shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-[0_2px_6px_rgba(0,0,0,0.06)] transition">
+                    <div id="operatorsKpiCard"
+                        class="relative bg-white border border-[#E5E5EA] rounded-[12px] p-4 flex flex-col justify-between shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-[0_2px_6px_rgba(0,0,0,0.06)] transition">
                         <div class="flex items-start justify-between">
                             <span
                                 class="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wider leading-tight">OPERADORES
@@ -288,8 +298,9 @@
                                 </span>
                                 <span class="text-xs font-mono text-[#8E8E93] font-medium leading-none">/ <%= totalOperadores %> activos</span>
                             </div>
-                            <div
-                                class="w-8 h-8 rounded-[8px] bg-[#F2F2F7] border border-[#E5E5EA] flex items-center justify-center text-[#636366]">
+                            <button id="operatorsPopoverButton" type="button" aria-label="Ver operadores de turno"
+                                aria-controls="operatorsPopover" aria-expanded="false" title="Ver operadores de turno"
+                                class="w-9 h-9 rounded-[10px] bg-[#F7F9FC] border border-[#E4EAF2] flex items-center justify-center text-[#64748B] hover:bg-[#EAF2FF] hover:text-[#2563EB] hover:border-[#C8DBFF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#007AFF]/30 transition cursor-pointer">
                                 <svg class="w-4 h-4 text-[#636366]" fill="none" stroke="currentColor" stroke-width="1.8"
                                     viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
@@ -297,8 +308,90 @@
                                     <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
                                     <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                                 </svg>
-                            </div>
+                            </button>
                         </div>
+                        <section id="operatorsPopover" role="dialog" aria-labelledby="operatorsPopoverTitle" aria-hidden="true"
+                            class="hidden operator-popover-window">
+                            <header class="flex items-start justify-between gap-3 px-4 py-3 border-b border-[#E5EAF0] bg-white">
+                                <div class="flex items-start gap-2.5 min-w-0">
+                                    <span class="mt-1.5 w-2 h-2 shrink-0 rounded-full bg-[#34C759]"></span>
+                                    <div class="min-w-0">
+                                        <h2 id="operatorsPopoverTitle" class="text-[13px] leading-4 font-semibold text-[#1C1C1E]">Operadores de turno</h2>
+                                        <p class="mt-1 text-[11px] text-[#8E8E93]">Estado y carga de trabajo</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2 shrink-0">
+                                    <span class="px-2 py-1 rounded-full bg-[#E5F9ED] text-[#16834A] text-[10px] font-semibold"><%= operadoresConectados %> conectados</span>
+                                    <button id="operatorsPopoverClose" type="button" aria-label="Cerrar operadores"
+                                        class="w-7 h-7 flex items-center justify-center rounded-[7px] text-[#8E8E93] hover:bg-[#F2F2F7] hover:text-[#48484A] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#007AFF]/30 transition">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+                                    </button>
+                                </div>
+                            </header>
+                            <div class="operator-popover-list">
+                                <% if (operadoresTurno.length) { %>
+                                    <% operadoresTurno.forEach(function(operador) {
+                                        const activeTickets = operador.tickets_asignados || [];
+                                        const isBusy = activeTickets.length > 0;
+                                        const operatorParts = operador.nombre.trim().split(/\s+/);
+                                        const operatorInitials = operatorParts.length > 1
+                                            ? `${operatorParts[0][0]}${operatorParts[operatorParts.length - 1][0]}`.toUpperCase()
+                                            : operador.nombre.slice(0, 2).toUpperCase();
+                                        const operatorAreaLabels = {
+                                            GENERAL: 'Operaciones IP',
+                                            REDES_FTTH: 'Redes FTTH / OLT',
+                                            TRAFICO_INALAMBRICO: 'Tráfico inalámbrico',
+                                            WAN: 'WAN',
+                                            GRANDES_CLIENTES: 'Grandes clientes',
+                                            SEGURIDAD: 'Seguridad',
+                                            TELEFONIA: 'Telefonía'
+                                        };
+                                        const operatorStatus = isBusy
+                                            ? { label: 'Ocupado', classes: 'bg-[#FFF4D6] text-[#A86100]' }
+                                            : operador.estado_operativo === 'DISPONIBLE'
+                                                ? { label: 'Disponible', classes: 'bg-[#E5F9ED] text-[#16834A]' }
+                                                : operador.estado_operativo === 'EN_TERRENO'
+                                                    ? { label: 'En terreno', classes: 'bg-[#EAF2FF] text-[#2563EB]' }
+                                                    : { label: 'Ausente', classes: 'bg-[#F2F2F7] text-[#636366]' };
+                                    %>
+                                        <article class="flex gap-3 px-4 py-3.5">
+                                            <div class="relative shrink-0">
+                                                <span class="w-10 h-10 flex items-center justify-center rounded-full border border-[#D8E8FF] bg-[#EFF6FF] text-[#3974C6] text-[12px] font-semibold"><%= operatorInitials %></span>
+                                                <span class="absolute right-0 bottom-0 w-3 h-3 rounded-full border-2 border-white <%= operador.estado_operativo === 'AUSENTE' ? 'bg-[#A1A1AA]' : 'bg-[#34C759]' %>"></span>
+                                            </div>
+                                            <div class="min-w-0 flex-1">
+                                                <div class="flex items-start justify-between gap-2">
+                                                    <h3 class="min-w-0 text-[12px] leading-4 font-semibold text-[#1C1C1E] break-words"><%= operador.nombre %></h3>
+                                                    <span class="shrink-0 px-2 py-1 rounded-[6px] text-[10px] font-semibold <%= operatorStatus.classes %>"><%= operatorStatus.label %></span>
+                                                </div>
+                                                <p class="mt-1 text-[11px] text-[#8E8E93] truncate"><%= operatorAreaLabels[operador.area_designada] || operador.area_designada %></p>
+                                                <% if (activeTickets.length) { %>
+                                                    <div class="mt-2 flex items-start gap-2 text-[11px] text-[#3974C6]">
+                                                        <span class="mt-1 w-1.5 h-1.5 rounded-full bg-[#3974C6] shrink-0"></span>
+                                                        <span><%= activeTickets.length %> <%= activeTickets.length === 1 ? 'ticket activo' : 'tickets activos' %> · <%= activeTickets.slice(0, 2).map(ticket => ticket.codigo_incidencia).join(', ') %><%= activeTickets.length > 2 ? ` +${activeTickets.length - 2}` : '' %></span>
+                                                    </div>
+                                                <% } else if (operador.estado_operativo === 'DISPONIBLE') { %>
+                                                    <div class="mt-2 flex items-center gap-2 text-[11px] text-[#16834A]">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-[#34C759] shrink-0"></span>
+                                                        <span>Sin carga actual (0 tickets)</span>
+                                                    </div>
+                                                <% } %>
+                                            </div>
+                                            <a href="mailto:<%= operador.email %>" aria-label="Contactar a <%= operador.nombre %>"
+                                                class="self-start shrink-0 px-2.5 py-1.5 rounded-[7px] border border-[#DCE4EF] bg-white text-[10px] font-semibold text-[#52647D] hover:border-[#BDD3F4] hover:bg-[#F3F7FD] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#007AFF]/30 transition">Contactar</a>
+                                        </article>
+                                    <% }); %>
+                                <% } else { %>
+                                    <p class="px-4 py-8 text-center text-[12px] text-[#8E8E93]">No hay operadores registrados en el turno.</p>
+                                <% } %>
+                            </div>
+                            <footer class="flex justify-end border-t border-[#E5EAF0] bg-[#F8FAFC] px-4 py-2.5">
+                                <a href="#gestion-turno" onclick="event.preventDefault(); showDashboardSection('shift')" class="inline-flex items-center gap-1.5 rounded text-[11px] font-semibold text-[#3974C6] hover:text-[#245AA5] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#007AFF]/30 transition">
+                                    Gestionar turno
+                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
+                                </a>
+                            </footer>
+                        </section>
                     </div>
                 </section>
                 <!-- END: KPI Cards -->
@@ -511,18 +604,30 @@
                                         let opId = ticket.asignado_a_id || '';
                                         let isAssigned = Boolean(opId) || estado === 'EN_PROGRESO' || estado === 'CERRADO' || estado === 'EN_ESPERA_TERCEROS';
                                         let area = ticket.area_designada || 'GENERAL';
-                                        let cleanSubject = (ticket.asunto || '').replace(/'/g, "\\'");
+                                        let ticketCreatedAtTime = ticket.createdAt ? new Date(ticket.createdAt).getTime() : 0;
+                                        let ticketAttendedAtTime = ticket.fecha_asignacion ? new Date(ticket.fecha_asignacion).getTime() : Date.now();
+                                        let ticketElapsedMinutes = ticketCreatedAtTime ? Math.max(0, Math.floor((ticketAttendedAtTime - ticketCreatedAtTime) / 60000)) : 0;
+                                        let ticketElapsedLabel = ticketElapsedMinutes >= 1440
+                                            ? Math.floor(ticketElapsedMinutes / 1440) + (Math.floor(ticketElapsedMinutes / 1440) === 1 ? ' día' : ' días')
+                                            : ticketElapsedMinutes >= 120
+                                                ? Math.floor(ticketElapsedMinutes / 60) + ' h'
+                                                : ticketElapsedMinutes + ' min';
+                                        let ticketSender = ticket.remitente || (ticket.creado_por
+                                            ? `${ticket.creado_por.nombre} <${ticket.creado_por.email}>`
+                                            : '');
+                                        let safeSubject = (ticket.asunto || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                                        let safeOperator = (opAsignado || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
                                     %>
-                                    <tr id="row-<%= ticket.codigo_incidencia %>" class="ticket-row hover:bg-[#F9F9FA] group transition-colors" data-area="<%= area %>" data-priority="<%= prio %>" data-assigned="<%= isAssigned %>" data-date="<%= ticket.createdAt ? new Date(ticket.createdAt).getTime() : 0 %>" data-subject="<%= cleanSubject %>" data-operator-id="<%= opId %>" data-operator-name="<%= opAsignado || '' %>">
+                                    <tr id="row-<%= ticket.codigo_incidencia %>" class="ticket-row hover:bg-[#F9F9FA] group transition-colors" data-area="<%= area %>" data-priority="<%= prio %>" data-assigned="<%= isAssigned %>" data-date="<%= ticketCreatedAtTime %>" data-subject="<%= safeSubject %>" data-detail-subject="<%= ticket.asunto || '' %>" data-description="<%= ticket.descripcion || '' %>" data-origin="<%= ticket.origen_ingesta %>" data-sender="<%= ticketSender %>" data-created-at="<%= ticket.createdAt ? new Date(ticket.createdAt).toISOString() : '' %>" data-attended-at="<%= ticket.fecha_asignacion ? new Date(ticket.fecha_asignacion).toISOString() : '' %>" data-operator-id="<%= opId %>" data-operator-name="<%= safeOperator %>">
                                         <td class="py-2 px-3 align-middle text-center w-[40px]">
                                             <div class="flex items-center justify-center">
-                                                <input type="checkbox" data-code="<%= ticket.codigo_incidencia %>" data-assigned="<%= isAssigned %>" <%= isAssigned ? 'disabled title="Ticket ya en asignación"' : '' %> onchange="TableSelectionManager.handleCheckboxChange(this)" class="row-checkbox w-3.5 h-3.5 rounded text-[#007AFF] border-[#D1D1D6] focus:ring-0 focus:outline-none <%= isAssigned ? 'opacity-30 cursor-not-allowed pointer-events-none bg-[#E5E5EA]' : 'cursor-pointer' %>">
+                                                <input type="checkbox" data-code="<%= ticket.codigo_incidencia %>" data-assigned="<%= isAssigned %>" <%= isAssigned ? 'disabled title="Ticket ya en asignación"' : '' %> class="row-checkbox w-3.5 h-3.5 rounded text-[#007AFF] border-[#D1D1D6] focus:ring-0 focus:outline-none <%= isAssigned ? 'opacity-30 cursor-not-allowed pointer-events-none bg-[#E5E5EA]' : 'cursor-pointer' %>">
                                             </div>
                                         </td>
                                         <td class="py-2 px-3 align-middle whitespace-nowrap">
                                             <div class="flex items-center gap-1.5">
                                                 <svg class="w-3.5 h-3.5 text-[#8E8E93] flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-                                                <a class="font-mono font-medium text-[#1C1C1E] hover:underline cursor-pointer" onclick="openAssignModal('<%= ticket.codigo_incidencia %>', '<%= cleanSubject %>', '<%= area %>', '<%= opId %>', '<%= opAsignado || '' %>', '<%= prio %>')"><%= ticket.codigo_incidencia %></a>
+                                                <button type="button" class="font-mono font-medium text-[#1C1C1E] hover:underline cursor-pointer" onclick="openTicketDetailsForCode('<%= ticket.codigo_incidencia %>')"><%= ticket.codigo_incidencia %></button>
                                             </div>
                                         </td>
                                         <td class="py-2 px-2.5 align-middle whitespace-nowrap">
@@ -542,11 +647,11 @@
                                             <span class="operator-label <%= !opAsignado ? 'italic text-[#8E8E93]' : 'font-semibold text-[#007AFF]' %>"><%= opAsignado || '— Sin asignar' %></span>
                                         </td>
                                         <td class="time-col py-2 px-2.5 align-middle text-center">
-                                            <span class="inline-block font-mono text-[11px] text-[#48484A] bg-[#F2F2F7] border border-[#E5E5EA] px-2 py-0.5 rounded-[4px]">1 min esp.</span>
+                                            <span data-ticket-elapsed class="inline-block font-sans text-[12px] font-semibold tabular-nums text-[#1C1C1E] bg-[#F2F2F7] border border-[#E5E5EA] px-2 py-0.5 rounded-[4px]" title="Tiempo transcurrido desde la creación hasta la asignación"><%= ticketElapsedLabel %></span>
                                         </td>
                                         <td class="action-col py-2 px-3 align-middle text-right">
-                                            <button onclick="openAssignModal('<%= ticket.codigo_incidencia %>', '<%= cleanSubject %>', '<%= area %>', '<%= opId %>', '<%= opAsignado || '' %>', '<%= prio %>')" class="bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA] border border-[#D1D1D6] text-[#1C1C1E] text-[11px] font-medium px-2.5 py-1 rounded-[6px] shadow-xs transition cursor-pointer">
-                                                Asignar
+                                            <button type="button" onclick="handleTicketAction('<%= ticket.codigo_incidencia %>', '<%= safeSubject %>', '<%= area %>', '<%= opId %>', '<%= safeOperator %>', '<%= prio %>')" class="bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA] border border-[#D1D1D6] text-[#1C1C1E] text-[11px] font-medium px-2.5 py-1 rounded-[6px] shadow-xs transition cursor-pointer">
+                                                <%= isAssigned ? 'Desasignar' : 'Asignar' %>
                                             </button>
                                         </td>
                                     </tr>
@@ -586,6 +691,10 @@
                     </div>
                 </section>
                 <!-- END: Finder List Table Container -->
+                </div>
+                <section id="shiftManagementSection" class="hidden min-h-0 flex-1 overflow-y-auto rounded-[12px] border border-[#E5E5EA] bg-white p-4 sm:p-6" aria-label="Gestión de Turno">
+                    <%- include('components/shift-section') %>
+                </section>
             </main>
             <!-- END: Content Main Area -->
         </div>
@@ -605,7 +714,7 @@
                         CONFIGURACION DE ASIGNACION
                     </h3>
                     <p class="text-[12px] text-[#8E8E93] leading-snug mt-1.5 px-3 font-normal">
-                        describe las indicaciones y al operador que deseas que realice la asignacion
+                        describe las indicaciones
                     </p>
                 </div>
 
@@ -630,7 +739,7 @@
                                 readonly tabindex="-1" type="text" value="...">
                             <button
                                 class="w-[36px] h-[36px] flex items-center justify-center bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA] border border-[#D1D1D6] rounded-[10px] text-[#636366] hover:text-[#1C1C1E] shadow-xs transition flex-shrink-0 cursor-pointer"
-                                title="Ver detalles del ticket" type="button" onclick="showTicketSubjectAlert()">
+                                title="Ver detalles del ticket" aria-label="Ver detalles del ticket" type="button" onclick="openTicketDetailsModal()">
                                 <svg class="w-4 h-4 text-[#636366]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                                     <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                 </svg>
@@ -742,11 +851,12 @@
                         <label class="w-[82px] text-right text-[13px] font-medium text-[#636366] pr-3 select-none">Operador:</label>
                         <div class="flex-1 relative">
                             <input type="hidden" id="selectedOperatorId" value="">
+                            <input type="hidden" id="selectedOperatorEmail" value="">
                             <details id="modalOperatorDropdown" class="relative group select-none z-20">
                                 <summary
                                     class="list-none flex items-center justify-between w-full h-[36px] pl-3.5 pr-2 bg-white hover:bg-[#FAFAFC] active:bg-[#F2F2F7] rounded-[10px] border border-[#D1D1D6] shadow-xs cursor-pointer text-[13px] font-medium text-[#1C1C1E] transition focus:outline-none">
                                     <span class="truncate text-[13px] leading-none font-medium text-[#1C1C1E]"
-                                        id="modalOperatorText">Andrea Silva - Fibra</span>
+                                        id="modalOperatorText">Seleccionar operador...</span>
                                     <span
                                         class="flex items-center justify-center w-[20px] h-[20px] rounded-[6px] bg-[#F2F2F7] text-[#8E8E93]">
                                         <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
@@ -761,7 +871,7 @@
                                             let parts = op.nombre.split(' ');
                                             let inits = parts.length > 1 ? (parts[0][0] + parts[1][0]).toUpperCase() : op.nombre.substring(0, 2).toUpperCase();
                                         %>
-                                            <a class="flex items-center justify-between px-2.5 py-1.5 rounded-[6px] text-[#1C1C1E] hover:bg-[#007AFF] hover:text-white font-medium transition cursor-pointer" onclick="event.preventDefault();setModalOperator('<%= op.id %>', '<%= op.nombre %>', '<%= inits %>');">
+                                            <a data-operator-id="<%= op.id %>" data-operator-email="<%= op.email %>" class="flex items-center justify-between px-2.5 py-1.5 rounded-[6px] text-[#1C1C1E] hover:bg-[#007AFF] hover:text-white font-medium transition cursor-pointer" onclick="event.preventDefault();setModalOperator('<%= op.id %>', '<%= op.nombre %>', '<%= inits %>', this.dataset.operatorEmail);">
                                                 <span class="truncate"><%= op.nombre %></span>
                                                 <span class="font-mono text-[10px] text-[#8E8E93] group-hover:text-white"><%= inits %></span>
                                             </a>
@@ -779,8 +889,8 @@
                 <div class="flex items-center justify-between pt-3 mt-1">
                     <button id="modalUnassignBtn"
                         class="h-[34px] px-4 bg-[#FEE2E2] hover:bg-[#FECACA] active:bg-[#FCA5A5] text-[#EF4444] text-[13px] font-medium rounded-[10px] flex items-center justify-center transition cursor-pointer select-none"
-                        onclick="unassignCurrentTicket()" type="button">
-                        Delete
+                        onclick="openUnassignmentConfirmation()" type="button">
+                        Desasignar
                     </button>
                     <div class="flex items-center gap-2.5">
                         <button
@@ -788,16 +898,227 @@
                             onclick="closeAssignModal()" type="button">
                             Cancelar
                         </button>
-                        <button
+                        <button id="saveAssignButton"
                             class="h-[34px] px-5 bg-[#007AFF] hover:bg-[#006DE6] active:bg-[#0062CC] text-white text-[13px] font-medium rounded-[10px] flex items-center justify-center shadow-xs transition cursor-pointer select-none"
-                            onclick="saveAssignModal()" type="button">
-                            Guardar
+                            onclick="openAssignmentConfirmation()" type="button">
+                            Asignar
                         </button>
                     </div>
                 </div>
             </div>
         </div>
         <!-- END: Modal Sheet -->
+
+        <div id="ticketActionConfirmOverlay"
+            class="fixed inset-0 bg-black/25 backdrop-blur-[5px] z-[90] hidden items-center justify-center p-4"
+            onclick="handleTicketActionConfirmationBackdrop(event)">
+            <section role="dialog" aria-modal="true" aria-labelledby="ticketActionConfirmTitle"
+                class="figma-alerts-alert__fill-shadow w-[360px] max-w-[calc(100vw-2rem)] !rounded-[24px] border border-white/60 bg-white/75 p-5 text-[#1C1C1E] backdrop-blur-[28px]">
+                <h3 id="ticketActionConfirmTitle" class="text-[16px] font-bold leading-5">Confirmar acción</h3>
+                <p id="ticketActionConfirmMessage" class="mt-3 text-[14px] leading-5 text-[#242428]"></p>
+                <div class="mt-4 flex flex-col gap-2">
+                    <button id="ticketActionConfirmButton" type="button" onclick="confirmTicketAction()"
+                        class="figma-alerts-alert__button-1 !h-10 !w-full text-[14px] font-semibold text-white transition hover:brightness-95">Confirmar</button>
+                    <button type="button" onclick="closeTicketActionConfirmation()"
+                        class="figma-alerts-alert__button-3 !h-10 !w-full text-[14px] font-medium text-[#242428] transition hover:brightness-95">Cancelar</button>
+                </div>
+            </section>
+        </div>
+
+        <div id="newTicketOverlay"
+            class="fixed inset-0 bg-black/35 backdrop-blur-[3px] z-[70] items-center justify-center p-4 hidden"
+            onclick="handleNewTicketBackdrop(event)">
+            <section role="dialog" aria-modal="true" aria-labelledby="newTicketTitle"
+                class="w-[580px] max-w-[calc(100vw-2rem)] max-h-[calc(100vh-2rem)] bg-white rounded-[22px] border border-[#E5E5EA] shadow-[0_24px_60px_rgba(0,0,0,0.18)] flex flex-col overflow-hidden">
+                <header class="px-6 py-5 border-b border-[#E5E5EA] flex items-center justify-between gap-4">
+                    <div>
+                        <div class="inline-flex items-center gap-1.5 rounded-[8px] border border-[#D1D1D6] bg-[#F5F5F7] px-2 py-1 shadow-sm">
+     <svg class="w-3.5 h-3.5 text-[#636366]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+        <path d="M3.5 8.5A2.5 2.5 0 0 1 6 6h3l1.5 2H18a2.5 2.5 0 0 1 2.5 2.5v6A2.5 2.5 0 0 1 18 19H6A2.5 2.5 0 0 1 3.5 16.5v-8Z"></path>
+     </svg>
+         <span class="font-mono text-[10px] font-bold text-[#636366]">#</span> 
+         <span class="font-mono text-[11px] font-semibold text-[#1C1C1E]"><%= nextTicketCode || 'INC-004' %></span> 
+</div>
+                       <!-- <h3 id="newTicketTitle" class="text-[15px] font-bold text-[#1C1C1E] uppercase">Nuevo Ticket</h3> -->
+                        
+                        <p class="text-[12px] text-[#8E8E93] mt-1">Nuevo Ticket</p>
+                    </div>
+                    <button type="button" onclick="closeNewTicketModal()" aria-label="Cerrar formulario"
+                        class="w-8 h-8 flex items-center justify-center rounded-[8px] text-[#636366] hover:bg-[#F2F2F7]">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="m6 6 12 12M18 6 6 18"></path>
+                        </svg>
+                    </button>
+                </header>
+                <form id="newTicketForm" class="flex min-h-0 flex-col">
+                    <div class="min-h-0 overflow-y-auto p-5 space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div class="rounded-[8px] bg-[#F5F5F7] border border-[#E5E5EA] px-3 py-2">
+                                <div class="text-[10px] font-semibold uppercase text-[#8E8E93]">Código</div>
+                                <div class="mt-1 text-[12px] font-mono text-[#48484A]">Se genera al guardar</div>
+                            </div>
+                            <div class="rounded-[8px] bg-[#F5F5F7] border border-[#E5E5EA] px-3 py-2">
+                                <div class="text-[10px] font-semibold uppercase text-[#8E8E93]">ID</div>
+                                <div class="mt-1 text-[12px] font-mono text-[#48484A]"><%= nextTicketCode || 'INC-004' %></div>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="newTicketSubject" class="block text-[11px] font-semibold uppercase text-[#636366] mb-1.5">Asunto</label>
+                            <input id="newTicketSubject" name="asunto" required maxlength="180"
+                                class="w-full h-[38px] px-3 bg-white border border-[#D1D1D6] rounded-[8px] text-[13px] text-[#1C1C1E] focus:outline-none focus:border-[#007AFF] focus:ring-2 focus:ring-[#007AFF]/20"
+                                placeholder="Resumen del incidente" type="text">
+                        </div>
+                        <div>
+                            <label for="newTicketDescription" class="block text-[11px] font-semibold uppercase text-[#636366] mb-1.5">Descripción</label>
+                            <textarea id="newTicketDescription" name="descripcion" rows="4"
+                                class="w-full px-3 py-2 bg-white border border-[#D1D1D6] rounded-[8px] text-[13px] leading-relaxed text-[#1C1C1E] resize-y focus:outline-none focus:border-[#007AFF] focus:ring-2 focus:ring-[#007AFF]/20"
+                                placeholder="Síntomas, impacto y contexto técnico"></textarea>
+                        </div>
+                        <div>
+                            <label for="newTicketAttachment" class="block text-[11px] font-semibold uppercase text-[#636366] mb-1.5">Adjunto</label>
+                            <input id="newTicketAttachment" name="adjunto" type="file" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.txt,.zip"
+                                class="block w-full text-[12px] text-[#3A3A3C] file:mr-3 file:rounded-[7px] file:border-0 file:bg-[#E8F1FF] file:px-3 file:py-1.5 file:text-[11px] file:font-medium file:text-[#0062CC] file:cursor-pointer file:hover:bg-[#DDEBFF] file:transition file:shadow-sm">
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div class="relative z-30">
+                                <label id="newTicketAreaLabel" class="block text-[11px] font-semibold uppercase text-[#636366] mb-1.5">Área</label>
+                                <details id="newTicketAreaDropdown" data-ticket-dropdown data-default-value="GENERAL" class="relative group select-none">
+                                    <input id="newTicketArea" name="areaDesignada" type="hidden" value="GENERAL">
+                                    <summary aria-labelledby="newTicketAreaLabel" aria-haspopup="listbox"
+                                        class="list-none flex items-center justify-between w-full h-[38px] pl-3 pr-2 bg-white hover:bg-[#FAFAFC] active:bg-[#F2F2F7] rounded-[8px] border border-[#D1D1D6] shadow-xs cursor-pointer text-[12px] text-[#1C1C1E] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#007AFF]/30">
+                                        <span data-ticket-dropdown-label class="truncate">General</span>
+                                        <span class="flex items-center justify-center w-[20px] h-[20px] rounded-[6px] bg-[#F2F2F7] text-[#8E8E93]">
+                                            <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"></path></svg>
+                                        </span>
+                                    </summary>
+                                    <div role="listbox" aria-labelledby="newTicketAreaLabel" class="absolute left-0 top-[42px] w-full max-h-48 overflow-y-auto bg-white rounded-[10px] border border-[#D1D1D6] shadow-[0_10px_25px_rgba(0,0,0,0.12)] p-1 z-50 space-y-0.5 text-[12px]">
+                                        <button type="button" role="option" aria-selected="true" data-ticket-option data-value="GENERAL" data-label="General" class="flex items-center w-full px-2.5 py-1.5 rounded-[6px] text-left text-[#1C1C1E] hover:bg-[#007AFF] hover:text-white font-medium transition">General</button>
+                                        <button type="button" role="option" aria-selected="false" data-ticket-option data-value="REDES_FTTH" data-label="Redes FTTH" class="flex items-center w-full px-2.5 py-1.5 rounded-[6px] text-left text-[#1C1C1E] hover:bg-[#007AFF] hover:text-white font-medium transition">Redes FTTH</button>
+                                        <button type="button" role="option" aria-selected="false" data-ticket-option data-value="TRAFICO_INALAMBRICO" data-label="Tráfico inalámbrico" class="flex items-center w-full px-2.5 py-1.5 rounded-[6px] text-left text-[#1C1C1E] hover:bg-[#007AFF] hover:text-white font-medium transition">Tráfico inalámbrico</button>
+                                        <button type="button" role="option" aria-selected="false" data-ticket-option data-value="WAN" data-label="WAN" class="flex items-center w-full px-2.5 py-1.5 rounded-[6px] text-left text-[#1C1C1E] hover:bg-[#007AFF] hover:text-white font-medium transition">WAN</button>
+                                        <button type="button" role="option" aria-selected="false" data-ticket-option data-value="GRANDES_CLIENTES" data-label="Grandes clientes" class="flex items-center w-full px-2.5 py-1.5 rounded-[6px] text-left text-[#1C1C1E] hover:bg-[#007AFF] hover:text-white font-medium transition">Grandes clientes</button>
+                                        <button type="button" role="option" aria-selected="false" data-ticket-option data-value="SEGURIDAD" data-label="Seguridad" class="flex items-center w-full px-2.5 py-1.5 rounded-[6px] text-left text-[#1C1C1E] hover:bg-[#007AFF] hover:text-white font-medium transition">Seguridad</button>
+                                        <button type="button" role="option" aria-selected="false" data-ticket-option data-value="TELEFONIA" data-label="Telefonía" class="flex items-center w-full px-2.5 py-1.5 rounded-[6px] text-left text-[#1C1C1E] hover:bg-[#007AFF] hover:text-white font-medium transition">Telefonía</button>
+                                    </div>
+                                </details>
+                            </div>
+                            <div class="relative z-20">
+                                <label id="newTicketOriginLabel" class="block text-[11px] font-semibold uppercase text-[#636366] mb-1.5">Origen</label>
+                                <details id="newTicketOriginDropdown" data-ticket-dropdown data-default-value="CORREO" class="relative group select-none">
+                                    <input id="newTicketOrigin" name="origenIngesta" type="hidden" value="CORREO">
+                                    <summary aria-labelledby="newTicketOriginLabel" aria-haspopup="listbox"
+                                        class="list-none flex items-center justify-between w-full h-[38px] pl-3 pr-2 bg-white hover:bg-[#FAFAFC] active:bg-[#F2F2F7] rounded-[8px] border border-[#D1D1D6] shadow-xs cursor-pointer text-[12px] text-[#1C1C1E] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#007AFF]/30">
+                                        <span data-ticket-dropdown-label class="truncate">Correo</span>
+                                        <span class="flex items-center justify-center w-[20px] h-[20px] rounded-[6px] bg-[#F2F2F7] text-[#8E8E93]">
+                                            <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"></path></svg>
+                                        </span>
+                                    </summary>
+                                    <div role="listbox" aria-labelledby="newTicketOriginLabel" class="absolute left-0 top-[42px] w-full bg-white rounded-[10px] border border-[#D1D1D6] shadow-[0_10px_25px_rgba(0,0,0,0.12)] p-1 z-50 space-y-0.5 text-[12px]">
+                                        <button type="button" role="option" aria-selected="true" data-ticket-option data-value="CORREO" data-label="Correo" class="flex items-center w-full px-2.5 py-1.5 rounded-[6px] text-left text-[#1C1C1E] hover:bg-[#007AFF] hover:text-white font-medium transition">Correo</button>
+                                        <button type="button" role="option" aria-selected="false" data-ticket-option data-value="LLAMADA" data-label="Llamada" class="flex items-center w-full px-2.5 py-1.5 rounded-[6px] text-left text-[#1C1C1E] hover:bg-[#007AFF] hover:text-white font-medium transition">Llamada</button>
+                                        <button type="button" role="option" aria-selected="false" data-ticket-option data-value="JEFATURA" data-label="Jefatura" class="flex items-center w-full px-2.5 py-1.5 rounded-[6px] text-left text-[#1C1C1E] hover:bg-[#007AFF] hover:text-white font-medium transition">Jefatura</button>
+                                        <button type="button" role="option" aria-selected="false" data-ticket-option data-value="COORDINADOR" data-label="Coordinador" class="flex items-center w-full px-2.5 py-1.5 rounded-[6px] text-left text-[#1C1C1E] hover:bg-[#007AFF] hover:text-white font-medium transition">Coordinador</button>
+                                    </div>
+                                </details>
+                            </div>
+                            <div class="relative z-10">
+                                <label id="newTicketPriorityLabel" class="block text-[11px] font-semibold uppercase text-[#636366] mb-1.5">Prioridad</label>
+                                <details id="newTicketPriorityDropdown" data-ticket-dropdown data-default-value="NONE" class="relative group select-none">
+                                    <input id="newTicketPriority" name="prioridad" type="hidden" value="NONE">
+                                    <summary aria-labelledby="newTicketPriorityLabel" aria-haspopup="listbox"
+                                        class="list-none flex items-center justify-between w-full h-[38px] pl-3 pr-2 bg-white hover:bg-[#FAFAFC] active:bg-[#F2F2F7] rounded-[8px] border border-[#D1D1D6] shadow-xs cursor-pointer text-[12px] text-[#1C1C1E] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#007AFF]/30">
+                                        <span data-ticket-dropdown-label class="truncate">Sin prioridad</span>
+                                        <span class="flex items-center justify-center w-[20px] h-[20px] rounded-[6px] bg-[#F2F2F7] text-[#8E8E93]">
+                                            <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"></path></svg>
+                                        </span>
+                                    </summary>
+                                    <div role="listbox" aria-labelledby="newTicketPriorityLabel" class="absolute left-0 top-[42px] w-full bg-white rounded-[10px] border border-[#D1D1D6] shadow-[0_10px_25px_rgba(0,0,0,0.12)] p-1 z-50 space-y-0.5 text-[12px]">
+                                        <button type="button" role="option" aria-selected="true" data-ticket-option data-value="NONE" data-label="Sin prioridad" class="flex items-center w-full px-2.5 py-1.5 rounded-[6px] text-left text-[#1C1C1E] hover:bg-[#007AFF] hover:text-white font-medium transition">Sin prioridad</button>
+                                        <button type="button" role="option" aria-selected="false" data-ticket-option data-value="P1" data-label="P1 - Crítica" class="flex items-center w-full px-2.5 py-1.5 rounded-[6px] text-left text-[#1C1C1E] hover:bg-[#007AFF] hover:text-white font-medium transition">P1 - Crítica</button>
+                                        <button type="button" role="option" aria-selected="false" data-ticket-option data-value="P2" data-label="P2 - Media" class="flex items-center w-full px-2.5 py-1.5 rounded-[6px] text-left text-[#1C1C1E] hover:bg-[#007AFF] hover:text-white font-medium transition">P2 - Media</button>
+                                        <button type="button" role="option" aria-selected="false" data-ticket-option data-value="P3" data-label="P3 - Normal" class="flex items-center w-full px-2.5 py-1.5 rounded-[6px] text-left text-[#1C1C1E] hover:bg-[#007AFF] hover:text-white font-medium transition">P3 - Normal</button>
+                                    </div>
+                                </details>
+                            </div>
+                        </div>
+                        <div id="newTicketSenderField" class="hidden">
+                            <label for="newTicketSender" class="block text-[11px] font-semibold uppercase text-[#636366] mb-1.5">Remitente</label>
+                            <input id="newTicketSender" name="remitente" type="text" maxlength="180" autocomplete="email"
+                                class="w-full h-[38px] px-3 bg-white border border-[#D1D1D6] rounded-[8px] text-[13px] text-[#1C1C1E] focus:outline-none focus:border-[#007AFF] focus:ring-2 focus:ring-[#007AFF]/20"
+                                placeholder="Nombre y correo del remitente">
+                        </div>
+                        <p id="newTicketError" class="hidden text-[12px] text-[#D70015]" role="alert"></p>
+                    </div>
+                    <footer class="px-5 py-4 border-t border-[#E5E5EA] flex justify-end gap-2.5">
+                        <button type="button" onclick="closeNewTicketModal()"
+                            class="h-[36px] px-4 bg-[#E5E5EA] hover:bg-[#DCDCE0] text-[#3A3A3C] text-[13px] font-medium rounded-[8px]">Cancelar</button>
+                        <button id="newTicketSubmitButton" type="submit"
+                            class="h-[36px] px-5 bg-[#007AFF] hover:bg-[#006DE6] text-white text-[13px] font-medium rounded-[8px]">Crear Ticket</button>
+                    </footer>
+                </form>
+            </section>
+        </div>
+
+        <div id="ticketDetailsOverlay"
+            class="fixed inset-0 bg-black/35 backdrop-blur-[3px] z-[60] items-center justify-center p-4 hidden"
+            onclick="handleTicketDetailsBackdrop(event)">
+            <section id="ticketDetailsCard" role="dialog" aria-modal="true" aria-labelledby="ticketDetailsTitle"
+                class="w-[620px] max-w-[calc(100vw-2rem)] max-h-[calc(100vh-2rem)] bg-white rounded-[22px] border border-[#E5E5EA] shadow-[0_24px_60px_rgba(0,0,0,0.18)] flex flex-col overflow-hidden">
+                <header class="px-6 py-5 border-b border-[#E5E5EA] flex items-center justify-between gap-4">
+                    <div>
+                        <h3 id="ticketDetailsTitle" class="text-[15px] font-bold text-[#1C1C1E] uppercase">Detalles del ticket</h3>
+                        <p id="ticketDetailsCount" class="text-[12px] text-[#8E8E93] mt-1"></p>
+                    </div>
+                    <button type="button" onclick="closeTicketDetailsModal()" aria-label="Cerrar detalles"
+                        class="w-8 h-8 flex items-center justify-center rounded-[8px] text-[#636366] hover:bg-[#F2F2F7]">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="m6 6 12 12M18 6 6 18"></path>
+                        </svg>
+                    </button>
+                </header>
+                <div id="ticketDetailsList" class="min-h-0 overflow-y-auto p-5 space-y-3"></div>
+                <footer class="px-5 py-4 border-t border-[#E5E5EA] flex justify-end">
+                    <button type="button" onclick="closeTicketDetailsModal()"
+                        class="h-[34px] px-4 bg-[#E5E5EA] hover:bg-[#DCDCE0] text-[#3A3A3C] text-[13px] font-medium rounded-[8px]">Cerrar</button>
+                </footer>
+            </section>
+        </div>
+
+        <template id="ticketDetailsTemplate">
+            <article class="rounded-[12px] border border-[#E5E5EA] bg-[#FAFAFC] p-4 space-y-4">
+                <div>
+                    <div class="flex items-center justify-between gap-3">
+                        <span data-detail-code class="font-mono text-[12px] font-semibold text-[#007AFF]"></span>
+                        <span data-detail-area class="text-[11px] font-medium text-[#48484A] bg-white border border-[#E5E5EA] rounded-[6px] px-2 py-1"></span>
+                    </div>
+                    <h4 data-detail-subject class="mt-2 text-[14px] font-semibold text-[#1C1C1E] break-words"></h4>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="rounded-[8px] bg-white border border-[#E5E5EA] px-3 py-2">
+                        <div class="text-[10px] font-semibold uppercase text-[#8E8E93]">Fecha de creación</div>
+                        <div data-detail-created-at class="mt-1 text-[12px] text-[#1C1C1E] tabular-nums"></div>
+                    </div>
+                    <div class="rounded-[8px] bg-white border border-[#E5E5EA] px-3 py-2">
+                        <div class="text-[10px] font-semibold uppercase text-[#8E8E93]">Área dirigida</div>
+                        <div data-detail-area-copy class="mt-1 text-[12px] text-[#1C1C1E]"></div>
+                    </div>
+                </div>
+                <section data-detail-sender-section class="hidden">
+                    <h5 class="text-[10px] font-semibold uppercase text-[#8E8E93] mb-1.5">Remitente</h5>
+                    <p class="rounded-[8px] bg-white border border-[#E5E5EA] px-3 py-2 text-[12px] text-[#1C1C1E] break-words">
+                        <span data-detail-sender></span>
+                    </p>
+                </section>
+                <section>
+                    <h5 class="text-[10px] font-semibold uppercase text-[#8E8E93] mb-1.5">Descripción</h5>
+                    <p data-detail-description class="min-h-[52px] rounded-[8px] bg-white border border-[#E5E5EA] p-3 text-[12px] leading-relaxed text-[#48484A] whitespace-pre-wrap break-words"></p>
+                </section>
+                <section>
+                    <h5 class="text-[10px] font-semibold uppercase text-[#8E8E93] mb-1.5">Archivos adjuntos</h5>
+                    <p class="rounded-[8px] bg-white border border-dashed border-[#D1D1D6] px-3 py-3 text-[12px] text-[#8E8E93]">No hay archivos adjuntos registrados para este ticket.</p>
+                </section>
+            </article>
+        </template>
 
         <!-- ==================================================================== -->
         <!-- BEGIN: macOS Liquid Glass Notification Toast (Diseño Nativo Stitch) -->
@@ -840,8 +1161,210 @@
     <!-- Interactive Client Script -->
     <script>
         let currentTicketCode = '';
+        let pendingTicketAction = null;
         let currentOperatorInitials = 'CM';
         let notifTimeout = null;
+
+        const dashboardOverview = document.getElementById('dashboardOverview');
+        const shiftManagementSection = document.getElementById('shiftManagementSection');
+        const dashboardNavLink = document.getElementById('dashboardNavLink');
+        const shiftManagementNavLink = document.getElementById('shiftManagementNavLink');
+
+        function showDashboardSection(section, updateHistory = true) {
+            const showShift = section === 'shift';
+            dashboardOverview?.classList.toggle('hidden', showShift);
+            shiftManagementSection?.classList.toggle('hidden', !showShift);
+            dashboardNavLink?.classList.toggle('bg-black/5', !showShift);
+            dashboardNavLink?.classList.toggle('text-[#007AFF]', !showShift);
+            dashboardNavLink?.classList.toggle('text-[#3A3A3C]', showShift);
+            shiftManagementNavLink?.classList.toggle('bg-black/5', showShift);
+            shiftManagementNavLink?.classList.toggle('text-[#007AFF]', showShift);
+            shiftManagementNavLink?.classList.toggle('text-[#3A3A3C]', !showShift);
+            shiftManagementNavLink?.setAttribute('aria-current', showShift ? 'page' : 'false');
+            if (operatorsPopover?.contains(document.activeElement)) {
+                (showShift ? shiftManagementNavLink : dashboardNavLink)?.focus();
+            }
+            setOperatorsPopoverOpen(false);
+
+            const targetHash = showShift ? '#gestion-turno' : '#dashboard';
+            if (updateHistory && window.location.hash !== targetHash) {
+                window.history.pushState({ section: showShift ? 'shift' : 'dashboard' }, '', targetHash);
+            }
+        }
+
+        window.addEventListener('popstate', () => {
+            showDashboardSection(window.location.hash === '#gestion-turno' ? 'shift' : 'dashboard', false);
+        });
+
+        const operatorsKpiCard = document.getElementById('operatorsKpiCard');
+        const operatorsPopover = document.getElementById('operatorsPopover');
+        const operatorsPopoverButton = document.getElementById('operatorsPopoverButton');
+        const operatorsPopoverClose = document.getElementById('operatorsPopoverClose');
+
+        if (window.location.hash === '#gestion-turno') {
+            showDashboardSection('shift', false);
+        }
+
+        function setOperatorsPopoverOpen(isOpen, restoreFocus = false) {
+            if (!operatorsPopover || !operatorsPopoverButton) return;
+            operatorsPopover.classList.toggle('hidden', !isOpen);
+            operatorsPopover.setAttribute('aria-hidden', String(!isOpen));
+            operatorsPopoverButton.setAttribute('aria-expanded', String(isOpen));
+            if (isOpen) operatorsPopoverClose?.focus();
+            else if (restoreFocus) operatorsPopoverButton.focus();
+        }
+
+        operatorsPopoverButton?.addEventListener('click', () => {
+            setOperatorsPopoverOpen(operatorsPopover?.classList.contains('hidden'));
+        });
+        operatorsPopoverClose?.addEventListener('click', () => setOperatorsPopoverOpen(false, true));
+
+        document.addEventListener('click', event => {
+            if (!operatorsPopover?.classList.contains('hidden') && !operatorsKpiCard?.contains(event.target)) {
+                setOperatorsPopoverOpen(false);
+            }
+        });
+
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && operatorsPopover && !operatorsPopover.classList.contains('hidden')) {
+                setOperatorsPopoverOpen(false, true);
+            }
+        });
+
+        function setNewTicketDropdownValue(dropdown, value) {
+            const hiddenInput = dropdown.querySelector('input[type="hidden"]');
+            const options = [...dropdown.querySelectorAll('[data-ticket-option]')];
+            const selectedOption = options.find(option => option.dataset.value === value);
+            if (!hiddenInput || !selectedOption) return false;
+
+            hiddenInput.value = value;
+            dropdown.querySelector('[data-ticket-dropdown-label]').textContent = selectedOption.dataset.label;
+            options.forEach(option => option.setAttribute('aria-selected', String(option === selectedOption)));
+            if (dropdown.id === 'newTicketOriginDropdown') syncNewTicketSenderField();
+            dropdown.open = false;
+            dropdown.querySelector('summary').focus();
+            return true;
+        }
+
+        function syncNewTicketDropdowns() {
+            document.querySelectorAll('[data-ticket-dropdown]').forEach(dropdown => {
+                setNewTicketDropdownValue(dropdown, dropdown.dataset.defaultValue);
+            });
+            syncNewTicketSenderField();
+        }
+
+        function syncNewTicketSenderField() {
+            const isEmailOrigin = document.getElementById('newTicketOrigin').value === 'CORREO';
+            const senderField = document.getElementById('newTicketSenderField');
+            const senderInput = document.getElementById('newTicketSender');
+            senderField.classList.toggle('hidden', !isEmailOrigin);
+            senderInput.required = isEmailOrigin;
+            if (!isEmailOrigin) senderInput.value = '';
+        }
+
+        document.querySelectorAll('[data-ticket-dropdown]').forEach(dropdown => {
+            dropdown.addEventListener('click', event => {
+                const option = event.target.closest('[data-ticket-option]');
+                if (option) setNewTicketDropdownValue(dropdown, option.dataset.value);
+            });
+            dropdown.addEventListener('toggle', () => {
+                if (dropdown.open) {
+                    document.querySelectorAll('[data-ticket-dropdown][open]').forEach(otherDropdown => {
+                        if (otherDropdown !== dropdown) otherDropdown.open = false;
+                    });
+                }
+            });
+            dropdown.addEventListener('keydown', event => {
+                if (event.key === 'Escape' && dropdown.open) {
+                    dropdown.open = false;
+                    dropdown.querySelector('summary').focus();
+                }
+            });
+        });
+
+        document.addEventListener('click', event => {
+            if (event.target.closest('[data-ticket-dropdown]')) return;
+            document.querySelectorAll('[data-ticket-dropdown][open]').forEach(dropdown => {
+                dropdown.open = false;
+            });
+        });
+
+        function openNewTicketModal() {
+            const overlay = document.getElementById('newTicketOverlay');
+            const form = document.getElementById('newTicketForm');
+            const errorMessage = document.getElementById('newTicketError');
+            form.reset();
+            syncNewTicketDropdowns();
+            errorMessage.textContent = '';
+            errorMessage.classList.add('hidden');
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+            document.getElementById('newTicketSubject').focus();
+        }
+
+        function closeNewTicketModal() {
+            const overlay = document.getElementById('newTicketOverlay');
+            overlay.classList.remove('flex');
+            overlay.classList.add('hidden');
+        }
+
+        function handleNewTicketBackdrop(event) {
+            if (event.target === document.getElementById('newTicketOverlay')) {
+                closeNewTicketModal();
+            }
+        }
+
+        async function createNewTicket(event) {
+            event.preventDefault();
+            const form = document.getElementById('newTicketForm');
+            if (!form.reportValidity()) return;
+
+            const submitButton = document.getElementById('newTicketSubmitButton');
+            const errorMessage = document.getElementById('newTicketError');
+            const originalLabel = submitButton.textContent;
+            const attachmentInput = document.getElementById('newTicketAttachment');
+            const payload = {
+                asunto: document.getElementById('newTicketSubject').value.trim(),
+                descripcion: document.getElementById('newTicketDescription').value.trim(),
+                remitente: document.getElementById('newTicketSender').value.trim(),
+                areaDesignada: document.getElementById('newTicketArea').value,
+                origenIngesta: document.getElementById('newTicketOrigin').value,
+                prioridad: document.getElementById('newTicketPriority').value,
+                adjunto: attachmentInput && attachmentInput.files.length ? attachmentInput.files[0].name : ''
+            };
+
+            submitButton.disabled = true;
+            submitButton.textContent = 'Creando...';
+            errorMessage.textContent = '';
+            errorMessage.classList.add('hidden');
+
+            try {
+                const response = await fetch('/api/tickets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                if (!response.ok || !result.success) {
+                    errorMessage.textContent = result.error || 'No se pudo crear el ticket.';
+                    errorMessage.classList.remove('hidden');
+                    return;
+                }
+
+                closeNewTicketModal();
+                window.location.reload();
+            } catch (error) {
+                console.error('Error al crear ticket:', error);
+                errorMessage.textContent = 'No se pudo conectar con el servidor.';
+                errorMessage.classList.remove('hidden');
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = originalLabel;
+            }
+        }
+
+        document.getElementById('newTicketButton')?.addEventListener('click', openNewTicketModal);
+        document.getElementById('newTicketForm')?.addEventListener('submit', createNewTicket);
 
         // Abrir Modal de Asignación con datos del ticket
         function openAssignModal(ticketCode, subject, area, operatorId, operatorName, priority) {
@@ -854,6 +1377,7 @@
             const areaValue = document.getElementById('selectedAreaValue');
             const opText = document.getElementById('modalOperatorText');
             const opIdInput = document.getElementById('selectedOperatorId');
+            const opEmailInput = document.getElementById('selectedOperatorEmail');
             const unassignBtn = document.getElementById('modalUnassignBtn');
 
             if (ticketInput) ticketInput.value = ticketCode || '#INC-00000';
@@ -895,6 +1419,9 @@
 
             // Operador
             if (opIdInput) opIdInput.value = operatorId || '';
+            const selectedOperator = Array.from(document.querySelectorAll('#modalOperatorDropdown [data-operator-id]'))
+                .find(option => option.dataset.operatorId === operatorId);
+            if (opEmailInput) opEmailInput.value = selectedOperator?.dataset.operatorEmail || '';
             if (opText) {
                 opText.textContent = operatorName || 'Seleccionar operador...';
                 if (operatorName) {
@@ -905,7 +1432,7 @@
                 }
             }
 
-            // Mostrar/ocultar botón delete/desasignar
+            // Mostrar u ocultar la opción de desasignar
             if (unassignBtn) {
                 if (operatorId) {
                     unassignBtn.classList.remove('hidden');
@@ -962,37 +1489,171 @@
         }
 
         // Selección de Operador en Dropdown
-        function setModalOperator(operatorId, operatorName, initials) {
+        function setModalOperator(operatorId, operatorName, initials, operatorEmail) {
             document.getElementById('modalOperatorText').textContent = operatorName;
             document.getElementById('selectedOperatorId').value = operatorId;
+            document.getElementById('selectedOperatorEmail').value = operatorEmail || '';
             currentOperatorInitials = initials;
             const details = document.getElementById('modalOperatorDropdown');
             if (details) details.removeAttribute('open');
         }
 
-        // Mostrar Detalle del Asunto
-        function showTicketSubjectAlert() {
-            const subj = document.getElementById('modalSubjectInput')?.value || '';
-            const code = document.getElementById('modalTicketInput')?.value || '';
-            alert(`Incidencia: ${code}\n\nAsunto:\n${subj}`);
+        function openTicketDetailsForCode(ticketCode) {
+            currentTicketCode = ticketCode;
+            openTicketDetailsModal();
         }
 
-        // Guardar Asignación en la Base de Datos
-        async function saveAssignModal() {
-            const operatorId = document.getElementById('selectedOperatorId').value;
-            const operatorName = document.getElementById('modalOperatorText').textContent;
-            const areaDesignada = document.getElementById('selectedAreaValue').value;
-            const prioridad = document.getElementById('selectedPriorityValue')?.value || 'P1';
+        function openTicketDetailsModal() {
+            const detailsList = document.getElementById('ticketDetailsList');
+            const template = document.getElementById('ticketDetailsTemplate');
+            const overlay = document.getElementById('ticketDetailsOverlay');
+            const areaLabels = {
+                GENERAL: 'Operaciones IP (General)',
+                REDES_FTTH: 'Redes FTTH',
+                TRAFICO_INALAMBRICO: 'Tráfico inalámbrico',
+                WAN: 'WAN',
+                GRANDES_CLIENTES: 'Grandes clientes',
+                SEGURIDAD: 'Seguridad',
+                TELEFONIA: 'Telefonía'
+            };
+            const codes = currentTicketCode.split(',').map(code => code.trim()).filter(Boolean);
+            const rows = codes.map(code => document.getElementById(`row-${code}`)).filter(Boolean);
 
+            detailsList.replaceChildren();
+            rows.forEach(row => {
+                const item = template.content.cloneNode(true);
+                const area = row.dataset.area || 'GENERAL';
+                const createdAt = row.dataset.createdAt ? new Date(row.dataset.createdAt) : null;
+                const formattedDate = createdAt && !Number.isNaN(createdAt.getTime())
+                    ? new Intl.DateTimeFormat('es-CL', { dateStyle: 'medium', timeStyle: 'short' }).format(createdAt)
+                    : 'No registrada';
+
+                item.querySelector('[data-detail-code]').textContent = row.id.replace(/^row-/, '');
+                item.querySelector('[data-detail-subject]').textContent = row.dataset.detailSubject || 'Sin asunto';
+                item.querySelector('[data-detail-area]').textContent = areaLabels[area] || area;
+                item.querySelector('[data-detail-area-copy]').textContent = areaLabels[area] || area;
+                item.querySelector('[data-detail-created-at]').textContent = formattedDate;
+                item.querySelector('[data-detail-description]').textContent = row.dataset.description || 'Sin descripción registrada.';
+                const senderSection = item.querySelector('[data-detail-sender-section]');
+                senderSection.classList.toggle('hidden', row.dataset.origin !== 'CORREO');
+                item.querySelector('[data-detail-sender]').textContent = row.dataset.sender || 'No registrado';
+                detailsList.appendChild(item);
+            });
+
+            const countLabel = rows.length === 1 ? '1 incidencia' : `${rows.length} incidencias`;
+            document.getElementById('ticketDetailsCount').textContent = countLabel;
+            if (rows.length === 0) {
+                detailsList.textContent = 'No se encontraron detalles para la selección actual.';
+            }
+
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+            overlay.querySelector('button')?.focus();
+        }
+
+        function closeTicketDetailsModal() {
+            const overlay = document.getElementById('ticketDetailsOverlay');
+            overlay.classList.remove('flex');
+            overlay.classList.add('hidden');
+        }
+
+        function handleTicketDetailsBackdrop(event) {
+            if (event.target === document.getElementById('ticketDetailsOverlay')) {
+                closeTicketDetailsModal();
+            }
+        }
+
+        function openAssignmentConfirmation() {
+            const operatorId = document.getElementById('selectedOperatorId').value;
+            const operatorName = document.getElementById('modalOperatorText').textContent.trim();
+            const operatorEmail = document.getElementById('selectedOperatorEmail').value.trim();
             if (!operatorId) {
                 alert('Por favor selecciona un operador para realizar la asignación.');
                 return;
             }
 
+            const ticketCodes = currentTicketCode.split(',').map(code => code.trim()).filter(Boolean);
+            if (!ticketCodes.length) {
+                alert('No hay tickets válidos para asignar.');
+                return;
+            }
+
+            const operatorContact = operatorEmail ? ` (${operatorEmail})` : '';
+            const message = ticketCodes.length === 1
+                ? `¿Confirmas asignar el ticket ${ticketCodes[0]} a ${operatorName}${operatorContact}?`
+                : `¿Confirmas asignar ${ticketCodes.length} tickets a ${operatorName}${operatorContact}?`;
+            openTicketActionConfirmation('assign', 'Confirmar asignación', message, 'Asignar');
+        }
+
+        function openUnassignmentConfirmation(ticketCode = currentTicketCode) {
+            currentTicketCode = ticketCode || currentTicketCode;
+            const row = document.getElementById(`row-${currentTicketCode}`);
+            const operatorName = row?.dataset.operatorName || document.getElementById('modalOperatorText').textContent.trim();
+            const message = `El ticket ${currentTicketCode} se desasignará de ${operatorName || 'su operador actual'} y volverá a la cola general. El ticket no se eliminará.`;
+            openTicketActionConfirmation('unassign', 'Confirmar desasignación', message, 'Desasignar');
+        }
+
+        function openTicketActionConfirmation(action, title, message, confirmLabel) {
+            pendingTicketAction = action;
+            document.getElementById('ticketActionConfirmTitle').textContent = title;
+            document.getElementById('ticketActionConfirmMessage').textContent = message;
+            document.getElementById('ticketActionConfirmButton').textContent = confirmLabel;
+            const overlay = document.getElementById('ticketActionConfirmOverlay');
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+            overlay.querySelector('button')?.focus();
+        }
+
+        function closeTicketActionConfirmation() {
+            pendingTicketAction = null;
+            const overlay = document.getElementById('ticketActionConfirmOverlay');
+            overlay.classList.remove('flex');
+            overlay.classList.add('hidden');
+        }
+
+        function handleTicketActionConfirmationBackdrop(event) {
+            if (event.target === document.getElementById('ticketActionConfirmOverlay')) {
+                closeTicketActionConfirmation();
+            }
+        }
+
+        async function confirmTicketAction() {
+            const action = pendingTicketAction;
+            closeTicketActionConfirmation();
+            if (action === 'assign') await saveAssignModal();
+            if (action === 'unassign') await unassignCurrentTicket();
+        }
+
+        // Guardar Asignación en la Base de Datos
+        async function saveAssignModal() {
+            const saveButton = document.getElementById('saveAssignButton');
+            const operatorId = document.getElementById('selectedOperatorId').value;
+            const operatorName = document.getElementById('modalOperatorText').textContent;
+            const areaDesignada = document.getElementById('selectedAreaValue').value;
+            const prioridad = document.getElementById('selectedPriorityValue')?.value || 'P1';
+            const isBatch = currentTicketCode.includes(',');
+            const ticketCodes = isBatch
+                ? [...new Set(currentTicketCode.split(',').map(code => code.trim()).filter(Boolean))]
+                : [currentTicketCode.trim()];
+
+            if (!operatorId) {
+                alert('Por favor selecciona un operador para realizar la asignación.');
+                return;
+            }
+            if (!ticketCodes.length || ticketCodes.some(code => !code)) {
+                alert('No hay tickets válidos para asignar.');
+                return;
+            }
+            if (saveButton?.disabled) return;
+
+            const originalLabel = saveButton?.textContent;
+            if (saveButton) {
+                saveButton.disabled = true;
+                saveButton.textContent = 'Guardando...';
+            }
             try {
                 // Si es asignación por lote múltiple
-                if (currentTicketCode.includes(',')) {
-                    const ticketCodes = currentTicketCode.split(',').map(s => s.trim()).filter(Boolean);
+                if (isBatch) {
                     const response = await fetch('/api/tickets/batch-assign', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -1005,16 +1666,16 @@
                     });
 
                     const result = await response.json();
-                    if (result.success) {
+                    if (response.ok && result.success && result.count === ticketCodes.length) {
                         closeAssignModal();
                         ticketCodes.forEach(code => {
-                            updateRowDisplay(code, operatorName, true, operatorId, areaDesignada, prioridad);
+                            updateRowDisplay(code, operatorName, true, operatorId, areaDesignada, prioridad, result.fechaAsignacion);
                         });
                         showNotification('Asignación Masiva', `Se asignaron ${ticketCodes.length} tickets a ${operatorName}`, currentOperatorInitials);
                         TableSelectionManager.clear();
                         updateKPIStats();
                     } else {
-                        alert('Error: ' + result.error);
+                        alert('Error: ' + (result.error || 'El servidor no confirmó la asignación de todos los tickets.'));
                     }
                     return;
                 }
@@ -1024,7 +1685,8 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        ticketCode: currentTicketCode,
+                        ticketCodes,
+                        ticketCode: ticketCodes[0],
                         operatorId,
                         areaDesignada,
                         prioridad
@@ -1032,11 +1694,11 @@
                 });
 
                 const result = await response.json();
-                if (result.success) {
+                if (response.ok && result.success) {
                     closeAssignModal();
 
                     // Actualizar fila en la tabla visualmente
-                    updateRowDisplay(currentTicketCode, operatorName, true, operatorId, areaDesignada, prioridad);
+                    updateRowDisplay(currentTicketCode, operatorName, true, operatorId, areaDesignada, prioridad, result.ticket.fecha_asignacion);
 
                     // Disparar Notificación Liquid-Glass
                     showNotification('Nueva Asignación', `se asignó correctamente a ${operatorName}`, currentOperatorInitials);
@@ -1047,13 +1709,29 @@
             } catch (err) {
                 console.error(err);
                 alert('Error al comunicarse con el servidor.');
+            } finally {
+                if (saveButton) {
+                    saveButton.disabled = false;
+                    saveButton.textContent = originalLabel;
+                }
             }
+        }
+
+        function handleTicketAction(ticketCode, subject, area, operatorId, operatorName, priority) {
+            const row = document.getElementById(`row-${ticketCode}`);
+            if (row?.dataset.assigned === 'true') {
+                return unassignTicketByCode(ticketCode);
+            }
+            return openAssignModal(ticketCode, subject, area, operatorId, operatorName, priority);
+        }
+
+        function unassignTicketByCode(ticketCode) {
+            currentTicketCode = ticketCode;
+            return openUnassignmentConfirmation(ticketCode);
         }
 
         // Desasignar Ticket
         async function unassignCurrentTicket() {
-            if (!confirm(`¿Deseas desasignar el ticket ${currentTicketCode}?`)) return;
-
             try {
                 const response = await fetch('/api/tickets/unassign', {
                     method: 'POST',
@@ -1062,24 +1740,53 @@
                 });
 
                 const result = await response.json();
-                if (result.success) {
+                if (response.ok && result.success) {
                     closeAssignModal();
                     updateRowDisplay(currentTicketCode, null, false, '', 'GENERAL', 'NONE');
                     showNotification('Ticket Desasignado', `${currentTicketCode} devuelto a cola general sin prioridad`, 'NOC');
                     updateKPIStats();
+                } else {
+                    alert('No se pudo desasignar el ticket: ' + (result.error || 'Inténtalo de nuevo.'));
                 }
             } catch (err) {
                 console.error(err);
+                alert('Error al comunicarse con el servidor al desasignar el ticket.');
             }
         }
 
+        function updateTicketElapsedMinutes(row, now = Date.now()) {
+            const elapsedLabel = row.querySelector('[data-ticket-elapsed]');
+            const createdAt = Date.parse(row.dataset.createdAt || '');
+            const attendedAt = row.dataset.attendedAt ? Date.parse(row.dataset.attendedAt) : now;
+            if (!elapsedLabel || !Number.isFinite(createdAt) || !Number.isFinite(attendedAt)) return;
+
+            const elapsedMinutes = Math.max(0, Math.floor((attendedAt - createdAt) / 60000));
+            if (elapsedMinutes >= 1440) {
+                const elapsedDays = Math.floor(elapsedMinutes / 1440);
+                elapsedLabel.textContent = `${elapsedDays} ${elapsedDays === 1 ? 'día' : 'días'}`;
+            } else if (elapsedMinutes >= 120) {
+                elapsedLabel.textContent = `${Math.floor(elapsedMinutes / 60)} h`;
+            } else {
+                elapsedLabel.textContent = `${elapsedMinutes} min`;
+            }
+        }
+
+        function refreshTicketElapsedMinutes() {
+            document.querySelectorAll('.ticket-row').forEach(row => updateTicketElapsedMinutes(row));
+        }
+
+        refreshTicketElapsedMinutes();
+        window.setInterval(refreshTicketElapsedMinutes, 60000);
+
         // Actualizar visualmente la fila de la tabla
-        function updateRowDisplay(ticketCode, operatorName, isAssigned, operatorId, area, prioridad) {
+        function updateRowDisplay(ticketCode, operatorName, isAssigned, operatorId, area, prioridad, attendedAt = null) {
             const row = document.getElementById(`row-${ticketCode}`);
             if (!row) return;
 
             // Actualizar estado de asignación en la fila y checkbox
             row.setAttribute('data-assigned', isAssigned ? 'true' : 'false');
+            row.dataset.attendedAt = isAssigned ? (attendedAt || new Date().toISOString()) : '';
+            updateTicketElapsedMinutes(row);
             const cb = row.querySelector('.row-checkbox');
             if (cb) {
                 if (isAssigned) {
@@ -1168,8 +1875,8 @@
             const cleanSubj = (row.querySelector('.truncate')?.getAttribute('title') || row.querySelector('.truncate')?.textContent || '').replace(/'/g, "\\'");
 
             if (actionBtn) {
-                actionBtn.textContent = 'Asignar';
-                actionBtn.setAttribute('onclick', `openAssignModal('${ticketCode}', '${cleanSubj}', '${area || 'GENERAL'}', '${operatorId || ''}', '${operatorName || ''}', '${currentPrio}')`);
+                actionBtn.textContent = isAssigned ? 'Desasignar' : 'Asignar';
+                actionBtn.setAttribute('onclick', `handleTicketAction('${ticketCode}', '${cleanSubj}', '${area || 'GENERAL'}', '${operatorId || ''}', '${operatorName || ''}', '${currentPrio}')`);
             }
 
             if (ticketLink) {
@@ -1481,13 +2188,13 @@
                         batchBtn.classList.add('cursor-pointer', 'shadow-sm', 'hover:brightness-105', 'active:scale-95');
                         
                         // Formato de texto según singular o plural
-                        batchText.textContent = count === 1 ? 'Asignar Ticket (1)' : `Asignar Tickets (${count})`;
+                        batchText.textContent = count === 1 ? 'Asignar 1 ticket' : `Asignar ${count} tickets`;
                     } else {
                         batchBtn.disabled = true;
                         batchBtn.setAttribute('disabled', 'true');
                         batchBtn.classList.add('opacity-40', 'cursor-not-allowed', 'pointer-events-none');
                         batchBtn.classList.remove('cursor-pointer', 'shadow-sm', 'hover:brightness-105', 'active:scale-95');
-                        batchText.textContent = 'Asignar Ticket';
+                        batchText.textContent = 'Asignar tickets';
                     }
                 }
 

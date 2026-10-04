@@ -1,0 +1,22 @@
+.figma-materials-liquid-glass-medium__liquid-glass-medium {
+    position: relative;
+    width: 160px;
+    height: 160px;
+}
+
+.figma-materials-liquid-glass-medium__fill-shadow {
+    background: linear-gradient(0deg, rgba(191, 191, 191, 0.1), rgba(191, 191, 191, 0.1)), rgba(255, 255, 255, 0.7);
+    background-blend-mode: darken, lighten;
+    --figma-panel-shadow: 1.25px 0px 0px -0.75px #DBDBDB, -1.25px 0px 0px -0.75px #DBDBDB, 0px 0px 0px 0.5px #DBDBDB, 0px 18px 48px rgba(0, 0, 0, 0.25);
+    @apply figma-shadow-panel;
+    border-radius: 34px;
+}
+
+.figma-materials-liquid-glass-medium__glass-effect {
+    --figma-muted-fill: #FFFFFF;
+    @apply figma-surface-muted;
+    background-blend-mode: multiply;
+    --figma-panel-shadow: inset 0px 40px 10px -40px #282828, inset 0px -40px 10px -40px #282828;
+    @apply figma-shadow-panel;
+    border-radius: 34px;
+}

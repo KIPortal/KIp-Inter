@@ -1,0 +1,11 @@
+.figma-materials-scroll-edge-effect-hard__scroll-edge-effect-hard {
+    box-sizing: border-box;
+    position: relative;
+    width: 200px;
+    height: 200px;
+    --figma-muted-fill: rgba(255, 255, 255, 0.85);
+    @apply figma-surface-muted;
+    border-bottom: 0.67px solid rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(3px);
+    border-radius: 0px;
+}

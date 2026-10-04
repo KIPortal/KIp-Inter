@@ -4,6 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build:assets": "node scripts/build-figma-assets.js",
+    "start": "npm run build:assets && node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -15,5 +17,8 @@
     "ejs": "^6.0.1",
     "express": "^5.2.1",
     "prisma": "^5.22.0"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.17"
   }
 }

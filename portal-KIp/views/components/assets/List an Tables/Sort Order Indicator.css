@@ -1,0 +1,18 @@
+.figma-list-an-tables-sort-order-indicator__sort-order-indicator {
+    position: relative;
+    width: 13px;
+    height: 19px;
+}
+
+.figma-list-an-tables-sort-order-indicator__layer {
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 510;
+    font-size: 9px;
+    line-height: 13px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    --figma-ink: rgba(0, 0, 0, 0.5);
+    @apply figma-text-ink;
+}

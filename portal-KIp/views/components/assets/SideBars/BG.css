@@ -1,0 +1,21 @@
+.figma-sidebars-bg__bg {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    backdrop-filter: blur(40px);
+}
+
+.figma-sidebars-bg__luminosity {
+    --figma-muted-fill: #DAE6F2;
+    @apply figma-surface-muted;
+    mix-blend-mode: luminosity;
+    opacity: 0.92;
+    backdrop-filter: blur(60px);
+}
+
+.figma-sidebars-bg__saturation {
+    --figma-muted-fill: #808080;
+    @apply figma-surface-muted;
+    background-blend-mode: saturation;
+    opacity: 0.85;
+}

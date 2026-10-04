@@ -1,0 +1,10 @@
+.figma-alerts-overlay__overlay {
+    position: relative;
+    width: 100px;
+    height: 100px;
+}
+
+.figma-alerts-overlay__rectangle-1 {
+    --figma-muted-fill: rgba(171, 171, 171, 0.6);
+    @apply figma-surface-muted;
+}

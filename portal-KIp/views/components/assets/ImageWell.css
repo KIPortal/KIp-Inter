@@ -1,0 +1,14 @@
+.figma-imagewell__image-well {
+    position: relative;
+    width: 30px;
+    height: 30px;
+    --figma-muted-fill: rgba(0, 0, 0, 0.02);
+    @apply figma-surface-muted;
+    --figma-panel-shadow: 0px 0px 0px 0.5px rgba(0, 0, 0, 0.05), inset 0px 0px 0px 1px #FFFFFF, inset 0px 0px 0px 1.5px rgba(0, 0, 0, 0.05);
+    @apply figma-shadow-panel;
+    border-radius: 3px;
+}
+
+.figma-imagewell__image {
+    background: url(Image.png);
+}
