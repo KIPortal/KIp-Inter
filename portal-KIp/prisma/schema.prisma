@@ -57,11 +57,12 @@ enum AreaDesignada {
 model User {
   id               String          @id @default(uuid())
   email            String          @unique
-  password         String
+  clave            String
   nombre           String
   rol              Rol             @default(OPERADOR)
   area_designada   AreaDesignada   @default(GENERAL)
   estado_operativo EstadoOperativo @default(DISPONIBLE)
+  tickets_resueltos Int            @default(0)
   
   tickets_creados   Ticket[] @relation("CreadorTicket")
   tickets_asignados Ticket[] @relation("AsignadoTicket")

@@ -9,9 +9,20 @@ async function renderDashboard(req, res) {
     try {
         if (req.user.rol === 'OPERADOR') return await renderOperatorDashboard(req, res);
 
+        let orderByConfig = { createdAt: 'desc' };
+        const sortBy = req.query.sortBy || req.query.sort;
+        const order = req.query.order === 'asc' ? 'asc' : 'desc';
+        if (sortBy) {
+            if (['Fecha', 'fecha', 'fecha_creacion', 'createdAt'].includes(sortBy)) {
+                orderByConfig = { createdAt: order };
+            } else {
+                orderByConfig = { [sortBy]: order };
+            }
+        }
+
         const tickets = await prisma.ticket.findMany({
             include: ticketRelations,
-            orderBy: { createdAt: 'desc' }
+            orderBy: orderByConfig
         });
 
         const operadoresTurno = await prisma.user.findMany({

@@ -109,8 +109,9 @@
 
             <div class="flex items-center gap-3">
                 <div
-                    class="relative hidden sm:flex items-center w-[130px] h-[32px] px-2 gap-1 bg-[#F5F5F7] border border-[#D1D1D6] rounded-[7px] transition focus-within:bg-white focus-within:border-[#007AFF]">
-                    <svg class="w-3.5 h-3.5 text-[#8E8E93] flex-shrink-0 pointer-events-none" fill="none"
+                    class="figma-toolbars-search__search !w-auto relative hidden sm:flex bg-[#F5F5F7] border border-[#D1D1D6] rounded-[7px] transition focus-within:bg-white focus-within:border-[#007AFF]">
+                    <div class="figma-toolbars-search__liquid-glass absolute inset-0"></div>
+                    <svg class="figma-toolbars-search__symbol w-3.5 h-3.5 text-[#8E8E93] flex-shrink-0 pointer-events-none" fill="none"
                         stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <circle cx="11" cy="11" r="8"></circle>
                         <line x1="21" x2="16.65" y1="21" y2="16.65"></line>
@@ -118,32 +119,43 @@
                     <input
                         id="globalSearchInput"
                         oninput="onSearchInput(this.value)"
-                        class="w-full min-w-0 bg-transparent text-[11px] text-[#1C1C1E] placeholder-[#8E8E93] focus:outline-none border-none p-0"
+                        class="figma-toolbars-search__search-label !w-[100px] bg-transparent text-[11px] text-[#1C1C1E] placeholder-[#8E8E93] focus:outline-none border-none p-0"
                         placeholder="Buscar..." type="text">
                     <span
-                        class="flex-shrink-0 px-1 py-0.5 text-[9px] font-mono text-[#8E8E93] bg-white border border-[#D1D1D6] rounded pointer-events-none font-medium">⌘K</span>
+                        class="flex-shrink-0 px-1 py-0.5 text-[9px] font-mono text-[#8E8E93] bg-white border border-[#D1D1D6] rounded pointer-events-none font-medium relative z-10">⌘K</span>
                 </div>
                 <div class="flex items-center gap-2">
                     <button id="newTicketButton" type="button"
-                        class="flex items-center gap-1.5 px-3 py-1.5 bg-[#007AFF] hover:bg-[#0062CC] text-white rounded-[7px] font-medium text-[12px] shadow-sm transition">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                            <line x1="12" x2="12" y1="5" y2="19"></line>
-                            <line x1="5" x2="19" y1="12" y2="12"></line>
-                        </svg>
-                        <span class="hidden sm:inline">Nuevo Ticket</span>
+                        class="figma-button !w-auto !h-[28px] bg-[#007AFF] hover:bg-[#0062CC] text-white shadow-sm transition">
+                        <div class="figma-button__label text-white flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                <line x1="12" x2="12" y1="5" y2="19"></line>
+                                <line x1="5" x2="19" y1="12" y2="12"></line>
+                            </svg>
+                            <span class="hidden sm:inline">Nuevo Ticket</span>
+                        </div>
                     </button>
                 </div>
                 <div class="h-5 w-[1px] bg-[#D1D1D6] mx-0.5"></div>
-                <div
-                    class="flex items-center gap-2 px-2 py-1 rounded-[8px] hover:bg-[#F2F2F7] transition cursor-pointer border border-transparent hover:border-[#D1D1D6]">
-                    <div
-                        class="w-7 h-7 rounded-full bg-[#007AFF] text-white flex items-center justify-center font-mono font-semibold text-[11px]">
-                        <%= typeof currentUser !== 'undefined' && currentUser && currentUser.nombre ? (currentUser.nombre.trim().split(/\s+/).slice(0, 2).map(part => part.charAt(0)).join('').toUpperCase() || 'CP') : 'CP' %></div>
-                    <div class="hidden sm:flex flex-col text-left">
-                        <span class="text-[11px] font-medium text-[#1C1C1E] leading-tight"><%= typeof currentUser !== 'undefined' && currentUser && currentUser.nombre ? currentUser.nombre : 'Coord. NOC' %></span>
-                        <span class="text-[9px] font-mono font-bold text-[#34C759] tracking-wider leading-tight"><%= typeof currentUser !== 'undefined' && currentUser && currentUser.email ? currentUser.email : '● LÍDER ACTIVO' %></span>
+                <details class="relative group select-none z-50">
+                    <summary
+                        class="list-none flex items-center gap-2 px-2 py-1 rounded-[8px] hover:bg-[#F2F2F7] transition cursor-pointer border border-transparent hover:border-[#D1D1D6]">
+                        <div
+                            class="w-7 h-7 rounded-full bg-[#007AFF] text-white flex items-center justify-center font-mono font-semibold text-[11px]">
+                            <%= typeof currentUser !== 'undefined' && currentUser && currentUser.nombre ? (currentUser.nombre.trim().split(/\s+/).slice(0, 2).map(part => part.charAt(0)).join('').toUpperCase() || 'CP') : 'CP' %></div>
+                        <div class="hidden sm:flex flex-col text-left">
+                            <span class="text-[11px] font-medium text-[#1C1C1E] leading-tight"><%= typeof currentUser !== 'undefined' && currentUser && currentUser.nombre ? currentUser.nombre : 'Coord. NOC' %></span>
+                            <span class="text-[9px] font-mono font-bold text-[#34C759] tracking-wider leading-tight"><%= typeof currentUser !== 'undefined' && currentUser && currentUser.email ? currentUser.email : '● LÍDER ACTIVO' %></span>
+                        </div>
+                    </summary>
+                    <div class="absolute right-0 top-[100%] mt-1 w-[150px] bg-white rounded-[6px] border border-[#D1D1D6] shadow-[0_4px_14px_rgba(0,0,0,0.1)] p-1 z-50 text-[12px]">
+                        <form action="/auth/logout" method="POST" class="m-0">
+                            <button type="submit" class="w-full text-left px-2 py-1.5 rounded-[4px] text-[#1C1C1E] hover:bg-[#007AFF] hover:text-white font-medium transition cursor-pointer">
+                                Cerrar Sesión
+                            </button>
+                        </form>
                     </div>
-                </div>
+                </details>
             </div>
         </header>
 
@@ -411,16 +423,16 @@
                             <!-- Área Dropdown -->
                             <div class="flex items-center gap-1.5">
                                 <span class="text-[11px] text-[#8E8E93] font-medium">Área:</span>
-                                <details id="filterAreaDropdown" class="relative group select-none z-30">
+                                <details id="filterAreaDropdown" class="figma-combo-box-combobox__combo-box !w-auto !p-0 relative group select-none z-30">
                                     <summary
-                                        class="list-none flex items-center justify-between gap-2 h-[24px] pl-2 pr-1 bg-white hover:bg-[#F9F9FA] active:bg-[#F2F2F7] rounded-[6px] border border-black/10 shadow-[0_1px_2px_rgba(0,0,0,0.04)] cursor-pointer text-[12px] font-medium text-[#1C1C1E] transition focus:outline-none">
+                                        class="figma-combo-box-combobox__text-field !w-auto list-none flex items-center justify-between gap-2 h-[24px] pl-2 pr-1.5 bg-[#F5F5F7] hover:bg-[#EBEBF0] active:bg-[#E5E5EA] rounded-[6px] border border-black/5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] cursor-pointer transition focus:outline-none">
                                         <span id="filterAreaText"
-                                            class="truncate text-[12px] leading-none font-medium text-[#1C1C1E]/90">General</span>
+                                            class="figma-combo-box-combobox__label font-sans truncate text-[12px] font-medium text-[#1C1C1E] relative z-10 flex-1">General</span>
                                         <span
-                                            class="flex items-center justify-center w-[16px] h-[16px] rounded-[4px] bg-black/5 text-[#636366]"><svg
-                                                class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2"
+                                            class="figma-combo-box-combobox__combo-box-button flex items-center justify-center text-[#8E8E93] relative z-10"><svg
+                                                class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5"
                                                 viewBox="0 0 24 24">
-                                                <path d="M6 9l6 6 6-6"></path>
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"></path>
                                             </svg></span>
                                     </summary>
                                     <div
@@ -468,28 +480,30 @@
                             <div class="flex items-center gap-1.5 ml-1">
                                 <span class="text-[11px] text-[#8E8E93] font-medium leading-none">Filtrar por:</span>
                                 <button id="filterDateBtn" onclick="toggleSortDate()"
-                                    class="flex items-center gap-1 h-[24px] px-2 bg-white hover:bg-[#F9F9FA] active:bg-[#F2F2F7] rounded-[6px] border border-black/10 shadow-[0_1px_2px_rgba(0,0,0,0.04)] text-[12px] font-medium text-[#1C1C1E] transition focus:outline-none cursor-pointer"
+                                    class="figma-button !w-auto !h-[24px] !px-2 bg-white hover:bg-[#F9F9FA] active:bg-[#F2F2F7] border border-black/10 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition focus:outline-none cursor-pointer"
                                     title="Ordenar por Fecha">
-                                    <svg class="w-3 h-3 text-[#636366] flex-shrink-0" fill="none" stroke="currentColor"
-                                        stroke-width="1.8" viewBox="0 0 24 24">
-                                        <rect height="18" rx="2" ry="2" width="18" x="3" y="4"></rect>
-                                        <line x1="16" x2="16" y1="2" y2="6"></line>
-                                        <line x1="8" x2="8" y1="2" y2="6"></line>
-                                        <line x1="3" x2="21" y1="10" y2="10"></line>
-                                    </svg>
-                                    <span class="leading-none">Fecha</span>
-                                    <span id="dateSortIndicator" class="text-[9px] text-[#8E8E93] leading-none">▼</span>
+                                    <div class="figma-button__label text-[#1C1C1E] !text-[12px] flex items-center gap-1">
+                                        <svg class="w-3 h-3 text-[#636366] flex-shrink-0" fill="none" stroke="currentColor"
+                                            stroke-width="1.8" viewBox="0 0 24 24">
+                                            <rect height="18" rx="2" ry="2" width="18" x="3" y="4"></rect>
+                                            <line x1="16" x2="16" y1="2" y2="6"></line>
+                                            <line x1="8" x2="8" y1="2" y2="6"></line>
+                                            <line x1="3" x2="21" y1="10" y2="10"></line>
+                                        </svg>
+                                        <span class="leading-none">Fecha</span>
+                                        <span id="dateSortIndicator" class="text-[9px] text-[#8E8E93] leading-none">▼</span>
+                                    </div>
                                 </button>
-                                <details id="filterPriorityDropdown" class="relative group select-none z-30">
+                                <details id="filterPriorityDropdown" class="figma-combo-box-combobox__combo-box !w-auto !p-0 relative group select-none z-30">
                                     <summary
-                                        class="list-none flex items-center h-[24px] pl-2 pr-1 bg-white hover:bg-[#F9F9FA] active:bg-[#F2F2F7] rounded-[6px] border border-black/10 shadow-[0_1px_2px_rgba(0,0,0,0.04)] gap-1.5 cursor-pointer transition select-none">
+                                        class="figma-combo-box-combobox__text-field !w-auto list-none flex items-center justify-between gap-2 h-[24px] pl-2 pr-1.5 bg-[#F5F5F7] hover:bg-[#EBEBF0] active:bg-[#E5E5EA] rounded-[6px] border border-black/5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] cursor-pointer transition select-none focus:outline-none">
                                         <span id="filterPriorityText"
-                                            class="text-[12px] font-medium text-[#1C1C1E] leading-none">Prioridad</span>
+                                            class="figma-combo-box-combobox__label font-sans text-[12px] font-medium text-[#1C1C1E] relative z-10 flex-1">Prioridad</span>
                                         <span
-                                            class="flex items-center justify-center w-[16px] h-[16px] rounded-[4px] bg-black/5 text-[#636366]"><svg
-                                                class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2"
+                                            class="figma-combo-box-combobox__combo-box-button flex items-center justify-center text-[#8E8E93] relative z-10"><svg
+                                                class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5"
                                                 viewBox="0 0 24 24">
-                                                <path d="M7 15l5 5 5-5M7 9l5-5 5 5"></path>
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 15l5 5 5-5M7 9l5-5 5 5"></path>
                                             </svg></span>
                                     </summary>
                                     <div
@@ -530,13 +544,15 @@
                                 <span class="text-[11px]">Seleccionados: <strong id="selectionBadgeCount"
                                         class="text-[#007AFF] font-mono font-semibold">0</strong></span>
                                 <button id="batchAssignBtn" onclick="openBatchAssignModal()"
-                                    class="flex items-center gap-1.5 h-[24px] px-2.5 bg-[#007AFF] hover:bg-[#0062CC] text-white rounded-[6px] text-[11px] font-medium shadow-xs transition select-none disabled:opacity-40 disabled:pointer-events-none disabled:cursor-not-allowed"
+                                    class="figma-button !w-auto !h-[24px] !px-2.5 bg-[#007AFF] hover:bg-[#0062CC] text-white shadow-xs transition select-none disabled:opacity-40 disabled:pointer-events-none disabled:cursor-not-allowed"
                                     disabled>
-                                    <span id="batchAssignBtnText" class="leading-none">Asignar Ticket</span>
-                                    <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.5"
-                                        viewBox="0 0 24 24">
-                                        <path d="M6 9l6 6 6-6"></path>
-                                    </svg>
+                                    <div class="figma-button__label text-white !text-[11px] flex items-center gap-1.5">
+                                        <span id="batchAssignBtnText" class="leading-none">Asignar Ticket</span>
+                                        <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.5"
+                                            viewBox="0 0 24 24">
+                                            <path d="M6 9l6 6 6-6"></path>
+                                        </svg>
+                                    </div>
                                 </button>
                             </div>
                         </div>
@@ -616,11 +632,12 @@
                                             : '');
                                         let safeSubject = (ticket.asunto || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
                                         let safeOperator = (opAsignado || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                                        let isClosed = estado === 'CERRADO' || estado === 'RESUELTO';
                                     %>
-                                    <tr id="row-<%= ticket.codigo_incidencia %>" class="ticket-row hover:bg-[#F9F9FA] group transition-colors" data-area="<%= area %>" data-priority="<%= prio %>" data-assigned="<%= isAssigned %>" data-date="<%= ticketCreatedAtTime %>" data-subject="<%= safeSubject %>" data-detail-subject="<%= ticket.asunto || '' %>" data-description="<%= ticket.descripcion || '' %>" data-origin="<%= ticket.origen_ingesta %>" data-sender="<%= ticketSender %>" data-created-at="<%= ticket.createdAt ? new Date(ticket.createdAt).toISOString() : '' %>" data-attended-at="<%= ticket.fecha_asignacion ? new Date(ticket.fecha_asignacion).toISOString() : '' %>" data-operator-id="<%= opId %>" data-operator-name="<%= safeOperator %>">
+                                    <tr id="row-<%= ticket.codigo_incidencia %>" class="ticket-row hover:bg-[#F9F9FA] group transition-colors <%= isClosed ? 'opacity-70 grayscale-[20%]' : '' %>" data-area="<%= area %>" data-priority="<%= prio %>" data-assigned="<%= isAssigned %>" data-date="<%= ticketCreatedAtTime %>" data-subject="<%= safeSubject %>" data-detail-subject="<%= ticket.asunto || '' %>" data-description="<%= ticket.descripcion || '' %>" data-origin="<%= ticket.origen_ingesta %>" data-sender="<%= ticketSender %>" data-created-at="<%= ticket.createdAt ? new Date(ticket.createdAt).toISOString() : '' %>" data-attended-at="<%= ticket.fecha_asignacion ? new Date(ticket.fecha_asignacion).toISOString() : '' %>" data-operator-id="<%= opId %>" data-operator-name="<%= safeOperator %>">
                                         <td class="py-2 px-3 align-middle text-center w-[40px]">
                                             <div class="flex items-center justify-center">
-                                                <input type="checkbox" data-code="<%= ticket.codigo_incidencia %>" data-assigned="<%= isAssigned %>" <%= isAssigned ? 'disabled title="Ticket ya en asignación"' : '' %> class="row-checkbox w-3.5 h-3.5 rounded text-[#007AFF] border-[#D1D1D6] focus:ring-0 focus:outline-none <%= isAssigned ? 'opacity-30 cursor-not-allowed pointer-events-none bg-[#E5E5EA]' : 'cursor-pointer' %>">
+                                                <input type="checkbox" data-code="<%= ticket.codigo_incidencia %>" data-assigned="<%= isAssigned %>" <%= (isAssigned || isClosed) ? 'disabled title="Ticket no disponible"' : '' %> class="row-checkbox w-3.5 h-3.5 rounded text-[#007AFF] border-[#D1D1D6] focus:ring-0 focus:outline-none <%= (isAssigned || isClosed) ? 'opacity-30 cursor-not-allowed pointer-events-none bg-[#E5E5EA]' : 'cursor-pointer' %>">
                                             </div>
                                         </td>
                                         <td class="py-2 px-3 align-middle whitespace-nowrap">
@@ -646,12 +663,25 @@
                                             <span class="operator-label <%= !opAsignado ? 'italic text-[#8E8E93]' : 'font-semibold text-[#007AFF]' %>"><%= opAsignado || '— Sin asignar' %></span>
                                         </td>
                                         <td class="time-col py-2 px-2.5 align-middle text-center">
-                                            <span data-ticket-elapsed class="inline-block font-sans text-[12px] font-semibold tabular-nums text-[#1C1C1E] bg-[#F2F2F7] border border-[#E5E5EA] px-2 py-0.5 rounded-[4px]" title="Tiempo transcurrido desde la creación hasta la asignación"><%= ticketElapsedLabel %></span>
+                                            <% if (isClosed) { %>
+                                                <div class="flex items-center justify-center gap-1.5" title="Ticket cerrado en <%= ticketElapsedLabel %>">
+                                                    <i data-lucide="check-circle" class="w-4 h-4 text-green-500"></i>
+                                                    <span class="font-sans text-[12px] font-semibold tabular-nums text-green-600"><%= ticketElapsedLabel %></span>
+                                                </div>
+                                            <% } else { %>
+                                                <span data-ticket-elapsed class="inline-block font-sans text-[12px] font-semibold tabular-nums text-[#1C1C1E] bg-[#F2F2F7] border border-[#E5E5EA] px-2 py-0.5 rounded-[4px]" title="Tiempo transcurrido desde la creación hasta la asignación"><%= ticketElapsedLabel %></span>
+                                            <% } %>
                                         </td>
                                         <td class="action-col py-2 px-3 align-middle text-right">
-                                            <button type="button" onclick="handleTicketAction('<%= ticket.codigo_incidencia %>', '<%= safeSubject %>', '<%= area %>', '<%= opId %>', '<%= safeOperator %>', '<%= prio %>')" class="bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA] border border-[#D1D1D6] text-[#1C1C1E] text-[11px] font-medium px-2.5 py-1 rounded-[6px] shadow-xs transition cursor-pointer">
-                                                <%= isAssigned ? 'Desasignar' : 'Asignar' %>
-                                            </button>
+                                            <% if (isClosed) { %>
+                                                <button type="button" onclick="openTicketDetailsForCode('<%= ticket.codigo_incidencia %>')" class="bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA] border border-[#D1D1D6] text-[#8E8E93] text-[11px] font-medium px-2.5 py-1 rounded-[6px] shadow-xs transition cursor-pointer">
+                                                    Detalles
+                                                </button>
+                                            <% } else { %>
+                                                <button type="button" onclick="handleTicketAction('<%= ticket.codigo_incidencia %>', '<%= safeSubject %>', '<%= area %>', '<%= opId %>', '<%= safeOperator %>', '<%= prio %>')" class="bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA] border border-[#D1D1D6] text-[#1C1C1E] text-[11px] font-medium px-2.5 py-1 rounded-[6px] shadow-xs transition cursor-pointer">
+                                                    <%= isAssigned ? 'Desasignar' : 'Asignar' %>
+                                                </button>
+                                            <% } %>
                                         </td>
                                     </tr>
                                     <% }); %>

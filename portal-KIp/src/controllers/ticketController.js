@@ -109,7 +109,7 @@ async function assignTicket(req, res) {
         }
 
         const dataToUpdate = {
-            estado_actual: 'EN_PROGRESO',
+            estado_actual: 'NUEVO',
             fecha_asignacion: new Date(),
             asignado_a_id: operatorId
         };
@@ -199,7 +199,7 @@ async function batchAssignTickets(req, res) {
 
         const fechaAsignacion = new Date();
         const updateData = {
-            estado_actual: 'EN_PROGRESO',
+            estado_actual: 'NUEVO',
             fecha_asignacion: fechaAsignacion,
             asignado_a_id: operatorId
         };
@@ -259,7 +259,7 @@ async function claimTicket(req, res) {
             select: { id: true, estado_actual: true, asignado_a_id: true, area_designada: true }
         });
         if (!ticket) return res.status(404).json({ success: false, error: 'Ticket no encontrado' });
-        if (ticket.estado_actual !== 'NUEVO' || ticket.asignado_a_id) {
+        if (ticket.estado_actual !== 'NUEVO' || (ticket.asignado_a_id !== null && ticket.asignado_a_id !== req.user.id)) {
             return res.status(409).json({ success: false, error: 'El ticket ya no está disponible para reclamar' });
         }
 
@@ -272,7 +272,10 @@ async function claimTicket(req, res) {
             where: {
                 id: ticket.id,
                 estado_actual: 'NUEVO',
-                asignado_a_id: null,
+                OR: [
+                    { asignado_a_id: null },
+                    { asignado_a_id: req.user.id }
+                ],
                 area_designada: { in: [...new Set([operatorArea, 'GENERAL'])] }
             },
             data: {
@@ -360,11 +363,19 @@ function resolveTicket(req, res) {
 }
 
 function updateOperatorStatus(req, res) {
-    const actionsByStatus = { EN_PAUSA: 'pause', EN_PROGRESO: 'resume', CERRADO: 'resolve' };
+    const actionsByStatus = { 
+        EN_PAUSA: 'pause', 
+        PAUSADO: 'pause',
+        EN_ESPERA: 'pause',
+        pausar: 'pause',
+        EN_PROGRESO: 'resume', 
+        CERRADO: 'resolve' 
+    };
     const action = actionsByStatus[req.body?.status];
     if (!action) return res.status(400).json({ success: false, error: 'Estado de destino no válido' });
     return updateOperatorTicket(req, res, action);
 }
+
 
 module.exports = {
     createTicket,

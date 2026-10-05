@@ -5,8 +5,13 @@ const authRoutes = require('./routes/auth');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const operatorRoutes = require('./routes/operatorRoutes');
 const ticketRoutes = require('./routes/ticketRoutes');
+const emailIngestionService = require('./services/emailIngestionService');
 
 const app = express();
+
+// Iniciar ingesta de correos vía Graph API
+emailIngestionService.iniciarIngesta();
+
 const sessionSecret = process.env.SESSION_SECRET || (process.env.NODE_ENV === 'production'
 	? null
 	: 'local-development-session-secret');

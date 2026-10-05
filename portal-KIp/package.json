@@ -13,10 +13,14 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@azure/identity": "^4.13.3",
+    "@azure/msal-node": "^7.0.1",
+    "@microsoft/microsoft-graph-client": "^3.0.7",
     "@prisma/client": "^5.22.0",
     "ejs": "^6.0.1",
     "express": "^5.2.1",
     "express-session": "^1.19.0",
+    "node-cron": "^4.6.0",
     "prisma": "^5.22.0"
   },
   "devDependencies": {
