@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html class="h-full" lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title><%= typeof title !== 'undefined' ? title : 'Inter | Operaciones IP - Iniciar Sesión' %></title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Estilos de autenticación y escenario 3D -->
+    <style>
+        body, body.login-body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #04060d;
+        }
+
+        .input-box:focus-within {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
+        }
+
+        /* Escenario 3D interactivo (Malla NOC de Topología de Red) */
+        .network-scene {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        #networkCanvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body class="login-body min-h-screen sm:h-screen w-full bg-[#04060d] text-[#101828] overflow-y-auto sm:overflow-hidden flex flex-col justify-between select-none">
+
+    <!-- ============================================================== -->
+    <!-- MODELO 3D: TOPOLOGÍA DE RED IP INTERACTIVA (MALLA NOC 3D)      -->
+    <!-- ============================================================== -->
+    <div class="network-scene">
+        <!-- Resplandor atmosférico detrás del cluster de red en tonos azul/cian Inter -->
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(13,110,253,0.16)_0%,rgba(4,6,13,0)_70%)] lg:bg-[radial-gradient(circle_at_36%_50%,rgba(13,110,253,0.22)_0%,rgba(56,189,248,0.08)_42%,rgba(4,6,13,0)_72%)] pointer-events-none"></div>
+        <canvas id="networkCanvas"></canvas>
+    </div>
+
+    <!-- Contenedor Principal: Malla 3D de fondo con Tarjeta alineada a la derecha -->
+    <div class="relative w-full min-h-screen sm:h-full flex items-center justify-center sm:justify-end px-4 sm:px-12 md:px-20 lg:px-28 py-10 sm:py-0 z-10">
+
+        <!-- Gradiente sutil para garantizar contraste y profundidad visual -->
+        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-slate-950/20 to-slate-950/70 pointer-events-none z-10"></div>
+
+        <!-- Marca de Agua / Tag Minimalista Superior Izquierdo -->
+        <div class="absolute left-6 sm:left-8 lg:left-14 top-6 sm:top-10 flex items-center gap-3 z-20">
+            <div class="h-9 px-3 bg-[#0d6efd] rounded-lg flex items-center justify-center shadow-lg">
+                <span class="text-white font-black text-lg tracking-wider">inter</span>
+            </div>
+            <div class="hidden sm:flex flex-col">
+                <span class="text-white text-xs font-bold tracking-widest uppercase">Operaciones IP</span>
+                <span class="text-blue-200/60 text-[10px] tracking-wide">Red Central NOC</span>
+            </div>
+        </div>
+
+        <!-- Estado de Telemetría Inferior Izquierdo -->
+        <div class="absolute left-6 sm:left-8 lg:left-14 bottom-6 sm:bottom-8 hidden sm:flex items-center gap-2 text-[11px] text-white/50 font-mono z-20">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>HUB CENTRAL // NODO IP ACTIVO</span>
+        </div>
+
+        <!-- ============================================================== -->
+        <!-- FORMULARIO DE INICIO DE SESIÓN (TARJETA MODERNA)               -->
+        <!-- ============================================================== -->
+        <div class="relative z-20 w-full max-w-[430px] bg-white rounded-2xl shadow-2xl p-8 sm:p-10 border border-slate-100 flex flex-col justify-between">
+            
+            <!-- Cabecera: Logotipo y Título -->
+            <div>
+                <div class="flex items-center justify-between mb-7">
+                    <div class="h-8 px-2.5 bg-[#0d6efd] rounded-md flex items-center justify-center shadow-xs">
+                        <span class="text-white font-extrabold text-base tracking-wide">inter</span>
+                    </div>
+                    <span class="text-[11px] font-semibold text-[#0d6efd] bg-blue-50 px-2.5 py-1 rounded-full">
+                        Acceso Seguro
+                    </span>
+                </div>
+                <h1 class="text-2xl font-bold text-[#0f172a] tracking-tight mb-1.5">
+                    Iniciar sesión
+                </h1>
+                <p class="text-xs text-[#64748b]">
+                    Ingresa tus credenciales para acceder al portal.
+                </p>
+            </div>
+
+            <!-- Formulario: Manejo híbrido (Render SSR por EJS o asíncrono con fetch) -->
+            <form class="mt-7 space-y-4" id="loginForm" method="POST" action="/auth/login" onsubmit="handleLogin(event)">
+                
+                <% if (typeof csrfToken !== 'undefined' && csrfToken) { %>
+                    <!-- Token CSRF si la aplicación Express utiliza csurf o similar -->
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+                <% } %>
+
+                <!-- Alerta dinámica (Renderizada por EJS si existe error en locals, o controlada por JS) -->
+                <% if (typeof error !== 'undefined' && error) { %>
+                    <div id="loginAlert" class="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-600 flex items-center gap-2 transition">
+                        <i data-lucide="alert-circle" class="w-4 h-4 text-red-500 shrink-0"></i>
+                        <span id="loginAlertText"><%= error %></span>
+                    </div>
+                <% } else { %>
+                    <div id="loginAlert" class="hidden p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-600 flex items-center gap-2 transition">
+                        <i data-lucide="alert-circle" class="w-4 h-4 text-red-500 shrink-0"></i>
+                        <span id="loginAlertText">Credenciales inválidas.</span>
+                    </div>
+                <% } %>
+
+                <!-- Campo: Usuario / Correo -->
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-semibold text-[#334155]" for="email">
+                        Correo electrónico
+                    </label>
+                    <div class="input-box h-12 bg-[#f8f9ff] border border-[#e2e8f0] rounded-xl px-3.5 flex items-center gap-2.5 transition">
+                        <i data-lucide="user" class="w-4 h-4 text-[#94a3b8] shrink-0"></i>
+                        <input 
+                            autocomplete="email" 
+                            class="w-full bg-transparent text-xs sm:text-sm text-[#0f172a] placeholder-[#94a3b8] outline-none font-medium" 
+                            id="email" 
+                            name="email" 
+                            value="<%= typeof email !== 'undefined' ? email : '' %>"
+                            placeholder="usuario@inter.com.ve" 
+                            required 
+                            type="email" 
+                        />
+                    </div>
+                </div>
+
+                <!-- Campo: Contraseña -->
+                <div class="space-y-1.5">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-xs font-semibold text-[#334155]" for="password">
+                            Contraseña
+                        </label>
+                        <a class="text-[11px] font-medium text-[#0d6efd] hover:underline cursor-pointer" href="#" onclick="showForgotPasswordInfo(event)">
+                            ¿Olvidaste tu clave?
+                        </a>
+                    </div>
+                    <div class="input-box h-12 bg-[#f8f9ff] border border-[#e2e8f0] rounded-xl px-3.5 flex items-center gap-2.5 transition">
+                        <i data-lucide="lock" class="w-4 h-4 text-[#94a3b8] shrink-0"></i>
+                        <input 
+                            autocomplete="current-password" 
+                            class="w-full bg-transparent text-xs sm:text-sm text-[#0f172a] placeholder-[#94a3b8] outline-none font-medium" 
+                            id="password" 
+                            name="password" 
+                            placeholder="••••••••••••" 
+                            required 
+                            type="password" 
+                        />
+                        <button class="text-[#94a3b8] hover:text-[#475569] p-1 cursor-pointer transition" onclick="togglePasswordVisibility()" type="button" title="Mostrar/Ocultar contraseña">
+                            <span id="eyeIconWrapper">
+                                <i data-lucide="eye" class="w-4 h-4"></i>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recordar sesión -->
+                <div class="pt-1">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input id="remember" name="remember" checked class="w-4 h-4 rounded text-[#0d6efd] focus:ring-[#0d6efd] border-slate-300 accent-[#0d6efd]" type="checkbox" />
+                        <span class="text-xs text-[#64748b]">Recordar sesión</span>
+                    </label>
+                </div>
+
+                <!-- Botón de Envío -->
+                <button class="w-full h-12 mt-2 bg-[#0d6efd] hover:bg-[#0b5ed7] active:bg-[#0a58ca] text-white rounded-xl font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md shadow-blue-500/20 transition cursor-pointer" id="submitBtn" type="submit">
+                    <span id="btnText">Ingresar</span>
+                    <span id="btnIcon" class="flex items-center">
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </span>
+                </button>
+
+            </form>
+
+            <!-- Pie de Tarjeta -->
+            <div class="mt-6 pt-4 border-t border-[#f1f5f9] text-center">
+                <p class="text-[11px] text-[#94a3b8]">
+                    © Inter Telecomunicaciones C.A. — Red Privada
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- SCRIPTS: MOTOR 3D CANVAS Y LÓGICA DE INTERACCIÓN               -->
+    <!-- ============================================================== -->
+    <script>
+        // Inicializar iconos Lucide
+        lucide.createIcons();
+
+        // ==============================================================
+        // MOTOR 3D: TOPOLOGÍA DE RED Y MALLA DE NODOS NOC (HTML5 CANVAS)
+        // ==============================================================
+        (function initNetworkMesh() {
+            const canvas = document.getElementById('networkCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
+            let width = 0;
+            let height = 0;
+            let dpr = 1;
+            let baseRadius = 200;
+            let centerX = 0;
+            let centerY = 0;
+
+            const TOTAL_NODES = 85;
+            const CORE_COUNT = 8;
+            const MAX_PACKETS = 24;
+            const nodes = [];
+            const packets = [];
+
+            // Efecto Parallax con el cursor del mouse
+            let mouseX = 0;
+            let mouseY = 0;
+            let currentMouseX = 0;
+            let currentMouseY = 0;
+
+            window.addEventListener('mousemove', (e) => {
+                const nx = (e.clientX / window.innerWidth) - 0.5;
+                const ny = (e.clientY / window.innerHeight) - 0.5;
+                mouseX = nx * 0.5;
+                mouseY = ny * 0.5;
+            }, { passive: true });
+
+            function resize() {
+                dpr = window.devicePixelRatio || 1;
+                width = window.innerWidth;
+                height = window.innerHeight;
+                canvas.width = width * dpr;
+                canvas.height = height * dpr;
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                ctx.scale(dpr, dpr);
+
+                const isDesktop = width >= 1024;
+                centerX = isDesktop ? width * 0.36 : width * 0.50;
+                centerY = height * 0.50;
+                baseRadius = isDesktop ? Math.min(width * 0.17, 210) : Math.min(width * 0.34, 150);
+            }
+
+            // Generador del Clúster Esférico 3D de Topología de Red
+            function initNodes() {
+                nodes.length = 0;
+                for (let i = 0; i < TOTAL_NODES; i++) {
+                    const phi = Math.acos(-1 + (2 * i) / TOTAL_NODES);
+                    const theta = Math.sqrt(TOTAL_NODES * Math.PI) * phi;
+                    const r = baseRadius * (0.45 + 0.55 * Math.sqrt((i + 1) / TOTAL_NODES));
+
+                    const x = r * Math.sin(phi) * Math.cos(theta);
+                    const y = r * Math.sin(phi) * Math.sin(theta);
+                    const z = r * Math.cos(phi);
+
+                    const isCore = i < CORE_COUNT;
+
+                    nodes.push({
+                        x, y, z,
+                        origR: r,
+                        isCore,
+                        size: isCore ? 4.0 : (1.8 + Math.random() * 1.3),
+                        driftSpeed: 0.001 + Math.random() * 0.0015,
+                        seed: Math.random() * 100,
+                        pulsePhase: Math.random() * Math.PI * 2,
+                        px: 0, py: 0, pz: 0,
+                        scale: 1,
+                        alpha: 1,
+                        neighbors: []
+                    });
+                }
+            }
+
+            // Simulación de Tráfico de Paquetes IP
+            function spawnPacket(sourceNode) {
+                if (!sourceNode || !sourceNode.neighbors.length) return;
+                const targetNode = sourceNode.neighbors[Math.floor(Math.random() * sourceNode.neighbors.length)];
+                packets.push({
+                    from: sourceNode,
+                    to: targetNode,
+                    progress: 0,
+                    speed: 0.012 + Math.random() * 0.018,
+                    color: Math.random() > 0.35 ? '#38bdf8' : '#ffffff'
+                });
+            }
+
+            resize();
+            initNodes();
+            window.addEventListener('resize', () => {
+                resize();
+                initNodes();
+            });
+
+            let rotX = 0.2;
+            let rotY = 0;
+
+            function animate(timestamp) {
+                ctx.clearRect(0, 0, width, height);
+
+                // Rotación suave y parallax dinámico con el mouse
+                rotY += 0.0028;
+                currentMouseX += (mouseX - currentMouseX) * 0.05;
+                currentMouseY += (mouseY - currentMouseY) * 0.05;
+
+                const curRotY = rotY + currentMouseX;
+                const curRotX = rotX + Math.sin(timestamp * 0.0006) * 0.08 + currentMouseY;
+
+                const cosY = Math.cos(curRotY), sinY = Math.sin(curRotY);
+                const cosX = Math.cos(curRotX), sinX = Math.sin(curRotX);
+                const fov = 420;
+
+                // 1. Proyección tridimensional de todos los nodos
+                for (let i = 0; i < nodes.length; i++) {
+                    const node = nodes[i];
+
+                    // Oscilación de respiración orgánica
+                    const breath = Math.sin(timestamp * node.driftSpeed + node.seed) * 5;
+                    const curX = node.x * (1 + breath / node.origR);
+                    const curY = node.y * (1 + breath / node.origR);
+                    const curZ = node.z * (1 + breath / node.origR);
+
+                    // Rotación en eje Y
+                    const x1 = curX * cosY - curZ * sinY;
+                    const z1 = curZ * cosY + curX * sinY;
+
+                    // Rotación en eje X
+                    const y2 = curY * cosX - z1 * sinX;
+                    const z2 = z1 * cosX + curY * sinX;
+
+                    const scale = fov / (fov + z2 + baseRadius * 0.9);
+                    node.px = centerX + x1 * scale;
+                    node.py = centerY + y2 * scale;
+                    node.pz = z2;
+                    node.scale = scale;
+                    node.alpha = Math.max(0.12, Math.min(1, (z2 + baseRadius) / (2 * baseRadius)));
+                    node.neighbors = [];
+                }
+
+                // 2. Conexión de enlaces de red entre nodos cercanos
+                const maxLinkDist = baseRadius * 0.44;
+                ctx.lineWidth = 1;
+
+                for (let i = 0; i < nodes.length; i++) {
+                    const a = nodes[i];
+                    for (let j = i + 1; j < nodes.length; j++) {
+                        const b = nodes[j];
+                        const dx = a.x - b.x;
+                        const dy = a.y - b.y;
+                        const dz = a.z - b.z;
+                        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+                        if (dist < maxLinkDist) {
+                            a.neighbors.push(b);
+                            b.neighbors.push(a);
+
+                            const distFactor = (1 - dist / maxLinkDist);
+                            const linkAlpha = distFactor * Math.min(a.alpha, b.alpha) * 0.55;
+
+                            if (linkAlpha > 0.03) {
+                                ctx.beginPath();
+                                ctx.moveTo(a.px, a.py);
+                                ctx.lineTo(b.px, b.py);
+
+                                if (a.isCore || b.isCore) {
+                                    ctx.strokeStyle = `rgba(56, 189, 248, ${linkAlpha * 1.25})`;
+                                } else {
+                                    ctx.strokeStyle = `rgba(13, 110, 253, ${linkAlpha})`;
+                                }
+                                ctx.stroke();
+                            }
+                        }
+                    }
+                }
+
+                // 3. Renderizado de paquetes de datos (Tráfico IP en tránsito)
+                while (packets.length < MAX_PACKETS) {
+                    const randomSource = nodes[Math.floor(Math.random() * nodes.length)];
+                    spawnPacket(randomSource);
+                }
+
+                for (let i = packets.length - 1; i >= 0; i--) {
+                    const pkt = packets[i];
+                    pkt.progress += pkt.speed;
+
+                    if (pkt.progress >= 1) {
+                        if (Math.random() > 0.4 && pkt.to.neighbors.length > 0) {
+                            pkt.from = pkt.to;
+                            pkt.to = pkt.to.neighbors[Math.floor(Math.random() * pkt.to.neighbors.length)];
+                            pkt.progress = 0;
+                        } else {
+                            packets.splice(i, 1);
+                            continue;
+                        }
+                    }
+
+                    const x = pkt.from.px + (pkt.to.px - pkt.from.px) * pkt.progress;
+                    const y = pkt.from.py + (pkt.to.py - pkt.from.py) * pkt.progress;
+                    const pktAlpha = Math.min(pkt.from.alpha, pkt.to.alpha);
+
+                    ctx.beginPath();
+                    ctx.arc(x, y, 1.8 * pkt.from.scale, 0, Math.PI * 2);
+                    ctx.fillStyle = pkt.color === '#ffffff' 
+                        ? `rgba(255, 255, 255, ${pktAlpha * 0.95})` 
+                        : `rgba(56, 189, 248, ${pktAlpha * 0.9})`;
+                    ctx.shadowColor = '#38bdf8';
+                    ctx.shadowBlur = 4;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+
+                // 4. Renderizado de Nodos (Routers, Switches, Gateway Hubs)
+                for (let i = 0; i < nodes.length; i++) {
+                    const node = nodes[i];
+                    const r = node.size * node.scale;
+
+                    if (node.isCore) {
+                        // Gateway Hub: Ondas de radar pulsantes
+                        const pulse = (timestamp * 0.002 + node.pulsePhase) % 1;
+                        const ringR = r * (1 + pulse * 2.8);
+                        const ringAlpha = (1 - pulse) * node.alpha * 0.7;
+
+                        ctx.beginPath();
+                        ctx.arc(node.px, node.py, ringR, 0, Math.PI * 2);
+                        ctx.strokeStyle = `rgba(56, 189, 248, ${ringAlpha})`;
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+
+                        // Resplandor exterior del Core Node
+                        ctx.beginPath();
+                        ctx.arc(node.px, node.py, r * 1.5, 0, Math.PI * 2);
+                        ctx.fillStyle = `rgba(13, 110, 253, ${node.alpha * 0.35})`;
+                        ctx.fill();
+
+                        // Centro del Core Node
+                        ctx.beginPath();
+                        ctx.arc(node.px, node.py, r, 0, Math.PI * 2);
+                        ctx.fillStyle = `rgba(255, 255, 255, ${node.alpha * 0.95})`;
+                        ctx.shadowColor = '#38bdf8';
+                        ctx.shadowBlur = 8;
+                        ctx.fill();
+                        ctx.shadowBlur = 0;
+                    } else {
+                        // Nodo IP Estándar
+                        ctx.beginPath();
+                        ctx.arc(node.px, node.py, r, 0, Math.PI * 2);
+                        ctx.fillStyle = `rgba(56, 189, 248, ${node.alpha * 0.85})`;
+                        ctx.fill();
+
+                        // Núcleo brillante
+                        ctx.beginPath();
+                        ctx.arc(node.px, node.py, Math.max(0.8, r * 0.4), 0, Math.PI * 2);
+                        ctx.fillStyle = `rgba(255, 255, 255, ${node.alpha})`;
+                        ctx.fill();
+                    }
+                }
+
+                requestAnimationFrame(animate);
+            }
+
+            requestAnimationFrame(animate);
+        })();
+
+        // ==============================================================
+        // CONTROLADORES DE INTERFAZ Y FORMULARIO
+        // ==============================================================
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('password');
+            const eyeWrapper = document.getElementById('eyeIconWrapper');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeWrapper.innerHTML = '<i data-lucide="eye-off" class="w-4 h-4"></i>';
+            } else {
+                passwordInput.type = 'password';
+                eyeWrapper.innerHTML = '<i data-lucide="eye" class="w-4 h-4"></i>';
+            }
+            lucide.createIcons();
+        }
+
+        function showForgotPasswordInfo(e) {
+            if (e) e.preventDefault();
+            const alertBox = document.getElementById('loginAlert');
+            const alertText = document.getElementById('loginAlertText');
+            if (alertBox && alertText) {
+                alertBox.className = 'p-3 rounded-xl bg-blue-50 border border-blue-200 text-xs text-[#0d6efd] flex items-center gap-2 transition';
+                alertText.textContent = 'Contacte al Administrador NOC para restablecer sus credenciales.';
+                alertBox.classList.remove('hidden');
+            } else {
+                alert('Contacte al Administrador NOC para restablecer sus credenciales.');
+            }
+        }
+
+        async function handleLogin(e) {
+            // Si prefieres envío clásico POST con recarga de página (SSR en Express), 
+            // simplemente comenta e.preventDefault() o quita onsubmit="handleLogin(event)" del form.
+            e.preventDefault();
+            
+            const form = document.getElementById('loginForm');
+            const submitBtn = document.getElementById('submitBtn');
+            const btnText = document.getElementById('btnText');
+            const btnIcon = document.getElementById('btnIcon');
+            const alertBox = document.getElementById('loginAlert');
+            const alertText = document.getElementById('loginAlertText');
+            const emailInput = document.getElementById('email').value.trim();
+            const passwordInput = document.getElementById('password').value;
+
+            if (alertBox) {
+                alertBox.className = 'hidden p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-600 flex items-center gap-2 transition';
+            }
+
+            submitBtn.disabled = true;
+            btnText.textContent = 'Verificando...';
+            btnIcon.innerHTML = '';
+
+            try {
+                const actionUrl = form.getAttribute('action') || '/auth/login';
+                const res = await fetch(actionUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        email: emailInput,
+                        password: passwordInput
+                    })
+                });
+
+                const contentType = res.headers.get("content-type");
+                const data = contentType && contentType.includes('application/json')
+                    ? await res.json()
+                    : {};
+
+                if (!res.ok || !data.success) {
+                    throw new Error(data.message || 'Credenciales inválidas. Verifique sus datos.');
+                }
+
+                btnText.textContent = 'Acceso Concedido';
+                btnIcon.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i>';
+                lucide.createIcons();
+                setTimeout(() => {
+                    window.location.href = data.redirect || '/dashboard';
+                }, 400);
+            } catch (err) {
+                if (alertBox && alertText) {
+                    alertBox.className = 'p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-600 flex items-center gap-2 transition';
+                    alertBox.classList.remove('hidden');
+                    alertText.textContent = err.message || 'Error de comunicación con el servidor.';
+                }
+                submitBtn.disabled = false;
+                btnText.textContent = 'Ingresar';
+                btnIcon.innerHTML = '<i data-lucide="arrow-right" class="w-4 h-4"></i>';
+                lucide.createIcons();
+            }
+        }
+    </script>
+</body>
+
+</html>

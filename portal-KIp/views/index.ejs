@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <meta content="width=1280, initial-scale=1.0" name="viewport">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>
         <%= titulo %>
     </title>
@@ -85,14 +85,14 @@
     </style>
 </head>
 
-<body class="h-screen w-screen bg-[#F5F5F7] overflow-hidden flex flex-col font-sans text-[13px] text-[#1C1C1E] m-0 p-0">
+<body class="h-dvh w-full min-w-0 bg-[#F5F5F7] overflow-hidden flex flex-col font-sans text-[13px] text-[#1C1C1E] m-0 p-0">
 
     <!-- macOS Full Application Viewport -->
     <div class="relative w-full h-full flex flex-col overflow-hidden bg-white select-none">
 
         <!-- BEGIN: macOS Unified Titlebar & Toolbar -->
         <header
-            class="h-[56px] bg-white border-b border-[#E5E5EA] px-4 flex items-center justify-between select-none z-20 flex-shrink-0">
+            class="h-[56px] bg-white border-b border-[#E5E5EA] px-2 sm:px-4 flex items-center justify-between gap-2 select-none z-20 flex-shrink-0">
             <div class="flex items-center gap-3">
                 <div class="flex items-center gap-3">
                     <img alt="Logo Inter" class="h-[28px] w-auto object-contain"
@@ -101,7 +101,7 @@
                     <span class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Operaciones IP</span>
                 </div>
                 <div
-                    class="ml-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F2F2F7] border border-[#D1D1D6] text-[11px] text-[#48484A] font-medium">
+                    class="ml-2 hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F2F2F7] border border-[#D1D1D6] text-[11px] text-[#48484A] font-medium">
                     <span class="w-2 h-2 rounded-full bg-[#34C759]"></span>
                     <span>Turno A (07:00 - 15:00)</span>
                 </div>
@@ -109,7 +109,7 @@
 
             <div class="flex items-center gap-3">
                 <div
-                    class="relative flex items-center w-[130px] h-[32px] px-2 gap-1 bg-[#F5F5F7] border border-[#D1D1D6] rounded-[7px] transition focus-within:bg-white focus-within:border-[#007AFF]">
+                    class="relative hidden sm:flex items-center w-[130px] h-[32px] px-2 gap-1 bg-[#F5F5F7] border border-[#D1D1D6] rounded-[7px] transition focus-within:bg-white focus-within:border-[#007AFF]">
                     <svg class="w-3.5 h-3.5 text-[#8E8E93] flex-shrink-0 pointer-events-none" fill="none"
                         stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <circle cx="11" cy="11" r="8"></circle>
@@ -130,7 +130,7 @@
                             <line x1="12" x2="12" y1="5" y2="19"></line>
                             <line x1="5" x2="19" y1="12" y2="12"></line>
                         </svg>
-                        <span>Nuevo Ticket</span>
+                        <span class="hidden sm:inline">Nuevo Ticket</span>
                     </button>
                 </div>
                 <div class="h-5 w-[1px] bg-[#D1D1D6] mx-0.5"></div>
@@ -138,11 +138,10 @@
                     class="flex items-center gap-2 px-2 py-1 rounded-[8px] hover:bg-[#F2F2F7] transition cursor-pointer border border-transparent hover:border-[#D1D1D6]">
                     <div
                         class="w-7 h-7 rounded-full bg-[#007AFF] text-white flex items-center justify-center font-mono font-semibold text-[11px]">
-                        CP</div>
-                    <div class="flex flex-col text-left">
-                        <span class="text-[11px] font-medium text-[#1C1C1E] leading-tight">Coord. NOC</span>
-                        <span class="text-[9px] font-mono font-bold text-[#34C759] tracking-wider leading-tight">● LÍDER
-                            ACTIVO</span>
+                        <%= typeof currentUser !== 'undefined' && currentUser && currentUser.nombre ? (currentUser.nombre.trim().split(/\s+/).slice(0, 2).map(part => part.charAt(0)).join('').toUpperCase() || 'CP') : 'CP' %></div>
+                    <div class="hidden sm:flex flex-col text-left">
+                        <span class="text-[11px] font-medium text-[#1C1C1E] leading-tight"><%= typeof currentUser !== 'undefined' && currentUser && currentUser.nombre ? currentUser.nombre : 'Coord. NOC' %></span>
+                        <span class="text-[9px] font-mono font-bold text-[#34C759] tracking-wider leading-tight"><%= typeof currentUser !== 'undefined' && currentUser && currentUser.email ? currentUser.email : '● LÍDER ACTIVO' %></span>
                     </div>
                 </div>
             </div>
@@ -153,10 +152,10 @@
 
             <!-- BEGIN: Finder-style macOS Sidebar -->
             <aside
-                class="w-[200px] flex-shrink-0 bg-[#EBEBF0]/95 border-r border-[#D8D8DC] flex flex-col justify-between select-none py-3 px-2">
+                class="w-[52px] md:w-[200px] flex-shrink-0 bg-[#EBEBF0]/95 border-r border-[#D8D8DC] flex flex-col justify-between select-none py-3 px-1 md:px-2">
                 <div class="space-y-4">
                     <div>
-                        <div class="px-2.5 pb-1.5 text-[10px] font-bold text-[#8E8E93] uppercase tracking-wider">
+                        <div class="hidden md:block px-2.5 pb-1.5 text-[10px] font-bold text-[#8E8E93] uppercase tracking-wider">
                             Navegación</div>
                         <nav class="space-y-0.5">
                             <a id="dashboardNavLink" class="flex items-center justify-between px-2.5 py-1.5 rounded-[6px] bg-black/5 text-[#007AFF] font-medium text-[12px] transition"
@@ -167,10 +166,10 @@
                                             d="M19.5 21a3 3 0 0 0 3-3v-4.5a3 3 0 0 0-3-3h-15a3 3 0 0 0-3 3V18a3 3 0 0 0 3 3h15ZM1.5 10.5V6a3 3 0 0 1 3-3h15a3 3 0 0 1 3 3v4.5">
                                         </path>
                                     </svg>
-                                    <span>Dashboard General</span>
+                                    <span class="hidden md:inline">Dashboard General</span>
                                 </div>
                                 <span
-                                    class="font-mono text-[9px] bg-[#007AFF]/15 text-[#0062CC] px-1.5 py-0.5 rounded font-bold">
+                                    class="hidden md:inline font-mono text-[9px] bg-[#007AFF]/15 text-[#0062CC] px-1.5 py-0.5 rounded font-bold">
                                     <%= ticketsActivos %>
                                 </span>
                             </a>
@@ -181,7 +180,7 @@
                                         stroke-width="2" viewBox="0 0 24 24">
                                         <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                     </svg>
-                                    <span>Auditoría</span>
+                                    <span class="hidden md:inline">Auditoría</span>
                                 </div>
                             </a>
                             <a id="shiftManagementNavLink" class="flex items-center justify-between px-2.5 py-1.5 rounded-[6px] text-[#3A3A3C] hover:bg-black/5 text-[12px] font-medium transition"
@@ -193,10 +192,10 @@
                                             d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
                                         </path>
                                     </svg>
-                                    <span>Gestión de Turno</span>
+                                    <span class="hidden md:inline">Gestión de Turno</span>
                                 </div>
                                 <span
-                                    class="font-mono text-[9px] bg-[#34C759]/15 text-[#34C759] px-1.5 py-0.5 rounded font-bold">
+                                    class="hidden md:inline font-mono text-[9px] bg-[#34C759]/15 text-[#34C759] px-1.5 py-0.5 rounded font-bold">
                                     <%= operadoresDisponibles %>/<%= totalOperadores %>
                                 </span>
                             </a>
@@ -209,7 +208,7 @@
                                             d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
                                         </path>
                                     </svg>
-                                    <span>Reportes</span>
+                                    <span class="hidden md:inline">Reportes</span>
                                 </div>
                             </a>
                         </nav>
@@ -217,13 +216,13 @@
                 </div>
 
                 <!-- Sidebar Bottom Footer -->
-                <div class="p-2.5 rounded-[8px] bg-white/70 border border-black/5 shadow-xs space-y-1">
+                <div class="p-1.5 md:p-2.5 rounded-[8px] bg-white/70 border border-black/5 shadow-xs space-y-1">
                     <div class="flex items-center justify-between text-[11px]">
                         <span class="flex items-center gap-1.5 font-medium text-[#1C1C1E]"><span
-                                class="w-2 h-2 rounded-full bg-[#34C759]"></span>Servidor NOC</span>
-                        <span class="font-mono text-[10px] text-[#34C759] font-bold">18ms</span>
+                                class="w-2 h-2 rounded-full bg-[#34C759]"></span><span class="hidden md:inline">Servidor NOC</span></span>
+                        <span class="hidden md:inline font-mono text-[10px] text-[#34C759] font-bold">18ms</span>
                     </div>
-                    <div class="flex items-center justify-between text-[10px] text-[#8E8E93] font-mono">
+                    <div class="hidden md:flex items-center justify-between text-[10px] text-[#8E8E93] font-mono">
                         <span>Sincronía OLT</span>
                         <span class="text-[#3A3A3C]">Activo (0s)</span>
                     </div>
@@ -232,11 +231,11 @@
             <!-- END: Sidebar -->
 
             <!-- BEGIN: Content Main Area -->
-            <main class="flex-1 flex flex-col min-w-0 bg-white overflow-hidden p-4 gap-3">
+            <main class="flex-1 flex flex-col min-w-0 bg-white overflow-hidden p-2 sm:p-4 gap-3">
                 <div id="dashboardOverview" class="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
 
                 <!-- BEGIN: KPI Cards / macOS Widget Panels -->
-                <section class="grid grid-cols-4 gap-3 flex-shrink-0" data-purpose="kpi-cards">
+                <section class="grid grid-cols-2 xl:grid-cols-4 gap-2 sm:gap-3 flex-shrink-0" data-purpose="kpi-cards">
                     <!-- Card 1: Tickets Activos -->
                     <div
                         class="bg-white border border-[#E5E5EA] rounded-[12px] p-4 flex flex-col justify-between shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-[0_2px_6px_rgba(0,0,0,0.06)] transition">
@@ -544,7 +543,7 @@
                     </div>
 
                     <!-- Finder Native List Table -->
-                    <div class="flex-1 overflow-y-auto overflow-x-hidden min-h-0 bg-white">
+                    <div class="flex-1 overflow-y-auto overflow-x-auto min-h-0 bg-white">
                         <table class="w-full text-left border-collapse table-fixed min-w-[950px]">
                             <thead
                                 class="sticky top-0 bg-[#F9F9FA] text-[11px] font-medium text-[#8E8E93] border-b border-[#E5E5EA] z-10 shadow-xs">

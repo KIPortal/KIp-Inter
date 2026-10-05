@@ -1,0 +1,226 @@
+<%
+    const operator = typeof currentUser !== 'undefined' && currentUser ? currentUser : {};
+    const availableTickets = typeof ticketsAvailable !== 'undefined' && Array.isArray(ticketsAvailable) ? ticketsAvailable : [];
+    const assignedTickets = typeof ticketsAssigned !== 'undefined' && Array.isArray(ticketsAssigned) ? ticketsAssigned : [];
+    const pausedTickets = typeof ticketsPaused !== 'undefined' && Array.isArray(ticketsPaused) ? ticketsPaused : [];
+    const waitingTickets = typeof ticketsWaiting !== 'undefined' && Array.isArray(ticketsWaiting) ? ticketsWaiting : [];
+    const resolvedTickets = typeof ticketsResolved !== 'undefined' && Array.isArray(ticketsResolved) ? ticketsResolved : [];
+    const areaLabels = {
+        GENERAL: 'Operaciones IP',
+        REDES_FTTH: 'Redes FTTH / OLT',
+        TRAFICO_INALAMBRICO: 'Tráfico inalámbrico',
+        WAN: 'WAN',
+        GRANDES_CLIENTES: 'Grandes clientes',
+        SEGURIDAD: 'Seguridad',
+        TELEFONIA: 'Telefonía'
+    };
+    const operatorName = operator.nombre || 'Operador';
+    const operatorInitials = operatorName.trim().split(/\s+/).slice(0, 2).map(part => part[0]).join('').toUpperCase();
+    const operatorArea = areaLabels[operator.area_designada] || operator.area_designada || 'Área no asignada';
+    const formatDate = value => {
+        if (!value) return 'Fecha no disponible';
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? 'Fecha no disponible' : new Intl.DateTimeFormat('es', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
+    };
+    const queues = [
+        { id: 'available', title: 'Disponibles', description: 'Incidencias listas para tomar', tickets: availableTickets, tone: 'emerald', dateField: 'createdAt' },
+        { id: 'assigned', title: 'En progreso', description: 'Trabajo activo asignado a ti', tickets: assignedTickets, tone: 'blue', dateField: 'fecha_asignacion' },
+        { id: 'paused', title: 'Pausados', description: 'Incidencias en pausa', tickets: pausedTickets, tone: 'amber', dateField: 'fecha_asignacion' },
+        { id: 'waiting', title: 'Espera de terceros', description: 'Pendientes de respuesta externa', tickets: waitingTickets, tone: 'orange', dateField: 'fecha_asignacion' },
+        { id: 'resolved', title: 'Resueltos', description: 'Incidencias cerradas', tickets: resolvedTickets, tone: 'slate', dateField: 'fecha_cierre' }
+    ];
+%>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f2f4f7">
+    <title>Operaciones · Portal NOC</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', 'Inter', 'SF Pro Text', 'Helvetica Neue', 'sans-serif'],
+                        mono: ['SF Mono', 'JetBrains Mono', 'Menlo', 'monospace']
+                    }
+                }
+            }
+        };
+    </script>
+</head>
+<body class="min-h-screen bg-[#F2F4F7] font-sans text-[#1C1C1E] antialiased">
+    <div class="min-h-screen md:flex">
+        <aside class="border-b border-[#D9DEE6] bg-[#E9EDF2] md:flex md:w-60 md:flex-col md:border-b-0 md:border-r">
+            <div class="flex h-16 items-center gap-3 px-4 md:px-5">
+                <div class="flex h-9 w-9 items-center justify-center rounded-[10px] bg-[#174A66] text-[11px] font-bold text-white">NOC</div>
+                <div class="min-w-0">
+                    <p class="truncate text-[13px] font-semibold">Operaciones IP</p>
+                    <p class="text-[10px] font-medium uppercase tracking-wider text-[#697586]">Centro de red</p>
+                </div>
+            </div>
+            <nav aria-label="Colas de tickets" class="flex gap-1 overflow-x-auto px-3 pb-3 md:flex-col md:gap-1.5 md:px-3 md:py-5">
+                <a href="#available" class="shrink-0 rounded-[7px] bg-white px-3 py-2 text-[12px] font-semibold text-[#17634C] shadow-sm md:flex md:items-center md:justify-between">
+                    <span>Disponibles</span><span class="ml-2 font-mono text-[10px] text-[#697586]"><%= availableTickets.length %></span>
+                </a>
+                <a href="#assigned" class="shrink-0 rounded-[7px] px-3 py-2 text-[12px] font-medium text-[#485465] hover:bg-white/70 md:flex md:items-center md:justify-between">
+                    <span>En progreso</span><span class="ml-2 font-mono text-[10px] text-[#697586]"><%= assignedTickets.length %></span>
+                </a>
+                <a href="#paused" class="shrink-0 rounded-[7px] px-3 py-2 text-[12px] font-medium text-[#485465] hover:bg-white/70 md:flex md:items-center md:justify-between">
+                    <span>Pausados</span><span class="ml-2 font-mono text-[10px] text-[#697586]"><%= pausedTickets.length %></span>
+                </a>
+                <a href="#waiting" class="shrink-0 rounded-[7px] px-3 py-2 text-[12px] font-medium text-[#485465] hover:bg-white/70 md:flex md:items-center md:justify-between">
+                    <span>Espera terceros</span><span class="ml-2 font-mono text-[10px] text-[#697586]"><%= waitingTickets.length %></span>
+                </a>
+                <a href="#resolved" class="shrink-0 rounded-[7px] px-3 py-2 text-[12px] font-medium text-[#485465] hover:bg-white/70 md:flex md:items-center md:justify-between">
+                    <span>Resueltos</span><span class="ml-2 font-mono text-[10px] text-[#697586]"><%= resolvedTickets.length %></span>
+                </a>
+            </nav>
+            <div class="hidden px-4 pb-4 md:mt-auto md:block">
+                <div class="rounded-[8px] border border-[#D8DEE6] bg-white/70 p-3">
+                    <div class="flex items-center gap-2 text-[11px] font-semibold text-[#354354]"><span class="h-2 w-2 rounded-full bg-[#23A26D]"></span>Servidor NOC</div>
+                    <p class="mt-1 pl-4 text-[10px] text-[#7A8593]">Área · <%= operatorArea %></p>
+                </div>
+            </div>
+        </aside>
+
+        <div class="min-w-0 flex-1">
+            <header class="sticky top-0 z-10 flex min-h-16 items-center justify-between gap-3 border-b border-[#E0E4EA] bg-white/90 px-4 backdrop-blur-md sm:px-6 lg:px-8">
+                <div class="min-w-0">
+                    <p class="text-[10px] font-semibold uppercase tracking-wider text-[#7A8593]">Consola del operador</p>
+                    <h1 class="truncate text-[17px] font-semibold">Mi operación</h1>
+                </div>
+                <div class="flex min-w-0 items-center gap-2.5 sm:gap-3">
+                    <div class="min-w-0 max-w-[112px] text-right sm:max-w-48">
+                        <p class="truncate text-[12px] font-semibold"><%= operatorName %></p>
+                        <p class="truncate text-[10px] text-[#778291]"><span class="sm:hidden"><%= operatorArea %></span><span class="hidden sm:inline"><%= operator.email || operatorArea %></span></p>
+                    </div>
+                    <div aria-label="<%= operatorName %>" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#C8D8E1] bg-[#DCEAF0] font-mono text-[11px] font-semibold text-[#174A66]"><%= operatorInitials || 'OP' %></div>
+                </div>
+            </header>
+
+            <main class="mx-auto max-w-[1500px] space-y-5 px-4 py-5 sm:px-6 lg:px-8">
+                <section aria-label="Indicadores operativos" class="grid grid-cols-2 gap-3 xl:grid-cols-4">
+                    <a href="#available" class="rounded-[9px] border border-[#DCE6E1] bg-white p-4 shadow-[0_1px_3px_rgba(20,35,50,0.04)] transition hover:border-[#94C8AD]">
+                        <div class="flex items-center justify-between gap-2"><span class="text-[10px] font-semibold uppercase tracking-wider text-[#687789]">Disponibles</span><span class="h-2 w-2 rounded-full bg-[#23A26D]"></span></div>
+                        <p class="mt-2 font-mono text-[27px] font-semibold tabular-nums text-[#17634C]"><%= availableTickets.length %></p>
+                    </a>
+                    <a href="#assigned" class="rounded-[9px] border border-[#DCE3EC] bg-white p-4 shadow-[0_1px_3px_rgba(20,35,50,0.04)] transition hover:border-[#9DB8D6]">
+                        <div class="flex items-center justify-between gap-2"><span class="text-[10px] font-semibold uppercase tracking-wider text-[#687789]">En progreso</span><span class="h-2 w-2 rounded-full bg-[#3974C6]"></span></div>
+                        <p class="mt-2 font-mono text-[27px] font-semibold tabular-nums text-[#285C9E]"><%= assignedTickets.length %></p>
+                    </a>
+                    <a href="#paused" class="rounded-[9px] border border-[#E9E1CF] bg-white p-4 shadow-[0_1px_3px_rgba(20,35,50,0.04)] transition hover:border-[#D8BF86]">
+                        <div class="flex items-center justify-between gap-2"><span class="text-[10px] font-semibold uppercase tracking-wider text-[#687789]">Pausados / espera</span><span class="h-2 w-2 rounded-full bg-[#D69A28]"></span></div>
+                        <p class="mt-2 font-mono text-[27px] font-semibold tabular-nums text-[#95630E]"><%= pausedTickets.length + waitingTickets.length %></p>
+                    </a>
+                    <a href="#resolved" class="rounded-[9px] border border-[#DCE3EC] bg-white p-4 shadow-[0_1px_3px_rgba(20,35,50,0.04)] transition hover:border-[#B7C2D0]">
+                        <div class="flex items-center justify-between gap-2"><span class="text-[10px] font-semibold uppercase tracking-wider text-[#687789]">Resueltos</span><span class="h-2 w-2 rounded-full bg-[#788698]"></span></div>
+                        <p class="mt-2 font-mono text-[27px] font-semibold tabular-nums text-[#455365]"><%= resolvedTickets.length %></p>
+                    </a>
+                </section>
+
+                <div class="grid grid-cols-1 items-start gap-4 xl:grid-cols-2">
+                    <% queues.forEach(function(queue) { %>
+                        <section id="<%= queue.id %>" aria-labelledby="heading-<%= queue.id %>" class="overflow-hidden rounded-[9px] border border-[#DDE2E8] bg-white shadow-[0_1px_3px_rgba(20,35,50,0.04)]">
+                            <header class="flex items-center justify-between gap-3 border-b border-[#E8EBEF] bg-[#FAFBFC] px-4 py-3">
+                                <div class="min-w-0">
+                                    <h2 id="heading-<%= queue.id %>" class="text-[13px] font-semibold"><%= queue.title %></h2>
+                                    <p class="mt-0.5 text-[10px] text-[#7A8593]"><%= queue.description %></p>
+                                </div>
+                                <span class="shrink-0 rounded-[6px] bg-[#EEF1F4] px-2 py-1 font-mono text-[10px] font-semibold text-[#536174]"><%= queue.tickets.length %></span>
+                            </header>
+                            <% if (queue.tickets.length) { %>
+                                <ul class="divide-y divide-[#EEF0F3]">
+                                    <% queue.tickets.forEach(function(ticket) { %>
+                                        <li data-ticket-row class="px-4 py-3.5">
+                                            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                                <div class="min-w-0 flex-1">
+                                                    <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                                        <span class="font-mono text-[10px] font-semibold text-[#285C9E]"><%= ticket.codigo_incidencia %></span>
+                                                        <span class="rounded-[5px] border border-[#E1E5EA] bg-[#F7F8FA] px-1.5 py-0.5 font-mono text-[9px] text-[#5F6C7B]"><%= ticket.puntos_complejidad || 0 %> pts</span>
+                                                    </div>
+                                                    <h3 class="mt-1 break-words text-[12px] font-semibold leading-5 text-[#202A35]"><%= ticket.asunto || 'Sin asunto' %></h3>
+                                                    <div class="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-[#758190]">
+                                                        <span><%= areaLabels[ticket.area_designada] || ticket.area_designada || 'Área no asignada' %></span>
+                                                        <span><%= formatDate(queue.id === 'resolved' ? (ticket.fecha_cierre || ticket.resueltoEn) : ticket[queue.dateField]) %></span>
+                                                    </div>
+                                                </div>
+                                                <% if (queue.id === 'available') { %>
+                                                    <button type="button" data-ticket-action="claim" data-ticket-code="<%= ticket.codigo_incidencia %>" class="inline-flex h-8 shrink-0 items-center justify-center rounded-[6px] bg-[#17634C] px-3 text-[11px] font-semibold text-white transition hover:bg-[#124F3D] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#23A26D]/40 disabled:cursor-wait disabled:opacity-60">Tomar</button>
+                                                <% } else if (queue.id === 'assigned') { %>
+                                                    <div class="flex shrink-0 gap-1.5">
+                                                        <button type="button" data-ticket-action="status" data-ticket-status="EN_PAUSA" data-ticket-code="<%= ticket.codigo_incidencia %>" class="inline-flex h-8 items-center justify-center rounded-[6px] border border-[#D7DEE6] bg-white px-2.5 text-[10px] font-semibold text-[#465568] transition hover:bg-[#F2F4F7] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3974C6]/30 disabled:cursor-wait disabled:opacity-60">Pausar</button>
+                                                        <button type="button" data-ticket-action="status" data-ticket-status="CERRADO" data-ticket-code="<%= ticket.codigo_incidencia %>" class="inline-flex h-8 items-center justify-center rounded-[6px] bg-[#174A66] px-2.5 text-[10px] font-semibold text-white transition hover:bg-[#123B53] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3974C6]/30 disabled:cursor-wait disabled:opacity-60">Resolver</button>
+                                                    </div>
+                                                <% } else if (queue.id === 'paused') { %>
+                                                    <div class="flex shrink-0 gap-1.5">
+                                                        <button type="button" data-ticket-action="status" data-ticket-status="EN_PROGRESO" data-ticket-code="<%= ticket.codigo_incidencia %>" class="inline-flex h-8 items-center justify-center rounded-[6px] border border-[#D7DEE6] bg-white px-2.5 text-[10px] font-semibold text-[#465568] transition hover:bg-[#F2F4F7] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3974C6]/30 disabled:cursor-wait disabled:opacity-60">Reanudar</button>
+                                                        <button type="button" data-ticket-action="status" data-ticket-status="CERRADO" data-ticket-code="<%= ticket.codigo_incidencia %>" class="inline-flex h-8 items-center justify-center rounded-[6px] bg-[#174A66] px-2.5 text-[10px] font-semibold text-white transition hover:bg-[#123B53] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3974C6]/30 disabled:cursor-wait disabled:opacity-60">Resolver</button>
+                                                    </div>
+                                                <% } %>
+                                            </div>
+                                            <p data-ticket-feedback role="alert" class="mt-2 hidden text-[10px] font-medium text-[#B42318]"></p>
+                                        </li>
+                                    <% }); %>
+                                </ul>
+                            <% } else { %>
+                                <p class="px-4 py-8 text-center text-[11px] text-[#84909D]">No hay tickets en esta cola.</p>
+                            <% } %>
+                        </section>
+                    <% }); %>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('click', async event => {
+            const button = event.target.closest('[data-ticket-action]');
+            if (!button || button.disabled) return;
+
+            const row = button.closest('[data-ticket-row]');
+            const feedback = row.querySelector('[data-ticket-feedback]');
+            const controls = Array.from(row.querySelectorAll('button[data-ticket-action]'));
+            const ticketCode = button.dataset.ticketCode;
+            const action = button.dataset.ticketAction;
+            const originalLabels = controls.map(control => control.textContent.trim());
+            controls.forEach(control => { control.disabled = true; });
+            feedback.textContent = '';
+            feedback.classList.add('hidden');
+            button.textContent = action === 'claim' ? 'Tomando…' : 'Actualizando…';
+
+            try {
+                const url = `/api/tickets/${encodeURIComponent(ticketCode)}/${action === 'claim' ? 'claim' : 'status'}`;
+                const options = action === 'claim'
+                    ? { method: 'POST' }
+                    : {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ status: button.dataset.ticketStatus })
+                    };
+                const response = await fetch(url, options);
+                let result = {};
+                try {
+                    result = await response.json();
+                } catch (error) {
+                    result = {};
+                }
+                if (!response.ok || !result.success) {
+                    throw new Error(result.message || result.error || 'No se pudo actualizar el ticket.');
+                }
+                window.location.reload();
+            } catch (error) {
+                feedback.textContent = error.message || 'No se pudo completar la acción. Inténtalo de nuevo.';
+                feedback.classList.remove('hidden');
+                controls.forEach((control, index) => {
+                    control.disabled = false;
+                    control.textContent = originalLabels[index];
+                });
+            }
+        });
+    </script>
+</body>
+</html>

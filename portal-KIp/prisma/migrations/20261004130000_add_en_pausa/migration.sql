@@ -1,0 +1,1 @@
+ALTER TYPE "EstadoTicket" ADD VALUE 'EN_PAUSA';
