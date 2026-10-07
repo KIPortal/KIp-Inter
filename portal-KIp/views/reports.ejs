@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html class="h-full bg-[#E8E8ED]" lang="es">
+
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title><%= titulo %></title>
+    <!-- Tailwind CSS v3 with Plugins -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <link href="/css/figma-assets.css" rel="stylesheet">
+    <!-- Chart.js CDN with cdnjs fallback -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        if (typeof Chart === 'undefined') {
+            document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"><\/script>');
+        }
+    </script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', 'Inter', 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', 'sans-serif'],
+                        mono: ['SF Mono', 'JetBrains Mono', 'Menlo', 'Monaco', 'Courier New', 'monospace']
+                    },
+                    colors: {
+                        mac: {
+                            bg: '#F5F5F7', window: '#FFFFFF', sidebar: '#EBEBF0', accent: '#007AFF', accentHover: '#0062CC',
+                            subtle: '#8E8E93', border: '#E5E5EA', borderLight: '#F2F2F7', headerBorder: '#D1D1D6',
+                            selected: '#DCEBFE', selectedText: '#0062CC', dangerLight: '#FFE5E5', dangerText: '#D70015',
+                            successLight: '#E3F9E5', successText: '#1B873F', warningLight: '#FFF4D6', warningText: '#B25E02'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            user-select: none;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 9999px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.28);
+        }
+
+        .num-tabular {
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* macOS 27 Liquid Glass Card Design System */
+        .figma-card {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(229, 229, 234, 0.85);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.02);
+            border-radius: 16px;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .figma-card:hover {
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0, 0, 0, 0.03);
+        }
+
+        .macos-focus-ring {
+            box-shadow: 0 0 0 3px rgba(0, 136, 255, 0.35);
+            border-color: #389BFF !important;
+        }
+    </style>
+</head>
+
+<body class="h-dvh w-full min-w-0 bg-[#F5F5F7] overflow-hidden flex flex-col font-sans text-[13px] text-[#1C1C1E] m-0 p-0">
+
+    <!-- macOS Full Application Viewport -->
+    <div class="relative w-full h-full flex flex-col overflow-hidden bg-white select-none">
+
+        <!-- BEGIN: macOS Unified Titlebar & Toolbar -->
+        <header
+            class="h-[56px] bg-white border-b border-[#E5E5EA] px-2 sm:px-4 flex items-center justify-between gap-2 select-none z-20 flex-shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3">
+                    <img alt="Logo Inter" class="h-[28px] w-auto object-contain" onerror="this.style.display='none'"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuAtCf1kyA5Xv3ji8h2EifMIzU5ZiU3r5XlzhgnLFSjZns31wuEmyWwyxb7Ibp30TQgk1BU7IO9qFU5Ri9xtP1U6XPsTT3Ew2iMHnDiOmn4Y-IT_Fy4lZdLyfTzEBMnrxeUJ-S7GYU870d6-54QeqaoelnE_92ZTd36r0rRy5wwIyJJcT881mYSiNC15GTzaM5v_ZLKyzhMIEo-MMFCaNtJqZCR6YOc7FYA8AUcQvEfl_R03WH_n6yHU3a8zKevr3gppvw">
+                    <div class="h-5 w-[1px] bg-[#D1D1D6]"></div>
+                    <span class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Operaciones IP</span>
+                </div>
+                <div
+                    class="ml-2 hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F2F2F7] border border-[#D1D1D6] text-[11px] text-[#48484A] font-medium">
+                    <span class="w-2 h-2 rounded-full bg-[#34C759]"></span>
+                    <span>Turno A (07:00 - 15:00)</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <div
+                    class="figma-toolbars-search__search !w-auto relative hidden sm:flex bg-[#F5F5F7] border border-[#D1D1D6] rounded-[7px] transition focus-within:bg-white focus-within:border-[#007AFF]">
+                    <div class="figma-toolbars-search__liquid-glass absolute inset-0"></div>
+                    <svg class="figma-toolbars-search__symbol w-3.5 h-3.5 text-[#8E8E93] flex-shrink-0 pointer-events-none" fill="none"
+                        stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" x2="16.65" y1="21" y2="16.65"></line>
+                    </svg>
+                    <input
+                        id="globalSearchInput"
+                        class="figma-toolbars-search__search-label !w-[100px] focus:!w-[160px] transition-all duration-200 bg-transparent text-[11px] text-[#1C1C1E] placeholder-[#8E8E93] focus:outline-none border-none p-0"
+                        placeholder="Buscar..." type="text">
+                    <span
+                        class="flex-shrink-0 px-1 py-0.5 text-[9px] font-mono text-[#8E8E93] bg-white border border-[#D1D1D6] rounded pointer-events-none font-medium relative z-10">⌘K</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <a href="/?nuevo=1" id="newTicketButton"
+                        class="figma-button !w-auto !h-[28px] bg-[#007AFF] hover:bg-[#0062CC] text-white shadow-sm transition inline-flex items-center px-3 rounded-[6px]">
+                        <div class="figma-button__label text-white flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                <line x1="12" x2="12" y1="5" y2="19"></line>
+                                <line x1="5" x2="19" y1="12" y2="12"></line>
+                            </svg>
+                            <span class="hidden sm:inline">Nuevo Ticket</span>
+                        </div>
+                    </a>
+                </div>
+                <div class="h-5 w-[1px] bg-[#D1D1D6] mx-0.5"></div>
+                <details class="relative group select-none z-50">
+                    <summary
+                        class="list-none flex items-center gap-2 px-2 py-1 rounded-[8px] hover:bg-[#F2F2F7] transition cursor-pointer border border-transparent hover:border-[#D1D1D6]">
+                        <div
+                            class="w-7 h-7 rounded-full bg-[#007AFF] text-white flex items-center justify-center font-mono font-semibold text-[11px]">
+                            <%= typeof currentUser !== 'undefined' && currentUser && currentUser.nombre ? (currentUser.nombre.trim().split(/\s+/).slice(0, 2).map(part => part.charAt(0)).join('').toUpperCase() || 'CP') : 'CP' %></div>
+                        <div class="hidden sm:flex flex-col text-left">
+                            <span class="text-[11px] font-medium text-[#1C1C1E] leading-tight"><%= typeof currentUser !== 'undefined' && currentUser && currentUser.nombre ? currentUser.nombre : 'Coord. NOC' %></span>
+                            <span class="text-[9px] font-mono font-bold text-[#34C759] tracking-wider leading-tight"><%= typeof currentUser !== 'undefined' && currentUser && currentUser.email ? currentUser.email : '● LÍDER ACTIVO' %></span>
+                        </div>
+                    </summary>
+                    <div class="absolute right-0 top-[100%] mt-1 w-[150px] bg-white rounded-[6px] border border-[#D1D1D6] shadow-[0_4px_14px_rgba(0,0,0,0.1)] p-1 z-50 text-[12px]">
+                        <form action="/auth/logout" method="POST" class="m-0">
+                            <button type="submit" class="w-full text-left px-2 py-1.5 rounded-[4px] text-[#1C1C1E] hover:bg-[#007AFF] hover:text-white font-medium transition cursor-pointer">
+                                Cerrar Sesión
+                            </button>
+                        </form>
+                    </div>
+                </details>
+            </div>
+        </header>
+
+        <!-- Main Body Workspace -->
+        <div class="flex-1 flex overflow-hidden min-h-0 bg-[#F5F5F7]">
+
+            <!-- BEGIN: Finder-style macOS Sidebar -->
+            <aside
+                class="w-[52px] md:w-[200px] flex-shrink-0 bg-[#EBEBF0]/95 border-r border-[#D8D8DC] flex flex-col justify-between select-none py-3 px-1 md:px-2">
+                <div class="space-y-4">
+                    <div>
+                        <div class="hidden md:block px-2.5 pb-1.5 text-[10px] font-bold text-[#8E8E93] uppercase tracking-wider">
+                            Navegación</div>
+                        <nav class="space-y-0.5">
+                            <a id="dashboardNavLink" class="flex items-center justify-between px-2.5 py-1.5 rounded-[6px] text-[#3A3A3C] hover:bg-black/5 font-medium text-[12px] transition"
+                                href="/">
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-[#8E8E93]" fill="currentColor" viewBox="0 0 24 24">
+                                        <path
+                                            d="M19.5 21a3 3 0 0 0 3-3v-4.5a3 3 0 0 0-3-3h-15a3 3 0 0 0-3-3V18a3 3 0 0 0 3 3h15ZM1.5 10.5V6a3 3 0 0 1 3-3h15a3 3 0 0 1 3 3v4.5">
+                                        </path>
+                                    </svg>
+                                    <span class="hidden md:inline">Dashboard General</span>
+                                </div>
+                            </a>
+                            <a class="flex items-center justify-between px-2.5 py-1.5 rounded-[6px] text-[#3A3A3C] hover:bg-black/5 text-[12px] font-medium transition"
+                                href="/auditoria">
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-[#8E8E93]" fill="none" stroke="currentColor"
+                                        stroke-width="2" viewBox="0 0 24 24">
+                                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    <span class="hidden md:inline">Auditoría</span>
+                                </div>
+                            </a>
+                            <a id="shiftManagementNavLink" class="flex items-center justify-between px-2.5 py-1.5 rounded-[6px] text-[#3A3A3C] hover:bg-black/5 text-[12px] font-medium transition"
+                                href="/#gestion-turno">
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-[#8E8E93]" fill="none" stroke="currentColor"
+                                        stroke-width="2" viewBox="0 0 24 24">
+                                        <path
+                                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+                                        </path>
+                                    </svg>
+                                    <span class="hidden md:inline">Gestión de Turno</span>
+                                </div>
+                            </a>
+                            <a class="flex items-center justify-between px-2.5 py-1.5 rounded-[6px] bg-[#007AFF] text-white text-[12px] font-medium transition shadow-xs"
+                                href="/reportes">
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor"
+                                        stroke-width="2" viewBox="0 0 24 24">
+                                        <path
+                                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                                        </path>
+                                    </svg>
+                                    <span class="hidden md:inline">Reportes</span>
+                                </div>
+                            </a>
+                        </nav>
+                    </div>
+                </div>
+
+                <!-- Sidebar Bottom Footer -->
+                <div class="p-1.5 md:p-2.5 rounded-[8px] bg-white/70 border border-black/5 shadow-xs space-y-1">
+                    <div class="flex items-center justify-between text-[11px]">
+                        <span class="flex items-center gap-1.5 font-medium text-[#1C1C1E]"><span
+                                class="w-2 h-2 rounded-full bg-[#34C759]"></span><span class="hidden md:inline">Servidor NOC</span></span>
+                        <span class="hidden md:inline font-mono text-[10px] text-[#34C759] font-bold">18ms</span>
+                    </div>
+                    <div class="hidden md:flex items-center justify-between text-[10px] text-[#8E8E93] font-mono">
+                        <span>Sincronía OLT</span>
+                        <span class="text-[#3A3A3C]">Activo (0s)</span>
+                    </div>
+                </div>
+            </aside>
+            <!-- END: Sidebar -->
+
+            <!-- Main Scrollable Dashboard Content -->
+            <main class="flex-1 flex flex-col min-w-0 bg-[#F5F5F7] overflow-y-auto p-4 sm:p-6 lg:p-7 gap-6">
+
+                <!-- Page Header -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                        <h1 class="text-xl sm:text-2xl font-bold text-[#1C1C1E] tracking-tight">Reportes y Rendimiento</h1>
+                        <p class="text-[12px] text-[#8E8E93] mt-0.5">Métricas operativas globales, distribución de carga y ranking de operadores</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/80 border border-[#D1D1D6] text-[11px] text-[#1C1C1E] font-medium shadow-2xs">
+                            <span class="w-2 h-2 rounded-full bg-[#007AFF] animate-pulse"></span>
+                            <span>Jornada Activa</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- BEGIN: 4 KPI Cards (Liquid Glass) -->
+                <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 flex-shrink-0" data-purpose="kpi-cards">
+                    <!-- Card 1: Tickets Totales -->
+                    <div class="figma-card p-5 flex flex-col justify-between relative overflow-hidden group">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wider leading-tight">
+                                Tickets Totales
+                            </span>
+                            <span class="w-2 h-2 rounded-full bg-[#007AFF] mt-0.5"></span>
+                        </div>
+                        <div class="mt-3">
+                            <div class="text-[34px] font-semibold font-mono text-[#1C1C1E] tracking-tight num-tabular leading-none" id="kpi-total">
+                                <%= typeof kpis !== 'undefined' && typeof kpis.total !== 'undefined' ? kpis.total : 0 %>
+                            </div>
+                            <span class="text-[11px] text-[#8E8E93] mt-1.5 block">Volumen histórico global</span>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: Tickets de la Jornada -->
+                    <div class="figma-card p-5 flex flex-col justify-between relative overflow-hidden group">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wider leading-tight">
+                                Tickets de la Jornada
+                            </span>
+                            <span class="w-2 h-2 rounded-full bg-[#34C759] mt-0.5"></span>
+                        </div>
+                        <div class="mt-3">
+                            <div class="text-[34px] font-semibold font-mono text-[#1C1C1E] tracking-tight num-tabular leading-none" id="kpi-jornada">
+                                <%= typeof kpis !== 'undefined' && typeof kpis.jornada !== 'undefined' ? kpis.jornada : 0 %>
+                            </div>
+                            <span class="text-[11px] text-[#8E8E93] mt-1.5 block">Creados o resueltos hoy</span>
+                        </div>
+                    </div>
+
+                    <!-- Card 3: Tickets Resueltos / Tasa -->
+                    <div class="figma-card p-5 flex flex-col justify-between relative overflow-hidden group">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wider leading-tight">
+                                Tickets Resueltos
+                            </span>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#E3F9E5] text-[#1B873F] border border-[#BCE8C5]">
+                                <%= typeof kpis !== 'undefined' && kpis.tasa ? kpis.tasa : '0%' %>
+                            </span>
+                        </div>
+                        <div class="mt-3">
+                            <div class="text-[34px] font-semibold font-mono text-[#1C1C1E] tracking-tight num-tabular leading-none" id="kpi-resueltos">
+                                <%= typeof kpis !== 'undefined' && typeof kpis.resueltos !== 'undefined' ? kpis.resueltos : 0 %>
+                            </div>
+                            <span class="text-[11px] text-[#8E8E93] mt-1.5 block">Tasa de resolución efectiva</span>
+                        </div>
+                    </div>
+
+                    <!-- Card 4: Puntos de Complejidad -->
+                    <div class="figma-card p-5 flex flex-col justify-between relative overflow-hidden group">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wider leading-tight">
+                                Puntos Completados
+                            </span>
+                            <span class="w-2 h-2 rounded-full bg-[#FF9500] mt-0.5"></span>
+                        </div>
+                        <div class="mt-3">
+                            <div class="text-[34px] font-semibold font-mono text-[#1C1C1E] tracking-tight num-tabular leading-none text-[#FF9500]" id="kpi-puntos">
+                                <%= typeof kpis !== 'undefined' && typeof kpis.puntosTotales !== 'undefined' ? kpis.puntosTotales : 0 %>
+                            </div>
+                            <span class="text-[11px] text-[#8E8E93] mt-1.5 block">Complejidad acumulada</span>
+                        </div>
+                    </div>
+                </section>
+                <!-- END: KPI Cards -->
+
+                <!-- BEGIN: Charts Section (Horizontal Bar + Donut) -->
+                <section class="grid grid-cols-1 lg:grid-cols-2 gap-5 flex-shrink-0">
+                    <!-- Chart 1: Volumen por Área (Horizontal Bar) -->
+                    <div class="figma-card p-5 sm:p-6 flex flex-col">
+                        <div class="flex items-center justify-between pb-3 border-b border-[#E5E5EA]">
+                            <div>
+                                <h2 class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Volumen de Tickets por Área</h2>
+                                <p class="text-[11px] text-[#8E8E93] mt-0.5">Cantidad de incidencias registradas por especialidad técnica</p>
+                            </div>
+                            <span class="text-[10px] font-mono text-[#8E8E93] px-2 py-0.5 rounded bg-black/5 font-semibold">BARRAS</span>
+                        </div>
+                        <div class="relative w-full h-[280px] sm:h-[300px] mt-4">
+                            <canvas id="areaVolumeChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Chart 2: Total Puntos / Distribución por Área (Doughnut) -->
+                    <div class="figma-card p-5 sm:p-6 flex flex-col">
+                        <div class="flex items-center justify-between pb-3 border-b border-[#E5E5EA]">
+                            <div>
+                                <h2 class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Distribución por Área</h2>
+                                <p class="text-[11px] text-[#8E8E93] mt-0.5">Proporción de puntos de complejidad o volumen por área</p>
+                            </div>
+                            <span class="text-[10px] font-mono text-[#8E8E93] px-2 py-0.5 rounded bg-black/5 font-semibold">DONA</span>
+                        </div>
+                        <div class="relative w-full h-[280px] sm:h-[300px] mt-4 flex items-center justify-center">
+                            <canvas id="areaPointsChart"></canvas>
+                        </div>
+                    </div>
+                </section>
+                <!-- END: Charts Section -->
+
+                <!-- BEGIN: Ranking de Operadores (Liquid Glass Table) -->
+                <section class="figma-card flex flex-col overflow-hidden mb-4">
+                    <div class="px-5 py-4 border-b border-[#E5E5EA] bg-white/40 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                            <h2 class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Ranking de Operadores</h2>
+                            <p class="text-[11px] text-[#8E8E93] mt-0.5">Clasificación basada en puntos de complejidad de tickets resueltos o cerrados</p>
+                        </div>
+                        <span class="inline-flex items-center gap-1 text-[11px] text-[#48484A] font-medium bg-[#F2F2F7] px-2.5 py-1 rounded-full border border-[#D1D1D6]">
+                            <svg class="w-3.5 h-3.5 text-[#007AFF]" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            <span>Efectividad NOC</span>
+                        </span>
+                    </div>
+
+                    <div class="overflow-x-auto overflow-y-auto max-h-[460px]">
+                        <table class="w-full text-left border-collapse text-[12px]">
+                            <thead class="bg-white/90 backdrop-blur-md sticky top-0 z-10 border-b border-[#E5E5EA]">
+                                <tr>
+                                    <th class="py-2.5 px-4 font-semibold text-[#8E8E93] uppercase tracking-wider text-[10px] w-12 text-center">Pos.</th>
+                                    <th class="py-2.5 px-4 font-semibold text-[#8E8E93] uppercase tracking-wider text-[10px]">Operador</th>
+                                    <th class="py-2.5 px-4 font-semibold text-[#8E8E93] uppercase tracking-wider text-[10px]">Área Designada</th>
+                                    <th class="py-2.5 px-4 font-semibold text-[#8E8E93] uppercase tracking-wider text-[10px] text-right">Puntos Complejidad</th>
+                                    <th class="py-2.5 px-4 font-semibold text-[#8E8E93] uppercase tracking-wider text-[10px] text-right">Tickets Resueltos</th>
+                                    <th class="py-2.5 px-4 font-semibold text-[#8E8E93] uppercase tracking-wider text-[10px]">Tiempo Promedio</th>
+                                    <th class="py-2.5 px-4 font-semibold text-[#8E8E93] uppercase tracking-wider text-[10px] text-center">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-[#E5E5EA] bg-transparent">
+                                <% const rankItems = (typeof ranking !== 'undefined' && ranking && ranking.length > 0) ? ranking : ((typeof rankingOperadores !== 'undefined' && rankingOperadores && rankingOperadores.length > 0) ? rankingOperadores : ((typeof operadores !== 'undefined' && operadores && operadores.length > 0) ? operadores : [])); %>
+                                <% if (rankItems.length > 0) { %>
+                                    <% rankItems.forEach((op, index) => { %>
+                                    <tr class="hover:bg-white/60 transition-colors operator-ranking-row">
+                                        <!-- Posición con medallas -->
+                                        <td class="py-3 px-4 text-center">
+                                            <% if (index === 0) { %>
+                                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#FFF4D6] text-[#B25E02] font-mono font-bold text-[11px] shadow-2xs">🥇</span>
+                                            <% } else if (index === 1) { %>
+                                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#F2F2F7] text-[#48484A] font-mono font-bold text-[11px] shadow-2xs">🥈</span>
+                                            <% } else if (index === 2) { %>
+                                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#FFE5E5] text-[#991B1B] font-mono font-bold text-[11px] shadow-2xs">🥉</span>
+                                            <% } else { %>
+                                                <span class="inline-flex items-center justify-center w-6 h-6 text-[#8E8E93] font-mono font-semibold text-[11px]">#<%= index + 1 %></span>
+                                            <% } %>
+                                        </td>
+
+                                        <!-- Operador Info -->
+                                        <td class="py-3 px-4">
+                                            <div class="flex items-center gap-2.5">
+                                                <div class="w-7 h-7 rounded-full bg-[#007AFF] text-white flex items-center justify-center font-mono font-semibold text-[10px] flex-shrink-0 shadow-2xs">
+                                                    <%= op.nombre && op.nombre.trim() ? (op.nombre.trim().split(/\s+/).slice(0, 2).map(p => p.charAt(0)).join('').toUpperCase() || 'OP') : 'OP' %>
+                                                </div>
+                                                <div class="flex flex-col min-w-0">
+                                                    <span class="font-medium text-[#1C1C1E] truncate"><%= op.nombre || 'Operador' %></span>
+                                                    <span class="text-[10px] font-mono text-[#8E8E93] truncate"><%= op.email || 'Sin correo' %></span>
+                                                </div>
+                                            </div>
+                                        </td>
+
+                                        <!-- Área -->
+                                        <td class="py-3 px-4">
+                                            <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#F2F2F7] text-[#48484A] border border-[#E5E5EA]">
+                                                <%= op.area || 'General' %>
+                                            </span>
+                                        </td>
+
+                                        <!-- Puntos -->
+                                        <td class="py-3 px-4 text-right">
+                                            <span class="text-[#007AFF] font-mono font-bold text-[13px] num-tabular">
+                                                <%= op.puntos || 0 %> <span class="text-[10px] font-sans font-medium text-[#8E8E93]">pts</span>
+                                            </span>
+                                        </td>
+
+                                        <!-- Tickets Resueltos -->
+                                        <td class="py-3 px-4 text-right">
+                                            <span class="font-mono text-[#1C1C1E] font-medium num-tabular">
+                                                <%= op.resueltos || 0 %>
+                                            </span>
+                                        </td>
+
+                                        <!-- Tiempo Promedio -->
+                                        <td class="py-3 px-4 font-mono text-[#48484A]">
+                                            <%= op.tiempoPromedio || 'N/A' %>
+                                        </td>
+
+                                        <!-- Estado Operativo -->
+                                        <td class="py-3 px-4 text-center">
+                                            <% if (op.estado === 'DISPONIBLE') { %>
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#E3F9E5] text-[#1B873F] border border-[#BCE8C5]">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-[#34C759]"></span> Disponible
+                                                </span>
+                                            <% } else if (op.estado === 'EN_TERRENO') { %>
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#DCEBFE] text-[#0062CC] border border-[#B8D7FC]">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-[#007AFF]"></span> En Terreno
+                                                </span>
+                                            <% } else if (op.estado === 'AUSENTE') { %>
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#F2F2F7] text-[#8E8E93] border border-[#E5E5EA]">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-[#8E8E93]"></span> Ausente
+                                                </span>
+                                            <% } else { %>
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#F2F2F7] text-[#8E8E93] border border-[#E5E5EA]">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-[#8E8E93]"></span> <%= op.estado || 'Ausente' %>
+                                                </span>
+                                            <% } %>
+                                        </td>
+                                    </tr>
+                                    <% }) %>
+                                    <tr id="rankingNoMatchRow" class="hidden">
+                                        <td colspan="7" class="py-8 text-center text-[#8E8E93]">
+                                            No se encontraron operadores que coincidan con la búsqueda.
+                                        </td>
+                                    </tr>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="7" class="py-8 text-center text-[#8E8E93]">
+                                            No hay operadores registrados para mostrar en el ranking.
+                                        </td>
+                                    </tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+                <!-- END: Ranking Table -->
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Raw Report Data safely encoded for Client-Side Charts -->
+    <script id="report-data-json" type="application/json">
+        <%- JSON.stringify(typeof reportData !== 'undefined' ? reportData : {}).replace(/</g, '\\u003c') %>
+    </script>
+
+    <!-- Client-side logic for Chart.js & Shortcuts -->
+    <script>
+        document.addEventListener('keydown', function (e) {
+            if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+                e.preventDefault();
+                const searchInput = document.getElementById('globalSearchInput');
+                if (searchInput) {
+                    searchInput.focus();
+                    searchInput.select();
+                }
+            }
+        });
+
+        // Filtro en tiempo real para el ranking de operadores
+        (function setupRankingFilter() {
+            const searchInput = document.getElementById('globalSearchInput');
+            if (!searchInput) return;
+
+            searchInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    searchInput.value = '';
+                    searchInput.dispatchEvent(new Event('input'));
+                    searchInput.blur();
+                }
+            });
+
+            searchInput.addEventListener('input', function(e) {
+                const query = (e.target.value || '').toLowerCase().trim();
+                const rows = document.querySelectorAll('.operator-ranking-row');
+                let matchCount = 0;
+
+                rows.forEach(function(row) {
+                    const text = (row.textContent || '').toLowerCase();
+                    const visible = !query || text.includes(query);
+                    row.style.display = visible ? '' : 'none';
+                    if (visible) matchCount++;
+                });
+
+                const noMatchRow = document.getElementById('rankingNoMatchRow');
+                if (noMatchRow) {
+                    if (rows.length > 0 && matchCount === 0 && query.length > 0) {
+                        noMatchRow.classList.remove('hidden');
+                    } else {
+                        noMatchRow.classList.add('hidden');
+                    }
+                }
+            });
+        })();
+
+        // Initialize Charts when DOM is fully loaded & Chart.js is ready
+        (function() {
+            function handleChartUnavailable() {
+                ['areaVolumeChart', 'areaPointsChart'].forEach(function(canvasId) {
+                    const canvas = document.getElementById(canvasId);
+                    if (canvas && canvas.parentElement) {
+                        canvas.style.display = 'none';
+                        const existingMsg = canvas.parentElement.querySelector('.chart-fallback-msg');
+                        if (!existingMsg) {
+                            const fallback = document.createElement('div');
+                            fallback.className = 'chart-fallback-msg flex flex-col items-center justify-center h-full text-center p-6 text-[#8E8E93]';
+                            fallback.innerHTML = `
+                                <div class="w-10 h-10 rounded-full bg-black/5 flex items-center justify-center mb-2.5">
+                                    <svg class="w-5 h-5 text-[#8E8E93]" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                                    </svg>
+                                </div>
+                                <span class="text-[12px] font-medium text-[#1C1C1E]">Visualización gráfica no disponible</span>
+                                <span class="text-[11px] text-[#8E8E93] mt-1 max-w-[240px]">Los datos operacionales están consolidados en las tarjetas superiores.</span>
+                            `;
+                            canvas.parentElement.appendChild(fallback);
+                        }
+                    }
+                });
+            }
+
+            function initCharts() {
+                let reportData = {
+                    kpis: {},
+                    volumenPorArea: { labels: [], data: [] },
+                    puntosPorArea: { labels: [], data: [] },
+                    rankingOperadores: []
+                };
+
+                try {
+                    const dataEl = document.getElementById('report-data-json');
+                    if (dataEl && dataEl.textContent.trim()) {
+                        reportData = JSON.parse(dataEl.textContent);
+                    }
+                } catch (err) {
+                    console.error('Error al inicializar reportData:', err);
+                }
+
+                // Apple palette colors
+                const appleColors = [
+                    '#007AFF', // Blue
+                    '#34C759', // Green
+                    '#FF9500', // Orange
+                    '#AF52DE', // Purple
+                    '#5856D6', // Indigo
+                    '#FF2D55', // Pink
+                    '#5AC8FA'  // Teal
+                ];
+
+                // 1. Gráfico de Barras Horizontales (Volumen de Tickets por Área)
+                const barCanvas = document.getElementById('areaVolumeChart');
+                if (barCanvas && typeof Chart !== 'undefined') {
+                    const existingBar = Chart.getChart(barCanvas);
+                    if (existingBar) existingBar.destroy();
+
+                    const volumen = reportData.volumenPorArea || reportData.volumen_por_area || {};
+                    const barLabels = volumen.labels || [];
+                    const barValues = volumen.data || volumen.values || [];
+
+                    new Chart(barCanvas.getContext('2d'), {
+                        type: 'bar',
+                        data: {
+                            labels: barLabels,
+                            datasets: [{
+                                label: 'Tickets',
+                                data: barValues,
+                                backgroundColor: 'rgba(0, 122, 255, 0.75)',
+                                hoverBackgroundColor: '#007AFF',
+                                borderColor: '#007AFF',
+                                borderWidth: 1,
+                                borderRadius: 6,
+                                barThickness: 16,
+                                maxBarThickness: 22
+                            }]
+                        },
+                        options: {
+                            indexAxis: 'y', // Hace las barras horizontales
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: {
+                                duration: 600,
+                                easing: 'easeOutQuart'
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    backgroundColor: 'rgba(28, 28, 30, 0.92)',
+                                    titleFont: { size: 12, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
+                                    bodyFont: { size: 12, family: 'SF Mono, Menlo, monospace' },
+                                    padding: 10,
+                                    cornerRadius: 8,
+                                    displayColors: false,
+                                    callbacks: {
+                                        label: function(ctx) {
+                                            const val = ctx.parsed?.x ?? ctx.raw ?? 0;
+                                            return ` Tickets: ${val}`;
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    beginAtZero: true,
+                                    suggestedMax: 5,
+                                    grid: {
+                                        color: 'rgba(0, 0, 0, 0.04)'
+                                    },
+                                    border: {
+                                        display: false
+                                    },
+                                    ticks: {
+                                        precision: 0,
+                                        font: { size: 11, family: 'SF Mono, Menlo, monospace' },
+                                        color: '#8E8E93'
+                                    }
+                                },
+                                y: {
+                                    grid: { display: false },
+                                    border: { display: false },
+                                    ticks: {
+                                        font: { size: 11, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
+                                        color: '#1C1C1E'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // 2. Gráfico de Dona (Distribución de Puntos o Tickets por Área)
+                const donutCanvas = document.getElementById('areaPointsChart');
+                if (donutCanvas && typeof Chart !== 'undefined') {
+                    const existingDonut = Chart.getChart(donutCanvas);
+                    if (existingDonut) existingDonut.destroy();
+
+                    const puntos = reportData.puntosPorArea || reportData.puntos_por_area || {};
+                    const donutLabels = puntos.labels || [];
+                    const donutValues = puntos.data || puntos.values || [];
+                    const tipoLabel = puntos.tipo || 'Puntos';
+                    const hasData = donutValues.some(v => v > 0);
+
+                    // Si no hay valores registrados aún, mostrar placeholder sutil
+                    const chartData = hasData ? donutValues : [1];
+                    const chartLabels = hasData ? donutLabels : ['Sin registros'];
+                    const chartColors = hasData
+                        ? donutLabels.map((_, i) => appleColors[i % appleColors.length])
+                        : ['rgba(142, 142, 147, 0.25)'];
+
+                    new Chart(donutCanvas.getContext('2d'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: chartLabels,
+                            datasets: [{
+                                data: chartData,
+                                backgroundColor: chartColors,
+                                borderWidth: 2,
+                                borderColor: '#FFFFFF',
+                                hoverOffset: hasData ? 6 : 0
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            cutout: '68%',
+                            animation: {
+                                duration: 700,
+                                easing: 'easeOutQuart'
+                            },
+                            onResize: function(chart) {
+                                if (typeof window !== 'undefined') {
+                                    const targetPos = window.innerWidth < 640 ? 'bottom' : 'right';
+                                    if (chart.options.plugins.legend.position !== targetPos) {
+                                        chart.options.plugins.legend.position = targetPos;
+                                        chart.update('none');
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    position: (typeof window !== 'undefined' && window.innerWidth < 640) ? 'bottom' : 'right',
+                                    display: hasData,
+                                    labels: {
+                                        boxWidth: 10,
+                                        boxHeight: 10,
+                                        borderRadius: 3,
+                                        useBorderRadius: true,
+                                        font: { size: 11, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
+                                        color: '#1C1C1E',
+                                        padding: 10
+                                    }
+                                },
+                                tooltip: {
+                                    enabled: hasData,
+                                    backgroundColor: 'rgba(28, 28, 30, 0.92)',
+                                    titleFont: { size: 12, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
+                                    bodyFont: { size: 12, family: 'SF Mono, Menlo, monospace' },
+                                    padding: 10,
+                                    cornerRadius: 8,
+                                    callbacks: {
+                                        label: function(ctx) {
+                                            const val = ctx.parsed ?? ctx.raw ?? 0;
+                                            const total = (ctx.dataset.data || []).reduce((a, b) => Number(a) + Number(b), 0);
+                                            const pct = total > 0 ? Math.round((val / total) * 100) : 0;
+                                            return ` ${ctx.label}: ${val} ${tipoLabel.toLowerCase()} (${pct}%)`;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+
+            function waitForChart(retries) {
+                if (typeof Chart !== 'undefined') {
+                    initCharts();
+                } else if (retries > 0) {
+                    setTimeout(function() { waitForChart(retries - 1); }, 100);
+                } else {
+                    handleChartUnavailable();
+                }
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function() { waitForChart(40); });
+            } else {
+                waitForChart(40);
+            }
+        })();
+    </script>
+</body>
+
+</html>
