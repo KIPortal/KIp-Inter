@@ -248,6 +248,643 @@ runTest('R2.10: [Adversarial] Neutralización de inyecciones XSS en el script de
     assert(rendered.includes('\\u003cscript>alert(1)\\u003c/script>'), 'Debe escapar < como \\u003c en el bloque JSON');
 });
 
+// 7. New Requirements Tests (R1 & R2 Enhancements)
+runTest('R2.11: Presencia del lienzo Canvas para gráfico de líneas (#hourlyFlowChart)', () => {
+    assert(templateContent.includes('id="hourlyFlowChart"'), 'Debe existir canvas para gráfico de líneas (#hourlyFlowChart)');
+});
+
+runTest('R2.12: Presencia de Tarjeta de KPI para Área Crítica (#kpi-area-critica)', () => {
+    assert(templateContent.includes('id="kpi-area-critica"'), 'Debe contener KPI de Área Crítica (#kpi-area-critica)');
+    assert(templateContent.includes('Área Crítica'), 'Debe titular la tarjeta como Área Crítica');
+});
+
+runTest('R2.13: Columnas visuales de Eficiencia y Carga Actual en la tabla de ranking', () => {
+    assert(templateContent.includes('Eficiencia'), 'Debe incluir columna de Eficiencia');
+    assert(templateContent.includes('Carga Actual'), 'Debe incluir columna de Carga Actual');
+    assert(templateContent.includes('activas (Baja)') || templateContent.includes('Baja'), 'Debe tener indicador para carga baja');
+    assert(templateContent.includes('activas (Media)') || templateContent.includes('Media'), 'Debe tener indicador para carga media');
+    assert(templateContent.includes('activas (Alta)') || templateContent.includes('Alta'), 'Debe tener indicador para carga alta');
+});
+
+runTest('R2.14: Presencia de Indicadores de Saturación Técnica (barras de progreso)', () => {
+    assert(templateContent.includes('Indicadores de Saturación'), 'Debe incluir sección de indicadores de saturación');
+    assert(templateContent.includes('BARRAS AGRUPADAS'), 'Debe identificar gráfico de barras agrupadas');
+});
+
+// 8. R1 Dynamic Controller Calculation Test with Mocked Prisma
+runAsyncTest('R1.1: [End-to-End Async] Ejecución de getReports con cálculos dinámicos de R1', async () => {
+    const prisma = require('../src/config/prisma');
+    const { getReports } = require('../src/controllers/reportController');
+
+    // Salvar métodos originales si existen
+    const origCount = prisma.ticket.count;
+    const origAgg = prisma.ticket.aggregate;
+    const origGroupBy = prisma.ticket.groupBy;
+    const origFindManyTicket = prisma.ticket.findMany;
+    const origFindManyUser = prisma.user.findMany;
+
+    let callCount = 0;
+    prisma.ticket.count = async (args) => {
+        callCount++;
+        // 1. Total: 50, 2. Jornada: 15, 3. Resueltos: 35, 4. En progreso: 8
+        if (callCount === 1) return 50;
+        if (callCount === 2) return 15;
+        if (callCount === 3) return 35;
+        if (callCount === 4) return 8;
+        return 0;
+    };
+
+    let aggCallCount = 0;
+    prisma.ticket.aggregate = async (args) => {
+        aggCallCount++;
+        if (aggCallCount === 1) {
+            return { _sum: { puntos_complejidad: 120 }, _avg: { puntos_complejidad: 3.4 } };
+        }
+        return { _sum: { puntos_complejidad: 150 } };
+    };
+
+    let groupByCallCount = 0;
+    prisma.ticket.groupBy = async (args) => {
+        groupByCallCount++;
+        // 7: Volumen por área
+        if (groupByCallCount === 1) {
+            return [
+                { area_designada: 'REDES_FTTH', _count: { id: 25 } },
+                { area_designada: 'WAN', _count: { id: 15 } },
+                { area_designada: 'GENERAL', _count: { id: 10 } }
+            ];
+        }
+        // 8: Cerrados por área
+        if (groupByCallCount === 2) {
+            return [
+                { area_designada: 'REDES_FTTH', _count: { id: 18 } },
+                { area_designada: 'WAN', _count: { id: 12 } },
+                { area_designada: 'GENERAL', _count: { id: 5 } }
+            ];
+        }
+        // 9: Abiertos por área (Área Crítica) -> REDES_FTTH tiene 7, GENERAL tiene 5, WAN tiene 3
+        if (groupByCallCount === 3) {
+            return [
+                { area_designada: 'REDES_FTTH', _count: { id: 7 } },
+                { area_designada: 'WAN', _count: { id: 3 } },
+                { area_designada: 'GENERAL', _count: { id: 5 } }
+            ];
+        }
+        // 10: Puntos totales por área
+        if (groupByCallCount === 4) {
+            return [
+                { area_designada: 'REDES_FTTH', _sum: { puntos_complejidad: 80 } },
+                { area_designada: 'WAN', _sum: { puntos_complejidad: 45 } },
+                { area_designada: 'GENERAL', _sum: { puntos_complejidad: 25 } }
+            ];
+        }
+        // 11: Puntos cerrados por área
+        if (groupByCallCount === 5) {
+            return [
+                { area_designada: 'REDES_FTTH', _sum: { puntos_complejidad: 60 } },
+                { area_designada: 'WAN', _sum: { puntos_complejidad: 40 } },
+                { area_designada: 'GENERAL', _sum: { puntos_complejidad: 20 } }
+            ];
+        }
+        // 13: Asignados totales por operador
+        if (groupByCallCount === 6) {
+            return [
+                { asignado_a_id: 'op-1', _count: { id: 20 } },
+                { asignado_a_id: 'op-2', _count: { id: 10 } }
+            ];
+        }
+        // 14: Cerrados por operador con puntos
+        if (groupByCallCount === 7) {
+            return [
+                { asignado_a_id: 'op-1', _count: { id: 16 }, _sum: { puntos_complejidad: 50 } },
+                { asignado_a_id: 'op-2', _count: { id: 5 }, _sum: { puntos_complejidad: 18 } }
+            ];
+        }
+        // 15: Carga actual por operador (EN_PROGRESO o EN_PAUSA)
+        if (groupByCallCount === 8) {
+            return [
+                { asignado_a_id: 'op-1', _count: { id: 1 } },  // Baja
+                { asignado_a_id: 'op-2', _count: { id: 5 } }   // Alta
+            ];
+        }
+        return [];
+    };
+
+    prisma.user.findMany = async (args) => {
+        return [
+            { id: 'op-1', nombre: 'Laura Medina', email: 'lmedina@inter.com', rol: 'OPERADOR', area_designada: 'REDES_FTTH', estado_operativo: 'DISPONIBLE', tickets_resueltos: 16 },
+            { id: 'op-2', nombre: 'Pedro Ramos', email: 'pramos@inter.com', rol: 'OPERADOR', area_designada: 'WAN', estado_operativo: 'EN_TERRENO', tickets_resueltos: 5 }
+        ];
+    };
+
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    prisma.ticket.findMany = async (args) => {
+        // Closed tickets with operator
+        if (args.select && args.select.asignado_a) {
+            return [
+                {
+                    id: 't-1',
+                    asignado_a_id: 'op-1',
+                    puntos_complejidad: 10,
+                    createdAt: new Date(Date.now() - 3600000),
+                    fecha_cierre: new Date(),
+                    resueltoEn: new Date(),
+                    asignado_a: { id: 'op-1', nombre: 'Laura Medina', email: 'lmedina@inter.com', rol: 'OPERADOR', area_designada: 'REDES_FTTH', estado_operativo: 'DISPONIBLE', tickets_resueltos: 16 }
+                }
+            ];
+        }
+        // Today tickets for hourly flow
+        const d8 = new Date(startOfToday.getTime() + 8 * 3600000);
+        const d10 = new Date(startOfToday.getTime() + 10 * 3600000);
+        return [
+            { id: 't-h1', createdAt: d8, fecha_cierre: null, resueltoEn: null, updatedAt: d8, estado_actual: 'EN_PROGRESO' },
+            { id: 't-h2', createdAt: d8, fecha_cierre: d10, resueltoEn: d10, updatedAt: d10, estado_actual: 'CERRADO' }
+        ];
+    };
+
+    try {
+        let renderedView = null;
+        let renderedData = null;
+
+        const req = { user: { nombre: 'Coord Test', email: 'coord@test.com' } };
+        const res = {
+            render: (view, data) => {
+                renderedView = view;
+                renderedData = data;
+            },
+            status: () => res,
+            send: () => {}
+        };
+
+        await getReports(req, res);
+
+        assert.strictEqual(renderedView, 'reports', 'Debe renderizar la vista reports');
+        assert(renderedData, 'Debe proveer datos para renderizar');
+
+        // 1. Verificación de Área Crítica (REDES_FTTH con 7 abiertos) y Puntos Totales Globales
+        assert.strictEqual(renderedData.kpis.areaCritica.area, 'REDES_FTTH', 'El área crítica debe ser REDES_FTTH');
+        assert.strictEqual(renderedData.kpis.areaCritica.abiertos, 7, 'Debe registrar 7 tickets abiertos en área crítica');
+        assert.strictEqual(renderedData.kpis.puntosTotales, 150, 'Puntos totales debe priorizar los 150 globales');
+
+        // 2. Verificación de Ranking de Operadores y Eficiencia
+        const rank = renderedData.rankingOperadores;
+        assert(Array.isArray(rank) && rank.length === 2, 'Debe contener 2 operadores en el ranking');
+        const op1 = rank.find(o => o.id === 'op-1');
+        const op2 = rank.find(o => o.id === 'op-2');
+
+        // op1: asignados=20, cerrados=16 -> eficiencia = 80%, cargaActual = 1 (baja)
+        assert.strictEqual(op1.cerrados, 16, 'op-1 debe tener 16 cerrados');
+        assert.strictEqual(op1.asignadosTotales, 20, 'op-1 debe tener 20 asignados');
+        assert.strictEqual(op1.eficiencia, 80, 'op-1 debe tener 80% de eficiencia');
+        assert.strictEqual(op1.cargaActual, 1, 'op-1 debe tener carga actual 1');
+        assert.strictEqual(op1.cargaNivel, 'baja', 'op-1 debe tener carga baja');
+
+        // op2: asignados=10, cerrados=5 -> eficiencia = 50%, cargaActual = 5 (alta)
+        assert.strictEqual(op2.cerrados, 5, 'op-2 debe tener 5 cerrados');
+        assert.strictEqual(op2.asignadosTotales, 10, 'op-2 debe tener 10 asignados');
+        assert.strictEqual(op2.eficiencia, 50, 'op-2 debe tener 50% de eficiencia');
+        assert.strictEqual(op2.cargaActual, 5, 'op-2 debe tener carga actual 5');
+        assert.strictEqual(op2.cargaNivel, 'alta', 'op-2 debe tener carga alta');
+
+        // 3. Verificación de Flujo Horario
+        assert(renderedData.flujoPorHora, 'Debe contener flujoPorHora');
+        assert.strictEqual(renderedData.flujoPorHora.labels.length, 24, 'Debe contener 24 horas');
+        assert.strictEqual(renderedData.flujoPorHora.creados[8], 2, 'A las 08:00 se crearon 2 tickets');
+        assert.strictEqual(renderedData.flujoPorHora.cerrados[10], 1, 'A las 10:00 se cerró 1 ticket');
+
+        // 4. Verificación de Renderizado EJS con los datos producidos por el controlador
+        const fullHtml = ejs.render(templateContent, renderedData, { filename: templatePath });
+        assert(fullHtml.includes('Redes FTTH'), 'El HTML debe renderizar el área crítica');
+        assert(fullHtml.includes('Laura Medina'), 'El HTML debe renderizar al operador #1');
+        assert(fullHtml.includes('80%'), 'El HTML debe renderizar 80% de eficiencia');
+        assert(fullHtml.includes('1 activas (Baja)'), 'El HTML debe renderizar semáforo baja');
+        assert(fullHtml.includes('5 activas (Alta)'), 'El HTML debe renderizar semáforo alta');
+        assert(fullHtml.includes('id="hourlyFlowChart"'), 'El HTML debe renderizar el canvas de flujo por hora');
+    } finally {
+        // Restaurar métodos originales
+        prisma.ticket.count = origCount;
+        prisma.ticket.aggregate = origAgg;
+        prisma.ticket.groupBy = origGroupBy;
+        prisma.ticket.findMany = origFindManyTicket;
+        prisma.user.findMany = origFindManyUser;
+    }
+});
+
+// 9. Adversarial: Síntesis automática de Indicadores de Saturación Técnica sin detalles
+runTest('R2.15: [Adversarial] Síntesis de indicadores de saturación cuando volumenPorArea solo tiene labels y data', () => {
+    const dataWithoutDetails = {
+        titulo: 'NOC Portal - Reportes',
+        currentUser: { nombre: 'Coord', email: 'coord@test.com' },
+        kpis: { total: 10, jornada: 5, resueltos: 4, tasa: '40%', puntosTotales: 30, areaCritica: { nombre: 'Seguridad', abiertos: 6 } },
+        volumenPorArea: {
+            labels: ['Seguridad'],
+            data: [10],
+            totales: [10],
+            cerrados: [4],
+            saturaciones: [60]
+        },
+        puntosPorArea: { labels: ['Seguridad'], data: [30] },
+        ranking: [],
+        rankingOperadores: [],
+        operadores: [],
+        reportData: {
+            volumenPorArea: { labels: ['Seguridad'], data: [10], cerrados: [4], saturaciones: [60] }
+        }
+    };
+
+    const rendered = ejs.render(templateContent, dataWithoutDetails, { filename: templatePath });
+    assert(rendered.includes('Seguridad'), 'Debe renderizar la etiqueta del área');
+    assert(rendered.includes('(4/10 cerrados)'), 'Debe sintetizar la cantidad de cerrados y totales');
+    assert(rendered.includes('Sat. 60%'), 'Debe sintetizar la saturación del 60%');
+});
+
+// 10. Adversarial: Coherencia de Eficiencia cuando asignados = 0 pero cerrados > 0
+runAsyncTest('R1.2: [Adversarial] Eficiencia de operador cuando asignados = 0 pero cerrados > 0', async () => {
+    const prisma = require('../src/config/prisma');
+    const { getReports } = require('../src/controllers/reportController');
+
+    const origCount = prisma.ticket.count;
+    const origAgg = prisma.ticket.aggregate;
+    const origGroupBy = prisma.ticket.groupBy;
+    const origFindManyTicket = prisma.ticket.findMany;
+    const origFindManyUser = prisma.user.findMany;
+
+    try {
+        prisma.ticket.count = async () => 3;
+        prisma.ticket.aggregate = async () => ({ _sum: { puntos_complejidad: 15 }, _avg: { puntos_complejidad: 5 } });
+        let groupCalls = 0;
+        prisma.ticket.groupBy = async () => {
+            groupCalls++;
+            if (groupCalls === 6) {
+                // assigned counts group: returns nothing for op-zero
+                return [];
+            }
+            if (groupCalls === 7) {
+                // closed counts group: op-zero closed 3 tickets
+                return [{ asignado_a_id: 'op-zero', _count: { id: 3 }, _sum: { puntos_complejidad: 15 } }];
+            }
+            if (groupCalls === 8) {
+                // active counts: 0
+                return [];
+            }
+            return [{ area_designada: 'GENERAL', _count: { id: 3 }, _sum: { puntos_complejidad: 15 } }];
+        };
+        prisma.user.findMany = async () => [
+            { id: 'op-zero', nombre: 'Test Zero', email: 'zero@test.com', rol: 'OPERADOR', area_designada: 'GENERAL', estado_operativo: 'DISPONIBLE' }
+        ];
+        prisma.ticket.findMany = async () => [];
+
+        let renderedData = null;
+        const req = { user: { nombre: 'Coord' } };
+        const res = { render: (v, d) => { renderedData = d; }, status: () => res, send: () => {} };
+
+        await getReports(req, res);
+
+        const op = renderedData.rankingOperadores.find(o => o.id === 'op-zero');
+        assert(op, 'Debe existir op-zero en el ranking');
+        assert.strictEqual(op.cerrados, 3, 'Debe registrar 3 tickets cerrados');
+        assert.strictEqual(op.asignadosTotales, 3, 'Asignados totales no puede ser 0 si cerró 3; debe ajustarse a 3');
+        assert.strictEqual(op.eficiencia, 100, 'Eficiencia debe ser 100%');
+    } finally {
+        prisma.ticket.count = origCount;
+        prisma.ticket.aggregate = origAgg;
+        prisma.ticket.groupBy = origGroupBy;
+        prisma.ticket.findMany = origFindManyTicket;
+        prisma.user.findMany = origFindManyUser;
+    }
+});
+
+// 11. Adversarial: Coherencia de asignadosTotales considerando cargaActual activa (R1.3)
+runAsyncTest('R1.3: [Adversarial] Coherencia de asignadosTotales considerando cargaActual activa', async () => {
+    const prisma = require('../src/config/prisma');
+    const { getReports } = require('../src/controllers/reportController');
+
+    const origCount = prisma.ticket.count;
+    const origAgg = prisma.ticket.aggregate;
+    const origGroupBy = prisma.ticket.groupBy;
+    const origFindManyTicket = prisma.ticket.findMany;
+    const origFindManyUser = prisma.user.findMany;
+
+    try {
+        prisma.ticket.count = async () => 5;
+        prisma.ticket.aggregate = async () => ({ _sum: { puntos_complejidad: 20 }, _avg: { puntos_complejidad: 4 } });
+        let groupCalls = 0;
+        prisma.ticket.groupBy = async () => {
+            groupCalls++;
+            if (groupCalls === 6) {
+                // assigned counts group: returns 2 for op-active
+                return [{ asignado_a_id: 'op-active', _count: { id: 2 } }];
+            }
+            if (groupCalls === 7) {
+                // closed counts group: op-active closed 3 tickets
+                return [{ asignado_a_id: 'op-active', _count: { id: 3 }, _sum: { puntos_complejidad: 15 } }];
+            }
+            if (groupCalls === 8) {
+                // active counts: 2 tickets in progress
+                return [{ asignado_a_id: 'op-active', _count: { id: 2 } }];
+            }
+            return [{ area_designada: 'GENERAL', _count: { id: 5 }, _sum: { puntos_complejidad: 20 } }];
+        };
+        prisma.user.findMany = async () => [
+            { id: 'op-active', nombre: 'Test Active', email: 'active@test.com', rol: 'OPERADOR', area_designada: 'GENERAL', estado_operativo: 'DISPONIBLE' }
+        ];
+        prisma.ticket.findMany = async () => [];
+
+        let renderedData = null;
+        const req = { user: { nombre: 'Coord' } };
+        const res = { render: (v, d) => { renderedData = d; }, status: () => res, send: () => {} };
+
+        await getReports(req, res);
+
+        const op = renderedData.rankingOperadores.find(o => o.id === 'op-active');
+        assert(op, 'Debe existir op-active en el ranking');
+        assert.strictEqual(op.cerrados, 3, 'Debe registrar 3 tickets cerrados');
+        assert.strictEqual(op.cargaActual, 2, 'Debe registrar 2 tickets activos en cargaActual');
+        assert.strictEqual(op.asignadosTotales, 5, 'Asignados totales debe ser al menos cerrados + cargaActual (3 + 2 = 5)');
+        assert.strictEqual(op.eficiencia, 60, 'Eficiencia debe ser (3 / 5) * 100 = 60%');
+    } finally {
+        prisma.ticket.count = origCount;
+        prisma.ticket.aggregate = origAgg;
+        prisma.ticket.groupBy = origGroupBy;
+        prisma.ticket.findMany = origFindManyTicket;
+        prisma.user.findMany = origFindManyUser;
+    }
+});
+
+// 12. Adversarial: Desempate inteligente de Área Crítica por saturación (R1.4)
+runAsyncTest('R1.4: [Adversarial] Desempate inteligente de Área Crítica por porcentaje de saturación', async () => {
+    const prisma = require('../src/config/prisma');
+    const { getReports } = require('../src/controllers/reportController');
+
+    const origCount = prisma.ticket.count;
+    const origAgg = prisma.ticket.aggregate;
+    const origGroupBy = prisma.ticket.groupBy;
+    const origFindManyTicket = prisma.ticket.findMany;
+    const origFindManyUser = prisma.user.findMany;
+
+    try {
+        prisma.ticket.count = async () => 24;
+        prisma.ticket.aggregate = async () => ({ _sum: { puntos_complejidad: 40 }, _avg: { puntos_complejidad: 4 } });
+        let groupCalls = 0;
+        prisma.ticket.groupBy = async () => {
+            groupCalls++;
+            // 7: Volumen por área: WAN tiene 20 total, SEGURIDAD tiene 4 total
+            if (groupCalls === 1) {
+                return [
+                    { area_designada: 'WAN', _count: { id: 20 } },
+                    { area_designada: 'SEGURIDAD', _count: { id: 4 } }
+                ];
+            }
+            // 8: Cerrados: WAN cerró 16 (abiertos: 4, sat: 20%), SEGURIDAD cerró 0 (abiertos: 4, sat: 100%)
+            if (groupCalls === 2) {
+                return [
+                    { area_designada: 'WAN', _count: { id: 16 } },
+                    { area_designada: 'SEGURIDAD', _count: { id: 0 } }
+                ];
+            }
+            // 9: Abiertos: ambas tienen 4 abiertos
+            if (groupCalls === 3) {
+                return [
+                    { area_designada: 'WAN', _count: { id: 4 } },
+                    { area_designada: 'SEGURIDAD', _count: { id: 4 } }
+                ];
+            }
+            return [];
+        };
+        prisma.user.findMany = async () => [];
+        prisma.ticket.findMany = async () => [];
+
+        let renderedData = null;
+        const req = { user: { nombre: 'Coord' } };
+        const res = { render: (v, d) => { renderedData = d; }, status: () => res, send: () => {} };
+
+        await getReports(req, res);
+
+        assert.strictEqual(renderedData.kpis.areaCritica.area, 'SEGURIDAD', 'Área crítica debe desempatar a favor de SEGURIDAD (100% saturación vs 20%)');
+        assert.strictEqual(renderedData.kpis.areaCritica.abiertos, 4, 'Debe registrar 4 tickets abiertos');
+    } finally {
+        prisma.ticket.count = origCount;
+        prisma.ticket.aggregate = origAgg;
+        prisma.ticket.groupBy = origGroupBy;
+        prisma.ticket.findMany = origFindManyTicket;
+        prisma.user.findMany = origFindManyUser;
+    }
+});
+
+// 13. Adversarial: Conteo dinámico de áreas monitoreadas en la vista (R2.16)
+runTest('R2.16: [Adversarial] Renderizado con conteo dinámico de áreas monitoreadas en views/reports.ejs', () => {
+    const customAreaData = {
+        titulo: 'NOC Portal - Reportes',
+        currentUser: { nombre: 'Coord', email: 'coord@test.com' },
+        kpis: { total: 5, jornada: 2, resueltos: 3, tasa: '60%', puntosTotales: 15 },
+        volumenPorArea: {
+            labels: ['Redes FTTH', 'WAN', 'Telefonía'],
+            data: [2, 2, 1]
+        },
+        puntosPorArea: { labels: ['Redes FTTH', 'WAN', 'Telefonía'], data: [10, 5, 0], tipo: 'Puntos' },
+        ranking: [],
+        rankingOperadores: [],
+        operadores: [],
+        reportData: {
+            volumenPorArea: { labels: ['Redes FTTH', 'WAN', 'Telefonía'], data: [2, 2, 1] },
+            puntosPorArea: { labels: ['Redes FTTH', 'WAN', 'Telefonía'], data: [10, 5, 0], tipo: 'Puntos' }
+        }
+    };
+
+    const rendered = ejs.render(templateContent, customAreaData, { filename: templatePath });
+    assert(rendered.includes('3 Áreas Monitoreadas'), 'Debe renderizar dinámicamente "3 Áreas Monitoreadas"');
+});
+
+// 14. Adversarial: Flujo horario cuando fecha_cierre es de ayer pero resueltoEn es de hoy (R1.5)
+runAsyncTest('R1.5: [Adversarial] Flujo horario cuando fecha_cierre es de ayer pero resueltoEn es de hoy', async () => {
+    const prisma = require('../src/config/prisma');
+    const { getReports } = require('../src/controllers/reportController');
+
+    const origCount = prisma.ticket.count;
+    const origAgg = prisma.ticket.aggregate;
+    const origGroupBy = prisma.ticket.groupBy;
+    const origFindManyTicket = prisma.ticket.findMany;
+    const origFindManyUser = prisma.user.findMany;
+
+    try {
+        prisma.ticket.count = async () => 1;
+        prisma.ticket.aggregate = async () => ({ _sum: { puntos_complejidad: 5 } });
+        prisma.ticket.groupBy = async () => [];
+        prisma.user.findMany = async () => [];
+
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+        const resolvedAt11 = new Date(startOfToday.getTime() + 11 * 3600000);
+        const closedYesterday = new Date(startOfToday.getTime() - 24 * 3600000);
+
+        prisma.ticket.findMany = async (args) => {
+            return [
+                {
+                    id: 't-resuelto-hoy',
+                    createdAt: closedYesterday,
+                    fecha_cierre: closedYesterday,
+                    resueltoEn: resolvedAt11,
+                    updatedAt: resolvedAt11,
+                    estado_actual: 'CERRADO'
+                }
+            ];
+        };
+
+        let renderedData = null;
+        const req = { user: { nombre: 'Coord' } };
+        const res = { render: (v, d) => { renderedData = d; }, status: () => res, send: () => {} };
+
+        await getReports(req, res);
+
+        assert(renderedData.flujoPorHora, 'Debe existir flujoPorHora');
+        assert.strictEqual(renderedData.flujoPorHora.cerrados[11], 1, 'Debe registrar 1 ticket cerrado a las 11:00 de hoy a pesar de fecha_cierre antigua');
+    } finally {
+        prisma.ticket.count = origCount;
+        prisma.ticket.aggregate = origAgg;
+        prisma.ticket.groupBy = origGroupBy;
+        prisma.ticket.findMany = origFindManyTicket;
+        prisma.user.findMany = origFindManyUser;
+    }
+});
+
+// 15. Adversarial: Inclusión en ranking de operador con carga activa cuando operators.length === 0 (R1.6)
+runAsyncTest('R1.6: [Adversarial] Inclusión en ranking de operador con carga activa cuando operators.length === 0', async () => {
+    const prisma = require('../src/config/prisma');
+    const { getReports } = require('../src/controllers/reportController');
+
+    const origCount = prisma.ticket.count;
+    const origAgg = prisma.ticket.aggregate;
+    const origGroupBy = prisma.ticket.groupBy;
+    const origFindManyTicket = prisma.ticket.findMany;
+    const origFindManyUser = prisma.user.findMany;
+
+    try {
+        prisma.ticket.count = async () => 2;
+        prisma.ticket.aggregate = async () => ({ _sum: { puntos_complejidad: 0 } });
+        let groupCalls = 0;
+        prisma.ticket.groupBy = async () => {
+            groupCalls++;
+            if (groupCalls === 6) {
+                return [{ asignado_a_id: 'op-active-only', _count: { id: 2 } }];
+            }
+            if (groupCalls === 7) {
+                return [];
+            }
+            if (groupCalls === 8) {
+                return [{ asignado_a_id: 'op-active-only', _count: { id: 2 } }];
+            }
+            return [];
+        };
+        prisma.user.findMany = async () => [];
+        prisma.ticket.findMany = async () => [];
+
+        let renderedData = null;
+        const req = { user: { nombre: 'Coord' } };
+        const res = { render: (v, d) => { renderedData = d; }, status: () => res, send: () => {} };
+
+        await getReports(req, res);
+
+        assert(Array.isArray(renderedData.rankingOperadores) && renderedData.rankingOperadores.length === 1, 'Debe incluir al operador activo');
+        const op = renderedData.rankingOperadores[0];
+        assert.strictEqual(op.id, 'op-active-only');
+        assert.strictEqual(op.cargaActual, 2, 'Debe registrar 2 tickets activos');
+        assert.strictEqual(op.asignadosTotales, 2, 'Debe registrar 2 tickets asignados');
+        assert.strictEqual(op.eficiencia, 0, 'Debe tener 0% de eficiencia');
+    } finally {
+        prisma.ticket.count = origCount;
+        prisma.ticket.aggregate = origAgg;
+        prisma.ticket.groupBy = origGroupBy;
+        prisma.ticket.findMany = origFindManyTicket;
+        prisma.user.findMany = origFindManyUser;
+    }
+});
+
+// 16. Adversarial: Desempate de volumen por área a favor de mayor saturación (R1.7)
+runAsyncTest('R1.7: [Adversarial] Desempate de volumen por área a favor de mayor saturación', async () => {
+    const prisma = require('../src/config/prisma');
+    const { getReports } = require('../src/controllers/reportController');
+
+    const origCount = prisma.ticket.count;
+    const origAgg = prisma.ticket.aggregate;
+    const origGroupBy = prisma.ticket.groupBy;
+    const origFindManyTicket = prisma.ticket.findMany;
+    const origFindManyUser = prisma.user.findMany;
+
+    try {
+        prisma.ticket.count = async () => 20;
+        prisma.ticket.aggregate = async () => ({ _sum: { puntos_complejidad: 0 } });
+        let groupCalls = 0;
+        prisma.ticket.groupBy = async () => {
+            groupCalls++;
+            if (groupCalls === 1) {
+                return [
+                    { area_designada: 'WAN', _count: { id: 10 } },
+                    { area_designada: 'SEGURIDAD', _count: { id: 10 } }
+                ];
+            }
+            if (groupCalls === 2) {
+                return [
+                    { area_designada: 'WAN', _count: { id: 9 } },
+                    { area_designada: 'SEGURIDAD', _count: { id: 2 } }
+                ];
+            }
+            if (groupCalls === 3) {
+                return [
+                    { area_designada: 'WAN', _count: { id: 1 } },
+                    { area_designada: 'SEGURIDAD', _count: { id: 8 } }
+                ];
+            }
+            return [];
+        };
+        prisma.user.findMany = async () => [];
+        prisma.ticket.findMany = async () => [];
+
+        let renderedData = null;
+        const req = { user: { nombre: 'Coord' } };
+        const res = { render: (v, d) => { renderedData = d; }, status: () => res, send: () => {} };
+
+        await getReports(req, res);
+
+        const areas = renderedData.volumenPorArea.detalles;
+        assert.strictEqual(areas[0].area, 'SEGURIDAD', 'SEGURIDAD con 8 abiertos debe aparecer antes que WAN con 1 abierto cuando el volumen total está empatado');
+    } finally {
+        prisma.ticket.count = origCount;
+        prisma.ticket.aggregate = origAgg;
+        prisma.ticket.groupBy = origGroupBy;
+        prisma.ticket.findMany = origFindManyTicket;
+        prisma.user.findMany = origFindManyUser;
+    }
+});
+
+// 17. Adversarial: Renderizado con variables planas de KPI sin envoltura kpis (R2.17)
+runTest('R2.17: [Adversarial] Renderizado con variables planas de KPI sin envoltura kpis', () => {
+    const flatData = {
+        titulo: 'NOC Portal - Reportes',
+        currentUser: null,
+        ticketsTotales: 15,
+        ticketsJornada: 8,
+        resueltos: 7,
+        tasa: '47%',
+        puntosTotales: 65,
+        areaCritica: { nombre: 'WAN', abiertos: 3 },
+        volumenPorArea: { labels: ['WAN'], data: [15] },
+        puntosPorArea: { labels: ['WAN'], data: [65], tipo: 'Puntos' },
+        ranking: [],
+        rankingOperadores: [],
+        operadores: [],
+        reportData: {}
+    };
+
+    const rendered = ejs.render(templateContent, flatData, { filename: templatePath });
+    assert(rendered.includes('15'), 'Debe mostrar 15 tickets totales');
+    assert(rendered.includes('8'), 'Debe mostrar 8 tickets de jornada');
+    assert(rendered.includes('7'), 'Debe mostrar 7 tickets resueltos');
+    assert(rendered.includes('47%'), 'Debe mostrar tasa 47%');
+    assert(rendered.includes('65 pts'), 'Debe mostrar 65 pts');
+});
+
 console.log('\n================================================================');
 console.log(`   RESUMEN: ${passedTests}/${totalTests} pruebas pasaron correctamente`);
 console.log('================================================================\n');

@@ -250,7 +250,7 @@
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                         <h1 class="text-xl sm:text-2xl font-bold text-[#1C1C1E] tracking-tight">Reportes y Rendimiento</h1>
-                        <p class="text-[12px] text-[#8E8E93] mt-0.5">Métricas operativas globales, distribución de carga y ranking de operadores</p>
+                        <p class="text-[12px] text-[#8E8E93] mt-0.5">Métricas operativas dinámicas, saturación de área y ranking de operadores</p>
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/80 border border-[#D1D1D6] text-[11px] text-[#1C1C1E] font-medium shadow-2xs">
@@ -260,7 +260,7 @@
                     </div>
                 </div>
 
-                <!-- BEGIN: 4 KPI Cards (Liquid Glass) -->
+                <!-- BEGIN: 4 KPI Cards (Liquid Glass) - R2.1 -->
                 <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 flex-shrink-0" data-purpose="kpi-cards">
                     <!-- Card 1: Tickets Totales -->
                     <div class="figma-card p-5 flex flex-col justify-between relative overflow-hidden group">
@@ -272,7 +272,7 @@
                         </div>
                         <div class="mt-3">
                             <div class="text-[34px] font-semibold font-mono text-[#1C1C1E] tracking-tight num-tabular leading-none" id="kpi-total">
-                                <%= typeof kpis !== 'undefined' && typeof kpis.total !== 'undefined' ? kpis.total : 0 %>
+                                <%= typeof kpis !== 'undefined' && typeof kpis.total !== 'undefined' ? kpis.total : (typeof ticketsTotales !== 'undefined' ? ticketsTotales : 0) %>
                             </div>
                             <span class="text-[11px] text-[#8E8E93] mt-1.5 block">Volumen histórico global</span>
                         </div>
@@ -288,7 +288,7 @@
                         </div>
                         <div class="mt-3">
                             <div class="text-[34px] font-semibold font-mono text-[#1C1C1E] tracking-tight num-tabular leading-none" id="kpi-jornada">
-                                <%= typeof kpis !== 'undefined' && typeof kpis.jornada !== 'undefined' ? kpis.jornada : 0 %>
+                                <%= typeof kpis !== 'undefined' && typeof kpis.jornada !== 'undefined' ? kpis.jornada : (typeof ticketsJornada !== 'undefined' ? ticketsJornada : 0) %>
                             </div>
                             <span class="text-[11px] text-[#8E8E93] mt-1.5 block">Creados o resueltos hoy</span>
                         </div>
@@ -301,91 +301,207 @@
                                 Tickets Resueltos
                             </span>
                             <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#E3F9E5] text-[#1B873F] border border-[#BCE8C5]">
-                                <%= typeof kpis !== 'undefined' && kpis.tasa ? kpis.tasa : '0%' %>
+                                <%= typeof kpis !== 'undefined' && kpis.tasa ? kpis.tasa : (typeof tasa !== 'undefined' ? tasa : '0%') %>
                             </span>
                         </div>
                         <div class="mt-3">
                             <div class="text-[34px] font-semibold font-mono text-[#1C1C1E] tracking-tight num-tabular leading-none" id="kpi-resueltos">
-                                <%= typeof kpis !== 'undefined' && typeof kpis.resueltos !== 'undefined' ? kpis.resueltos : 0 %>
+                                <%= typeof kpis !== 'undefined' && typeof kpis.resueltos !== 'undefined' ? kpis.resueltos : (typeof resueltos !== 'undefined' ? resueltos : 0) %>
                             </div>
                             <span class="text-[11px] text-[#8E8E93] mt-1.5 block">Tasa de resolución efectiva</span>
                         </div>
                     </div>
 
-                    <!-- Card 4: Puntos de Complejidad -->
+                    <!-- Card 4: Área Crítica (R1.6 / R2.1) + Puntos de Complejidad -->
+                    <% 
+                        const critArea = (typeof areaCritica !== 'undefined' && areaCritica) 
+                            ? areaCritica 
+                            : ((typeof kpis !== 'undefined' && kpis.areaCritica) ? kpis.areaCritica : { nombre: 'Ninguna', abiertos: 0 });
+                        const isCritActive = critArea.abiertos > 0;
+                    %>
                     <div class="figma-card p-5 flex flex-col justify-between relative overflow-hidden group">
                         <div class="flex items-start justify-between">
                             <span class="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wider leading-tight">
-                                Puntos Completados
+                                Área Crítica
                             </span>
-                            <span class="w-2 h-2 rounded-full bg-[#FF9500] mt-0.5"></span>
+                            <% if (isCritActive) { %>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#FFE5E5] text-[#D70015] border border-[#FFC2C2] animate-pulse">
+                                    Mayor Congestión
+                                </span>
+                            <% } else { %>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#E3F9E5] text-[#1B873F] border border-[#BCE8C5]">
+                                    Estable
+                                </span>
+                            <% } %>
                         </div>
-                        <div class="mt-3">
-                            <div class="text-[34px] font-semibold font-mono text-[#1C1C1E] tracking-tight num-tabular leading-none text-[#FF9500]" id="kpi-puntos">
-                                <%= typeof kpis !== 'undefined' && typeof kpis.puntosTotales !== 'undefined' ? kpis.puntosTotales : 0 %>
+                        <div class="mt-2.5">
+                            <div class="text-[22px] font-bold text-[#1C1C1E] tracking-tight truncate leading-tight" id="kpi-area-critica">
+                                <%= critArea.nombre || critArea.label || 'Ninguna' %>
                             </div>
-                            <span class="text-[11px] text-[#8E8E93] mt-1.5 block">Complejidad acumulada</span>
+                            <div class="flex items-center justify-between text-[11px] text-[#8E8E93] mt-2">
+                                <span>
+                                    <strong class="num-tabular <%= isCritActive ? 'text-[#D70015] font-semibold' : 'text-[#34C759]' %>"><%= critArea.abiertos || critArea.ticketsAbiertos || 0 %></strong> tickets abiertos
+                                </span>
+                                <span id="kpi-puntos" class="font-mono text-[10px] text-[#8E8E93]">
+                                    <%= typeof kpis !== 'undefined' && typeof kpis.puntosTotales !== 'undefined' ? kpis.puntosTotales : (typeof puntosTotales !== 'undefined' ? puntosTotales : 0) %> pts
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </section>
                 <!-- END: KPI Cards -->
 
-                <!-- BEGIN: Charts Section (Horizontal Bar + Donut) -->
-                <section class="grid grid-cols-1 lg:grid-cols-2 gap-5 flex-shrink-0">
-                    <!-- Chart 1: Volumen por Área (Horizontal Bar) -->
-                    <div class="figma-card p-5 sm:p-6 flex flex-col">
+                <!-- BEGIN: Charts Section 1 (Grouped Bar + Saturation Indicators & Donut) - R2.2, R2.3 -->
+                <section class="grid grid-cols-1 xl:grid-cols-12 gap-5 flex-shrink-0">
+                    <!-- Chart 1: Volumen vs Cerrados por Área & Indicadores de Saturación (R2.2) -->
+                    <div class="xl:col-span-7 figma-card p-5 sm:p-6 flex flex-col">
                         <div class="flex items-center justify-between pb-3 border-b border-[#E5E5EA]">
                             <div>
-                                <h2 class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Volumen de Tickets por Área</h2>
-                                <p class="text-[11px] text-[#8E8E93] mt-0.5">Cantidad de incidencias registradas por especialidad técnica</p>
+                                <h2 class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Volumen de Tickets vs Cerrados por Área</h2>
+                                <p class="text-[11px] text-[#8E8E93] mt-0.5">Evaluación de saturación técnica: total de incidencias vs resueltas</p>
                             </div>
-                            <span class="text-[10px] font-mono text-[#8E8E93] px-2 py-0.5 rounded bg-black/5 font-semibold">BARRAS</span>
+                            <span class="text-[10px] font-mono text-[#8E8E93] px-2 py-0.5 rounded bg-black/5 font-semibold">BARRAS AGRUPADAS</span>
                         </div>
-                        <div class="relative w-full h-[280px] sm:h-[300px] mt-4">
+
+                        <!-- Canvas Grouped Bar Chart -->
+                        <div class="relative w-full h-[250px] sm:h-[270px] mt-4">
                             <canvas id="areaVolumeChart"></canvas>
+                        </div>
+
+                        <!-- Indicadores de Saturación por Área (Barras de Progreso) -->
+                        <div class="mt-5 pt-4 border-t border-[#E5E5EA]">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wider">Indicadores de Saturación Técnica</span>
+                                <span class="text-[10px] font-mono text-[#8E8E93]">% tickets aún abiertos</span>
+                            </div>
+                            <div class="space-y-2.5 max-h-[190px] overflow-y-auto pr-1">
+                                <% 
+                                    let areaDetalles = (typeof volumenPorArea !== 'undefined' && volumenPorArea.detalles) ? volumenPorArea.detalles : [];
+                                    if ((!areaDetalles || areaDetalles.length === 0) && typeof volumenPorArea !== 'undefined' && volumenPorArea.labels && volumenPorArea.labels.length > 0) {
+                                        const vLabels = volumenPorArea.labels;
+                                        const vTotals = volumenPorArea.totales || volumenPorArea.data || volumenPorArea.values || [];
+                                        const vClosed = volumenPorArea.cerrados || [];
+                                        const vSats = volumenPorArea.saturaciones || [];
+                                        areaDetalles = vLabels.map((lbl, idx) => {
+                                            const tot = vTotals[idx] || 0;
+                                            const cls = vClosed[idx] || 0;
+                                            const sat = (typeof vSats[idx] !== 'undefined') ? vSats[idx] : (tot > 0 ? Math.round(((tot - cls) / tot) * 100) : 0);
+                                            return { label: lbl, total: tot, cerrados: cls, saturacion: sat };
+                                        });
+                                    }
+                                    if (areaDetalles.length > 0) {
+                                        areaDetalles.forEach(areaItem => {
+                                            const sat = areaItem.saturacion || 0;
+                                            const isHigh = sat >= 60 && areaItem.total > 0;
+                                            const isMid = sat >= 30 && sat < 60 && areaItem.total > 0;
+                                %>
+                                    <div class="flex flex-col gap-1 text-[11px]">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center gap-1.5">
+                                                <span class="font-medium text-[#1C1C1E]"><%= areaItem.label %></span>
+                                                <span class="text-[10px] font-mono text-[#8E8E93]">(<%= areaItem.cerrados %>/<%= areaItem.total %> cerrados)</span>
+                                            </div>
+                                            <div class="flex items-center gap-1.5 font-mono">
+                                                <% if (isHigh) { %>
+                                                    <span class="text-[10px] font-bold text-[#D70015] bg-[#FFE5E5] px-1.5 py-0.2 rounded">Sat. <%= sat %>%</span>
+                                                <% } else if (isMid) { %>
+                                                    <span class="text-[10px] font-bold text-[#B25E02] bg-[#FFF4D6] px-1.5 py-0.2 rounded">Sat. <%= sat %>%</span>
+                                                <% } else { %>
+                                                    <span class="text-[10px] font-bold text-[#1B873F] bg-[#E3F9E5] px-1.5 py-0.2 rounded">Sat. <%= sat %>%</span>
+                                                <% } %>
+                                            </div>
+                                        </div>
+                                        <div class="w-full bg-[#E5E5EA] h-1.5 rounded-full overflow-hidden">
+                                            <div class="h-full rounded-full transition-all duration-500 <%= isHigh ? 'bg-[#FF3B30]' : (isMid ? 'bg-[#FF9500]' : 'bg-[#34C759]') %>"
+                                                 style="width: <%= Math.min(100, Math.max(0, sat)) %>%"></div>
+                                        </div>
+                                    </div>
+                                <% 
+                                        });
+                                    } else { 
+                                %>
+                                    <span class="text-[11px] text-[#8E8E93]">No hay registros de saturación por área.</span>
+                                <% } %>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Chart 2: Total Puntos / Distribución por Área (Doughnut) -->
-                    <div class="figma-card p-5 sm:p-6 flex flex-col">
-                        <div class="flex items-center justify-between pb-3 border-b border-[#E5E5EA]">
-                            <div>
-                                <h2 class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Distribución por Área</h2>
-                                <p class="text-[11px] text-[#8E8E93] mt-0.5">Proporción de puntos de complejidad o volumen por área</p>
+                    <!-- Chart 2: Total Puntos / Distribución por Área (Doughnut) - R2.3 -->
+                    <div class="xl:col-span-5 figma-card p-5 sm:p-6 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between pb-3 border-b border-[#E5E5EA]">
+                                <div>
+                                    <h2 class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Distribución por Área</h2>
+                                    <p class="text-[11px] text-[#8E8E93] mt-0.5">Proporción de puntos de complejidad o volumen por especialidad</p>
+                                </div>
+                                <span class="text-[10px] font-mono text-[#8E8E93] px-2 py-0.5 rounded bg-black/5 font-semibold">DONA</span>
                             </div>
-                            <span class="text-[10px] font-mono text-[#8E8E93] px-2 py-0.5 rounded bg-black/5 font-semibold">DONA</span>
+                            <div class="relative w-full h-[270px] sm:h-[300px] mt-4">
+                                <canvas id="areaPointsChart"></canvas>
+                            </div>
                         </div>
-                        <div class="relative w-full h-[280px] sm:h-[300px] mt-4 flex items-center justify-center">
-                            <canvas id="areaPointsChart"></canvas>
+                        <div class="mt-4 pt-3 border-t border-[#E5E5EA] flex items-center justify-between text-[11px] text-[#8E8E93]">
+                            <span>Métrica activa: <strong class="text-[#1C1C1E]"><%= (typeof puntosPorArea !== 'undefined' && puntosPorArea.tipo) ? puntosPorArea.tipo : 'Puntos' %></strong></span>
+                            <span class="font-mono text-[10px]"><%= typeof volumenPorArea !== 'undefined' && volumenPorArea.labels ? volumenPorArea.labels.length : 7 %> Áreas Monitoreadas</span>
                         </div>
                     </div>
                 </section>
-                <!-- END: Charts Section -->
+                <!-- END: Charts Section 1 -->
 
-                <!-- BEGIN: Ranking de Operadores (Liquid Glass Table) -->
+                <!-- BEGIN: Hourly Flow Chart (Line Chart) - R1.5, R2.5 -->
+                <section class="figma-card p-5 sm:p-6 flex flex-col flex-shrink-0">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#E5E5EA]">
+                        <div>
+                            <h2 class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Flujo Horario de la Jornada</h2>
+                            <p class="text-[11px] text-[#8E8E93] mt-0.5">Comparativa en tiempo real: incidencias creadas vs tickets cerrados por hora (00:00 - 23:00)</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-1.5 text-[11px] text-[#48484A]">
+                                <span class="w-2.5 h-2.5 rounded-full bg-[#007AFF]"></span>
+                                <span>Creados</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 text-[11px] text-[#48484A]">
+                                <span class="w-2.5 h-2.5 rounded-full bg-[#34C759]"></span>
+                                <span>Cerrados</span>
+                            </div>
+                            <span class="text-[10px] font-mono text-[#8E8E93] px-2 py-0.5 rounded bg-black/5 font-semibold">LÍNEAS</span>
+                        </div>
+                    </div>
+                    <div class="relative w-full h-[220px] sm:h-[260px] mt-4">
+                        <canvas id="hourlyFlowChart"></canvas>
+                    </div>
+                </section>
+                <!-- END: Hourly Flow Chart -->
+
+                <!-- BEGIN: Ranking de Operadores (Liquid Glass Table) - R1.4, R2.4 -->
                 <section class="figma-card flex flex-col overflow-hidden mb-4">
                     <div class="px-5 py-4 border-b border-[#E5E5EA] bg-white/40 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div>
                             <h2 class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Ranking de Operadores</h2>
-                            <p class="text-[11px] text-[#8E8E93] mt-0.5">Clasificación basada en puntos de complejidad de tickets resueltos o cerrados</p>
+                            <p class="text-[11px] text-[#8E8E93] mt-0.5">Rendimiento calculado en vivo: resolución, eficiencia histórica y semáforo de carga actual</p>
                         </div>
-                        <span class="inline-flex items-center gap-1 text-[11px] text-[#48484A] font-medium bg-[#F2F2F7] px-2.5 py-1 rounded-full border border-[#D1D1D6]">
-                            <svg class="w-3.5 h-3.5 text-[#007AFF]" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                            </svg>
-                            <span>Efectividad NOC</span>
-                        </span>
+                        <div class="flex items-center gap-2">
+                            <span class="inline-flex items-center gap-1 text-[11px] text-[#48484A] font-medium bg-[#F2F2F7] px-2.5 py-1 rounded-full border border-[#D1D1D6]">
+                                <svg class="w-3.5 h-3.5 text-[#007AFF]" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                </svg>
+                                <span>Efectividad NOC</span>
+                            </span>
+                        </div>
                     </div>
 
-                    <div class="overflow-x-auto overflow-y-auto max-h-[460px]">
+                    <div class="overflow-x-auto overflow-y-auto max-h-[500px]">
                         <table class="w-full text-left border-collapse text-[12px]">
                             <thead class="bg-white/90 backdrop-blur-md sticky top-0 z-10 border-b border-[#E5E5EA]">
                                 <tr>
                                     <th class="py-2.5 px-4 font-semibold text-[#8E8E93] uppercase tracking-wider text-[10px] w-12 text-center">Pos.</th>
                                     <th class="py-2.5 px-4 font-semibold text-[#8E8E93] uppercase tracking-wider text-[10px]">Operador</th>
-                                    <th class="py-2.5 px-4 font-semibold text-[#8E8E93] uppercase tracking-wider text-[10px]">Área Designada</th>
+                                    <th class="py-2.5 px-4 font-semibold text-[#8E8E93] uppercase tracking-wider text-[10px]">Área</th>
+                                    <th class="py-2.5 px-4 font-semibold text-[#8E8E93] uppercase tracking-wider text-[10px] text-right">Asignados</th>
+                                    <th class="py-2.5 px-4 font-semibold text-[#8E8E93] uppercase tracking-wider text-[10px] text-right">Cerrados</th>
+                                    <th class="py-2.5 px-4 font-semibold text-[#8E8E93] uppercase tracking-wider text-[10px]">Eficiencia</th>
+                                    <th class="py-2.5 px-4 font-semibold text-[#8E8E93] uppercase tracking-wider text-[10px]">Carga Actual</th>
                                     <th class="py-2.5 px-4 font-semibold text-[#8E8E93] uppercase tracking-wider text-[10px] text-right">Puntos Complejidad</th>
-                                    <th class="py-2.5 px-4 font-semibold text-[#8E8E93] uppercase tracking-wider text-[10px] text-right">Tickets Resueltos</th>
                                     <th class="py-2.5 px-4 font-semibold text-[#8E8E93] uppercase tracking-wider text-[10px]">Tiempo Promedio</th>
                                     <th class="py-2.5 px-4 font-semibold text-[#8E8E93] uppercase tracking-wider text-[10px] text-center">Estado</th>
                                 </tr>
@@ -428,17 +544,64 @@
                                             </span>
                                         </td>
 
-                                        <!-- Puntos -->
+                                        <!-- Asignados Totales (R1.4) -->
                                         <td class="py-3 px-4 text-right">
-                                            <span class="text-[#007AFF] font-mono font-bold text-[13px] num-tabular">
-                                                <%= op.puntos || 0 %> <span class="text-[10px] font-sans font-medium text-[#8E8E93]">pts</span>
+                                            <span class="font-mono text-[#48484A] font-medium num-tabular">
+                                                <%= typeof op.asignadosTotales !== 'undefined' ? op.asignadosTotales : (typeof op.asignados !== 'undefined' ? op.asignados : 0) %>
                                             </span>
                                         </td>
 
-                                        <!-- Tickets Resueltos -->
+                                        <!-- Tickets Cerrados / Resueltos (R1.4) -->
                                         <td class="py-3 px-4 text-right">
-                                            <span class="font-mono text-[#1C1C1E] font-medium num-tabular">
-                                                <%= op.resueltos || 0 %>
+                                            <span class="font-mono text-[#1C1C1E] font-semibold num-tabular">
+                                                <%= typeof op.cerrados !== 'undefined' ? op.cerrados : (op.resueltos || 0) %>
+                                            </span>
+                                        </td>
+
+                                        <!-- Eficiencia (Barra de Porcentaje) - R1.4, R2.4 -->
+                                        <td class="py-3 px-4 min-w-[130px]">
+                                            <% 
+                                                const ef = typeof op.eficiencia !== 'undefined' ? Number(op.eficiencia) : 0;
+                                            %>
+                                            <div class="flex items-center gap-2">
+                                                <span class="font-mono font-semibold text-[11px] text-[#1C1C1E] w-9 text-right num-tabular"><%= ef %>%</span>
+                                                <div class="w-16 bg-[#E5E5EA] rounded-full h-1.5 overflow-hidden flex-shrink-0">
+                                                    <div class="h-full rounded-full transition-all duration-300 <%= ef >= 80 ? 'bg-[#34C759]' : (ef >= 50 ? 'bg-[#007AFF]' : 'bg-[#FF9500]') %>"
+                                                         style="width: <%= Math.min(100, Math.max(0, ef)) %>%"></div>
+                                                </div>
+                                            </div>
+                                        </td>
+
+                                        <!-- Carga Actual (Semáforo Verde/Amarillo/Rojo) - R1.4, R2.4 -->
+                                        <td class="py-3 px-4 min-w-[130px]">
+                                            <% 
+                                                const carga = typeof op.cargaActual !== 'undefined' ? Number(op.cargaActual) : (typeof op.carga !== 'undefined' ? Number(op.carga) : 0);
+                                            %>
+                                            <% if (carga <= 2) { %>
+                                                <!-- Baja (Verde) -->
+                                                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#E3F9E5] text-[#1B873F] border border-[#BCE8C5]">
+                                                    <span class="w-2 h-2 rounded-full bg-[#34C759]"></span>
+                                                    <span><%= carga %> activas (Baja)</span>
+                                                </span>
+                                            <% } else if (carga <= 4) { %>
+                                                <!-- Media (Amarillo) -->
+                                                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#FFF4D6] text-[#B25E02] border border-[#FFE8A3]">
+                                                    <span class="w-2 h-2 rounded-full bg-[#FF9500]"></span>
+                                                    <span><%= carga %> activas (Media)</span>
+                                                </span>
+                                            <% } else { %>
+                                                <!-- Alta (Rojo) -->
+                                                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#FFE5E5] text-[#D70015] border border-[#FFC2C2]">
+                                                    <span class="w-2 h-2 rounded-full bg-[#FF3B30] animate-pulse"></span>
+                                                    <span><%= carga %> activas (Alta)</span>
+                                                </span>
+                                            <% } %>
+                                        </td>
+
+                                        <!-- Puntos Complejidad -->
+                                        <td class="py-3 px-4 text-right">
+                                            <span class="text-[#007AFF] font-mono font-bold text-[12px] num-tabular">
+                                                <%= op.puntos || 0 %> <span class="text-[10px] font-sans font-medium text-[#8E8E93]">pts</span>
                                             </span>
                                         </td>
 
@@ -470,13 +633,13 @@
                                     </tr>
                                     <% }) %>
                                     <tr id="rankingNoMatchRow" class="hidden">
-                                        <td colspan="7" class="py-8 text-center text-[#8E8E93]">
+                                        <td colspan="10" class="py-8 text-center text-[#8E8E93]">
                                             No se encontraron operadores que coincidan con la búsqueda.
                                         </td>
                                     </tr>
                                 <% } else { %>
                                     <tr>
-                                        <td colspan="7" class="py-8 text-center text-[#8E8E93]">
+                                        <td colspan="10" class="py-8 text-center text-[#8E8E93]">
                                             No hay operadores registrados para mostrar en el ranking.
                                         </td>
                                     </tr>
@@ -548,7 +711,7 @@
         // Initialize Charts when DOM is fully loaded & Chart.js is ready
         (function() {
             function handleChartUnavailable() {
-                ['areaVolumeChart', 'areaPointsChart'].forEach(function(canvasId) {
+                ['areaVolumeChart', 'areaPointsChart', 'hourlyFlowChart'].forEach(function(canvasId) {
                     const canvas = document.getElementById(canvasId);
                     if (canvas && canvas.parentElement) {
                         canvas.style.display = 'none';
@@ -563,7 +726,7 @@
                                     </svg>
                                 </div>
                                 <span class="text-[12px] font-medium text-[#1C1C1E]">Visualización gráfica no disponible</span>
-                                <span class="text-[11px] text-[#8E8E93] mt-1 max-w-[240px]">Los datos operacionales están consolidados en las tarjetas superiores.</span>
+                                <span class="text-[11px] text-[#8E8E93] mt-1 max-w-[240px]">Los datos consolidados se muestran en las tablas y métricas superiores.</span>
                             `;
                             canvas.parentElement.appendChild(fallback);
                         }
@@ -574,8 +737,9 @@
             function initCharts() {
                 let reportData = {
                     kpis: {},
-                    volumenPorArea: { labels: [], data: [] },
+                    volumenPorArea: { labels: [], data: [], totales: [], cerrados: [] },
                     puntosPorArea: { labels: [], data: [] },
+                    flujoPorHora: { labels: [], creados: [], cerrados: [] },
                     rankingOperadores: []
                 };
 
@@ -599,7 +763,7 @@
                     '#5AC8FA'  // Teal
                 ];
 
-                // 1. Gráfico de Barras Horizontales (Volumen de Tickets por Área)
+                // 1. Gráfico de Barras Agrupadas: Volumen Total vs Cerrados por Área (R2.2)
                 const barCanvas = document.getElementById('areaVolumeChart');
                 if (barCanvas && typeof Chart !== 'undefined') {
                     const existingBar = Chart.getChart(barCanvas);
@@ -607,26 +771,42 @@
 
                     const volumen = reportData.volumenPorArea || reportData.volumen_por_area || {};
                     const barLabels = volumen.labels || [];
-                    const barValues = volumen.data || volumen.values || [];
+                    const rawTotalData = volumen.totales || volumen.data || volumen.values || [];
+                    const rawClosedData = volumen.cerrados || [];
+
+                    const safeTotalData = barLabels.map((_, i) => (typeof rawTotalData[i] !== 'undefined' ? rawTotalData[i] : 0));
+                    const safeClosedData = barLabels.map((_, i) => (typeof rawClosedData[i] !== 'undefined' ? rawClosedData[i] : 0));
 
                     new Chart(barCanvas.getContext('2d'), {
                         type: 'bar',
                         data: {
                             labels: barLabels,
-                            datasets: [{
-                                label: 'Tickets',
-                                data: barValues,
-                                backgroundColor: 'rgba(0, 122, 255, 0.75)',
-                                hoverBackgroundColor: '#007AFF',
-                                borderColor: '#007AFF',
-                                borderWidth: 1,
-                                borderRadius: 6,
-                                barThickness: 16,
-                                maxBarThickness: 22
-                            }]
+                            datasets: [
+                                {
+                                    label: 'Volumen Total',
+                                    data: safeTotalData,
+                                    backgroundColor: 'rgba(0, 122, 255, 0.75)',
+                                    hoverBackgroundColor: '#007AFF',
+                                    borderColor: '#007AFF',
+                                    borderWidth: 1,
+                                    borderRadius: 5,
+                                    barPercentage: 0.8,
+                                    categoryPercentage: 0.7
+                                },
+                                {
+                                    label: 'Tickets Cerrados',
+                                    data: safeClosedData,
+                                    backgroundColor: 'rgba(52, 199, 89, 0.75)',
+                                    hoverBackgroundColor: '#34C759',
+                                    borderColor: '#34C759',
+                                    borderWidth: 1,
+                                    borderRadius: 5,
+                                    barPercentage: 0.8,
+                                    categoryPercentage: 0.7
+                                }
+                            ]
                         },
                         options: {
-                            indexAxis: 'y', // Hace las barras horizontales
                             responsive: true,
                             maintainAspectRatio: false,
                             animation: {
@@ -634,44 +814,46 @@
                                 easing: 'easeOutQuart'
                             },
                             plugins: {
-                                legend: { display: false },
+                                legend: {
+                                    display: true,
+                                    position: 'top',
+                                    labels: {
+                                        boxWidth: 10,
+                                        boxHeight: 10,
+                                        useBorderRadius: true,
+                                        borderRadius: 2,
+                                        font: { size: 11, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
+                                        color: '#1C1C1E',
+                                        padding: 12
+                                    }
+                                },
                                 tooltip: {
                                     backgroundColor: 'rgba(28, 28, 30, 0.92)',
                                     titleFont: { size: 12, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
                                     bodyFont: { size: 12, family: 'SF Mono, Menlo, monospace' },
                                     padding: 10,
-                                    cornerRadius: 8,
-                                    displayColors: false,
-                                    callbacks: {
-                                        label: function(ctx) {
-                                            const val = ctx.parsed?.x ?? ctx.raw ?? 0;
-                                            return ` Tickets: ${val}`;
-                                        }
-                                    }
+                                    cornerRadius: 8
                                 }
                             },
                             scales: {
                                 x: {
+                                    grid: { display: false },
+                                    border: { display: false },
+                                    ticks: {
+                                        font: { size: 10, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
+                                        color: '#1C1C1E',
+                                        maxRotation: 25,
+                                        minRotation: 0
+                                    }
+                                },
+                                y: {
                                     beginAtZero: true,
-                                    suggestedMax: 5,
-                                    grid: {
-                                        color: 'rgba(0, 0, 0, 0.04)'
-                                    },
-                                    border: {
-                                        display: false
-                                    },
+                                    grid: { color: 'rgba(0, 0, 0, 0.04)' },
+                                    border: { display: false },
                                     ticks: {
                                         precision: 0,
                                         font: { size: 11, family: 'SF Mono, Menlo, monospace' },
                                         color: '#8E8E93'
-                                    }
-                                },
-                                y: {
-                                    grid: { display: false },
-                                    border: { display: false },
-                                    ticks: {
-                                        font: { size: 11, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
-                                        color: '#1C1C1E'
                                     }
                                 }
                             }
@@ -679,7 +861,7 @@
                     });
                 }
 
-                // 2. Gráfico de Dona (Distribución de Puntos o Tickets por Área)
+                // 2. Gráfico de Dona: Distribución de Puntos o Tickets por Área (R2.3)
                 const donutCanvas = document.getElementById('areaPointsChart');
                 if (donutCanvas && typeof Chart !== 'undefined') {
                     const existingDonut = Chart.getChart(donutCanvas);
@@ -691,11 +873,11 @@
                     const tipoLabel = puntos.tipo || 'Puntos';
                     const hasData = donutValues.some(v => v > 0);
 
-                    // Si no hay valores registrados aún, mostrar placeholder sutil
-                    const chartData = hasData ? donutValues : [1];
-                    const chartLabels = hasData ? donutLabels : ['Sin registros'];
-                    const chartColors = hasData
-                        ? donutLabels.map((_, i) => appleColors[i % appleColors.length])
+                    const activeIndices = hasData ? donutValues.map((v, i) => v > 0 ? i : -1).filter(i => i !== -1) : [];
+                    const chartData = hasData && activeIndices.length > 0 ? activeIndices.map(i => donutValues[i]) : [1];
+                    const chartLabels = hasData && activeIndices.length > 0 ? activeIndices.map(i => donutLabels[i]) : ['Sin registros'];
+                    const chartColors = hasData && activeIndices.length > 0
+                        ? activeIndices.map(i => appleColors[i % appleColors.length])
                         : ['rgba(142, 142, 147, 0.25)'];
 
                     new Chart(donutCanvas.getContext('2d'), {
@@ -718,15 +900,6 @@
                                 duration: 700,
                                 easing: 'easeOutQuart'
                             },
-                            onResize: function(chart) {
-                                if (typeof window !== 'undefined') {
-                                    const targetPos = window.innerWidth < 640 ? 'bottom' : 'right';
-                                    if (chart.options.plugins.legend.position !== targetPos) {
-                                        chart.options.plugins.legend.position = targetPos;
-                                        chart.update('none');
-                                    }
-                                }
-                            },
                             plugins: {
                                 legend: {
                                     position: (typeof window !== 'undefined' && window.innerWidth < 640) ? 'bottom' : 'right',
@@ -736,9 +909,9 @@
                                         boxHeight: 10,
                                         borderRadius: 3,
                                         useBorderRadius: true,
-                                        font: { size: 11, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
+                                        font: { size: 10, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
                                         color: '#1C1C1E',
-                                        padding: 10
+                                        padding: 8
                                     }
                                 },
                                 tooltip: {
@@ -759,6 +932,116 @@
                                 }
                             }
                         }
+                    });
+                }
+
+                // 3. Gráfico de Líneas: Flujo por Hora (Creados vs Cerrados) - R2.5
+                const lineCanvas = document.getElementById('hourlyFlowChart');
+                if (lineCanvas && typeof Chart !== 'undefined') {
+                    const existingLine = Chart.getChart(lineCanvas);
+                    if (existingLine) existingLine.destroy();
+
+                    const flujo = reportData.flujoPorHora || reportData.flujo_por_hora || {};
+                    const defaultHours = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
+                    const flujoLabels = (flujo.labels && flujo.labels.length > 0) ? flujo.labels : defaultHours;
+                    const rawCreados = flujo.creados || [];
+                    const rawCerrados = flujo.cerrados || [];
+                    const safeCreados = flujoLabels.map((_, i) => (typeof rawCreados[i] !== 'undefined' ? rawCreados[i] : 0));
+                    const safeCerrados = flujoLabels.map((_, i) => (typeof rawCerrados[i] !== 'undefined' ? rawCerrados[i] : 0));
+
+                    new Chart(lineCanvas.getContext('2d'), {
+                        type: 'line',
+                        data: {
+                            labels: flujoLabels,
+                            datasets: [
+                                {
+                                    label: 'Creados Hoy',
+                                    data: safeCreados,
+                                    borderColor: '#007AFF',
+                                    backgroundColor: 'rgba(0, 122, 255, 0.08)',
+                                    fill: true,
+                                    tension: 0.35,
+                                    borderWidth: 2,
+                                    pointRadius: 3,
+                                    pointHoverRadius: 5,
+                                    pointBackgroundColor: '#007AFF'
+                                },
+                                {
+                                    label: 'Cerrados Hoy',
+                                    data: safeCerrados,
+                                    borderColor: '#34C759',
+                                    backgroundColor: 'rgba(52, 199, 89, 0.08)',
+                                    fill: true,
+                                    tension: 0.35,
+                                    borderWidth: 2,
+                                    pointRadius: 3,
+                                    pointHoverRadius: 5,
+                                    pointBackgroundColor: '#34C759'
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: {
+                                duration: 700,
+                                easing: 'easeOutQuart'
+                            },
+                            interaction: {
+                                mode: 'index',
+                                intersect: false
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    backgroundColor: 'rgba(28, 28, 30, 0.92)',
+                                    titleFont: { size: 12, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
+                                    bodyFont: { size: 12, family: 'SF Mono, Menlo, monospace' },
+                                    padding: 10,
+                                    cornerRadius: 8
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    grid: { color: 'rgba(0, 0, 0, 0.02)' },
+                                    border: { display: false },
+                                    ticks: {
+                                        font: { size: 10, family: 'SF Mono, Menlo, monospace' },
+                                        color: '#8E8E93',
+                                        maxTicksLimit: 12,
+                                        autoSkip: true
+                                    }
+                                },
+                                y: {
+                                    beginAtZero: true,
+                                    grid: { color: 'rgba(0, 0, 0, 0.04)' },
+                                    border: { display: false },
+                                    ticks: {
+                                        precision: 0,
+                                        font: { size: 10, family: 'SF Mono, Menlo, monospace' },
+                                        color: '#8E8E93'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // Ajuste responsivo de la leyenda del gráfico de dona al cambiar tamaño de ventana
+                if (typeof window !== 'undefined') {
+                    let resizeTimer = null;
+                    window.addEventListener('resize', function() {
+                        if (resizeTimer) clearTimeout(resizeTimer);
+                        resizeTimer = setTimeout(function() {
+                            const donut = Chart.getChart('areaPointsChart');
+                            if (donut && donut.options && donut.options.plugins && donut.options.plugins.legend) {
+                                const newPos = window.innerWidth < 640 ? 'bottom' : 'right';
+                                if (donut.options.plugins.legend.position !== newPos) {
+                                    donut.options.plugins.legend.position = newPos;
+                                    donut.update();
+                                }
+                            }
+                        }, 150);
                     });
                 }
             }
