@@ -178,15 +178,6 @@
                     <div class="h-5 w-[1px] bg-[#D1D1D6]"></div>
                     <span class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Operaciones IP</span>
                 </div>
-                <div class="ml-2 hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F2F2F7] border border-[#D1D1D6] text-[11px] text-[#48484A] font-medium">
-                    <span class="w-2 h-2 rounded-full bg-[#34C759]"></span>
-                    <span>Consola del Operador</span>
-                </div>
-                <!-- Real-time Status Indicator -->
-                <div id="realtimeStatusBadge" class="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#E3F9E5] border border-[#A7E8B5] text-[11px] text-[#1B873F] font-medium" title="Sincronización en tiempo real activa">
-                    <span class="w-2 h-2 rounded-full bg-[#34C759] animate-pulse"></span>
-                    <span id="realtimeStatusText">En tiempo real</span>
-                </div>
             </div>
 
             <div class="flex items-center gap-3">
@@ -388,7 +379,7 @@
                                 Todas
                             </button>
                             <button type="button" onclick="filterByPriorityLocal('HIGH')" id="filterBtnHigh" class="px-2.5 py-1 rounded-[6px] bg-[#F5F5F7] hover:bg-[#EBEBF0] text-[#1C1C1E] border border-black/5 text-[11px] font-medium transition cursor-pointer">
-                                Alta Carga (≥5 pts)
+                                Alta Carga 
                             </button>
                             <button type="button" onclick="filterByPriorityLocal('P1')" id="filterBtnP1" class="px-2 py-1 rounded-[6px] bg-[#F5F5F7] hover:bg-[#EBEBF0] text-[#1C1C1E] border border-black/5 text-[11px] font-medium transition cursor-pointer flex items-center gap-1">
                                 <span class="w-1.5 h-1.5 rounded-full bg-[#FF3B30]"></span>

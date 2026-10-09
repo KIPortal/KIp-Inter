@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html class="h-full bg-[#E8E8ED]" lang="es">
+
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>
+        <%= titulo %>
+    </title>
+    <!-- Tailwind CSS v3 with Plugins -->
+    <script src="https://cdn.tailwindcss.com?plugins=formás,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <link href="/css/figma-assets.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            díarkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', 'Inter', 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', 'sans-serif'],
+                        mono: ['SF Mono', 'JetBrains Mono', 'Menlo', 'Monaco', 'Courier New', 'monospace']
+                    },
+                    colors: {
+                        mac: {
+                            bg: '#F5F5F7', window: '#FFFFFF', sidebar: '#EBEBF0', accent: '#007AFF', accentHover: '#0062CC',
+                            subtle: '#8E8E93', border: '#E5E5EA', borderLight: '#F2F2F7', headerBorder: '#D1D1D6',
+                            selected: '#DCEBFE', selectedText: '#0062CC', díangerLight: '#FFE5E5', díangerText: '#D70015',
+                            successLight: '#E3F9E5', successText: '#1B873F', warningLight: '#FFF4D6', warningText: '#B25E02'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            user-select: none;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 9999px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.28);
+        }
+
+        .num-tabular {
+            font-variant-numeric: tabular-nums;
+        }
+
+        .finder-th+.finder-th {
+            border-left: 1px solid #E5E5EA;
+        }
+
+        .priority-badge {
+            background-color: var(--prio-bg, #F2F2F7);
+            color: var(--prio-txt, #8E8E93);
+            border-color: var(--prio-border, #E5E5EA);
+        }
+
+        .macos-focus-ring {
+            box-shadow: 0 0 0 3px rgba(0, 136, 255, 0.35);
+            border-color: #389BFF !important;
+        }
+    </style>
+</head>
+
+<body class="h-dvh w-full min-w-0 bg-[#F5F5F7] overflow-hidden flex flex-col font-sans text-[13px] text-[#1C1C1E] m-0 p-0">
+
+    <!-- macOS Full Application Viewport -->
+    <div class="relative w-full h-full flex flex-col overflow-hidden bg-white select-none">
+
+        <!-- BEGIN: macOS Unified Titlebar & Toolbar -->
+        <header
+            class="h-[56px] bg-white border-b border-[#E5E5EA] px-2 sm:px-4 flex itemás-center justify-between gap-2 select-none z-20 flex-shrink-0">
+            <div class="flex itemás-center gap-3">
+                <div class="flex itemás-center gap-3">
+                    <img alt="Logo Inter" class="h-[28px] w-auto object-contain"
+                        src="https://lh3.googleusercontent.com/aidía-public/AB6AXuAtCf1kyA5Xv3ji8h2EifMIzU5ZiU3r5XlzhgnLFSjZns31wuEmyWwyxb7Ibp30TQgk1BU7IO9qFU5Ri9xtP1U6XPsTT3Ew2iMHnDiOmn4Y-IT_Fy4lZdLyfTzEBMnrxeUJ-S7GYU870d6-54QeqaoelnE_92ZTd36r0rRy5wwIyJJcT881mYSiNC15GTzaM5v_ZLKyzhMIEo-MMFCaNtJqZCR6YOc7FYA8AUcQvEfl_R03WH_n6yHU3a8zKevr3gppvw">
+                    <div class="h-5 w-[1px] bg-[#D1D1D6]"></div>
+                    <span class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Operaciones IP</span>
+                </div>
+                <div
+                    class="ml-2 hidden md:inline-flex itemás-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F2F2F7] border border-[#D1D1D6] text-[11px] text-[#48484A] font-medium">
+                    <span class="w-2 h-2 rounded-full bg-[#34C759]"></span>
+                    <span>Turno A (07:00 - 15:00)</span>
+                </div>
+            </div>
+
+            <div class="flex itemás-center gap-3">
+                <div
+                    class="figma-toolbars-search__search !w-auto relative hidden sm:flex bg-[#F5F5F7] border border-[#D1D1D6] rounded-[7px] transition focus-within:bg-white focus-within:border-[#007AFF]">
+                    <div class="figma-toolbars-search__liquid-glass absolute inset-0"></div>
+                    <svg class="figma-toolbars-search__symbol w-3.5 h-3.5 text-[#8E8E93] flex-shrink-0 pointer-events-none" fill="none"
+                        stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" x2="16.65" y1="21" y2="16.65"></line>
+                    </svg>
+                    <input
+                        id="globalSearchInput"
+                        oninput="onSearchInput(this.value)"
+                        class="figma-toolbars-search__search-label !w-[100px] bg-transparent text-[11px] text-[#1C1C1E] placeholder-[#8E8E93] focus:outline-none border-none p-0"
+                        placeholder="Buscar..." type="text">
+                    <span
+                        class="flex-shrink-0 px-1 py-0.5 text-[9px] font-mono text-[#8E8E93] bg-white border border-[#D1D1D6] rounded pointer-events-none font-medium relative z-10">⌘K</span>
+                </div>
+                <div class="flex itemás-center gap-2">
+                    <button id="newTicketButton" type="button"
+                        class="figma-button !w-auto !h-[28px] bg-[#007AFF] hover:bg-[#0062CC] text-white shadow-sm transition">
+                        <div class="figma-button__label text-white flex itemás-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                <line x1="12" x2="12" y1="5" y2="19"></line>
+                                <line x1="5" x2="19" y1="12" y2="12"></line>
+                            </svg>
+                            <span class="hidden sm:inline">Nuevo Ticket</span>
+                        </div>
+                    </button>
+                </div>
+                <div class="h-5 w-[1px] bg-[#D1D1D6] mx-0.5"></div>
+                <details class="relative group select-none z-50">
+                    <summary
+                        class="list-none flex itemás-center gap-2 px-2 py-1 rounded-[8px] hover:bg-[#F2F2F7] transition cursor-pointer border border-transparent hover:border-[#D1D1D6]">
+                        <div
+                            class="w-7 h-7 rounded-full bg-[#007AFF] text-white flex itemás-center justify-center font-mono font-semibold text-[11px]">
+                            <%= typeof currentUser !== 'undefined' && currentUser && currentUser.nombre ? (currentUser.nombre.trim().split(/\s+/).slice(0, 2).map(part => part.charAt(0)).join('').toUpperCase() || 'CP') : 'CP' %></div>
+                        <div class="hidden sm:flex flex-col text-left">
+                            <span class="text-[11px] font-medium text-[#1C1C1E] leading-tight"><%= typeof currentUser !== 'undefined' && currentUser && currentUser.nombre ? currentUser.nombre : 'Coord. NOC' %></span>
+                            <span class="text-[9px] font-mono font-bold text-[#34C759] tracking-wider leading-tight"><%= typeof currentUser !== 'undefined' && currentUser && currentUser.email ? currentUser.email : '● LÍDER ACTIVO' %></span>
+                        </div>
+                    </summary>
+                    <div class="absolute right-0 top-[100%] mt-1 w-[150px] bg-white rounded-[6px] border border-[#D1D1D6] shadow-[0_4px_14px_rgba(0,0,0,0.1)] p-1 z-50 text-[12px]">
+                        <form action="/auth/logout" method="POST" class="m-0">
+                            <button type="submit" class="w-full text-left px-2 py-1.5 rounded-[4px] text-[#1C1C1E] hover:bg-[#007AFF] hover:text-white font-medium transition cursor-pointer">
+                                Cerrar Sesión
+                            </button>
+                        </form>
+                    </div>
+                </details>
+            </div>
+        </header>
+
+        <!-- Main Body Workspace -->
+        <div class="flex-1 flex overflow-hidden min-h-0 bg-[#F5F5F7]">
+
+            <!-- BEGIN: Finder-style macOS Sidebar -->
+            <aside
+                class="w-[52px] md:w-[200px] flex-shrink-0 bg-[#EBEBF0]/95 border-r border-[#D8D8DC] flex flex-col justify-between select-none py-3 px-1 md:px-2">
+                <div class="space-y-4">
+                    <div>
+                        <div class="hidden md:block px-2.5 pb-1.5 text-[10px] font-bold text-[#8E8E93] uppercase tracking-wider">
+                            Navegación</div>
+                        <nav class="space-y-0.5">
+                            <a id="díashboardNavLink" class="flex itemás-center justify-between px-2.5 py-1.5 rounded-[6px] text-[#3A3A3C] hover:bg-black/5 font-medium text-[12px] transition"
+                                href="/">
+                                <div class="flex itemás-center gap-2">
+                                    <svg class="w-4 h-4 text-[#8E8E93]" fill="currentColor" viewBox="0 0 24 24">
+                                        <path
+                                            d="M19.5 21a3 3 0 0 0 3-3v-4.5a3 3 0 0 0-3-3h-15a3 3 0 0 0-3-3V18a3 3 0 0 0 3 3h15ZM1.5 10.5V6a3 3 0 0 1 3-3h15a3 3 0 0 1 3 3v4.5">
+                                        </path>
+                                    </svg>
+                                    <span class="hidden md:inline">Dashboard General</span>
+                                </div>
+                                <span
+                                    class="hidden md:inline font-mono text-[9px] bg-black/5 text-[#8E8E93] px-1.5 py-0.5 rounded font-bold">
+                                    <%= typeof ticketsActivos !== 'undefined' ? ticketsActivos : 0 %>
+                                </span>
+                            </a>
+                            <a class="flex itemás-center justify-between px-2.5 py-1.5 rounded-[6px] bg-[#007AFF] text-white text-[12px] font-medium transition"
+                                href="/auditoria">
+                                <div class="flex itemás-center gap-2">
+                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor"
+                                        stroke-width="2" viewBox="0 0 24 24">
+                                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    <span class="hidden md:inline">Auditoría</span>
+                                </div>
+                            </a>
+                            <a id="shiftManagementNavLink" class="flex items-center justify-between px-2.5 py-1.5 rounded-[6px] text-[#3A3A3C] hover:bg-black/5 text-[12px] font-medium transition"
+                                href="/#gestion-turno">
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-[#8E8E93]" fill="none" stroke="currentColor"
+                                        stroke-width="2" viewBox="0 0 24 24">
+                                        <path
+                                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+                                        </path>
+                                    </svg>
+                                    <span class="hidden md:inline">Gestión de Turno</span>
+                                </div>
+                                <span
+                                    class="hidden md:inline font-mono text-[9px] bg-[#34C759]/15 text-[#34C759] px-1.5 py-0.5 rounded font-bold">
+                                    <%= typeof operadoresDisponibles !== 'undefined' ? operadoresDisponibles : 0 %>/<%= typeof totalOperadores !== 'undefined' ? totalOperadores : 0 %>
+                                </span>
+                            </a>
+                            <a class="flex items-center justify-between px-2.5 py-1.5 rounded-[6px] text-[#3A3A3C] hover:bg-black/5 text-[12px] font-medium transition"
+                                href="/reportes">
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-[#8E8E93]" fill="none" stroke="currentColor"
+                                        stroke-width="2" viewBox="0 0 24 24">
+                                        <path
+                                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                                        </path>
+                                    </svg>
+                                    <span class="hidden md:inline">Reportes</span>
+                                </div>
+                            </a>
+                        </nav>
+                    </div>
+                </div>
+
+                <!-- Sidebar Bottom Footer -->
+                <div class="p-1.5 md:p-2.5 rounded-[8px] bg-white/70 border border-black/5 shadow-xs space-y-1">
+                    <div class="flex itemás-center justify-between text-[11px]">
+                        <span class="flex itemás-center gap-1.5 font-medium text-[#1C1C1E]"><span
+                                class="w-2 h-2 rounded-full bg-[#34C759]"></span><span class="hidden md:inline">Servidor NOC</span></span>
+                        <span class="hidden md:inline font-mono text-[10px] text-[#34C759] font-bold">18más</span>
+                    </div>
+                    <div class="hidden md:flex itemás-center justify-between text-[10px] text-[#8E8E93] font-mono">
+                        <span>Sincronía OLT</span>
+                        <span class="text-[#3A3A3C]">Activo (0s)</span>
+                    </div>
+                </div>
+            </aside>
+            <!-- END: Sidebar -->
+
+            <main class="flex-1 flex flex-col min-w-0 bg-[#F5F5F7] overflow-hidden p-4 sm:p-6 gap-4">
+                <div class="flex itemás-center justify-between flex-shrink-0">
+                    <h2 class="text-lg font-semibold text-[#1C1C1E]">Historial de Auditoría</h2>
+                </div>
+
+                <div class="flex-1 flex flex-col min-h-0 bg-white border border-[#E5E5EA] rounded-[12px] shadow-[0_1px_4px_rgba(0,0,0,0.04)] overflow-hidden">
+                    <div class="px-4 py-3 bg-[#F6F6F8] border-b border-[#E5E5EA]">
+                        <h3 class="text-[13px] font-semibold text-[#1C1C1E]">Logs del Sistema</h3>
+                    </div>
+                    <div class="flex-1 overflow-auto">
+                        <table class="w-full text-left border-collapse text-[12px] figma-table">
+                            <thead class="bg-white sticky top-0 z-10 border-b border-[#E5E5EA] shadow-sm">
+                                <tr>
+                                    <th class="py-2 px-4 font-semibold text-[#8E8E93] uppercase tracking-wider text-[10px] whitespace-nowrap">Fecha</th>
+                                    <th class="py-2 px-4 font-semibold text-[#8E8E93] uppercase tracking-wider text-[10px] whitespace-nowrap">Usuario</th>
+                                    <th class="py-2 px-4 font-semibold text-[#8E8E93] uppercase tracking-wider text-[10px] whitespace-nowrap">Acción</th>
+                                    <th class="py-2 px-4 font-semibold text-[#8E8E93] uppercase tracking-wider text-[10px] whitespace-nowrap">Ticket</th>
+                                    <th class="py-2 px-4 font-semibold text-[#8E8E93] uppercase tracking-wider text-[10px]">Detalles</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-[#E5E5EA]">
+                                <% if (typeof logs !== 'undefined' && logs.length > 0) { %>
+                                    <% logs.forEach(log => { %>
+                                    <tr class="hover:bg-[#F9F9FA] transition group">
+                                        <td class="py-2.5 px-4 text-[#48484A] font-mono whitespace-nowrap"><%= log.fecha %></td>
+                                        <td class="py-2.5 px-4 font-medium text-[#1C1C1E] whitespace-nowrap"><%= log.usuario %></td>
+                                        <td class="py-2.5 px-4 text-[#48484A] whitespace-nowrap">
+                                            <span class="px-2 py-0.5 rounded-full bg-[#E5F9ED] text-[#16834A] text-[10px] font-semibold border border-[#BDE8D1]">
+                                                <%= log.accion %>
+                                            </span>
+                                        </td>
+                                        <td class="py-2.5 px-4 text-[#007AFF] font-mono whitespace-nowrap hover:underline cursor-pointer"><%= log.ticket || '-' %></td>
+                                        <td class="py-2.5 px-4 text-[#8E8E93] truncate max-w-xs group-hover:text-[#48484A] transition" title="<%= log.detalles %>"><%= log.detalles %></td>
+                                    </tr>
+                                    <% }) %>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="5" class="py-8 text-center text-[#8E8E93]">
+                                            <svg class="w-8 h-8 mx-auto mb-2 text-[#D1D1D6]" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                            No se encontraron registros de auditoría.
+                                        </td>
+                                    </tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('keydown', function (e) {
+            if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+                e.preventDefault();
+                const searchInput = document.getElementById('globalSearchInput');
+                if (searchInput) {
+                    searchInput.focus();
+                    searchInput.select();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

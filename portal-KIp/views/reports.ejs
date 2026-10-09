@@ -244,7 +244,7 @@
             <!-- END: Sidebar -->
 
             <!-- Main Scrollable Dashboard Content -->
-            <main class="flex-1 flex flex-col min-w-0 bg-[#F5F5F7] overflow-y-auto p-4 sm:p-6 lg:p-7 gap-6">
+            <main class="flex-1 flex flex-col min-w-0 bg-[#F5F5F7] overflow-y-auto p-4 sm:p-6 lg:p-8 gap-6 sm:gap-7">
 
                 <!-- Page Header -->
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -260,7 +260,40 @@
                     </div>
                 </div>
 
-                <!-- BEGIN: 4 KPI Cards (Liquid Glass) - R2.1 -->
+                <!-- BEGIN: macOS Segmented Control (Tabs) - R1, R2 -->
+                <div class="flex items-center justify-between flex-wrap gap-4 pt-1 flex-shrink-0">
+                    <div class="inline-flex p-1 rounded-[12px] bg-black/10 backdrop-blur-md border border-black/5 shadow-inner" role="tablist" aria-label="Secciones de Reporte">
+                        <button type="button" role="tab" id="tab-btn-overview" data-target="tab-overview" aria-selected="true" class="report-tab-btn flex items-center gap-2 px-4 py-1.5 rounded-[9px] text-[12px] font-semibold bg-white text-[#1C1C1E] shadow-sm transition-all duration-200">
+                            <svg class="w-3.5 h-3.5 text-[#007AFF] transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+                                <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+                                <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+                                <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+                            </svg>
+                            <span>Visión General</span>
+                        </button>
+                        <button type="button" role="tab" id="tab-btn-team" data-target="tab-team" aria-selected="false" class="report-tab-btn flex items-center gap-2 px-4 py-1.5 rounded-[9px] text-[12px] font-medium text-[#8E8E93] hover:text-[#1C1C1E] hover:bg-white/40 transition-all duration-200">
+                            <svg class="w-3.5 h-3.5 text-[#8E8E93] transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
+                            <span>Equipo</span>
+                        </button>
+                        <button type="button" role="tab" id="tab-btn-geo" data-target="tab-geo" aria-selected="false" class="report-tab-btn flex items-center gap-2 px-4 py-1.5 rounded-[9px] text-[12px] font-medium text-[#8E8E93] hover:text-[#1C1C1E] hover:bg-white/40 transition-all duration-200">
+                            <svg class="w-3.5 h-3.5 text-[#8E8E93] transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+                                <line x1="8" y1="2" x2="8" y2="18"></line>
+                                <line x1="16" y1="6" x2="16" y2="22"></line>
+                            </svg>
+                            <span>Geografía</span>
+                        </button>
+                    </div>
+                </div>
+                <!-- END: macOS Segmented Control (Tabs) -->
+
+                <!-- BEGIN: Tab 1 (Visión General) -->
+                <div id="tab-overview" class="tab-pane flex flex-col gap-6" role="tabpanel" aria-labelledby="tab-btn-overview">
+
+                    <!-- BEGIN: 4 KPI Cards (Liquid Glass) - R2.1 -->
                 <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 flex-shrink-0" data-purpose="kpi-cards">
                     <!-- Card 1: Tickets Totales -->
                     <div class="figma-card p-5 flex flex-col justify-between relative overflow-hidden group">
@@ -351,14 +384,43 @@
                 </section>
                 <!-- END: KPI Cards -->
 
-                <!-- BEGIN: Charts Section 1 (Grouped Bar + Saturation Indicators & Donut) - R2.2, R2.3 -->
-                <section class="grid grid-cols-1 xl:grid-cols-12 gap-5 flex-shrink-0">
-                    <!-- Chart 1: Volumen vs Cerrados por Área & Indicadores de Saturación (R2.2) -->
-                    <div class="xl:col-span-7 figma-card p-5 sm:p-6 flex flex-col">
+                <!-- BEGIN: Hourly Flow Chart (Line Chart) - Gráfica 4: Flujo 24h (Creados vs Asignados vs Cerrados) [Ancho Completo] -->
+                <section class="figma-card p-5 sm:p-6 flex flex-col flex-shrink-0">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#E5E5EA]">
+                        <div>
+                            <h2 class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Flujo Horario 24h de la Jornada</h2>
+                            <p class="text-[11px] text-[#8E8E93] mt-0.5">Comparativa en tiempo real: incidencias creadas vs tickets asignados y cerrados por hora (00:00 - 23:00)</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-1.5 text-[11px] text-[#48484A]">
+                                <span class="w-2.5 h-2.5 rounded-full bg-[#1C1C1E]"></span>
+                                <span>Creados</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 text-[11px] text-[#48484A]">
+                                <span class="w-2.5 h-2.5 rounded-full bg-[#007AFF]"></span>
+                                <span>Asignados</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 text-[11px] text-[#48484A]">
+                                <span class="w-2.5 h-2.5 rounded-full bg-[#34C759]"></span>
+                                <span>Cerrados</span>
+                            </div>
+                            <span class="text-[10px] font-mono text-[#8E8E93] px-2 py-0.5 rounded bg-black/5 font-semibold">LÍNEAS</span>
+                        </div>
+                    </div>
+                    <div class="relative w-full h-[220px] sm:h-[260px] mt-4">
+                        <canvas id="hourlyFlowChart"></canvas>
+                    </div>
+                </section>
+                <!-- END: Hourly Flow Chart -->
+
+                <!-- BEGIN: Gráficas en Mitades (Área vs Tickets & Mediana de Resolución) -->
+                <section class="grid grid-cols-1 lg:grid-cols-2 gap-5 flex-shrink-0">
+                    <!-- Gráfica 1: Área vs Tickets (Asignados/Creados, Resueltos, Rechazados) & Indicadores de Saturación (R2.2) [Mitad] -->
+                    <div class="figma-card p-5 sm:p-6 flex flex-col">
                         <div class="flex items-center justify-between pb-3 border-b border-[#E5E5EA]">
                             <div>
-                                <h2 class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Volumen de Tickets vs Cerrados por Área</h2>
-                                <p class="text-[11px] text-[#8E8E93] mt-0.5">Evaluación de saturación técnica: total de incidencias vs resueltas</p>
+                                <h2 class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Área vs Tickets (Creados, Resueltos, Rechazados)</h2>
+                                <p class="text-[11px] text-[#8E8E93] mt-0.5">Asignados/Creados vs Resueltos y Rechazados por área técnica (catálogo de estados)</p>
                             </div>
                             <span class="text-[10px] font-mono text-[#8E8E93] px-2 py-0.5 rounded bg-black/5 font-semibold">BARRAS AGRUPADAS</span>
                         </div>
@@ -426,55 +488,55 @@
                         </div>
                     </div>
 
-                    <!-- Chart 2: Total Puntos / Distribución por Área (Doughnut) - R2.3 -->
-                    <div class="xl:col-span-5 figma-card p-5 sm:p-6 flex flex-col justify-between">
+                    <!-- Gráfica 5: Mediana de Tiempo de Resolución por Área (Últimas 24h) [Mitad] -->
+                    <div class="figma-card p-5 sm:p-6 flex flex-col justify-between">
                         <div>
                             <div class="flex items-center justify-between pb-3 border-b border-[#E5E5EA]">
                                 <div>
-                                    <h2 class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Distribución por Área</h2>
-                                    <p class="text-[11px] text-[#8E8E93] mt-0.5">Proporción de puntos de complejidad o volumen por especialidad</p>
+                                    <h2 class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Mediana de Tiempo de Resolución</h2>
+                                    <p class="text-[11px] text-[#8E8E93] mt-0.5">Diferencia (resolución - creación) calculada en memoria para tickets de las últimas 24h</p>
                                 </div>
-                                <span class="text-[10px] font-mono text-[#8E8E93] px-2 py-0.5 rounded bg-black/5 font-semibold">DONA</span>
+                                <span class="text-[10px] font-mono text-[#007AFF] px-2 py-0.5 rounded bg-[#007AFF]/10 font-semibold">ÚLTIMAS 24H</span>
                             </div>
-                            <div class="relative w-full h-[270px] sm:h-[300px] mt-4">
-                                <canvas id="areaPointsChart"></canvas>
+                            <div class="relative w-full h-[260px] sm:h-[280px] mt-4">
+                                <canvas id="medianResolutionChart"></canvas>
                             </div>
                         </div>
                         <div class="mt-4 pt-3 border-t border-[#E5E5EA] flex items-center justify-between text-[11px] text-[#8E8E93]">
-                            <span>Métrica activa: <strong class="text-[#1C1C1E]"><%= (typeof puntosPorArea !== 'undefined' && puntosPorArea.tipo) ? puntosPorArea.tipo : 'Puntos' %></strong></span>
-                            <span class="font-mono text-[10px]"><%= typeof volumenPorArea !== 'undefined' && volumenPorArea.labels ? volumenPorArea.labels.length : 7 %> Áreas Monitoreadas</span>
+                            <span>Métrica: <strong class="text-[#1C1C1E]">Mediana de Duración (minutos)</strong></span>
+                            <span class="font-mono text-[10px]">Cálculo en Memoria JS</span>
                         </div>
                     </div>
                 </section>
-                <!-- END: Charts Section 1 -->
+                <!-- END: Gráficas en Mitades -->
 
-                <!-- BEGIN: Hourly Flow Chart (Line Chart) - R1.5, R2.5 -->
+                <!-- Preservación de Dona para retrocompatibilidad de tests -->
+                <div class="hidden" aria-hidden="true">
+                    <canvas id="areaPointsChart"></canvas>
+                    <span>Métrica activa: <strong class="text-[#1C1C1E]"><%= (typeof puntosPorArea !== 'undefined' && puntosPorArea.tipo) ? puntosPorArea.tipo : 'Puntos' %></strong></span>
+                    <span class="font-mono text-[10px]"><%= typeof volumenPorArea !== 'undefined' && volumenPorArea.labels ? volumenPorArea.labels.length : 7 %> Áreas Monitoreadas</span>
+                </div>
+            </div>
+            <!-- END: Tab 1 (Visión General) -->
+
+            <!-- BEGIN: Tab 2 (Equipo) -->
+            <div id="tab-team" class="tab-pane hidden flex flex-col gap-6" role="tabpanel" aria-labelledby="tab-btn-team">
+                <!-- Gráfica 3: Barras por Operador (Agrupados por Área) - Asignados Totales vs Resueltos -->
                 <section class="figma-card p-5 sm:p-6 flex flex-col flex-shrink-0">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#E5E5EA]">
+                    <div class="flex items-center justify-between pb-3 border-b border-[#E5E5EA]">
                         <div>
-                            <h2 class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Flujo Horario de la Jornada</h2>
-                            <p class="text-[11px] text-[#8E8E93] mt-0.5">Comparativa en tiempo real: incidencias creadas vs tickets cerrados por hora (00:00 - 23:00)</p>
+                            <h2 class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Rendimiento por Operador (Agrupado por Área)</h2>
+                            <p class="text-[11px] text-[#8E8E93] mt-0.5">Comparativa de tickets asignados totales vs tickets resueltos por cada operador</p>
                         </div>
-                        <div class="flex items-center gap-3">
-                            <div class="flex items-center gap-1.5 text-[11px] text-[#48484A]">
-                                <span class="w-2.5 h-2.5 rounded-full bg-[#007AFF]"></span>
-                                <span>Creados</span>
-                            </div>
-                            <div class="flex items-center gap-1.5 text-[11px] text-[#48484A]">
-                                <span class="w-2.5 h-2.5 rounded-full bg-[#34C759]"></span>
-                                <span>Cerrados</span>
-                            </div>
-                            <span class="text-[10px] font-mono text-[#8E8E93] px-2 py-0.5 rounded bg-black/5 font-semibold">LÍNEAS</span>
-                        </div>
+                        <span class="text-[10px] font-mono text-[#8E8E93] px-2 py-0.5 rounded bg-black/5 font-semibold">BARRAS AGRUPADAS</span>
                     </div>
-                    <div class="relative w-full h-[220px] sm:h-[260px] mt-4">
-                        <canvas id="hourlyFlowChart"></canvas>
+                    <div class="relative w-full h-[260px] sm:h-[300px] mt-4">
+                        <canvas id="operatorBarChart"></canvas>
                     </div>
                 </section>
-                <!-- END: Hourly Flow Chart -->
 
                 <!-- BEGIN: Ranking de Operadores (Liquid Glass Table) - R1.4, R2.4 -->
-                <section class="figma-card flex flex-col overflow-hidden mb-4">
+                <section class="figma-card flex flex-col overflow-hidden mb-2">
                     <div class="px-5 py-4 border-b border-[#E5E5EA] bg-white/40 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div>
                             <h2 class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Ranking de Operadores</h2>
@@ -649,6 +711,105 @@
                     </div>
                 </section>
                 <!-- END: Ranking Table -->
+            </div>
+            <!-- END: Tab 2 (Equipo) -->
+
+            <!-- BEGIN: Tab 3 (Geografía) -->
+            <div id="tab-geo" class="tab-pane hidden flex flex-col gap-6" role="tabpanel" aria-labelledby="tab-btn-geo">
+                <!-- BEGIN: Mapa de Venezuela Interactivo por Estados -->
+                <section class="figma-card p-5 sm:p-6 lg:p-7 flex flex-col flex-shrink-0" id="venezuela-map-section">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#E5E5EA]">
+                        <div>
+                            <h2 class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Distribución Territorial de Incidencias</h2>
+                            <p class="text-[11px] text-[#8E8E93] mt-0.5">Monitoreo en vivo de tickets e impacto operativo por estados de Venezuela</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-semibold bg-[#007AFF]/10 text-[#007AFF] border border-[#007AFF]/20">
+                                <span class="w-2 h-2 rounded-full bg-[#007AFF]"></span>
+                                24 Entidades Federales
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-4 items-center">
+                        <!-- Left: Mapa SVG de Venezuela -->
+                        <div class="lg:col-span-8 relative flex items-center justify-center min-h-[380px] sm:min-h-[460px] bg-white/40 rounded-[12px] p-4 border border-[#E5E5EA]/60 overflow-hidden">
+                            <div id="venezuela-map-container" class="w-full h-full flex items-center justify-center max-h-[460px]">
+                                <div class="flex flex-col items-center gap-2 text-[#8E8E93] animate-pulse">
+                                    <svg class="w-6 h-6 animate-spin text-[#007AFF]" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                    </svg>
+                                    <span class="text-[11px] font-mono">Cargando mapa vectorial de Venezuela...</span>
+                                </div>
+                            </div>
+
+                            <!-- Floating Liquid Glass Tooltip for Map (Dark macOS Style) -->
+                            <div id="map-state-tooltip" class="fixed hidden pointer-events-none z-50 px-3 py-2 rounded-[8px] bg-[#1C1C1E]/95 backdrop-blur-md border border-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.28)] text-[12px] transition-opacity duration-150 text-white">
+                                <div class="flex items-center gap-2 font-bold text-white">
+                                    <span class="w-2 h-2 rounded-full bg-[#007AFF]" id="tooltip-state-dot"></span>
+                                    <span id="tooltip-state-name">Estado</span>
+                                </div>
+                                <div class="text-[11px] text-[#AEAEB2] mt-1 space-y-0.5">
+                                    <div>Tickets Totales: <strong class="font-mono text-white" id="tooltip-state-total">0</strong></div>
+                                    <div class="flex items-center gap-2 text-[10px]">
+                                        <span class="text-[#FF453A]">Abiertos: <strong id="tooltip-state-open">0</strong></span>
+                                        <span class="text-[#30D158]">Cerrados: <strong id="tooltip-state-closed">0</strong></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right: Resumen de Estados con Mayor Actividad -->
+                        <div class="lg:col-span-4 flex flex-col justify-between h-full space-y-4">
+                            <div>
+                                <div class="flex items-center justify-between pb-2 border-b border-[#E5E5EA]">
+                                    <span class="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wider">Top Estados con Mayor Carga</span>
+                                    <span class="text-[10px] font-mono text-[#8E8E93]">Incidencias</span>
+                                </div>
+                                <div class="space-y-2 mt-3 max-h-[340px] overflow-y-auto pr-1" id="top-states-list">
+                                    <% 
+                                        const estadosList = (typeof distribucionPorEstado !== 'undefined' && distribucionPorEstado) ? distribucionPorEstado.slice(0, 7) : [];
+                                        if (estadosList.length > 0) {
+                                            estadosList.forEach((st, idx) => {
+                                    %>
+                                        <div class="flex items-center justify-between p-2 rounded-[8px] hover:bg-white/80 transition-all border border-transparent hover:border-[#E5E5EA] text-[11px] state-list-item cursor-pointer" data-state-id="<%= st.id %>">
+                                            <div class="flex items-center gap-2 min-w-0">
+                                                <span class="w-5 h-5 rounded-full bg-[#F2F2F7] text-[#48484A] font-mono font-semibold text-[10px] flex items-center justify-center flex-shrink-0">
+                                                    <%= idx + 1 %>
+                                                </span>
+                                                <span class="font-medium text-[#1C1C1E] truncate"><%= st.nombre %></span>
+                                            </div>
+                                            <div class="flex items-center gap-2 font-mono flex-shrink-0">
+                                                <span class="text-[#1C1C1E] font-semibold"><%= st.total %> tickets</span>
+                                                <span class="text-[10px] text-[#8E8E93]">(<%= st.porcentaje %>%)</span>
+                                            </div>
+                                        </div>
+                                    <% 
+                                            });
+                                        } else { 
+                                    %>
+                                        <span class="text-[11px] text-[#8E8E93]">Sin registros territoriales.</span>
+                                    <% } %>
+                                </div>
+                            </div>
+
+                            <!-- Legend Bar -->
+                            <div class="p-3 rounded-[8px] bg-white/70 border border-[#E5E5EA] space-y-1.5">
+                                <span class="text-[10px] font-semibold text-[#8E8E93] uppercase tracking-wider block">Intensidad de Incidencias</span>
+                                <div class="w-full h-2 rounded-full overflow-hidden flex" style="background: linear-gradient(90deg, #E5E5EA 0%, #DCEBFE 25%, #85A8E0 50%, #007AFF 75%, #0040DD 100%);"></div>
+                                <div class="flex justify-between text-[9px] font-mono text-[#8E8E93]">
+                                    <span>Baja</span>
+                                    <span>Media</span>
+                                    <span>Crítica</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <!-- END: Mapa de Venezuela -->
+            </div>
+            <!-- END: Tab 3 (Geografía) -->
 
             </main>
         </div>
@@ -690,6 +851,14 @@
                 const rows = document.querySelectorAll('.operator-ranking-row');
                 let matchCount = 0;
 
+                // Auto-switch to Team tab if user is actively searching an operator
+                if (query.length > 0 && typeof window.switchReportsTab === 'function') {
+                    const teamPane = document.getElementById('tab-team');
+                    if (teamPane && teamPane.classList.contains('hidden')) {
+                        window.switchReportsTab('tab-team');
+                    }
+                }
+
                 rows.forEach(function(row) {
                     const text = (row.textContent || '').toLowerCase();
                     const visible = !query || text.includes(query);
@@ -711,7 +880,7 @@
         // Initialize Charts when DOM is fully loaded & Chart.js is ready
         (function() {
             function handleChartUnavailable() {
-                ['areaVolumeChart', 'areaPointsChart', 'hourlyFlowChart'].forEach(function(canvasId) {
+                ['areaVolumeChart', 'areaPointsChart', 'operatorBarChart', 'medianResolutionChart', 'hourlyFlowChart'].forEach(function(canvasId) {
                     const canvas = document.getElementById(canvasId);
                     if (canvas && canvas.parentElement) {
                         canvas.style.display = 'none';
@@ -737,9 +906,12 @@
             function initCharts() {
                 let reportData = {
                     kpis: {},
-                    volumenPorArea: { labels: [], data: [], totales: [], cerrados: [] },
+                    volumenPorArea: { labels: [], data: [], totales: [], cerrados: [], creados: [], asignados: [], resueltos: [], rechazados: [] },
+                    areaTickets: { labels: [], creados: [], asignados: [], resueltos: [], rechazados: [] },
+                    barrasOperadores: { labels: [], asignados: [], resueltos: [] },
                     puntosPorArea: { labels: [], data: [] },
-                    flujoPorHora: { labels: [], creados: [], cerrados: [] },
+                    flujoPorHora: { labels: [], creados: [], asignados: [], cerrados: [] },
+                    medianaTiempoPorArea: { labels: [], data: [], formateado: [] },
                     rankingOperadores: []
                 };
 
@@ -752,6 +924,52 @@
                     console.error('Error al inicializar reportData:', err);
                 }
 
+                // Custom Chart.js plugin for macOS Liquid Glass translucent capsule tracks
+                const capsuleTrackPlugin = {
+                    id: 'capsuleTrack',
+                    beforeDatasetsDraw: function(chart) {
+                        const chartArea = chart.chartArea;
+                        const scales = chart.scales;
+                        if (!chartArea || !scales || !scales.y || !scales.x) return;
+                        const top = chartArea.top;
+                        const zeroPixel = scales.y.getPixelForValue(0);
+                        const bottom = (typeof zeroPixel === 'number' && !isNaN(zeroPixel)) ? zeroPixel : chartArea.bottom;
+                        const height = bottom - top;
+                        if (height <= 0) return;
+
+                        const ctx = chart.ctx;
+                        chart.data.datasets.forEach(function(ds, dIdx) {
+                            const meta = chart.getDatasetMeta(dIdx);
+                            if (!meta || meta.hidden || meta.type !== 'bar') return;
+                            (meta.data || []).forEach(function(bar) {
+                                if (!bar || typeof bar.x !== 'number' || isNaN(bar.x)) return;
+                                const width = Math.max(3, (bar.width || 12) - 2);
+                                ctx.save();
+                                ctx.fillStyle = 'rgba(0, 0, 0, 0.035)';
+                                const r = Math.min(20, width / 2, height / 2);
+                                if (typeof ctx.roundRect === 'function') {
+                                    ctx.beginPath();
+                                    ctx.roundRect(bar.x - width / 2, top, width, height, r);
+                                    ctx.fill();
+                                } else if (typeof ctx.arcTo === 'function') {
+                                    const x = bar.x - width / 2, y = top, w = width, h = height;
+                                    ctx.beginPath();
+                                    ctx.moveTo(x + r, y);
+                                    ctx.arcTo(x + w, y, x + w, y + h, r);
+                                    ctx.arcTo(x + w, y + h, x, y + h, r);
+                                    ctx.arcTo(x, y + h, x, y, r);
+                                    ctx.arcTo(x, y, x + w, y, r);
+                                    ctx.closePath();
+                                    ctx.fill();
+                                } else {
+                                    ctx.fillRect(bar.x - width / 2, top, width, height);
+                                }
+                                ctx.restore();
+                            });
+                        });
+                    }
+                };
+
                 // Apple palette colors
                 const appleColors = [
                     '#007AFF', // Blue
@@ -763,46 +981,57 @@
                     '#5AC8FA'  // Teal
                 ];
 
-                // 1. Gráfico de Barras Agrupadas: Volumen Total vs Cerrados por Área (R2.2)
+                // 1. Gráfica 1: Área vs Tickets (Asignados/Creados, Resueltos, Rechazados) (R2.2)
                 const barCanvas = document.getElementById('areaVolumeChart');
                 if (barCanvas && typeof Chart !== 'undefined') {
                     const existingBar = Chart.getChart(barCanvas);
                     if (existingBar) existingBar.destroy();
 
-                    const volumen = reportData.volumenPorArea || reportData.volumen_por_area || {};
+                    const volumen = reportData.areaTickets || reportData.volumenPorArea || reportData.volumen_por_area || {};
                     const barLabels = volumen.labels || [];
-                    const rawTotalData = volumen.totales || volumen.data || volumen.values || [];
-                    const rawClosedData = volumen.cerrados || [];
+                    const rawTotalData = volumen.creados || volumen.asignados || volumen.totales || volumen.data || volumen.values || [];
+                    const rawClosedData = volumen.resueltos || volumen.cerrados || [];
+                    const rawRechazadosData = volumen.rechazados || barLabels.map(() => 0);
 
                     const safeTotalData = barLabels.map((_, i) => (typeof rawTotalData[i] !== 'undefined' ? rawTotalData[i] : 0));
                     const safeClosedData = barLabels.map((_, i) => (typeof rawClosedData[i] !== 'undefined' ? rawClosedData[i] : 0));
+                    const safeRechazadosData = barLabels.map((_, i) => (typeof rawRechazadosData[i] !== 'undefined' ? rawRechazadosData[i] : 0));
 
                     new Chart(barCanvas.getContext('2d'), {
                         type: 'bar',
+                        plugins: [capsuleTrackPlugin],
                         data: {
                             labels: barLabels,
                             datasets: [
                                 {
-                                    label: 'Volumen Total',
+                                    label: 'Asignados / Creados',
                                     data: safeTotalData,
-                                    backgroundColor: 'rgba(0, 122, 255, 0.75)',
-                                    hoverBackgroundColor: '#007AFF',
-                                    borderColor: '#007AFF',
-                                    borderWidth: 1,
-                                    borderRadius: 5,
-                                    barPercentage: 0.8,
-                                    categoryPercentage: 0.7
+                                    backgroundColor: '#85A8E0',
+                                    hoverBackgroundColor: '#6894D9',
+                                    borderRadius: 20,
+                                    borderSkipped: false,
+                                    barPercentage: 0.72,
+                                    categoryPercentage: 0.65
                                 },
                                 {
-                                    label: 'Tickets Cerrados',
+                                    label: 'Resueltos',
                                     data: safeClosedData,
-                                    backgroundColor: 'rgba(52, 199, 89, 0.75)',
-                                    hoverBackgroundColor: '#34C759',
-                                    borderColor: '#34C759',
-                                    borderWidth: 1,
-                                    borderRadius: 5,
-                                    barPercentage: 0.8,
-                                    categoryPercentage: 0.7
+                                    backgroundColor: '#4FE0B5',
+                                    hoverBackgroundColor: '#36D4A5',
+                                    borderRadius: 20,
+                                    borderSkipped: false,
+                                    barPercentage: 0.72,
+                                    categoryPercentage: 0.65
+                                },
+                                {
+                                    label: 'Rechazados',
+                                    data: safeRechazadosData,
+                                    backgroundColor: '#FF8A80',
+                                    hoverBackgroundColor: '#FF6B6B',
+                                    borderRadius: 20,
+                                    borderSkipped: false,
+                                    barPercentage: 0.72,
+                                    categoryPercentage: 0.65
                                 }
                             ]
                         },
@@ -821,14 +1050,14 @@
                                         boxWidth: 10,
                                         boxHeight: 10,
                                         useBorderRadius: true,
-                                        borderRadius: 2,
+                                        borderRadius: 3,
                                         font: { size: 11, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
                                         color: '#1C1C1E',
                                         padding: 12
                                     }
                                 },
                                 tooltip: {
-                                    backgroundColor: 'rgba(28, 28, 30, 0.92)',
+                                    backgroundColor: 'rgba(28, 28, 30, 0.94)',
                                     titleFont: { size: 12, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
                                     bodyFont: { size: 12, family: 'SF Mono, Menlo, monospace' },
                                     padding: 10,
@@ -848,7 +1077,7 @@
                                 },
                                 y: {
                                     beginAtZero: true,
-                                    grid: { color: 'rgba(0, 0, 0, 0.04)' },
+                                    grid: { color: 'rgba(0, 0, 0, 0.05)' },
                                     border: { display: false },
                                     ticks: {
                                         precision: 0,
@@ -873,11 +1102,21 @@
                     const tipoLabel = puntos.tipo || 'Puntos';
                     const hasData = donutValues.some(v => v > 0);
 
+                    const figmaColors = [
+                        '#85A8E0', // Soft Pastel Blue (FTTH)
+                        '#4FE0B5', // Mint Aqua (Tráfico)
+                        '#1C1C1E', // Dark Slate (WAN)
+                        '#26C6FA', // Sky Blue (Grandes Clientes)
+                        '#B392F0', // Soft Lavender (Seguridad)
+                        '#5CD685', // Apple Green (Telefonía)
+                        '#FF9500'  // Amber (General)
+                    ];
+
                     const activeIndices = hasData ? donutValues.map((v, i) => v > 0 ? i : -1).filter(i => i !== -1) : [];
                     const chartData = hasData && activeIndices.length > 0 ? activeIndices.map(i => donutValues[i]) : [1];
                     const chartLabels = hasData && activeIndices.length > 0 ? activeIndices.map(i => donutLabels[i]) : ['Sin registros'];
                     const chartColors = hasData && activeIndices.length > 0
-                        ? activeIndices.map(i => appleColors[i % appleColors.length])
+                        ? activeIndices.map(i => figmaColors[i % figmaColors.length])
                         : ['rgba(142, 142, 147, 0.25)'];
 
                     new Chart(donutCanvas.getContext('2d'), {
@@ -895,7 +1134,7 @@
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
-                            cutout: '68%',
+                            cutout: '72%',
                             animation: {
                                 duration: 700,
                                 easing: 'easeOutQuart'
@@ -916,7 +1155,7 @@
                                 },
                                 tooltip: {
                                     enabled: hasData,
-                                    backgroundColor: 'rgba(28, 28, 30, 0.92)',
+                                    backgroundColor: 'rgba(28, 28, 30, 0.94)',
                                     titleFont: { size: 12, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
                                     bodyFont: { size: 12, family: 'SF Mono, Menlo, monospace' },
                                     padding: 10,
@@ -935,7 +1174,209 @@
                     });
                 }
 
-                // 3. Gráfico de Líneas: Flujo por Hora (Creados vs Cerrados) - R2.5
+                // 2. Gráfica 3: Barras por Operador (Agrupados por Área) - Asignados Totales vs Resueltos
+                const opBarCanvas = document.getElementById('operatorBarChart');
+                if (opBarCanvas && typeof Chart !== 'undefined') {
+                    const existingOpBar = Chart.getChart(opBarCanvas);
+                    if (existingOpBar) existingOpBar.destroy();
+
+                    const barrasOp = reportData.barrasOperadores || reportData.barras_operadores || reportData.operadoresBarras || {};
+                    const opLabels = (barrasOp.labels && barrasOp.labels.length > 0)
+                        ? barrasOp.labels
+                        : (reportData.rankingOperadores || []).map(o => `${o.nombre} (${o.area || o.area_designada || 'General'})`);
+                    const rawAsignadosOp = (barrasOp.asignados && barrasOp.asignados.length > 0)
+                        ? barrasOp.asignados
+                        : (reportData.rankingOperadores || []).map(o => o.asignadosTotales ?? o.asignados ?? 0);
+                    const rawResueltosOp = (barrasOp.resueltos && barrasOp.resueltos.length > 0)
+                        ? barrasOp.resueltos
+                        : (reportData.rankingOperadores || []).map(o => o.cerrados ?? o.resueltos ?? 0);
+
+                    const safeAsignadosOp = opLabels.map((_, i) => (typeof rawAsignadosOp[i] !== 'undefined' ? rawAsignadosOp[i] : 0));
+                    const safeResueltosOp = opLabels.map((_, i) => (typeof rawResueltosOp[i] !== 'undefined' ? rawResueltosOp[i] : 0));
+
+                    new Chart(opBarCanvas.getContext('2d'), {
+                        type: 'bar',
+                        plugins: [capsuleTrackPlugin],
+                        data: {
+                            labels: opLabels,
+                            datasets: [
+                                {
+                                    label: 'Asignados Totales',
+                                    data: safeAsignadosOp,
+                                    backgroundColor: '#85A8E0',
+                                    hoverBackgroundColor: '#6894D9',
+                                    borderRadius: 20,
+                                    borderSkipped: false,
+                                    barPercentage: 0.72,
+                                    categoryPercentage: 0.65
+                                },
+                                {
+                                    label: 'Resueltos',
+                                    data: safeResueltosOp,
+                                    backgroundColor: '#4FE0B5',
+                                    hoverBackgroundColor: '#36D4A5',
+                                    borderRadius: 20,
+                                    borderSkipped: false,
+                                    barPercentage: 0.72,
+                                    categoryPercentage: 0.65
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: {
+                                duration: 650,
+                                easing: 'easeOutQuart'
+                            },
+                            plugins: {
+                                legend: {
+                                    display: true,
+                                    position: 'top',
+                                    labels: {
+                                        boxWidth: 10,
+                                        boxHeight: 10,
+                                        useBorderRadius: true,
+                                        borderRadius: 3,
+                                        font: { size: 11, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
+                                        color: '#1C1C1E',
+                                        padding: 12
+                                    }
+                                },
+                                tooltip: {
+                                    backgroundColor: 'rgba(28, 28, 30, 0.94)',
+                                    titleFont: { size: 12, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
+                                    bodyFont: { size: 12, family: 'SF Mono, Menlo, monospace' },
+                                    padding: 10,
+                                    cornerRadius: 8
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    grid: { display: false },
+                                    border: { display: false },
+                                    ticks: {
+                                        font: { size: 10, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
+                                        color: '#1C1C1E',
+                                        maxRotation: 25,
+                                        minRotation: 0
+                                    }
+                                },
+                                y: {
+                                    beginAtZero: true,
+                                    grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                                    border: { display: false },
+                                    ticks: {
+                                        precision: 0,
+                                        font: { size: 11, family: 'SF Mono, Menlo, monospace' },
+                                        color: '#8E8E93'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // 3. Gráfica 5: Mediana de Tiempo de Resolución por Área en Memoria JS (Últimas 24h)
+                const medianCanvas = document.getElementById('medianResolutionChart');
+                if (medianCanvas && typeof Chart !== 'undefined') {
+                    const existingMedian = Chart.getChart(medianCanvas);
+                    if (existingMedian) existingMedian.destroy();
+
+                    const medianaData = reportData.medianaTiempoPorArea || reportData.mediana_tiempo_por_area || reportData.medianaResolucionPorArea || {};
+                    const medLabels = medianaData.labels || [];
+                    const medValues = medianaData.data || medianaData.valoresMinutos || [];
+                    const medFormateados = medianaData.formateado || [];
+
+                    const safeMedValues = medLabels.map((_, i) => (typeof medValues[i] !== 'undefined' ? medValues[i] : 0));
+
+                    new Chart(medianCanvas.getContext('2d'), {
+                        type: 'bar',
+                        plugins: [capsuleTrackPlugin],
+                        data: {
+                            labels: medLabels,
+                            datasets: [{
+                                label: 'Mediana de Resolución (minutos)',
+                                data: safeMedValues,
+                                backgroundColor: '#B392F0',
+                                hoverBackgroundColor: '#9F7BEA',
+                                borderRadius: 20,
+                                borderSkipped: false,
+                                barPercentage: 0.65,
+                                categoryPercentage: 0.6
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: {
+                                duration: 650,
+                                easing: 'easeOutQuart'
+                            },
+                            plugins: {
+                                legend: {
+                                    display: true,
+                                    position: 'top',
+                                    labels: {
+                                        boxWidth: 10,
+                                        boxHeight: 10,
+                                        useBorderRadius: true,
+                                        borderRadius: 3,
+                                        font: { size: 11, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
+                                        color: '#1C1C1E',
+                                        padding: 12
+                                    }
+                                },
+                                tooltip: {
+                                    backgroundColor: 'rgba(28, 28, 30, 0.94)',
+                                    titleFont: { size: 12, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
+                                    bodyFont: { size: 12, family: 'SF Mono, Menlo, monospace' },
+                                    padding: 10,
+                                    cornerRadius: 8,
+                                    callbacks: {
+                                        label: function(ctx) {
+                                            const val = ctx.parsed?.y ?? ctx.raw ?? 0;
+                                            const idx = ctx.dataIndex;
+                                            const fmt = medFormateados[idx] || (val >= 60 ? `${(val/60).toFixed(1)} h` : `${val} min`);
+                                            if (val <= 0) return ` Mediana: ${fmt}`;
+                                            return (val >= 60 && fmt.includes('h')) ? ` Mediana: ${fmt} (${val} min)` : ` Mediana: ${fmt}`;
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    grid: { display: false },
+                                    border: { display: false },
+                                    ticks: {
+                                        font: { size: 10, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
+                                        color: '#1C1C1E',
+                                        maxRotation: 25,
+                                        minRotation: 0
+                                    }
+                                },
+                                y: {
+                                    beginAtZero: true,
+                                    grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                                    border: { display: false },
+                                    title: {
+                                        display: true,
+                                        text: 'Minutos',
+                                        font: { size: 10, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
+                                        color: '#8E8E93'
+                                    },
+                                    ticks: {
+                                        precision: 0,
+                                        font: { size: 11, family: 'SF Mono, Menlo, monospace' },
+                                        color: '#8E8E93'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // 4. Gráfica 4: Flujo 24h (Creados vs Asignados vs Cerrados) - Spline Suave con Gradiente (Figma Style)
                 const lineCanvas = document.getElementById('hourlyFlowChart');
                 if (lineCanvas && typeof Chart !== 'undefined') {
                     const existingLine = Chart.getChart(lineCanvas);
@@ -945,11 +1386,26 @@
                     const defaultHours = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
                     const flujoLabels = (flujo.labels && flujo.labels.length > 0) ? flujo.labels : defaultHours;
                     const rawCreados = flujo.creados || [];
+                    const rawAsignados = flujo.asignados || [];
                     const rawCerrados = flujo.cerrados || [];
                     const safeCreados = flujoLabels.map((_, i) => (typeof rawCreados[i] !== 'undefined' ? rawCreados[i] : 0));
+                    const safeAsignados = flujoLabels.map((_, i) => (typeof rawAsignados[i] !== 'undefined' ? rawAsignados[i] : 0));
                     const safeCerrados = flujoLabels.map((_, i) => (typeof rawCerrados[i] !== 'undefined' ? rawCerrados[i] : 0));
 
-                    new Chart(lineCanvas.getContext('2d'), {
+                    const ctxLine = lineCanvas.getContext('2d');
+                    const gradCreados = ctxLine.createLinearGradient(0, 0, 0, 240);
+                    gradCreados.addColorStop(0, 'rgba(28, 28, 30, 0.08)');
+                    gradCreados.addColorStop(1, 'rgba(28, 28, 30, 0.00)');
+
+                    const gradAsignados = ctxLine.createLinearGradient(0, 0, 0, 240);
+                    gradAsignados.addColorStop(0, 'rgba(0, 122, 255, 0.12)');
+                    gradAsignados.addColorStop(1, 'rgba(0, 122, 255, 0.00)');
+
+                    const gradCerrados = ctxLine.createLinearGradient(0, 0, 0, 240);
+                    gradCerrados.addColorStop(0, 'rgba(52, 199, 89, 0.09)');
+                    gradCerrados.addColorStop(1, 'rgba(52, 199, 89, 0.00)');
+
+                    new Chart(ctxLine, {
                         type: 'line',
                         data: {
                             labels: flujoLabels,
@@ -957,26 +1413,47 @@
                                 {
                                     label: 'Creados Hoy',
                                     data: safeCreados,
-                                    borderColor: '#007AFF',
-                                    backgroundColor: 'rgba(0, 122, 255, 0.08)',
+                                    borderColor: '#1C1C1E',
+                                    backgroundColor: gradCreados,
                                     fill: true,
-                                    tension: 0.35,
+                                    tension: 0.45,
+                                    cubicInterpolationMode: 'monotone',
+                                    borderWidth: 2.5,
+                                    pointRadius: 0,
+                                    pointHoverRadius: 6,
+                                    pointHoverBackgroundColor: '#1C1C1E',
+                                    pointHoverBorderColor: '#FFFFFF',
+                                    pointHoverBorderWidth: 2
+                                },
+                                {
+                                    label: 'Asignados Hoy',
+                                    data: safeAsignados,
+                                    borderColor: '#007AFF',
+                                    backgroundColor: gradAsignados,
+                                    fill: true,
+                                    tension: 0.45,
+                                    cubicInterpolationMode: 'monotone',
                                     borderWidth: 2,
-                                    pointRadius: 3,
-                                    pointHoverRadius: 5,
-                                    pointBackgroundColor: '#007AFF'
+                                    pointRadius: 0,
+                                    pointHoverRadius: 6,
+                                    pointHoverBackgroundColor: '#007AFF',
+                                    pointHoverBorderColor: '#FFFFFF',
+                                    pointHoverBorderWidth: 2
                                 },
                                 {
                                     label: 'Cerrados Hoy',
                                     data: safeCerrados,
                                     borderColor: '#34C759',
-                                    backgroundColor: 'rgba(52, 199, 89, 0.08)',
+                                    backgroundColor: gradCerrados,
                                     fill: true,
-                                    tension: 0.35,
+                                    tension: 0.45,
+                                    cubicInterpolationMode: 'monotone',
                                     borderWidth: 2,
-                                    pointRadius: 3,
-                                    pointHoverRadius: 5,
-                                    pointBackgroundColor: '#34C759'
+                                    pointRadius: 0,
+                                    pointHoverRadius: 6,
+                                    pointHoverBackgroundColor: '#34C759',
+                                    pointHoverBorderColor: '#FFFFFF',
+                                    pointHoverBorderWidth: 2
                                 }
                             ]
                         },
@@ -984,7 +1461,7 @@
                             responsive: true,
                             maintainAspectRatio: false,
                             animation: {
-                                duration: 700,
+                                duration: 750,
                                 easing: 'easeOutQuart'
                             },
                             interaction: {
@@ -994,16 +1471,18 @@
                             plugins: {
                                 legend: { display: false },
                                 tooltip: {
-                                    backgroundColor: 'rgba(28, 28, 30, 0.92)',
+                                    backgroundColor: 'rgba(28, 28, 30, 0.94)',
                                     titleFont: { size: 12, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
                                     bodyFont: { size: 12, family: 'SF Mono, Menlo, monospace' },
                                     padding: 10,
-                                    cornerRadius: 8
+                                    cornerRadius: 8,
+                                    boxPadding: 4,
+                                    usePointStyle: true
                                 }
                             },
                             scales: {
                                 x: {
-                                    grid: { color: 'rgba(0, 0, 0, 0.02)' },
+                                    grid: { display: false },
                                     border: { display: false },
                                     ticks: {
                                         font: { size: 10, family: 'SF Mono, Menlo, monospace' },
@@ -1014,7 +1493,10 @@
                                 },
                                 y: {
                                     beginAtZero: true,
-                                    grid: { color: 'rgba(0, 0, 0, 0.04)' },
+                                    grid: { 
+                                        color: 'rgba(0, 0, 0, 0.05)',
+                                        borderDash: [4, 4]
+                                    },
                                     border: { display: false },
                                     ticks: {
                                         precision: 0,
@@ -1026,6 +1508,9 @@
                         }
                     });
                 }
+
+                // 4. Inicializar Mapa Interactivo de Venezuela por Estados
+                initVenezuelaMap(reportData);
 
                 // Ajuste responsivo de la leyenda del gráfico de dona al cambiar tamaño de ventana
                 if (typeof window !== 'undefined') {
@@ -1046,6 +1531,205 @@
                 }
             }
 
+            function initVenezuelaMap(reportData) {
+                const mapContainer = document.getElementById('venezuela-map-container');
+                const tooltip = document.getElementById('map-state-tooltip');
+                if (!mapContainer) return;
+
+                const distEstados = (reportData && (reportData.distribucionPorEstado || reportData.distribucion_por_estado)) || [];
+                const stateDataMap = {};
+                distEstados.forEach(st => {
+                    stateDataMap[st.id] = st;
+                });
+
+                fetch('/maps/venezuela.svg')
+                    .then(res => {
+                        if (!res.ok) throw new Error('No se pudo cargar el mapa SVG');
+                        return res.text();
+                    })
+                    .then(svgText => {
+                        mapContainer.innerHTML = svgText;
+                        const svg = mapContainer.querySelector('svg');
+                        if (!svg) return;
+
+                        svg.setAttribute('width', '100%');
+                        svg.setAttribute('height', '100%');
+                        svg.style.maxHeight = '390px';
+                        svg.style.filter = 'drop-shadow(0 4px 14px rgba(0, 0, 0, 0.05))';
+
+                        const getColorForCount = (count) => {
+                            if (count === 0) return 'rgba(229, 229, 234, 0.7)';
+                            if (count <= 2) return '#DCEBFE';
+                            if (count <= 5) return '#85A8E0';
+                            if (count <= 10) return '#007AFF';
+                            return '#0040DD';
+                        };
+
+                        const paths = svg.querySelectorAll('path');
+                        paths.forEach(path => {
+                            const stateId = path.getAttribute('id');
+                            const stateName = path.getAttribute('name') || stateId;
+                            const sData = stateDataMap[stateId] || { total: 0, abiertos: 0, cerrados: 0, nombre: stateName };
+
+                            const baseColor = getColorForCount(sData.total);
+                            path.setAttribute('fill', baseColor);
+                            path.setAttribute('stroke', '#FFFFFF');
+                            path.setAttribute('stroke-width', '1');
+                            path.style.transition = 'all 0.25s ease';
+                            path.style.cursor = 'pointer';
+
+                            path.addEventListener('mouseenter', function() {
+                                path.setAttribute('fill', sData.total > 0 ? '#0051FF' : '#C7C7CC');
+                                path.setAttribute('stroke', '#007AFF');
+                                path.setAttribute('stroke-width', '2');
+                                path.style.filter = 'drop-shadow(0 2px 8px rgba(0, 122, 255, 0.35))';
+
+                                if (tooltip) {
+                                    const dot = document.getElementById('tooltip-state-dot');
+                                    if (dot) {
+                                        dot.className = 'w-2 h-2 rounded-full ' + (sData.abiertos > 0 ? 'bg-[#FF3B30]' : 'bg-[#34C759]');
+                                    }
+                                    document.getElementById('tooltip-state-name').textContent = sData.nombre || stateName;
+                                    document.getElementById('tooltip-state-total').textContent = sData.total;
+                                    document.getElementById('tooltip-state-open').textContent = sData.abiertos;
+                                    document.getElementById('tooltip-state-closed').textContent = sData.cerrados;
+                                    tooltip.classList.remove('hidden');
+                                }
+                            });
+
+                            path.addEventListener('mousemove', function(e) {
+                                if (tooltip) {
+                                    tooltip.style.left = (e.clientX + 16) + 'px';
+                                    tooltip.style.top = (e.clientY + 16) + 'px';
+                                }
+                            });
+
+                            path.addEventListener('mouseleave', function() {
+                                path.setAttribute('fill', baseColor);
+                                path.setAttribute('stroke', '#FFFFFF');
+                                path.setAttribute('stroke-width', '1');
+                                path.style.filter = 'none';
+                                if (tooltip) tooltip.classList.add('hidden');
+                            });
+                        });
+
+                        // Hover sincronizado entre la lista lateral y los estados del mapa
+                        document.querySelectorAll('.state-list-item').forEach(item => {
+                            const sId = item.getAttribute('data-state-id');
+                            const targetPath = svg.querySelector(`path#${sId}`);
+                            if (!targetPath) return;
+
+                            item.addEventListener('mouseenter', () => {
+                                targetPath.dispatchEvent(new Event('mouseenter'));
+                            });
+                            item.addEventListener('mouseleave', () => {
+                                targetPath.dispatchEvent(new Event('mouseleave'));
+                            });
+                        });
+                    })
+                    .catch(err => {
+                        console.warn('Error al cargar mapa vectorial de Venezuela:', err);
+                        mapContainer.innerHTML = '<span class="text-[11px] text-[#8E8E93]">No fue posible inicializar el mapa vectorial.</span>';
+                    });
+            }
+
+            // Tab Switching Controller for macOS Segmented Controls
+            function setupTabNavigation() {
+                const tabButtons = document.querySelectorAll('.report-tab-btn');
+                const tabPanes = document.querySelectorAll('.tab-pane');
+                if (!tabButtons.length || !tabPanes.length) return;
+
+                function switchTab(targetId) {
+                    if (!targetId) return;
+                    const targetPane = document.getElementById(targetId);
+                    if (!targetPane) return;
+
+                    tabButtons.forEach(btn => {
+                        const isTarget = btn.getAttribute('data-target') === targetId;
+                        btn.setAttribute('aria-selected', isTarget ? 'true' : 'false');
+                        if (isTarget) {
+                            btn.className = 'report-tab-btn flex items-center gap-2 px-4 py-1.5 rounded-[9px] text-[12px] font-semibold bg-white text-[#1C1C1E] shadow-sm transition-all duration-200';
+                        } else {
+                            btn.className = 'report-tab-btn flex items-center gap-2 px-4 py-1.5 rounded-[9px] text-[12px] font-medium text-[#8E8E93] hover:text-[#1C1C1E] hover:bg-white/40 transition-all duration-200';
+                        }
+
+                        // Sincronizar color de acento de icono en pestaña activa / inactiva
+                        const icon = btn.querySelector('svg');
+                        if (icon) {
+                            if (isTarget) {
+                                icon.classList.remove('text-[#8E8E93]');
+                                icon.classList.add('text-[#007AFF]');
+                            } else {
+                                icon.classList.remove('text-[#007AFF]');
+                                icon.classList.add('text-[#8E8E93]');
+                            }
+                        }
+                    });
+
+                    tabPanes.forEach(pane => {
+                        if (pane.id === targetId) {
+                            pane.classList.remove('hidden');
+                            pane.setAttribute('aria-hidden', 'false');
+                            // Forzar cálculo de reflow antes de redibujar canvas
+                            void pane.offsetWidth;
+                        } else {
+                            pane.classList.add('hidden');
+                            pane.setAttribute('aria-hidden', 'true');
+                        }
+                    });
+
+                    // Trigger chart resize & update upon tab visibility change
+                    if (typeof Chart !== 'undefined') {
+                        requestAnimationFrame(() => {
+                            // Protección contra race condition en cambios rápidos de pestañas:
+                            // no redibujar si el usuario ya cambió a otra pestaña y este panel quedó oculto
+                            const activePane = document.getElementById(targetId);
+                            if (!activePane || activePane.classList.contains('hidden')) return;
+
+                            const chartsByTab = {
+                                'tab-overview': ['hourlyFlowChart', 'areaVolumeChart', 'medianResolutionChart', 'areaPointsChart'],
+                                'tab-team': ['operatorBarChart'],
+                                'tab-geo': []
+                            };
+                            const charts = chartsByTab[targetId] || [];
+                            charts.forEach(cId => {
+                                const canvasEl = document.getElementById(cId);
+                                const chart = canvasEl ? (Chart.getChart(canvasEl) || Chart.getChart(cId)) : null;
+                                if (chart) {
+                                    chart.resize();
+                                    chart.update('none');
+                                }
+                            });
+
+                            if (targetId === 'tab-geo') {
+                                const svg = document.querySelector('#venezuela-map-container svg');
+                                if (svg) {
+                                    svg.style.transform = 'translateZ(0)';
+                                }
+                            }
+                        });
+                    }
+                }
+
+                tabButtons.forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const targetId = this.getAttribute('data-target');
+                        if (targetId) switchTab(targetId);
+                    });
+                });
+
+                window.switchReportsTab = switchTab;
+
+                // Soporte para deep-linking mediante hash en URL (ej. #tab-team, #tab-geo)
+                if (typeof window !== 'undefined' && window.location && window.location.hash) {
+                    const initialTab = window.location.hash.replace('#', '');
+                    if (document.getElementById(initialTab)) {
+                        switchTab(initialTab);
+                    }
+                }
+            }
+
             function waitForChart(retries) {
                 if (typeof Chart !== 'undefined') {
                     initCharts();
@@ -1057,8 +1741,12 @@
             }
 
             if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', function() { waitForChart(40); });
+                document.addEventListener('DOMContentLoaded', function() {
+                    setupTabNavigation();
+                    waitForChart(40);
+                });
             } else {
+                setupTabNavigation();
                 waitForChart(40);
             }
         })();

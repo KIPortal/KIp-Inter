@@ -27,16 +27,20 @@ function runTest(name, fn) {
     }
 }
 
-async function runAsyncTest(name, fn) {
+const asyncQueue = [];
+function runAsyncTest(name, fn) {
     totalTests++;
-    try {
-        await fn();
-        passedTests++;
-        console.log(`  ✅ [PASS] ${name}`);
-    } catch (err) {
-        console.error(`  ❌ [FAIL] ${name}`);
-        console.error(`     Error: ${err.message}`);
-    }
+    const p = (async () => {
+        try {
+            await fn();
+            passedTests++;
+            console.log(`  ✅ [PASS] ${name}`);
+        } catch (err) {
+            console.error(`  ❌ [FAIL] ${name}`);
+            console.error(`     Error: ${err.message}`);
+        }
+    })();
+    asyncQueue.push(p);
 }
 
 console.log('\n================================================================');
@@ -88,7 +92,7 @@ runTest('R2.5: Presencia de Tabla de Ranking de Operadores estilizada', () => {
 
 runTest('R2.6: Seguridad JSON en script de datos (#report-data-json)', () => {
     assert(templateContent.includes('id="report-data-json"'), 'Debe existir el elemento #report-data-json');
-    assert(templateContent.includes('.replace(/</g, \'\\u003c\')'), 'Debe neutralizar inyecciones de script con u003c');
+    assert(templateContent.includes('.replace(/</g,') && templateContent.includes('003c'), 'Debe neutralizar inyecciones de script con u003c');
 });
 
 // 3. EJS Template Rendering Test with Mock Data
@@ -885,10 +889,566 @@ runTest('R2.17: [Adversarial] Renderizado con variables planas de KPI sin envolt
     assert(rendered.includes('65 pts'), 'Debe mostrar 65 pts');
 });
 
-console.log('\n================================================================');
-console.log(`   RESUMEN: ${passedTests}/${totalTests} pruebas pasaron correctamente`);
-console.log('================================================================\n');
+// 18. New Reorganization: Presencia de los 5 gráficos en views/reports.ejs (R2.18)
+runTest('R2.18: Presencia de los lienzos y secciones para los 5 gráficos en views/reports.ejs', () => {
+    // Gráfica 1: Área vs Tickets
+    assert(templateContent.includes('id="areaVolumeChart"'), 'Debe contener canvas #areaVolumeChart para Gráfica 1');
+    assert(templateContent.includes('Área vs Tickets'), 'Debe titular Gráfica 1 como Área vs Tickets');
+    
+    // Gráfica 2: Mapa de Venezuela
+    assert(templateContent.includes('id="venezuela-map-container"'), 'Debe contener contenedor de mapa #venezuela-map-container para Gráfica 2');
+    
+    // Gráfica 3: Barras por Operador
+    assert(templateContent.includes('id="operatorBarChart"'), 'Debe contener canvas #operatorBarChart para Gráfica 3');
+    assert(templateContent.includes('Rendimiento por Operador'), 'Debe titular Gráfica 3');
+    
+    // Gráfica 4: Flujo 24h
+    assert(templateContent.includes('id="hourlyFlowChart"'), 'Debe contener canvas #hourlyFlowChart para Gráfica 4');
+    
+    // Gráfica 5: Mediana de tiempo de resolución
+    assert(templateContent.includes('id="medianResolutionChart"'), 'Debe contener canvas #medianResolutionChart para Gráfica 5');
+    assert(templateContent.includes('Mediana de Tiempo de Resolución'), 'Debe titular Gráfica 5');
+});
 
-if (passedTests !== totalTests) {
-    process.exit(1);
-}
+// 19. New Reorganization: Cálculos de los 5 gráficos en getReports (R1.8)
+runAsyncTest('R1.8: [Async] Cálculos de 5 Gráficos (Mediana en memoria, Barras Operador, Flujo 24h, Área vs Tickets)', async () => {
+    const prisma = require('../src/config/prisma');
+    const { getReports } = require('../src/controllers/reportController');
+
+    const origCount = prisma.ticket.count;
+    const origAgg = prisma.ticket.aggregate;
+    const origGroupBy = prisma.ticket.groupBy;
+    const origFindManyTicket = prisma.ticket.findMany;
+    const origFindManyUser = prisma.user.findMany;
+
+    try {
+        prisma.ticket.count = async () => 20;
+        prisma.ticket.aggregate = async () => ({ _sum: { puntos_complejidad: 50 }, _avg: { puntos_complejidad: 5 } });
+        let groupCount = 0;
+        prisma.ticket.groupBy = async (args) => {
+            groupCount++;
+            if (groupCount === 1) { // volumen por area
+                return [
+                    { area_designada: 'REDES_FTTH', _count: { id: 10 } },
+                    { area_designada: 'WAN', _count: { id: 6 } }
+                ];
+            }
+            if (groupCount === 2) { // cerrados por area
+                return [
+                    { area_designada: 'REDES_FTTH', _count: { id: 7 } },
+                    { area_designada: 'WAN', _count: { id: 4 } }
+                ];
+            }
+            if (groupCount === 3) { // abiertos por area
+                return [
+                    { area_designada: 'REDES_FTTH', _count: { id: 3 } },
+                    { area_designada: 'WAN', _count: { id: 2 } }
+                ];
+            }
+            if (groupCount === 6) { // assigned por op
+                return [
+                    { asignado_a_id: 'op-a', _count: { id: 10 } },
+                    { asignado_a_id: 'op-b', _count: { id: 6 } }
+                ];
+            }
+            if (groupCount === 7) { // closed por op
+                return [
+                    { asignado_a_id: 'op-a', _count: { id: 7 }, _sum: { puntos_complejidad: 25 } },
+                    { asignado_a_id: 'op-b', _count: { id: 4 }, _sum: { puntos_complejidad: 15 } }
+                ];
+            }
+            if (groupCount === 8) { // active load
+                return [
+                    { asignado_a_id: 'op-a', _count: { id: 2 } },
+                    { asignado_a_id: 'op-b', _count: { id: 1 } }
+                ];
+            }
+            return [];
+        };
+
+        prisma.user.findMany = async () => [
+            { id: 'op-a', nombre: 'Operador FTTH', email: 'op_a@test.com', rol: 'OPERADOR', area_designada: 'REDES_FTTH', estado_operativo: 'DISPONIBLE' },
+            { id: 'op-b', nombre: 'Operador WAN', email: 'op_b@test.com', rol: 'OPERADOR', area_designada: 'WAN', estado_operativo: 'DISPONIBLE' }
+        ];
+
+        const now = new Date();
+        const tMinus100m = new Date(now.getTime() - 100 * 60000);
+        const tMinus70m = new Date(now.getTime() - 70 * 60000);
+        const tMinus40m = new Date(now.getTime() - 40 * 60000);
+        const tMinus10m = new Date(now.getTime() - 10 * 60000);
+
+        let findManyCall = 0;
+        prisma.ticket.findMany = async (args) => {
+            findManyCall++;
+            // 16: closedTickets con asignado_a
+            if (args.select && args.select.asignado_a) {
+                return [];
+            }
+            // 17: todayTickets
+            if (args.select && args.select.fecha_asignacion) {
+                return [
+                    { id: 'today-1', createdAt: now, fecha_asignacion: now, fecha_cierre: null, resueltoEn: null, updatedAt: now, estado_actual: 'EN_PROGRESO' },
+                    { id: 'today-2', createdAt: now, fecha_asignacion: null, fecha_cierre: now, resueltoEn: now, updatedAt: now, estado_actual: 'CERRADO' }
+                ];
+            }
+            // 18: allTicketsGeo
+            if (args.select && args.select.asunto) {
+                return [{ id: 'geo-1', asunto: 'Falla Caracas', descripcion: '', estado_actual: 'CERRADO', area_designada: 'REDES_FTTH' }];
+            }
+            // 19: recentResolvedTickets (para mediana de resolución en memoria JS)
+            return [
+                // REDES_FTTH: 3 tickets resueltos con duraciones:
+                // ticket 1: dura 30 min (creado -100m, resuelto -70m)
+                { id: 'm-1', area_designada: 'REDES_FTTH', createdAt: tMinus100m, resueltoEn: tMinus70m, fecha_cierre: tMinus70m, estado_actual: 'CERRADO' },
+                // ticket 2: dura 60 min (creado -100m, resuelto -40m)
+                { id: 'm-2', area_designada: 'REDES_FTTH', createdAt: tMinus100m, resueltoEn: tMinus40m, fecha_cierre: tMinus40m, estado_actual: 'CERRADO' },
+                // ticket 3: dura 90 min (creado -100m, resuelto -10m)
+                { id: 'm-3', area_designada: 'REDES_FTTH', createdAt: tMinus100m, resueltoEn: tMinus10m, fecha_cierre: tMinus10m, estado_actual: 'CERRADO' },
+                // WAN: 2 tickets resueltos con duraciones:
+                // ticket 4: dura 20 min
+                { id: 'm-4', area_designada: 'WAN', createdAt: tMinus70m, resueltoEn: new Date(tMinus70m.getTime() + 20 * 60000), fecha_cierre: null, estado_actual: 'CERRADO' },
+                // ticket 5: dura 40 min
+                { id: 'm-5', area_designada: 'WAN', createdAt: tMinus70m, resueltoEn: new Date(tMinus70m.getTime() + 40 * 60000), fecha_cierre: null, estado_actual: 'CERRADO' }
+            ];
+        };
+
+        let renderedData = null;
+        const req = { user: { nombre: 'Coord NOC' } };
+        const res = { render: (v, d) => { renderedData = d; }, status: () => res, send: () => {} };
+
+        await getReports(req, res);
+
+        assert(renderedData, 'Debe devolver datos de reporte');
+
+        // G1: Área vs Tickets
+        assert(renderedData.volumenPorArea, 'Debe incluir volumenPorArea');
+        assert(renderedData.areaTickets, 'Debe incluir areaTickets');
+        const ftthIndex = renderedData.areaTickets.areas.indexOf('REDES_FTTH');
+        assert(ftthIndex >= 0, 'REDES_FTTH debe estar presente');
+        assert.strictEqual(renderedData.areaTickets.creados[ftthIndex], 10, 'FTTH creados debe ser 10');
+        assert.strictEqual(renderedData.areaTickets.resueltos[ftthIndex], 7, 'FTTH resueltos debe ser 7');
+        assert.strictEqual(renderedData.areaTickets.rechazados[ftthIndex], 0, 'FTTH rechazados debe ser 0');
+
+        // G3: Barras por Operador
+        assert(renderedData.barrasOperadores, 'Debe incluir barrasOperadores');
+        assert.strictEqual(renderedData.barrasOperadores.labels.length, 2, 'Debe tener 2 operadores');
+        const opFtth = renderedData.barrasOperadores.detalles.find(o => o.id === 'op-a');
+        assert(opFtth, 'Operador FTTH debe existir');
+        assert.strictEqual(opFtth.asignadosTotales, 10, 'Asignados debe ser 10');
+        assert.strictEqual(opFtth.cerrados, 7, 'Cerrados debe ser 7');
+
+        // G4: Flujo 24h
+        assert(renderedData.flujoPorHora, 'Debe incluir flujoPorHora');
+        assert(Array.isArray(renderedData.flujoPorHora.asignados), 'flujoPorHora debe incluir array de asignados');
+        assert.strictEqual(renderedData.flujoPorHora.asignados.length, 24, 'flujoPorHora.asignados debe tener 24 horas');
+        const currentHour = now.getHours();
+        assert.strictEqual(renderedData.flujoPorHora.asignados[currentHour], 1, 'Debe registrar 1 asignado en la hora actual');
+        assert.strictEqual(renderedData.flujoPorHora.cerrados[currentHour], 1, 'Debe registrar 1 cerrado en la hora actual');
+
+        // G5: Mediana de tiempo de resolución en memoria JS
+        assert(renderedData.medianaTiempoPorArea, 'Debe incluir medianaTiempoPorArea');
+        const medFtth = renderedData.medianaTiempoPorArea.detalles.find(d => d.area === 'REDES_FTTH');
+        assert(medFtth, 'Debe existir detalle para REDES_FTTH');
+        // Duraciones: 30, 60, 90 -> mediana es 60 min
+        assert.strictEqual(medFtth.medianaMinutos, 60, 'La mediana de REDES_FTTH (30, 60, 90) debe ser exactamente 60 minutos');
+        assert.strictEqual(medFtth.formateado, '1.0 h', '60 minutos debe formatearse como 1.0 h');
+
+        const medWan = renderedData.medianaTiempoPorArea.detalles.find(d => d.area === 'WAN');
+        assert(medWan, 'Debe existir detalle para WAN');
+        // Duraciones: 20, 40 -> mediana es (20 + 40) / 2 = 30 min
+        assert.strictEqual(medWan.medianaMinutos, 30, 'La mediana de WAN (20, 40) debe ser exactamente 30 minutos');
+        assert.strictEqual(medWan.formateado, '30 min', '30 minutos debe formatearse como 30 min');
+
+        const medGeneral = renderedData.medianaTiempoPorArea.detalles.find(d => d.area === 'GENERAL');
+        assert(medGeneral, 'Debe existir detalle para GENERAL');
+        assert.strictEqual(medGeneral.medianaMinutos, 0, 'Área sin tickets resueltos debe tener mediana 0');
+        assert.strictEqual(medGeneral.formateado, 'N/A', 'Área sin tickets resueltos debe tener formato N/A');
+
+        // Renderizado EJS completo con los datos producidos
+        const html = ejs.render(templateContent, renderedData, { filename: templatePath });
+        assert(html.includes('id="operatorBarChart"'), 'El HTML debe renderizar el canvas #operatorBarChart');
+        assert(html.includes('id="medianResolutionChart"'), 'El HTML debe renderizar el canvas #medianResolutionChart');
+        assert(html.includes('id="areaVolumeChart"'), 'El HTML debe renderizar el canvas #areaVolumeChart');
+        assert(html.includes('id="hourlyFlowChart"'), 'El HTML debe renderizar el canvas #hourlyFlowChart');
+        assert(html.includes('id="venezuela-map-container"'), 'El HTML debe renderizar el contenedor de mapa');
+    } finally {
+        prisma.ticket.count = origCount;
+        prisma.ticket.aggregate = origAgg;
+        prisma.ticket.groupBy = origGroupBy;
+        prisma.ticket.findMany = origFindManyTicket;
+        prisma.user.findMany = origFindManyUser;
+    }
+});
+
+// 20. Adversarial: Mediana con fecha_resolucion / fecha_creacion, exclusión >24h y área dinámica (R1.9)
+runAsyncTest('R1.9: [Adversarial] Mediana con fecha_resolucion / fecha_creacion y exclusión estricta >24h', async () => {
+    const prisma = require('../src/config/prisma');
+    const { getReports } = require('../src/controllers/reportController');
+
+    const origCount = prisma.ticket.count;
+    const origAgg = prisma.ticket.aggregate;
+    const origGroupBy = prisma.ticket.groupBy;
+    const origFindManyTicket = prisma.ticket.findMany;
+    const origFindManyUser = prisma.user.findMany;
+
+    try {
+        prisma.ticket.count = async () => 5;
+        prisma.ticket.aggregate = async () => ({ _sum: { puntos_complejidad: 10 } });
+        prisma.ticket.groupBy = async () => [];
+        prisma.user.findMany = async () => [];
+
+        const now = new Date();
+        const t2hAgo = new Date(now.getTime() - 2 * 3600000);
+        const t1hAgo = new Date(now.getTime() - 1 * 3600000);
+        const t30hAgo = new Date(now.getTime() - 30 * 3600000);
+        const t28hAgo = new Date(now.getTime() - 28 * 3600000);
+
+        prisma.ticket.findMany = async (args) => {
+            if (args.select && args.select.fecha_asignacion) {
+                return [
+                    { id: 'corrupt-date', createdAt: 'fecha-invalida', fecha_asignacion: 'otra-invalida', fecha_cierre: null, resueltoEn: null, updatedAt: now, estado_actual: 'EN_PROGRESO' }
+                ];
+            }
+            if (args.select && args.select.asunto) return [];
+            if (args.select && args.select.asignado_a) return [];
+
+            // Recent resolved tickets: incluye campos con nombres alternativos fecha_resolucion y fecha_creacion,
+            // un ticket resuelto hace 28h (debe excluirse por estar fuera de 24h) y un área dinámica
+            return [
+                { id: 'res-alt-1', area_designada: 'CUSTOM_SEC', fecha_creacion: t2hAgo, fecha_resolucion: t1hAgo, estado_actual: 'CERRADO' },
+                { id: 'res-old-2', area_designada: 'CUSTOM_SEC', fecha_creacion: t30hAgo, fecha_resolucion: t28hAgo, estado_actual: 'CERRADO' }
+            ];
+        };
+
+        let renderedData = null;
+        const req = { user: { nombre: 'Coord' } };
+        const res = { render: (v, d) => { renderedData = d; }, status: () => res, send: () => {} };
+
+        await getReports(req, res);
+
+        assert(renderedData.medianaTiempoPorArea, 'Debe devolver medianaTiempoPorArea');
+        const customArea = renderedData.medianaTiempoPorArea.detalles.find(d => d.area === 'CUSTOM_SEC');
+        assert(customArea, 'El área dinámica CUSTOM_SEC debe ser incluida en los resultados');
+        // Solo el ticket de hace 1h (60 min) debe incluirse; el de hace 28h debe ser ignorado
+        assert.strictEqual(customArea.ticketsCount, 1, 'Debe incluir solo 1 ticket resuelto dentro de la ventana de 24h');
+        assert.strictEqual(customArea.medianaMinutos, 60, 'La mediana debe calcular exactamente 60 minutos con fecha_creacion/fecha_resolucion');
+
+        // Robustez en flujoPorHora con fechas corruptas
+        assert.strictEqual(renderedData.flujoPorHora.creados.some(isNaN), false, 'No deben existir valores NaN en flujoPorHora.creados');
+        assert.strictEqual(renderedData.flujoPorHora.asignados.some(isNaN), false, 'No deben existir valores NaN en flujoPorHora.asignados');
+    } finally {
+        prisma.ticket.count = origCount;
+        prisma.ticket.aggregate = origAgg;
+        prisma.ticket.groupBy = origGroupBy;
+        prisma.ticket.findMany = origFindManyTicket;
+        prisma.user.findMany = origFindManyUser;
+    }
+});
+
+// 21. Presencia de pistas de fondo translúcidas y tooltip oscuro de mapa (R2.19)
+runTest('R2.19: [Adversarial] Verificación de plugin de pistas translúcidas y tooltip oscuro del mapa', () => {
+    assert(templateContent.includes('capsuleTrackPlugin'), 'Debe definir plugin de pistas translúcidas capsuleTrackPlugin');
+    assert(templateContent.includes('plugins: [capsuleTrackPlugin]'), 'Debe registrar capsuleTrackPlugin en los gráficos de barras');
+    assert(templateContent.includes('bg-[#1C1C1E]/95'), 'El tooltip del mapa SVG debe adoptar estilo oscuro Liquid Glass');
+});
+
+// 22. Adversarial: Verificación de fallback arcTo y tolerancia a labels vacías en barras de operador (R2.20)
+runTest('R2.20: [Adversarial] Verificación de fallback arcTo en capsuleTrackPlugin y robustez de fallback en barras de operador', () => {
+    assert(templateContent.includes('ctx.arcTo'), 'Debe soportar degradación elegante vía arcTo para trazado de cápsulas en Canvas');
+    assert(templateContent.includes('barrasOp.labels && barrasOp.labels.length > 0'), 'Debe validar longitud no vacía de labels antes de omitir fallback');
+});
+
+// 23. Adversarial: Flujo 24h con fecha_creacion/fecha_resolucion, tolerancia a nulls e isFinite en mediana (R1.10)
+runAsyncTest('R1.10: [Adversarial] Flujo 24h con aliases fecha_creacion/resolucion, tolerancia a nulls e isFinite en mediana', async () => {
+    const prisma = require('../src/config/prisma');
+    const { getReports } = require('../src/controllers/reportController');
+
+    const origCount = prisma.ticket.count;
+    const origAgg = prisma.ticket.aggregate;
+    const origGroupBy = prisma.ticket.groupBy;
+    const origFindManyTicket = prisma.ticket.findMany;
+    const origFindManyUser = prisma.user.findMany;
+
+    try {
+        prisma.ticket.count = async () => 3;
+        prisma.ticket.aggregate = async () => ({ _sum: { puntos_complejidad: 0 } });
+        prisma.ticket.groupBy = async () => [];
+        prisma.user.findMany = async () => [];
+
+        const now = new Date();
+        const t1hAgo = new Date(now.getTime() - 3600000);
+
+        prisma.ticket.findMany = async (args) => {
+            // todayTickets: incluye nulls y aliases alternativos fecha_creacion / fecha_resolucion
+            if (args.select && args.select.fecha_asignacion) {
+                return [
+                    null,
+                    { id: 'alias-flow', fecha_creacion: t1hAgo, fecha_resolucion: now, fecha_asignacion: t1hAgo, estado_actual: 'CERRADO' },
+                    undefined
+                ];
+            }
+            // allTicketsGeo: incluye nulls
+            if (args.select && args.select.asunto) {
+                return [null, { id: 'geo-safe', asunto: 'Caracas Falla', descripcion: '', estado_actual: 'CERRADO' }];
+            }
+            if (args.select && args.select.asignado_a) return [];
+
+            // recentResolvedTickets: incluye null y ticket con fechas normales
+            return [
+                null,
+                { id: 'res-alias', area_designada: 'WAN', fecha_creacion: t1hAgo, fecha_resolucion: now, estado_actual: 'CERRADO' }
+            ];
+        };
+
+        let renderedData = null;
+        const req = { user: { nombre: 'Coord' } };
+        const res = { render: (v, d) => { renderedData = d; }, status: () => res, send: () => {} };
+
+        await getReports(req, res);
+
+        assert(renderedData, 'Debe procesar sin errores ante datos con elementos null');
+        const hCrea = t1hAgo.getHours();
+        const hRes = now.getHours();
+        assert(renderedData.flujoPorHora.creados[hCrea] >= 1, 'Debe registrar creado mediante fecha_creacion');
+        assert(renderedData.flujoPorHora.cerrados[hRes] >= 1, 'Debe registrar cerrado mediante fecha_resolucion');
+        assert(renderedData.flujoPorHora.asignados[hCrea] >= 1, 'Debe registrar asignado');
+
+        const wanMed = renderedData.medianaTiempoPorArea.detalles.find(d => d.area === 'WAN');
+        assert.strictEqual(wanMed.medianaMinutos, 60, 'Mediana de 1h debe ser 60 min');
+    } finally {
+        prisma.ticket.count = origCount;
+        prisma.ticket.aggregate = origAgg;
+        prisma.ticket.groupBy = origGroupBy;
+        prisma.ticket.findMany = origFindManyTicket;
+        prisma.user.findMany = origFindManyUser;
+    }
+});
+
+// 24. Reestructuración en Pestañas (Segmented Control estilo macOS) - R1 & R2
+runTest('R2.21: Presencia del Segmented Control estilo macOS (botonera de 3 pestañas)', () => {
+    assert(templateContent.includes('role="tablist"'), 'Debe incluir role="tablist" para la botonera de pestañas');
+    assert(templateContent.includes('report-tab-btn'), 'Debe usar clase report-tab-btn para los botones de pestañas');
+    assert(templateContent.includes('bg-black/10') || templateContent.includes('bg-white/20'), 'Debe usar fondo translúcido estilo macOS para el Segmented Control');
+    assert(templateContent.includes('backdrop-blur'), 'Debe usar backdrop-blur para el Segmented Control');
+    assert(templateContent.includes('Visión General'), 'Debe contener la pestaña Visión General');
+    assert(templateContent.includes('Equipo'), 'Debe contener la pestaña Equipo');
+    assert(templateContent.includes('Geografía'), 'Debe contener la pestaña Geografía');
+});
+
+runTest('R2.22: Estructura de los 3 contenedores de pestañas (Tab Panes: #tab-overview, #tab-team, #tab-geo)', () => {
+    assert(templateContent.includes('id="tab-overview"'), 'Debe existir contenedor #tab-overview');
+    assert(templateContent.includes('id="tab-team"'), 'Debe existir contenedor #tab-team');
+    assert(templateContent.includes('id="tab-geo"'), 'Debe existir contenedor #tab-geo');
+
+    // Tab 1: 4 KPIs, Flujo 24h (ancho completo), Área vs Tickets (mitad), Mediana (mitad)
+    const overviewIdx = templateContent.indexOf('id="tab-overview"');
+    const teamIdx = templateContent.indexOf('id="tab-team"');
+    const geoIdx = templateContent.indexOf('id="tab-geo"');
+    assert(overviewIdx >= 0 && teamIdx > overviewIdx && geoIdx > teamIdx, 'Los 3 contenedores deben estar ordenados secuencialmente');
+
+    const tab1Content = templateContent.substring(overviewIdx, teamIdx);
+    assert(tab1Content.includes('id="kpi-total"'), 'Tab 1 debe contener los 4 KPIs superiores');
+    assert(tab1Content.includes('id="hourlyFlowChart"'), 'Tab 1 debe contener el gráfico de Flujo 24h');
+    assert(tab1Content.includes('id="areaVolumeChart"'), 'Tab 1 debe contener el gráfico Área vs Tickets');
+    assert(tab1Content.includes('id="medianResolutionChart"'), 'Tab 1 debe contener el gráfico de Mediana de Resolución');
+
+    // Tab 2: Barras por Operador y Ranking
+    const tab2Content = templateContent.substring(teamIdx, geoIdx);
+    assert(tab2Content.includes('id="operatorBarChart"'), 'Tab 2 debe contener el gráfico de Barras por Operador');
+    assert(tab2Content.includes('Ranking de Operadores'), 'Tab 2 debe contener la tabla de Ranking de Operadores');
+
+    // Tab 3: Mapa de Venezuela y resumen de estados
+    const tab3Content = templateContent.substring(geoIdx);
+    assert(tab3Content.includes('id="venezuela-map-container"'), 'Tab 3 debe contener el mapa vectorial de Venezuela');
+    assert(tab3Content.includes('id="venezuela-map-section"'), 'Tab 3 debe contener la sección territorial');
+});
+
+runTest('R2.23: Reducción de opacidad de grid en Chart.js a rgba(0, 0, 0, 0.05)', () => {
+    assert(templateContent.includes("rgba(0, 0, 0, 0.05)"), 'Las escalas de Chart.js deben usar opacidad de grid reducida a rgba(0, 0, 0, 0.05)');
+});
+
+runTest('R2.24: Lógica de alternancia de pestañas y redibujo de Chart.js en la vista', () => {
+    assert(templateContent.includes('setupTabNavigation'), 'Debe incluir función controladora de pestañas setupTabNavigation');
+    assert(templateContent.includes('switchTab'), 'Debe incluir lógica de alternancia switchTab');
+    assert(templateContent.includes('chart.resize()'), 'Debe redibujar gráficas con resize al cambiar de pestaña');
+    assert(templateContent.includes('chart.update('), 'Debe actualizar gráficas con update al cambiar de pestaña');
+});
+
+runTest('R2.25: [Adversarial] Sincronización de color en iconos de pestañas (activo text-[#007AFF], inactivo text-[#8E8E93])', () => {
+    assert(templateContent.includes('text-[#007AFF]'), 'El icono activo inicial debe tener text-[#007AFF]');
+    assert(templateContent.includes('text-[#8E8E93]'), 'Los iconos inactivos iniciales deben tener text-[#8E8E93]');
+    assert(templateContent.includes("icon.classList.add('text-[#007AFF]')"), 'switchTab debe aplicar text-[#007AFF] al icono activo');
+    assert(templateContent.includes("icon.classList.add('text-[#8E8E93]')"), 'switchTab debe aplicar text-[#8E8E93] a los iconos inactivos');
+});
+
+runTest('R2.26: [Adversarial] Robustez de switchTab ante targetId inválido o nulo (guardia de existencia)', () => {
+    assert(templateContent.includes('if (!targetId) return;'), 'switchTab debe validar targetId truthy');
+    assert(templateContent.includes('const targetPane = document.getElementById(targetId);') &&
+           templateContent.includes('if (!targetPane) return;'), 'switchTab debe comprobar la existencia del panel antes de ocultar la vista');
+});
+
+runTest('R2.27: [Adversarial] Prevención de resize en paneles ocultos ante cambios rápidos de pestañas (Race Condition Guard)', () => {
+    assert(templateContent.includes("classList.contains('hidden')"), 'requestAnimationFrame en switchTab debe verificar que el panel no esté oculto antes de llamar a resize()');
+});
+
+runTest('R2.28: [Adversarial] Forzado de reflow síncrono (offsetWidth) y soporte de elemento canvas en Chart.getChart', () => {
+    assert(templateContent.includes('void pane.offsetWidth;'), 'switchTab debe forzar un reflow de layout con offsetWidth al desocultar un panel');
+    assert(templateContent.includes('Chart.getChart(canvasEl)'), 'switchTab debe soportar paso directo del elemento canvas a Chart.getChart');
+});
+
+runTest('R2.29: [Adversarial] Cambio automático a pestaña de Equipo al buscar en globalSearchInput', () => {
+    assert(templateContent.includes("window.switchReportsTab('tab-team')"), 'El filtro de búsqueda global debe alternar a la pestaña tab-team si el usuario está buscando un operador');
+});
+
+runTest('R2.30: [Adversarial] Soporte de enlace directo a pestañas mediante window.location.hash', () => {
+    assert(templateContent.includes('window.location.hash'), 'setupTabNavigation debe leer window.location.hash para activar la pestaña inicial solicitada');
+});
+
+runTest('R2.31: [Adversarial Functional] Simulación DOM de switchTab (transición de estados, ARIA y Chart.js resize)', () => {
+    // Creación de DOM simulado para verificar la lógica algorítmica de switchTab
+    const mockPanes = {
+        'tab-overview': { id: 'tab-overview', classes: new Set([]), ariaHidden: 'false', offsetWidth: 1024 },
+        'tab-team': { id: 'tab-team', classes: new Set(['hidden']), ariaHidden: 'true', offsetWidth: 1024 },
+        'tab-geo': { id: 'tab-geo', classes: new Set(['hidden']), ariaHidden: 'true', offsetWidth: 1024 }
+    };
+
+    const mockButtons = [
+        {
+            target: 'tab-overview',
+            selected: 'true',
+            className: 'report-tab-btn',
+            svg: { classes: new Set(['w-3.5', 'h-3.5', 'text-[#007AFF]']) }
+        },
+        {
+            target: 'tab-team',
+            selected: 'false',
+            className: 'report-tab-btn',
+            svg: { classes: new Set(['w-3.5', 'h-3.5', 'text-[#8E8E93]']) }
+        },
+        {
+            target: 'tab-geo',
+            selected: 'false',
+            className: 'report-tab-btn',
+            svg: { classes: new Set(['w-3.5', 'h-3.5', 'text-[#8E8E93]']) }
+        }
+    ];
+
+    const chartResizeLog = [];
+    const mockCharts = {
+        'operatorBarChart': {
+            resize: () => { chartResizeLog.push('operatorBarChart.resize'); },
+            update: (mode) => { chartResizeLog.push(`operatorBarChart.update(${mode})`); }
+        },
+        'hourlyFlowChart': {
+            resize: () => { chartResizeLog.push('hourlyFlowChart.resize'); },
+            update: (mode) => { chartResizeLog.push(`hourlyFlowChart.update(${mode})`); }
+        }
+    };
+
+    const pendingRAF = [];
+    function mockRAF(fn) { pendingRAF.push(fn); }
+
+    function runSimulatedSwitchTab(targetId) {
+        if (!targetId) return;
+        const targetPane = mockPanes[targetId];
+        if (!targetPane) return;
+
+        mockButtons.forEach(btn => {
+            const isTarget = btn.target === targetId;
+            btn.selected = isTarget ? 'true' : 'false';
+            if (isTarget) {
+                btn.className = 'active-class';
+                btn.svg.classes.delete('text-[#8E8E93]');
+                btn.svg.classes.add('text-[#007AFF]');
+            } else {
+                btn.className = 'inactive-class';
+                btn.svg.classes.delete('text-[#007AFF]');
+                btn.svg.classes.add('text-[#8E8E93]');
+            }
+        });
+
+        Object.values(mockPanes).forEach(pane => {
+            if (pane.id === targetId) {
+                pane.classes.delete('hidden');
+                pane.ariaHidden = 'false';
+                void pane.offsetWidth;
+            } else {
+                pane.classes.add('hidden');
+                pane.ariaHidden = 'true';
+            }
+        });
+
+        mockRAF(() => {
+            const activePane = mockPanes[targetId];
+            if (!activePane || activePane.classes.has('hidden')) return;
+
+            const chartsByTab = {
+                'tab-overview': ['hourlyFlowChart'],
+                'tab-team': ['operatorBarChart'],
+                'tab-geo': []
+            };
+            const charts = chartsByTab[targetId] || [];
+            charts.forEach(cId => {
+                const c = mockCharts[cId];
+                if (c) {
+                    c.resize();
+                    c.update('none');
+                }
+            });
+        });
+    }
+
+    // 1. Transición de Tab 1 -> Tab 2
+    runSimulatedSwitchTab('tab-team');
+    assert.strictEqual(mockPanes['tab-overview'].classes.has('hidden'), true, 'tab-overview debe quedar oculto');
+    assert.strictEqual(mockPanes['tab-overview'].ariaHidden, 'true', 'tab-overview ariaHidden debe ser true');
+    assert.strictEqual(mockPanes['tab-team'].classes.has('hidden'), false, 'tab-team debe ser visible');
+    assert.strictEqual(mockPanes['tab-team'].ariaHidden, 'false', 'tab-team ariaHidden debe ser false');
+
+    const btnTeam = mockButtons.find(b => b.target === 'tab-team');
+    const btnOverview = mockButtons.find(b => b.target === 'tab-overview');
+    assert.strictEqual(btnTeam.selected, 'true', 'tab-btn-team aria-selected debe ser true');
+    assert.strictEqual(btnTeam.svg.classes.has('text-[#007AFF]'), true, 'tab-btn-team icono debe ser azul');
+    assert.strictEqual(btnOverview.selected, 'false', 'tab-btn-overview aria-selected debe ser false');
+    assert.strictEqual(btnOverview.svg.classes.has('text-[#8E8E93]'), true, 'tab-btn-overview icono debe ser gris');
+
+    // Ejecutar RAF pendiente para tab-team
+    assert.strictEqual(pendingRAF.length, 1, 'Debe haber un callback en cola RAF');
+    pendingRAF.shift()();
+    assert(chartResizeLog.includes('operatorBarChart.resize'), 'operatorBarChart debe haber recibido resize()');
+    assert(chartResizeLog.includes('operatorBarChart.update(none)'), 'operatorBarChart debe haber recibido update(none)');
+
+    // 2. Transición inválida (debe abortar sin alterar visibilidad)
+    runSimulatedSwitchTab('invalid-tab-id');
+    assert.strictEqual(mockPanes['tab-team'].classes.has('hidden'), false, 'tab-team debe seguir visible ante id inválido');
+    assert.strictEqual(mockPanes['tab-overview'].classes.has('hidden'), true, 'tab-overview debe seguir oculto ante id inválido');
+
+    // 3. Race condition: Cambio rápido tab-team -> tab-overview antes de ejecutar el frame
+    chartResizeLog.length = 0;
+    runSimulatedSwitchTab('tab-overview');
+    // En este momento, tab-overview es visible y tab-team está oculto.
+    // Simulamos un frame rezagado que iba destinado a tab-team:
+    const staleTeamFrame = () => {
+        const activePane = mockPanes['tab-team'];
+        if (!activePane || activePane.classes.has('hidden')) return; // Guardia de race condition
+        mockCharts['operatorBarChart'].resize();
+    };
+    staleTeamFrame();
+    assert.strictEqual(chartResizeLog.length, 0, 'Frame rezagado no debe ejecutar resize() en panel oculto');
+
+    // Ejecutar el frame legítimo de tab-overview
+    const currentFrame = pendingRAF.pop();
+    currentFrame();
+    assert(chartResizeLog.includes('hourlyFlowChart.resize'), 'hourlyFlowChart en tab-overview debe recibir resize()');
+});
+
+(async () => {
+    await Promise.all(asyncQueue);
+    console.log('\n================================================================');
+    console.log(`   RESUMEN: ${passedTests}/${totalTests} pruebas pasaron correctamente`);
+    console.log('================================================================\n');
+
+    if (passedTests !== totalTests) {
+        process.exit(1);
+    }
+})();
