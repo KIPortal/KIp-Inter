@@ -210,8 +210,8 @@ Estructura propuesta, sujeta a ajuste posterior:
 - **Quién cierra un ticket:** el coordinador de su área o el administrador general.
 - **Guardia:** no aparece como disponible en la jornada normal; aparece como "De guardia", puede ser contactado y ver y resolver tickets desde casa.
 - **Traspaso al guardia:** el coordinador puede traspasar casos con nota de contexto (sección 10.1).
+- **Asignación al guardia:** el estado "De guardia" **no bloquea** la asignación. El coordinador puede asignarle tickets, porque cuando el coordinador se retira el guardia es quien atiende lo que queda pendiente.
 
 ### Pendientes
 
-1. ¿El estado "De guardia" debe bloquear la asignación masiva a ese operador, o el coordinador puede asignarle tickets aunque esté de guardia?
 2. **Teléfono de guardia de Telefonía:** existe un teléfono de guardia en Telefonía. Queda por confirmar con el departamento si se guarda en el sistema o si el contacto será solo por correo. Se evalúa en una fase posterior.
