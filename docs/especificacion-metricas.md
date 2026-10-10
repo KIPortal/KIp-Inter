@@ -20,7 +20,8 @@ Que el coordinador de cada área pueda:
 
 | Rol | Puede |
 |---|---|
-| **Coordinador** | Ver todo su área, asignar, reasignar, definir prioridad y puntos, cerrar tickets, ver reportes y exportarlos. |
+| **Coordinador de área** | Ver todo su área, asignar, reasignar, definir prioridad y puntos, cerrar tickets de su área, ver reportes y exportarlos. |
+| **Administrador general** | Todo lo del coordinador, en todas las áreas. Puede cerrar tickets de cualquier área. |
 | **Operador** | Ver tickets disponibles de su área, tomarlos, pausarlos, marcarlos como resueltos y consultar sus propios indicadores. |
 
 ---
@@ -32,6 +33,11 @@ Que el coordinador de cada área pueda:
 - **Fin de semana:** el operador de guardia trabaja desde casa.
 - Cada operador tiene un **horario asignado** (días y franja). Con esto el sistema sabe si está disponible.
 - El horario se guarda como dato del operador, no como regla fija.
+- **Rotación de guardia semanal:** las guardias cambian cada semana. El coordinador las define desde **Gestión de Turno**, indicando qué operadores están de guardia en cada semana.
+- **Estado del operador de guardia:**
+  - En la jornada normal **no aparece como "Disponible"**, aparece como **"De guardia"** (o "En casa de guardia" si trabaja remoto).
+  - Puede **recibir contacto** (se muestra su teléfono o canal de contacto) y **ver y resolver los tickets** que llegan al correo desde su casa.
+  - No cuenta como disponible para asignación en la jornada normal, salvo que el coordinador lo active.
 
 ---
 
@@ -105,6 +111,8 @@ Se muestran **dos medidas** en paralelo, claramente etiquetadas:
 - Se calcula un **índice de carga** por operador:
   **índice = tickets activos del operador ÷ promedio de tickets activos de su área**
 - **Alerta** cuando el índice supera **1.5** (un operador tiene 50% más carga que el promedio del área).
+
+**Ejemplo:** en un área, el promedio de tickets activos es **4**. El umbral es 1.5 × 4 = **6**. Si un operador tiene **7 o más** tickets activos, se le marca con alerta de sobrecarga. Con 6 o menos, no.
 - La alerta **solo se muestra al coordinador**. Él decide si asigna más o no.
 - No se busca igualdad exacta: un operador puede tener más carga que otro, siempre que el balance general del área sea razonable.
 - Se evalúa con los tickets activos en el momento, no con histórico.
@@ -141,7 +149,10 @@ Mesa de control del coordinador. Aquí se gestiona todo.
 
 - Tabla con filtros: estado, prioridad, operador, área, fecha, antigüedad.
 - Acciones: asignar, reasignar, definir prioridad y puntos, pausar, poner en espera de terceros, resolver, cerrar.
-- **Sin asignación masiva.** Cada ticket se asigna individualmente, con la alerta de sobrecarga visible.
+- **Asignación masiva:** se conserva. El coordinador puede seleccionar varios tickets y asignarlos a un operador a la vez.
+  - Antes de confirmar, el sistema calcula la carga que tendría el operador después de la asignación.
+  - Si esa asignación lo llevaría a **sobrecarga** (índice mayor a 1.5), se muestra un aviso claro: "Esta asignación dejará a [operador] con [N] tickets activos, por encima del umbral del área." El coordinador puede confirmar o cancelar.
+  - El aviso no bloquea la acción; solo exige una confirmación consciente.
 - Historial de cada ticket: quién lo tomó, cuándo cambió de estado y quién lo cerró.
 
 ---
@@ -175,7 +186,6 @@ Estructura propuesta, sujeta a ajuste posterior:
 
 ## 13. Fuera de alcance (por ahora)
 
-- Asignación masiva de tickets.
 - Notificaciones por correo o WhatsApp al operador.
 - Modo oscuro (la primera versión es en claro, estilo macOS).
 - Sincronización en tiempo real (WebSocket). Se evalúa en fase posterior.
@@ -184,6 +194,13 @@ Estructura propuesta, sujeta a ajuste posterior:
 
 ## 14. Preguntas abiertas
 
-1. ¿El umbral de sobrecarga de **1.5** es razonable para empezar, o prefieres otro valor?
-2. ¿Quién puede cerrar un ticket: solo el coordinador de su área, o también un coordinador general?
-3. ¿El operador de guardia de fin de semana aparece como disponible aunque esté en casa?
+### Resueltas en esta versión
+
+- **Umbral de sobrecarga:** 1.5 veces el promedio del área (ejemplo en la sección 7). Se ajusta con datos reales.
+- **Quién cierra un ticket:** el coordinador de su área o el administrador general.
+- **Guardia:** no aparece como disponible en la jornada normal; aparece como "De guardia", puede ser contactado y ver y resolver tickets desde casa.
+
+### Pendientes
+
+1. ¿El estado "De guardia" debe bloquear la asignación masiva a ese operador, o el coordinador puede asignarle tickets aunque esté de guardia?
+2. ¿El teléfono de contacto del operador de guardia se guarda en el sistema o se consulta fuera de la aplicación?
