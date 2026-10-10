@@ -155,6 +155,16 @@ Mesa de control del coordinador. Aquí se gestiona todo.
   - El aviso no bloquea la acción; solo exige una confirmación consciente.
 - Historial de cada ticket: quién lo tomó, cuándo cambió de estado y quién lo cerró.
 
+### 10.1 Traspaso de casos al operador de guardia
+
+Cuando el coordinador se retira y quedan casos sin resolver, puede **traspasarlos al operador de guardia** con una nota de contexto.
+
+- El coordinador selecciona uno o varios tickets y los traspasa a un operador de guardia.
+- Cada traspaso incluye una **nota de traspaso** obligatoria: qué se intentó, qué se hizo y qué sigue. Así el guardia sabe qué hacer sin tener que reconstruir el caso.
+- El ticket queda asignado al guardia, con la nota visible en el detalle y en el historial.
+- Los traspasos cuentan para la carga del guardia y aparecen como traspaso en los reportes.
+- El traspaso no reinicia el tiempo de solución: el tiempo sigue contando desde que el ticket llegó al correo.
+
 ---
 
 ## 11. Reportes y plantilla Excel (v1)
@@ -199,8 +209,9 @@ Estructura propuesta, sujeta a ajuste posterior:
 - **Umbral de sobrecarga:** 1.5 veces el promedio del área (ejemplo en la sección 7). Se ajusta con datos reales.
 - **Quién cierra un ticket:** el coordinador de su área o el administrador general.
 - **Guardia:** no aparece como disponible en la jornada normal; aparece como "De guardia", puede ser contactado y ver y resolver tickets desde casa.
+- **Traspaso al guardia:** el coordinador puede traspasar casos con nota de contexto (sección 10.1).
 
 ### Pendientes
 
 1. ¿El estado "De guardia" debe bloquear la asignación masiva a ese operador, o el coordinador puede asignarle tickets aunque esté de guardia?
-2. ¿El teléfono de contacto del operador de guardia se guarda en el sistema o se consulta fuera de la aplicación?
+2. **Teléfono de guardia de Telefonía:** existe un teléfono de guardia en Telefonía. Queda por confirmar con el departamento si se guarda en el sistema o si el contacto será solo por correo. Se evalúa en una fase posterior.
