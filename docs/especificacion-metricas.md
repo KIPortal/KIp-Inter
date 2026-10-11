@@ -193,10 +193,12 @@ Estructura propuesta, sujeta a ajuste posterior:
 
 > Estos cambios **no se han aplicado**. Requieren revisión antes de tocar `schema.prisma` y las migraciones.
 
-1. **Añadir el estado `RESUELTO`** al enum `EstadoTicket`.
+1. **Reflejar el estado `RESUELTO` en `schema.prisma`.** El valor ya existe en la base de datos por la migración `20261006140000_add_resuelto_and_adjunto`, pero el enum `EstadoTicket` del schema no lo tiene, así que Prisma Client no lo conoce.
 2. **Añadir `fecha_resuelto`** al modelo `Ticket`.
 3. **Unificar** `resueltoEn` y `fecha_cierre`: hoy hacen casi lo mismo. Propuesta: `fecha_resuelto` para el operador y `fecha_cierre` para el coordinador.
-4. **Añadir `clave` al modelo `User`** (hoy el código lo usa pero el schema no lo tiene) y sincronizar el enum con la migración `EN_PAUSA`.
+4. **Sincronizar el modelo `Adjunto` con el schema.** La misma migración crea la tabla `Adjunto` (relacionada con `Ticket`), pero `schema.prisma` no la declara. No requiere una migración nueva, solo declarar el modelo.
+   - *Nota:* `clave` y `EN_PAUSA` **sí** están en `schema.prisma`; una versión anterior de este documento decía lo contrario y era incorrecta.
+   - *Pendiente de seguridad, distinto del schema:* `authController` compara la contraseña en texto plano (`user.clave !== clave`). Conviene guardar un hash (por ejemplo con bcrypt).
 5. **Añadir horario por operador** (días de la semana y franja horaria, con tipo `TURNO` o `GUARDIA`).
 6. **Añadir índice** sobre `createdAt`, `fecha_resuelto` y `fecha_cierre` para que los reportes por periodo sean rápidos.
 
