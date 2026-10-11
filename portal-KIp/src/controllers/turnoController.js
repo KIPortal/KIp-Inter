@@ -67,7 +67,7 @@ async function setGuardia(req, res) {
         const weekStart = resolveWeek(req.body.semana);
         if (!weekStart) return res.status(400).json({ error: 'Fecha inválida (use AAAA-MM-DD)' });
         const ids = req.body.operatorIds;
-        if (!Array.isArray(ids) || ids.some(id => !Number.isInteger(id))) {
+        if (!Array.isArray(ids) || ids.some(id => typeof id !== 'string' || !id.trim())) {
             return res.status(400).json({ error: 'operatorIds debe ser una lista de ids' });
         }
         const unique = [...new Set(ids)];
@@ -88,8 +88,8 @@ async function setGuardia(req, res) {
 
 async function setHorario(req, res) {
     try {
-        const operatorId = Number(req.params.operatorId);
-        if (!Number.isInteger(operatorId)) return res.status(400).json({ error: 'Operador inválido' });
+        const operatorId = String(req.params.operatorId || '').trim();
+        if (!operatorId) return res.status(400).json({ error: 'Operador inválido' });
         const operador = await prisma.user.findFirst({ where: { id: operatorId, rol: 'OPERADOR' }, select: { id: true } });
         if (!operador) return res.status(404).json({ error: 'Operador no encontrado' });
         const { error, horario } = validateSchedule(req.body);

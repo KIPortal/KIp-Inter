@@ -68,31 +68,36 @@ const at = (iso, hhmm) => new Date(`${iso}T${hhmm}:00-04:00`);
 
     await t('setGuardia: reemplaza la guardia de la semana y audita', async () => {
         let deleted, created;
-        prisma.user.findMany = async () => [{ id: 1 }, { id: 2 }];
+        prisma.user.findMany = async () => [{ id: 'u1' }, { id: 'u2' }];
         prisma.guardiaSemanal = { deleteMany: async a => { deleted = a; return a; }, createMany: async a => { created = a; return a; } };
         prisma.$transaction = async ops => Promise.all(ops);
         const res = mockRes();
-        await ctrl.setGuardia({ body: { semana: '2026-10-14', operatorIds: [1, 2, 2] }, user }, res);
+        await ctrl.setGuardia({ body: { semana: '2026-10-14', operatorIds: ['u1', 'u2', 'u2'] }, user }, res);
         assert.strictEqual(res.code, 200);
         assert.strictEqual(deleted.where.semana_inicio.toISOString(), '2026-10-12T04:00:00.000Z');
         assert.strictEqual(created.data.length, 2);
         assert.strictEqual(audits.pop().accion, 'GUARDIA_DEFINIDA');
     });
     await t('setGuardia: rechaza ids que no son operadores', async () => {
-        prisma.user.findMany = async () => [{ id: 1 }];
+        prisma.user.findMany = async () => [{ id: 'u1' }];
         const res = mockRes();
-        await ctrl.setGuardia({ body: { operatorIds: [1, 99] }, user }, res);
+        await ctrl.setGuardia({ body: { operatorIds: ['u1', 'zz'] }, user }, res);
+        assert.strictEqual(res.code, 400);
+    });
+    await t('setGuardia: rechaza ids numéricos (los usuarios usan UUID)', async () => {
+        const res = mockRes();
+        await ctrl.setGuardia({ body: { operatorIds: [1] }, user }, res);
         assert.strictEqual(res.code, 400);
     });
     await t('setHorario: valida y hace upsert', async () => {
         let up;
-        prisma.user.findFirst = async () => ({ id: 5 });
+        prisma.user.findFirst = async () => ({ id: 'u5' });
         prisma.horarioOperador = { upsert: async a => { up = a; } };
         const bad = mockRes();
-        await ctrl.setHorario({ params: { operatorId: '5' }, body: { dias: [1], inicio: '18:00', fin: '09:00' }, user }, bad);
+        await ctrl.setHorario({ params: { operatorId: 'u5' }, body: { dias: [1], inicio: '18:00', fin: '09:00' }, user }, bad);
         assert.strictEqual(bad.code, 400);
         const ok = mockRes();
-        await ctrl.setHorario({ params: { operatorId: '5' }, body: { dias: [1, 2], inicio: '09:00', fin: '18:00' }, user }, ok);
+        await ctrl.setHorario({ params: { operatorId: 'u5' }, body: { dias: [1, 2], inicio: '09:00', fin: '18:00' }, user }, ok);
         assert.strictEqual(ok.code, 200);
         assert.strictEqual(up.create.hora_inicio, '09:00');
         assert.strictEqual(audits.pop().accion, 'HORARIO_EDITADO');
