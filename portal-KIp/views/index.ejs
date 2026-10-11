@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>
-        <%= titulo %>
+        <%= typeof titulo !== 'undefined' ? titulo : 'NOC Portal' %>
     </title>
     <!-- Tailwind CSS v3 with Plugins -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
@@ -180,9 +180,18 @@
                                     </svg>
                                     <span class="hidden md:inline">Dashboard General</span>
                                 </div>
+                            </a>
+                            <a id="ticketsNavLink" class="flex items-center justify-between px-2.5 py-1.5 rounded-[6px] text-[#3A3A3C] hover:bg-black/5 text-[12px] font-medium transition"
+                                href="#tickets" onclick="event.preventDefault(); showDashboardSection('tickets')">
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-[#8E8E93]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path>
+                                    </svg>
+                                    <span class="hidden md:inline">Tickets</span>
+                                </div>
                                 <span
                                     class="hidden md:inline font-mono text-[9px] bg-[#007AFF]/15 text-[#0062CC] px-1.5 py-0.5 rounded font-bold">
-                                    <%= ticketsActivos %>
+                                    <%= typeof ticketsActivos !== 'undefined' ? ticketsActivos : 0 %>
                                 </span>
                             </a>
                             <a class="flex items-center justify-between px-2.5 py-1.5 rounded-[6px] text-[#3A3A3C] hover:bg-black/5 text-[12px] font-medium transition"
@@ -208,7 +217,7 @@
                                 </div>
                                 <span
                                     class="hidden md:inline font-mono text-[9px] bg-[#34C759]/15 text-[#34C759] px-1.5 py-0.5 rounded font-bold">
-                                    <%= operadoresDisponibles %>/<%= totalOperadores %>
+                                    <%= typeof operadoresDisponibles !== 'undefined' ? operadoresDisponibles : 0 %>/<%= typeof totalOperadores !== 'undefined' ? totalOperadores : 0 %>
                                 </span>
                             </a>
                             <a class="flex items-center justify-between px-2.5 py-1.5 rounded-[6px] text-[#3A3A3C] hover:bg-black/5 text-[12px] font-medium transition"
@@ -352,14 +361,16 @@
                                 </div>
                             </header>
                             <div class="operator-popover-list">
-                                <% if (typeof operadoresTurno !== 'undefined' && operadoresTurno && operadoresTurno.length) { %>
+                                <% if (typeof operadoresTurno !== 'undefined' && Array.isArray(operadoresTurno) && operadoresTurno.length) { %>
                                     <% operadoresTurno.forEach(function(operador) {
-                                        const activeTickets = operador.tickets_asignados || [];
+                                        if (!operador) return;
+                                        const activeTickets = Array.isArray(operador.tickets_asignados) ? operador.tickets_asignados : [];
                                         const isBusy = activeTickets.length > 0;
-                                        const operatorParts = operador.nombre.trim().split(/\s+/);
+                                        const opName = (operador.nombre && typeof operador.nombre === 'string') ? operador.nombre.trim() : 'Operador';
+                                        const operatorParts = opName.split(/\s+/);
                                         const operatorInitials = operatorParts.length > 1
                                             ? `${operatorParts[0][0]}${operatorParts[operatorParts.length - 1][0]}`.toUpperCase()
-                                            : operador.nombre.slice(0, 2).toUpperCase();
+                                            : opName.slice(0, 2).toUpperCase();
                                         const operatorAreaLabels = {
                                             GENERAL: 'Operaciones IP',
                                             REDES_FTTH: 'Redes FTTH / OLT',
@@ -420,7 +431,7 @@
                 <!-- END: KPI Cards -->
 
                 <!-- BEGIN: Panel Alertas de Sobrecarga (Solo Coordinador) - R1.3 -->
-                <% if (typeof currentUser !== 'undefined' && currentUser && currentUser.rol && currentUser.rol.trim().toUpperCase() === 'COORDINADOR') { 
+                <% if (typeof currentUser !== 'undefined' && currentUser && currentUser.rol === 'COORDINADOR') { 
                     const alertasLista = (typeof alertasSobrecarga !== 'undefined' && Array.isArray(alertasSobrecarga)) ? alertasSobrecarga : [];
                 %>
                 <section id="overloadAlertsSection" class="p-3.5 rounded-[12px] bg-gradient-to-r from-amber-500/10 via-amber-400/5 to-transparent border border-amber-300/60 shadow-[0_2px_8px_rgba(245,158,11,0.06)] backdrop-blur-md flex flex-col gap-2.5 flex-shrink-0" aria-label="Alertas de Sobrecarga">
@@ -435,6 +446,7 @@
                     <% if (alertasLista.length > 0) { %>
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5">
                         <% alertasLista.forEach(function(alerta) { 
+                            if (!alerta) return;
                             const areaLabel = alerta.area || alerta.area_designada || 'General';
                             const ticketsCount = typeof alerta.ticketsActivos !== 'undefined' ? alerta.ticketsActivos : (alerta.tickets_activos || 0);
                             const promArea = typeof alerta.promedioArea !== 'undefined' ? alerta.promedioArea : (alerta.promedio_area || alerta.promedio || 0);
@@ -477,10 +489,132 @@
                 <% } %>
                 <!-- END: Panel Alertas de Sobrecarga -->
 
-                <!-- BEGIN: macOS Finder List View Table Container -->
-                <section
-                    class="flex-1 bg-white border border-[#E5E5EA] rounded-[12px] flex flex-col min-h-0 overflow-hidden shadow-[0_1px_4px_rgba(0,0,0,0.04)]"
-                    data-purpose="incident-queue">
+                <!-- BEGIN: Situación del Turno - Flujo por hora y Carga por Área -->
+                <section class="grid grid-cols-1 lg:grid-cols-2 gap-3 flex-1 min-h-[260px]" data-purpose="shift-situation-charts">
+                    <!-- Resumen: Carga Activa por Área -->
+                    <div class="bg-white border border-[#E5E5EA] rounded-[12px] p-4 flex flex-col justify-between shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-[0_2px_6px_rgba(0,0,0,0.06)] transition min-h-0">
+                        <div class="flex items-center justify-between pb-2 border-b border-[#E5E5EA]">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-[#007AFF]"></span>
+                                <h2 class="text-[12px] font-bold text-[#1C1C1E] uppercase tracking-wider">Carga Activa por Área</h2>
+                            </div>
+                            <span class="text-[10px] text-[#8E8E93] font-mono">Turno actual</span>
+                        </div>
+                        <div class="flex-1 mt-3 space-y-2 overflow-y-auto pr-1">
+                            <% 
+                                const areaLabels = {
+                                    REDES_FTTH: 'Redes FTTH / OLT',
+                                    WAN: 'WAN',
+                                    GRANDES_CLIENTES: 'Grandes Clientes',
+                                    TELEFONIA: 'Telefonía',
+                                    SEGURIDAD: 'Seguridad',
+                                    TRAFICO_INALAMBRICO: 'Tráfico inalámbrico',
+                                    GENERAL: 'Operaciones IP'
+                                };
+                                const areaCounts = {
+                                    REDES_FTTH: 0,
+                                    WAN: 0,
+                                    GRANDES_CLIENTES: 0,
+                                    TELEFONIA: 0,
+                                    SEGURIDAD: 0,
+                                    TRAFICO_INALAMBRICO: 0,
+                                    GENERAL: 0
+                                };
+                                const safeTicketList = (typeof tickets !== 'undefined' && Array.isArray(tickets)) ? tickets : [];
+                                safeTicketList.forEach(function(t) {
+                                    if (!t) return;
+                                    const area = t.area_designada || 'GENERAL';
+                                    if (t.estado_actual !== 'CERRADO') {
+                                        areaCounts[area] = (areaCounts[area] || 0) + 1;
+                                    }
+                                });
+                                const maxAreaC = Math.max(1, ...Object.values(areaCounts));
+                            %>
+                            <% Object.keys(areaLabels).forEach(function(key) { 
+                                const count = areaCounts[key] || 0;
+                                const barPct = Math.round((count / maxAreaC) * 100);
+                            %>
+                                <div class="flex flex-col gap-1">
+                                    <div class="flex items-center justify-between text-[11px]">
+                                        <span class="font-medium text-[#1C1C1E] truncate"><%= areaLabels[key] %></span>
+                                        <span class="font-mono font-semibold text-[#1C1C1E] num-tabular"><%= count %> <%= count === 1 ? 'ticket' : 'tickets' %></span>
+                                    </div>
+                                    <div class="w-full bg-[#F2F2F7] rounded-full h-1.5 overflow-hidden">
+                                        <div class="bg-[#007AFF] h-1.5 rounded-full transition-all duration-300" style="width: <%= count > 0 ? Math.max(8, barPct) : 0 %>%;"></div>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+                        <div class="pt-2 border-t border-[#E5E5EA] flex items-center justify-between text-[11px] text-[#8E8E93]">
+                            <span>Monitoreo de carga</span>
+                            <a href="#tickets" onclick="event.preventDefault(); showDashboardSection('tickets')" class="text-[#007AFF] hover:underline font-medium">Ver cola de tickets →</a>
+                        </div>
+                    </div>
+
+                    <!-- Resumen: Flujo por Hora de Hoy -->
+                    <div class="bg-white border border-[#E5E5EA] rounded-[12px] p-4 flex flex-col justify-between shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-[0_2px_6px_rgba(0,0,0,0.06)] transition min-h-0">
+                        <div class="flex items-center justify-between pb-2 border-b border-[#E5E5EA]">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-[#34C759]"></span>
+                                <h2 class="text-[12px] font-bold text-[#1C1C1E] uppercase tracking-wider">Flujo por Hora de Hoy</h2>
+                            </div>
+                            <span class="text-[10px] text-[#8E8E93] font-mono">Llegada vs Cierre</span>
+                        </div>
+                        <div class="flex-1 mt-3 flex flex-col justify-between">
+                            <% 
+                                const workHours = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
+                                const currentHour = new Date().getHours();
+                                const hourlyFlow = {};
+                                workHours.forEach(function(h) { hourlyFlow[h] = { creados: 0, cerrados: 0 }; });
+                                safeTicketList.forEach(function(t) {
+                                    if (!t) return;
+                                    if (t.createdAt) {
+                                        const h = new Date(t.createdAt).getHours();
+                                        if (hourlyFlow[h]) hourlyFlow[h].creados++;
+                                    }
+                                    if (t.fecha_cierre) {
+                                        const h = new Date(t.fecha_cierre).getHours();
+                                        if (hourlyFlow[h]) hourlyFlow[h].cerrados++;
+                                    }
+                                });
+                                const maxFlow = Math.max(1, ...workHours.map(function(h) { return Math.max(hourlyFlow[h].creados, hourlyFlow[h].cerrados); }));
+                            %>
+                            <div class="flex items-end justify-between gap-1 h-[140px] pt-2 px-1">
+                                <% workHours.forEach(function(h) { 
+                                    const cr = hourlyFlow[h].creados;
+                                    const cl = hourlyFlow[h].cerrados;
+                                    const crPct = Math.round((cr / maxFlow) * 100);
+                                    const clPct = Math.round((cl / maxFlow) * 100);
+                                    const isNow = h === currentHour;
+                                %>
+                                    <div class="flex-1 flex flex-col items-center gap-1 h-full justify-end group">
+                                        <div class="w-full flex items-end justify-center gap-0.5 h-[105px]">
+                                            <div class="w-1.5 sm:w-2 bg-[#007AFF] rounded-t transition-all" style="height: <%= Math.max(4, crPct) %>%;" title="<%= h %>:00 - <%= cr %> creados"></div>
+                                            <div class="w-1.5 sm:w-2 bg-[#34C759] rounded-t transition-all" style="height: <%= Math.max(4, clPct) %>%;" title="<%= h %>:00 - <%= cl %> cerrados"></div>
+                                        </div>
+                                        <span class="font-mono text-[9px] <%= isNow ? 'text-[#007AFF] font-bold' : 'text-[#8E8E93]' %>"><%= String(h).padStart(2, '0') %>h</span>
+                                    </div>
+                                <% }); %>
+                            </div>
+                            <div class="pt-2 border-t border-[#E5E5EA] flex items-center justify-between text-[11px]">
+                                <div class="flex items-center gap-3 text-[#636366]">
+                                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-xs bg-[#007AFF]"></span>Creados</span>
+                                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-xs bg-[#34C759]"></span>Cerrados</span>
+                                </div>
+                                <span class="font-mono text-[10px] text-[#8E8E93]">Jornada activa</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <!-- END: Situación del Turno -->
+            </div>
+            <!-- END: #dashboardOverview -->
+
+            <!-- BEGIN: Sección #tickets (Gestión de Tickets) -->
+            <section
+                id="tickets"
+                class="hidden flex-1 bg-white border border-[#E5E5EA] rounded-[12px] flex flex-col min-h-0 overflow-hidden shadow-[0_1px_4px_rgba(0,0,0,0.04)]"
+                data-purpose="incident-queue">
                     <!-- Table Header Filter Bar -->
                     <div
                         class="px-3 py-2 bg-[#F6F6F8] border-b border-[#E5E5EA] flex items-center justify-between flex-shrink-0 relative z-20 overflow-visible">
@@ -627,9 +761,9 @@
                                         class="h-[24px] pl-2 pr-4 text-[12px] font-medium text-[#1C1C1E] bg-[#F5F5F7] hover:bg-[#EBEBF0] rounded-[6px] border border-black/5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] cursor-pointer transition focus:outline-none max-w-[130px] truncate">
                                         <option value="ALL">Todos</option>
                                         <option value="UNASSIGNED">Sin Asignar</option>
-                                        <% if (typeof operadoresTurno !== 'undefined' && operadoresTurno.length > 0) { %>
-                                            <% operadoresTurno.forEach(function(op) { %>
-                                                <option value="<%= op.id %>"><%= op.nombre %></option>
+                                        <% if (typeof operadoresTurno !== 'undefined' && Array.isArray(operadoresTurno) && operadoresTurno.length > 0) { %>
+                                            <% operadoresTurno.forEach(function(op) { if (!op) return; %>
+                                                <option value="<%= op.id || '' %>"><%= op.nombre || 'Operador' %></option>
                                             <% }); %>
                                         <% } else { %>
                                             <option value="Carlos Mendoza">Carlos Mendoza</option>
@@ -644,7 +778,8 @@
                         <!-- Right: Bulk Selection & Traspasar a Guardia Action Button -->
                         <div class="flex items-center gap-2 text-xs text-[#8E8E93]">
                             <!-- Botón Traspasar a guardia - R2 -->
-                            <button id="guardShiftBtn" type="button" onclick="openGuardShiftModal()"
+                            <!-- TODO backend: conectar endpoint -->
+                            <button id="guardShiftBtn" data-action="guard-shift" type="button" onclick="openGuardShiftModal()"
                                 class="figma-button !w-auto !h-[24px] !px-2.5 bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA] text-[#1C1C1E] border border-[#D1D1D6] rounded-[6px] shadow-2xs transition select-none flex items-center gap-1.5 cursor-pointer"
                                 title="Traspasar tickets a la guardia entrante">
                                 <svg class="w-3.5 h-3.5 text-[#007AFF]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -695,8 +830,9 @@
                                 </tr>
                             </thead>
                             <tbody id="ticketTableBody" class="divide-y divide-[#EBEBF0] text-[12px] font-normal">
-                                <% if (tickets && tickets.length > 0) { %>
+                                <% if (typeof tickets !== 'undefined' && tickets && tickets.length > 0) { %>
                                     <% tickets.forEach(function(ticket) { 
+                                        if (!ticket) return;
                                         let prio = ticket.prioridad || (ticket.puntos_complejidad >= 8 ? 'P1' : (ticket.puntos_complejidad >= 5 ? 'P2' : 'P3'));
 
                                         let estado = ticket.estado_actual || 'NUEVO';
@@ -747,7 +883,8 @@
                                             </div>
                                         </td>
                                         <td class="prio-col py-2 px-2.5 align-middle whitespace-nowrap">
-                                            <select class="priority-native-select text-[10px] font-mono font-bold rounded-[5px] px-1.5 py-0.5 border cursor-pointer focus:outline-none transition-colors <%= prioSelectClass %>"
+                                            <!-- TODO backend: conectar endpoint -->
+                                            <select data-action="update-priority" class="priority-native-select text-[10px] font-mono font-bold rounded-[5px] px-1.5 py-0.5 border cursor-pointer focus:outline-none transition-colors <%= prioSelectClass %>"
                                                 data-ticket-code="<%= ticket.codigo_incidencia %>"
                                                 onchange="handlePrioritySelectChange(this)">
                                                 <option value="P1" <%= prio === 'P1' ? 'selected' : '' %> class="text-red-700 bg-white font-bold">P1 (Crítica)</option>
@@ -782,10 +919,11 @@
                                                 </button>
                                             <% } else { %>
                                                 <div class="inline-flex items-center gap-1 justify-end">
-                                                    <button type="button" onclick="closeTicketDirectly(this, '<%= ticket.codigo_incidencia %>')" class="bg-white hover:bg-red-50 text-red-600 hover:text-red-700 border border-red-200 text-[11px] font-medium px-2 py-0.5 rounded-[6px] shadow-2xs transition cursor-pointer">
+                                                    <!-- TODO backend: conectar endpoint -->
+                                                    <button type="button" data-action="close-ticket" onclick="closeTicketDirectly(this, '<%= ticket.codigo_incidencia %>')" class="bg-white hover:bg-red-50 text-red-600 hover:text-red-700 border border-red-200 text-[11px] font-medium px-2 py-0.5 rounded-[6px] shadow-2xs transition cursor-pointer">
                                                         Cerrar
                                                     </button>
-                                                    <button type="button" onclick="handleTicketAction('<%= ticket.codigo_incidencia %>', '<%= safeSubject %>', '<%= area %>', '<%= opId %>', '<%= safeOperator %>', '<%= prio %>')" class="bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA] border border-[#D1D1D6] text-[#1C1C1E] text-[11px] font-medium px-2 py-0.5 rounded-[6px] shadow-xs transition cursor-pointer">
+                                                    <button type="button" data-action="toggle-assign" onclick="handleTicketAction('<%= ticket.codigo_incidencia %>', '<%= safeSubject %>', '<%= area %>', '<%= opId %>', '<%= safeOperator %>', '<%= prio %>')" class="bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA] border border-[#D1D1D6] text-[#1C1C1E] text-[11px] font-medium px-2 py-0.5 rounded-[6px] shadow-xs transition cursor-pointer">
                                                         <%= isAssigned ? 'Desasignar' : 'Asignar' %>
                                                     </button>
                                                 </div>
@@ -794,201 +932,8 @@
                                     </tr>
                                     <% }); %>
                                 <% } else { %>
-                                    <!-- Maqueta estática de demostración (Dummy Data) - R2 -->
-                                    <tr id="row-INC-042" class="ticket-row hover:bg-[#F9F9FA] group transition-colors" data-area="REDES_FTTH" data-priority="P1" data-state="EN_PROGRESO" data-assigned="true" data-operator-id="1" data-operator-name="Carlos Mendoza" data-subject="Corte masivo de fibra OLT Chacao">
-                                        <td class="py-2 px-3 align-middle text-center w-[40px]">
-                                            <div class="flex items-center justify-center">
-                                                <input type="checkbox" data-code="INC-042" data-assigned="true" class="row-checkbox w-3.5 h-3.5 rounded text-[#007AFF] border-[#D1D1D6] focus:ring-0 focus:outline-none cursor-pointer">
-                                            </div>
-                                        </td>
-                                        <td class="py-2 px-3 align-middle whitespace-nowrap">
-                                            <div class="flex items-center gap-1.5">
-                                                <svg class="w-3.5 h-3.5 text-[#8E8E93] flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-                                                <button type="button" class="font-mono font-medium text-[#1C1C1E] hover:underline cursor-pointer" onclick="openTicketDetailsForCode('INC-042')">INC-042</button>
-                                            </div>
-                                        </td>
-                                        <td class="prio-col py-2 px-2.5 align-middle whitespace-nowrap">
-                                            <select class="priority-native-select text-[10px] font-mono font-bold rounded-[5px] px-1.5 py-0.5 border cursor-pointer focus:outline-none transition-colors bg-red-50 text-red-700 border-red-200" data-ticket-code="INC-042" onchange="handlePrioritySelectChange(this)">
-                                                <option value="P1" selected class="text-red-700 bg-white font-bold">P1 (Crítica)</option>
-                                                <option value="P2" class="text-amber-700 bg-white font-bold">P2 (Media)</option>
-                                                <option value="P3" class="text-emerald-700 bg-white font-bold">P3 (Baja)</option>
-                                            </select>
-                                        </td>
-                                        <td class="state-col py-2 px-2.5 align-middle whitespace-nowrap">
-                                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] text-[11px] font-medium" style="background-color: rgba(2, 132, 199, 0.1); color: rgb(12, 74, 110); border: 1px solid rgba(2, 132, 199, 0.2);">
-                                                <span class="w-1.5 h-1.5 rounded-full" style="background-color: #0284c7;"></span>
-                                                <span class="status-text">En Progreso</span>
-                                            </span>
-                                        </td>
-                                        <td class="py-2 px-3 align-middle truncate font-normal text-[#1C1C1E]" title="Corte masivo de fibra OLT Chacao">Corte masivo de fibra OLT Chacao</td>
-                                        <td class="op-col py-2 px-2.5 align-middle whitespace-nowrap text-[#1C1C1E] font-medium text-[11px]">
-                                            <span class="operator-label font-semibold text-[#007AFF]">Carlos Mendoza</span>
-                                        </td>
-                                        <td class="time-col py-2 px-2.5 align-middle text-center">
-                                            <span data-ticket-elapsed class="inline-block font-sans text-[12px] font-semibold tabular-nums text-[#1C1C1E] bg-[#F2F2F7] border border-[#E5E5EA] px-2 py-0.5 rounded-[4px]">24 min</span>
-                                        </td>
-                                        <td class="action-col py-2 px-3 align-middle text-right whitespace-nowrap">
-                                            <div class="inline-flex items-center gap-1 justify-end">
-                                                <button type="button" onclick="closeTicketDirectly(this, 'INC-042')" class="bg-white hover:bg-red-50 text-red-600 hover:text-red-700 border border-red-200 text-[11px] font-medium px-2 py-0.5 rounded-[6px] shadow-2xs transition cursor-pointer">Cerrar</button>
-                                                <button type="button" onclick="handleTicketAction('INC-042', 'Corte masivo de fibra OLT Chacao', 'REDES_FTTH', '1', 'Carlos Mendoza', 'P1')" class="bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA] border border-[#D1D1D6] text-[#1C1C1E] text-[11px] font-medium px-2 py-0.5 rounded-[6px] shadow-xs transition cursor-pointer">Desasignar</button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr id="row-INC-043" class="ticket-row hover:bg-[#F9F9FA] group transition-colors" data-area="WAN" data-priority="P2" data-state="NUEVO" data-assigned="false" data-operator-id="" data-operator-name="" data-subject="Alta latencia en enlace troncal principal">
-                                        <td class="py-2 px-3 align-middle text-center w-[40px]">
-                                            <div class="flex items-center justify-center">
-                                                <input type="checkbox" data-code="INC-043" data-assigned="false" class="row-checkbox w-3.5 h-3.5 rounded text-[#007AFF] border-[#D1D1D6] focus:ring-0 focus:outline-none cursor-pointer">
-                                            </div>
-                                        </td>
-                                        <td class="py-2 px-3 align-middle whitespace-nowrap">
-                                            <div class="flex items-center gap-1.5">
-                                                <svg class="w-3.5 h-3.5 text-[#8E8E93] flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-                                                <button type="button" class="font-mono font-medium text-[#1C1C1E] hover:underline cursor-pointer" onclick="openTicketDetailsForCode('INC-043')">INC-043</button>
-                                            </div>
-                                        </td>
-                                        <td class="prio-col py-2 px-2.5 align-middle whitespace-nowrap">
-                                            <select class="priority-native-select text-[10px] font-mono font-bold rounded-[5px] px-1.5 py-0.5 border cursor-pointer focus:outline-none transition-colors bg-amber-50 text-amber-700 border-amber-200" data-ticket-code="INC-043" onchange="handlePrioritySelectChange(this)">
-                                                <option value="P1" class="text-red-700 bg-white font-bold">P1 (Crítica)</option>
-                                                <option value="P2" selected class="text-amber-700 bg-white font-bold">P2 (Media)</option>
-                                                <option value="P3" class="text-emerald-700 bg-white font-bold">P3 (Baja)</option>
-                                            </select>
-                                        </td>
-                                        <td class="state-col py-2 px-2.5 align-middle whitespace-nowrap">
-                                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] text-[11px] font-medium" style="background-color: rgba(100, 116, 139, 0.1); color: rgb(30, 41, 59); border: 1px solid rgba(100, 116, 139, 0.2);">
-                                                <span class="w-1.5 h-1.5 rounded-full" style="background-color: #64748b;"></span>
-                                                <span class="status-text">Nuevo</span>
-                                            </span>
-                                        </td>
-                                        <td class="py-2 px-3 align-middle truncate font-normal text-[#1C1C1E]" title="Alta latencia en enlace troncal principal">Alta latencia en enlace troncal principal</td>
-                                        <td class="op-col py-2 px-2.5 align-middle whitespace-nowrap text-[#1C1C1E] font-medium text-[11px]">
-                                            <span class="operator-label italic text-[#8E8E93]">— Sin asignar</span>
-                                        </td>
-                                        <td class="time-col py-2 px-2.5 align-middle text-center">
-                                            <span data-ticket-elapsed class="inline-block font-sans text-[12px] font-semibold tabular-nums text-[#1C1C1E] bg-[#F2F2F7] border border-[#E5E5EA] px-2 py-0.5 rounded-[4px]">12 min</span>
-                                        </td>
-                                        <td class="action-col py-2 px-3 align-middle text-right whitespace-nowrap">
-                                            <div class="inline-flex items-center gap-1 justify-end">
-                                                <button type="button" onclick="closeTicketDirectly(this, 'INC-043')" class="bg-white hover:bg-red-50 text-red-600 hover:text-red-700 border border-red-200 text-[11px] font-medium px-2 py-0.5 rounded-[6px] shadow-2xs transition cursor-pointer">Cerrar</button>
-                                                <button type="button" onclick="handleTicketAction('INC-043', 'Alta latencia en enlace troncal principal', 'WAN', '', '', 'P2')" class="bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA] border border-[#D1D1D6] text-[#1C1C1E] text-[11px] font-medium px-2 py-0.5 rounded-[6px] shadow-xs transition cursor-pointer">Asignar</button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr id="row-INC-044" class="ticket-row hover:bg-[#F9F9FA] group transition-colors" data-area="GRANDES_CLIENTES" data-priority="P3" data-state="EN_ESPERA_TERCEROS" data-assigned="true" data-operator-id="2" data-operator-name="Laura Rivas" data-subject="Aprovisionamiento VLAN Banco Mercantil">
-                                        <td class="py-2 px-3 align-middle text-center w-[40px]">
-                                            <div class="flex items-center justify-center">
-                                                <input type="checkbox" data-code="INC-044" data-assigned="true" class="row-checkbox w-3.5 h-3.5 rounded text-[#007AFF] border-[#D1D1D6] focus:ring-0 focus:outline-none cursor-pointer">
-                                            </div>
-                                        </td>
-                                        <td class="py-2 px-3 align-middle whitespace-nowrap">
-                                            <div class="flex items-center gap-1.5">
-                                                <svg class="w-3.5 h-3.5 text-[#8E8E93] flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-                                                <button type="button" class="font-mono font-medium text-[#1C1C1E] hover:underline cursor-pointer" onclick="openTicketDetailsForCode('INC-044')">INC-044</button>
-                                            </div>
-                                        </td>
-                                        <td class="prio-col py-2 px-2.5 align-middle whitespace-nowrap">
-                                            <select class="priority-native-select text-[10px] font-mono font-bold rounded-[5px] px-1.5 py-0.5 border cursor-pointer focus:outline-none transition-colors bg-emerald-50 text-emerald-700 border-emerald-200" data-ticket-code="INC-044" onchange="handlePrioritySelectChange(this)">
-                                                <option value="P1" class="text-red-700 bg-white font-bold">P1 (Crítica)</option>
-                                                <option value="P2" class="text-amber-700 bg-white font-bold">P2 (Media)</option>
-                                                <option value="P3" selected class="text-emerald-700 bg-white font-bold">P3 (Baja)</option>
-                                            </select>
-                                        </td>
-                                        <td class="state-col py-2 px-2.5 align-middle whitespace-nowrap">
-                                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] text-[11px] font-medium" style="background-color: rgba(245, 158, 11, 0.1); color: rgb(146, 64, 14); border: 1px solid rgba(245, 158, 11, 0.2);">
-                                                <span class="w-1.5 h-1.5 rounded-full" style="background-color: #f59e0b;"></span>
-                                                <span class="status-text">En Espera</span>
-                                            </span>
-                                        </td>
-                                        <td class="py-2 px-3 align-middle truncate font-normal text-[#1C1C1E]" title="Aprovisionamiento VLAN Banco Mercantil">Aprovisionamiento VLAN Banco Mercantil</td>
-                                        <td class="op-col py-2 px-2.5 align-middle whitespace-nowrap text-[#1C1C1E] font-medium text-[11px]">
-                                            <span class="operator-label font-semibold text-[#007AFF]">Laura Rivas</span>
-                                        </td>
-                                        <td class="time-col py-2 px-2.5 align-middle text-center">
-                                            <span data-ticket-elapsed class="inline-block font-sans text-[12px] font-semibold tabular-nums text-[#1C1C1E] bg-[#F2F2F7] border border-[#E5E5EA] px-2 py-0.5 rounded-[4px]">45 min</span>
-                                        </td>
-                                        <td class="action-col py-2 px-3 align-middle text-right whitespace-nowrap">
-                                            <div class="inline-flex items-center gap-1 justify-end">
-                                                <button type="button" onclick="closeTicketDirectly(this, 'INC-044')" class="bg-white hover:bg-red-50 text-red-600 hover:text-red-700 border border-red-200 text-[11px] font-medium px-2 py-0.5 rounded-[6px] shadow-2xs transition cursor-pointer">Cerrar</button>
-                                                <button type="button" onclick="handleTicketAction('INC-044', 'Aprovisionamiento VLAN Banco Mercantil', 'GRANDES_CLIENTES', '2', 'Laura Rivas', 'P3')" class="bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA] border border-[#D1D1D6] text-[#1C1C1E] text-[11px] font-medium px-2 py-0.5 rounded-[6px] shadow-xs transition cursor-pointer">Desasignar</button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr id="row-INC-045" class="ticket-row hover:bg-[#F9F9FA] group transition-colors" data-area="SEGURIDAD" data-priority="P1" data-state="NUEVO" data-assigned="false" data-operator-id="" data-operator-name="" data-subject="Intento de intrusión masivo en firewall perimetral">
-                                        <td class="py-2 px-3 align-middle text-center w-[40px]">
-                                            <div class="flex items-center justify-center">
-                                                <input type="checkbox" data-code="INC-045" data-assigned="false" class="row-checkbox w-3.5 h-3.5 rounded text-[#007AFF] border-[#D1D1D6] focus:ring-0 focus:outline-none cursor-pointer">
-                                            </div>
-                                        </td>
-                                        <td class="py-2 px-3 align-middle whitespace-nowrap">
-                                            <div class="flex items-center gap-1.5">
-                                                <svg class="w-3.5 h-3.5 text-[#8E8E93] flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-                                                <button type="button" class="font-mono font-medium text-[#1C1C1E] hover:underline cursor-pointer" onclick="openTicketDetailsForCode('INC-045')">INC-045</button>
-                                            </div>
-                                        </td>
-                                        <td class="prio-col py-2 px-2.5 align-middle whitespace-nowrap">
-                                            <select class="priority-native-select text-[10px] font-mono font-bold rounded-[5px] px-1.5 py-0.5 border cursor-pointer focus:outline-none transition-colors bg-red-50 text-red-700 border-red-200" data-ticket-code="INC-045" onchange="handlePrioritySelectChange(this)">
-                                                <option value="P1" selected class="text-red-700 bg-white font-bold">P1 (Crítica)</option>
-                                                <option value="P2" class="text-amber-700 bg-white font-bold">P2 (Media)</option>
-                                                <option value="P3" class="text-emerald-700 bg-white font-bold">P3 (Baja)</option>
-                                            </select>
-                                        </td>
-                                        <td class="state-col py-2 px-2.5 align-middle whitespace-nowrap">
-                                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] text-[11px] font-medium" style="background-color: rgba(100, 116, 139, 0.1); color: rgb(30, 41, 59); border: 1px solid rgba(100, 116, 139, 0.2);">
-                                                <span class="w-1.5 h-1.5 rounded-full" style="background-color: #64748b;"></span>
-                                                <span class="status-text">Nuevo</span>
-                                            </span>
-                                        </td>
-                                        <td class="py-2 px-3 align-middle truncate font-normal text-[#1C1C1E]" title="Intento de intrusión masivo en firewall perimetral">Intento de intrusión masivo en firewall perimetral</td>
-                                        <td class="op-col py-2 px-2.5 align-middle whitespace-nowrap text-[#1C1C1E] font-medium text-[11px]">
-                                            <span class="operator-label italic text-[#8E8E93]">— Sin asignar</span>
-                                        </td>
-                                        <td class="time-col py-2 px-2.5 align-middle text-center">
-                                            <span data-ticket-elapsed class="inline-block font-sans text-[12px] font-semibold tabular-nums text-[#1C1C1E] bg-[#F2F2F7] border border-[#E5E5EA] px-2 py-0.5 rounded-[4px]">8 min</span>
-                                        </td>
-                                        <td class="action-col py-2 px-3 align-middle text-right whitespace-nowrap">
-                                            <div class="inline-flex items-center gap-1 justify-end">
-                                                <button type="button" onclick="closeTicketDirectly(this, 'INC-045')" class="bg-white hover:bg-red-50 text-red-600 hover:text-red-700 border border-red-200 text-[11px] font-medium px-2 py-0.5 rounded-[6px] shadow-2xs transition cursor-pointer">Cerrar</button>
-                                                <button type="button" onclick="handleTicketAction('INC-045', 'Intento de intrusión masivo en firewall perimetral', 'SEGURIDAD', '', '', 'P1')" class="bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA] border border-[#D1D1D6] text-[#1C1C1E] text-[11px] font-medium px-2 py-0.5 rounded-[6px] shadow-xs transition cursor-pointer">Asignar</button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr id="row-INC-046" class="ticket-row hover:bg-[#F9F9FA] group transition-colors" data-area="TELEFONIA" data-priority="P2" data-state="EN_PAUSA" data-assigned="true" data-operator-id="3" data-operator-name="Andrés Silva" data-subject="Degradación de troncal SIP Caracas-Valencia">
-                                        <td class="py-2 px-3 align-middle text-center w-[40px]">
-                                            <div class="flex items-center justify-center">
-                                                <input type="checkbox" data-code="INC-046" data-assigned="true" class="row-checkbox w-3.5 h-3.5 rounded text-[#007AFF] border-[#D1D1D6] focus:ring-0 focus:outline-none cursor-pointer">
-                                            </div>
-                                        </td>
-                                        <td class="py-2 px-3 align-middle whitespace-nowrap">
-                                            <div class="flex items-center gap-1.5">
-                                                <svg class="w-3.5 h-3.5 text-[#8E8E93] flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-                                                <button type="button" class="font-mono font-medium text-[#1C1C1E] hover:underline cursor-pointer" onclick="openTicketDetailsForCode('INC-046')">INC-046</button>
-                                            </div>
-                                        </td>
-                                        <td class="prio-col py-2 px-2.5 align-middle whitespace-nowrap">
-                                            <select class="priority-native-select text-[10px] font-mono font-bold rounded-[5px] px-1.5 py-0.5 border cursor-pointer focus:outline-none transition-colors bg-amber-50 text-amber-700 border-amber-200" data-ticket-code="INC-046" onchange="handlePrioritySelectChange(this)">
-                                                <option value="P1" class="text-red-700 bg-white font-bold">P1 (Crítica)</option>
-                                                <option value="P2" selected class="text-amber-700 bg-white font-bold">P2 (Media)</option>
-                                                <option value="P3" class="text-emerald-700 bg-white font-bold">P3 (Baja)</option>
-                                            </select>
-                                        </td>
-                                        <td class="state-col py-2 px-2.5 align-middle whitespace-nowrap">
-                                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] text-[11px] font-medium" style="background-color: rgba(245, 158, 11, 0.1); color: rgb(180, 83, 9); border: 1px solid rgba(245, 158, 11, 0.2);">
-                                                <span class="w-1.5 h-1.5 rounded-full" style="background-color: #f59e0b;"></span>
-                                                <span class="status-text">En Pausa</span>
-                                            </span>
-                                        </td>
-                                        <td class="py-2 px-3 align-middle truncate font-normal text-[#1C1C1E]" title="Degradación de troncal SIP Caracas-Valencia">Degradación de troncal SIP Caracas-Valencia</td>
-                                        <td class="op-col py-2 px-2.5 align-middle whitespace-nowrap text-[#1C1C1E] font-medium text-[11px]">
-                                            <span class="operator-label font-semibold text-[#007AFF]">Andrés Silva</span>
-                                        </td>
-                                        <td class="time-col py-2 px-2.5 align-middle text-center">
-                                            <span data-ticket-elapsed class="inline-block font-sans text-[12px] font-semibold tabular-nums text-[#1C1C1E] bg-[#F2F2F7] border border-[#E5E5EA] px-2 py-0.5 rounded-[4px]">1 h</span>
-                                        </td>
-                                        <td class="action-col py-2 px-3 align-middle text-right whitespace-nowrap">
-                                            <div class="inline-flex items-center gap-1 justify-end">
-                                                <button type="button" onclick="closeTicketDirectly(this, 'INC-046')" class="bg-white hover:bg-red-50 text-red-600 hover:text-red-700 border border-red-200 text-[11px] font-medium px-2 py-0.5 rounded-[6px] shadow-2xs transition cursor-pointer">Cerrar</button>
-                                                <button type="button" onclick="handleTicketAction('INC-046', 'Degradación de troncal SIP Caracas-Valencia', 'TELEFONIA', '3', 'Andrés Silva', 'P2')" class="bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA] border border-[#D1D1D6] text-[#1C1C1E] text-[11px] font-medium px-2 py-0.5 rounded-[6px] shadow-xs transition cursor-pointer">Desasignar</button>
-                                            </div>
-                                        </td>
+                                    <tr id="emptyTicketsRow">
+                                        <td colspan="8" class="text-center py-8 text-[#8E8E93]">No hay incidencias disponibles en este turno.</td>
                                     </tr>
                                 <% } %>
                                 <tr id="noFilterMatchRow" class="hidden">
@@ -1007,7 +952,7 @@
                                 Carpeta</button>
                             <div class="h-4 w-[1px] bg-[#D1D1D6] mx-1"></div>
                             <span class="text-[#8E8E93] text-[11px]">Mostrando <strong id="activeTicketsCounter" class="text-[#1C1C1E] font-mono">
-                                    <%= (typeof tickets !== 'undefined' && tickets && tickets.length > 0) ? tickets.length : 5 %>
+                                    <%= (typeof tickets !== 'undefined' && tickets && tickets.length > 0) ? tickets.length : 0 %>
                                 </strong> casos activos</span>
                         </div>
                         <div class="flex items-center gap-2">
@@ -1020,10 +965,12 @@
                         </div>
                     </div>
                 </section>
-                <!-- END: Finder List Table Container -->
-                </div>
+                <!-- END: Sección #tickets -->
                 <section id="shiftManagementSection" class="hidden min-h-0 flex-1 overflow-y-auto rounded-[12px] border border-[#E5E5EA] bg-white p-4 sm:p-6" aria-label="Gestión de Turno">
-                    <%- include('components/shift-section') %>
+                    <%- include('components/shift-section', {
+                        operadoresTurno: (typeof operadoresTurno !== 'undefined' && Array.isArray(operadoresTurno)) ? operadoresTurno.filter(Boolean) : [],
+                        operadoresDisponibles: (typeof operadoresDisponibles !== 'undefined') ? operadoresDisponibles : 0
+                    }) %>
                 </section>
             </main>
             <!-- END: Content Main Area -->
@@ -1196,10 +1143,12 @@
                                 </summary>
                                 <div
                                     class="absolute left-0 top-[40px] w-full bg-white rounded-[12px] border border-[#D1D1D6] shadow-[0_10px_25px_rgba(0,0,0,0.12)] p-1 z-40 space-y-0.5 text-[12px] max-h-[170px] overflow-y-auto">
-                                    <% if (operadores && operadores.length > 0) { %>
+                                    <% if (typeof operadores !== 'undefined' && Array.isArray(operadores) && operadores.length > 0) { %>
                                         <% operadores.forEach(function(op) { 
-                                            let parts = op.nombre.split(' ');
-                                            let inits = parts.length > 1 ? (parts[0][0] + parts[1][0]).toUpperCase() : op.nombre.substring(0, 2).toUpperCase();
+                                            if (!op) return;
+                                            let opName = (op.nombre && typeof op.nombre === 'string') ? op.nombre.trim() : 'Operador';
+                                            let parts = opName.split(/\s+/);
+                                            let inits = parts.length > 1 ? (parts[0][0] + parts[1][0]).toUpperCase() : opName.slice(0, 2).toUpperCase();
                                         %>
                                             <a data-operator-id="<%= op.id %>" data-operator-email="<%= op.email %>" class="flex items-center justify-between px-2.5 py-1.5 rounded-[6px] text-[#1C1C1E] hover:bg-[#007AFF] hover:text-white font-medium transition cursor-pointer" onclick="event.preventDefault();setModalOperator('<%= op.id %>', '<%= op.nombre %>', '<%= inits %>', this.dataset.operatorEmail);">
                                                 <span class="truncate"><%= op.nombre %></span>
@@ -1273,7 +1222,8 @@
                     <button type="button" onclick="closeGuardShiftModal()" class="px-4 py-2 rounded-[8px] border border-[#D1D1D6] bg-white text-[#3A3A3C] hover:bg-[#F2F2F7] font-medium text-[12px] transition shadow-2xs cursor-pointer">
                         Cancelar
                     </button>
-                    <button type="button" onclick="confirmGuardShift()" class="px-4 py-2 rounded-[8px] bg-[#007AFF] hover:bg-[#0062CC] text-white font-medium text-[12px] transition shadow-xs cursor-pointer flex items-center gap-1.5">
+                    <!-- TODO backend: conectar endpoint -->
+                    <button type="button" data-action="confirm-guard-shift" onclick="confirmGuardShift()" class="px-4 py-2 rounded-[8px] bg-[#007AFF] hover:bg-[#0062CC] text-white font-medium text-[12px] transition shadow-xs cursor-pointer flex items-center gap-1.5">
                         <span>Confirmar</span>
                     </button>
                 </div>
@@ -1309,7 +1259,7 @@
         <path d="M3.5 8.5A2.5 2.5 0 0 1 6 6h3l1.5 2H18a2.5 2.5 0 0 1 2.5 2.5v6A2.5 2.5 0 0 1 18 19H6A2.5 2.5 0 0 1 3.5 16.5v-8Z"></path>
      </svg>
          <span class="font-mono text-[10px] font-bold text-[#636366]">#</span> 
-         <span class="font-mono text-[11px] font-semibold text-[#1C1C1E]"><%= nextTicketCode || 'INC-004' %></span> 
+         <span class="font-mono text-[11px] font-semibold text-[#1C1C1E]"><%= typeof nextTicketCode !== 'undefined' ? nextTicketCode : 'INC-004' %></span> 
 </div>
                        <!-- <h3 id="newTicketTitle" class="text-[15px] font-bold text-[#1C1C1E] uppercase">Nuevo Ticket</h3> -->
                         
@@ -1331,7 +1281,7 @@
                             </div>
                             <div class="rounded-[8px] bg-[#F5F5F7] border border-[#E5E5EA] px-3 py-2">
                                 <div class="text-[10px] font-semibold uppercase text-[#8E8E93]">ID</div>
-                                <div class="mt-1 text-[12px] font-mono text-[#48484A]"><%= nextTicketCode || 'INC-004' %></div>
+                                <div class="mt-1 text-[12px] font-mono text-[#48484A]"><%= typeof nextTicketCode !== 'undefined' ? nextTicketCode : 'INC-004' %></div>
                             </div>
                         </div>
                         <div>
@@ -1538,43 +1488,69 @@
         let notifTimeout = null;
 
         const dashboardOverview = document.getElementById('dashboardOverview');
+        const ticketsSection = document.getElementById('tickets');
         const shiftManagementSection = document.getElementById('shiftManagementSection');
         const dashboardNavLink = document.getElementById('dashboardNavLink');
+        const ticketsNavLink = document.getElementById('ticketsNavLink');
         const shiftManagementNavLink = document.getElementById('shiftManagementNavLink');
 
         function showDashboardSection(section, updateHistory = true) {
-            const showShift = section === 'shift';
-            dashboardOverview?.classList.toggle('hidden', showShift);
-            shiftManagementSection?.classList.toggle('hidden', !showShift);
-            dashboardNavLink?.classList.toggle('bg-black/5', !showShift);
-            dashboardNavLink?.classList.toggle('text-[#007AFF]', !showShift);
-            dashboardNavLink?.classList.toggle('text-[#3A3A3C]', showShift);
-            shiftManagementNavLink?.classList.toggle('bg-black/5', showShift);
-            shiftManagementNavLink?.classList.toggle('text-[#007AFF]', showShift);
-            shiftManagementNavLink?.classList.toggle('text-[#3A3A3C]', !showShift);
-            shiftManagementNavLink?.setAttribute('aria-current', showShift ? 'page' : 'false');
+            const isShift = section === 'shift' || section === 'gestion-turno';
+            const isTickets = section === 'tickets';
+            const isDashboard = !isShift && !isTickets;
+
+            dashboardOverview?.classList.toggle('hidden', !isDashboard);
+            ticketsSection?.classList.toggle('hidden', !isTickets);
+            shiftManagementSection?.classList.toggle('hidden', !isShift);
+
+            dashboardNavLink?.classList.toggle('bg-black/5', isDashboard);
+            dashboardNavLink?.classList.toggle('text-[#007AFF]', isDashboard);
+            dashboardNavLink?.classList.toggle('text-[#3A3A3C]', !isDashboard);
+            dashboardNavLink?.setAttribute('aria-current', isDashboard ? 'page' : 'false');
+
+            ticketsNavLink?.classList.toggle('bg-black/5', isTickets);
+            ticketsNavLink?.classList.toggle('text-[#007AFF]', isTickets);
+            ticketsNavLink?.classList.toggle('text-[#3A3A3C]', !isTickets);
+            ticketsNavLink?.setAttribute('aria-current', isTickets ? 'page' : 'false');
+
+            shiftManagementNavLink?.classList.toggle('bg-black/5', isShift);
+            shiftManagementNavLink?.classList.toggle('text-[#007AFF]', isShift);
+            shiftManagementNavLink?.classList.toggle('text-[#3A3A3C]', !isShift);
+            shiftManagementNavLink?.setAttribute('aria-current', isShift ? 'page' : 'false');
+
             if (operatorsPopover?.contains(document.activeElement)) {
-                (showShift ? shiftManagementNavLink : dashboardNavLink)?.focus();
+                (isShift ? shiftManagementNavLink : (isTickets ? ticketsNavLink : dashboardNavLink))?.focus();
             }
             setOperatorsPopoverOpen(false);
 
-            const targetHash = showShift ? '#gestion-turno' : '#dashboard';
+            if (isTickets && typeof applyTableFilters === 'function') {
+                applyTableFilters();
+            }
+
+            const targetHash = isShift ? '#gestion-turno' : (isTickets ? '#tickets' : (window.location.hash === '#general' ? '#general' : '#dashboard'));
             if (updateHistory && window.location.hash !== targetHash) {
-                window.history.pushState({ section: showShift ? 'shift' : 'dashboard' }, '', targetHash);
+                window.history.pushState({ section: isShift ? 'shift' : (isTickets ? 'tickets' : 'dashboard') }, '', targetHash);
             }
         }
 
+        function getSectionFromHash() {
+            const h = window.location.hash;
+            if (h === '#gestion-turno') return 'shift';
+            if (h === '#tickets') return 'tickets';
+            if (h === '#general' || h === '#dashboard') return 'dashboard';
+            return 'dashboard';
+        }
+
         window.addEventListener('popstate', () => {
-            showDashboardSection(window.location.hash === '#gestion-turno' ? 'shift' : 'dashboard', false);
+            showDashboardSection(getSectionFromHash(), false);
         });
 
-        const operatorsKpiCard = document.getElementById('operatorsKpiCard');
-        const operatorsPopover = document.getElementById('operatorsPopover');
-        const operatorsPopoverButton = document.getElementById('operatorsPopoverButton');
-        const operatorsPopoverClose = document.getElementById('operatorsPopoverClose');
+        window.addEventListener('hashchange', () => {
+            showDashboardSection(getSectionFromHash(), false);
+        });
 
-        if (window.location.hash === '#gestion-turno') {
-            showDashboardSection('shift', false);
+        if (window.location.hash) {
+            showDashboardSection(getSectionFromHash(), false);
         }
 
         function setOperatorsPopoverOpen(isOpen, restoreFocus = false) {
@@ -2298,6 +2274,9 @@
 
         function onSearchInput(val) {
             currentSearchQuery = (val || '').toLowerCase().trim();
+            if (currentSearchQuery && document.getElementById('tickets')?.classList.contains('hidden')) {
+                showDashboardSection('tickets', false);
+            }
             applyTableFilters();
         }
 
@@ -2480,7 +2459,7 @@
 
             const noMatch = document.getElementById('noFilterMatchRow');
             if (noMatch) {
-                noMatch.classList.toggle('hidden', visibleCount > 0);
+                noMatch.classList.toggle('hidden', rows.length === 0 || visibleCount > 0);
             }
 
             const counter = document.getElementById('activeTicketsCounter');

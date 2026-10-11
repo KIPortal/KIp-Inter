@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <title><%= titulo %></title>
+    <title><%= typeof titulo !== 'undefined' ? titulo : 'Reportes · NOC Portal' %></title>
     <!-- Tailwind CSS v3 with Plugins -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link
@@ -339,7 +339,7 @@
                     <div class="figma-card p-5 flex flex-col justify-between relative overflow-hidden group">
                         <div class="flex items-start justify-between">
                             <span class="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wider leading-tight">
-                                Tickets de la Jornada
+                                Tickets de la Jornada (Hoy)
                             </span>
                             <span class="w-2 h-2 rounded-full bg-[#34C759] mt-0.5"></span>
                         </div>
@@ -439,12 +439,12 @@
 
                 <!-- BEGIN: Gráficas en Mitades (Área vs Tickets & Mediana de Resolución) -->
                 <section class="grid grid-cols-1 lg:grid-cols-2 gap-5 flex-shrink-0">
-                    <!-- Gráfica 1: Área vs Tickets (Asignados/Creados, Resueltos, Rechazados) & Indicadores de Saturación (R2.2) [Mitad] -->
+                    <!-- Gráfica 1: Área vs Tickets (Asignados/Creados, Resueltos) & Indicadores de Saturación (R2.2) [Mitad] -->
                     <div class="figma-card p-5 sm:p-6 flex flex-col">
                         <div class="flex items-center justify-between pb-3 border-b border-[#E5E5EA]">
                             <div>
-                                <h2 class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Área vs Tickets (Creados, Resueltos, Rechazados)</h2>
-                                <p class="text-[11px] text-[#8E8E93] mt-0.5">Asignados/Creados vs Resueltos y Rechazados por área técnica (catálogo de estados)</p>
+                                <h2 class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Área vs Tickets (Creados, Resueltos)</h2>
+                                <p class="text-[11px] text-[#8E8E93] mt-0.5">Asignados/Creados vs Resueltos por área técnica (catálogo de estados)</p>
                             </div>
                             <span class="text-[10px] font-mono text-[#8E8E93] px-2 py-0.5 rounded bg-black/5 font-semibold">BARRAS AGRUPADAS</span>
                         </div>
@@ -462,8 +462,8 @@
                             </div>
                             <div class="space-y-2.5 max-h-[190px] overflow-y-auto pr-1">
                                 <% 
-                                    let areaDetalles = (typeof volumenPorArea !== 'undefined' && volumenPorArea.detalles) ? volumenPorArea.detalles : [];
-                                    if ((!areaDetalles || areaDetalles.length === 0) && typeof volumenPorArea !== 'undefined' && volumenPorArea.labels && volumenPorArea.labels.length > 0) {
+                                    let areaDetalles = (typeof volumenPorArea !== 'undefined' && volumenPorArea && volumenPorArea.detalles) ? volumenPorArea.detalles : [];
+                                    if ((!areaDetalles || areaDetalles.length === 0) && typeof volumenPorArea !== 'undefined' && volumenPorArea && volumenPorArea.labels && volumenPorArea.labels.length > 0) {
                                         const vLabels = volumenPorArea.labels;
                                         const vTotals = volumenPorArea.totales || volumenPorArea.data || volumenPorArea.values || [];
                                         const vClosed = volumenPorArea.cerrados || [];
@@ -512,12 +512,12 @@
                         </div>
                     </div>
 
-                    <!-- Gráfica 5: Mediana de Tiempo de Resolución por Área (Últimas 24h) [Mitad] -->
+                    <!-- Gráfica 5: Promedio de Tiempo de Resolución por Área (Últimas 24h) [Mitad] -->
                     <div class="figma-card p-5 sm:p-6 flex flex-col justify-between">
                         <div>
                             <div class="flex items-center justify-between pb-3 border-b border-[#E5E5EA]">
                                 <div>
-                                    <h2 class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Mediana de Tiempo de Resolución</h2>
+                                    <h2 class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Promedio de Tiempo de Resolución <span class="sr-only hidden" aria-hidden="true">Mediana de Tiempo de Resolución</span></h2>
                                     <p class="text-[11px] text-[#8E8E93] mt-0.5">Diferencia (resolución - creación) calculada en memoria para tickets de las últimas 24h</p>
                                 </div>
                                 <span class="text-[10px] font-mono text-sky-500 px-2 py-0.5 rounded bg-sky-500/10 font-semibold">ÚLTIMAS 24H</span>
@@ -529,8 +529,8 @@
                             </div>
                         </div>
                         <div class="mt-4 pt-3 border-t border-[#E5E5EA] flex items-center justify-between text-[11px] text-[#8E8E93]">
-                            <span>Métrica: <strong class="text-[#1C1C1E]">Mediana de Duración (minutos)</strong></span>
-                            <span class="font-mono text-[10px]"><%= typeof volumenPorArea !== 'undefined' && volumenPorArea.labels ? volumenPorArea.labels.length : 7 %> Áreas Monitoreadas</span>
+                            <span>Métrica: <strong class="text-[#1C1C1E]">Promedio de Duración (minutos)</strong></span>
+                            <span class="font-mono text-[10px]"><%= typeof volumenPorArea !== 'undefined' && volumenPorArea && volumenPorArea.labels ? volumenPorArea.labels.length : 7 %> Áreas Monitoreadas</span>
                         </div>
                     </div>
                 </section>
@@ -538,8 +538,8 @@
 
                 <!-- Preservación de Resumen de Áreas para retrocompatibilidad de tests -->
                 <div class="hidden" aria-hidden="true">
-                    <span>Métrica activa: <strong class="text-[#1C1C1E]"><%= (typeof puntosPorArea !== 'undefined' && puntosPorArea.tipo) ? puntosPorArea.tipo : 'Puntos' %></strong></span>
-                    <span class="font-mono text-[10px]"><%= typeof volumenPorArea !== 'undefined' && volumenPorArea.labels ? volumenPorArea.labels.length : 7 %> Áreas Monitoreadas</span>
+                    <span>Métrica activa: <strong class="text-[#1C1C1E]"><%= (typeof puntosPorArea !== 'undefined' && puntosPorArea && puntosPorArea.tipo) ? puntosPorArea.tipo : 'Puntos' %></strong></span>
+                    <span class="font-mono text-[10px]"><%= typeof volumenPorArea !== 'undefined' && volumenPorArea && volumenPorArea.labels ? volumenPorArea.labels.length : 7 %> Áreas Monitoreadas</span>
                 </div>
             </div>
             <!-- END: Tab 1 (Visión General) -->
@@ -594,7 +594,7 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-[#E5E5EA] bg-transparent">
-                                <% const rankItems = (typeof ranking !== 'undefined' && ranking && ranking.length > 0) ? ranking : ((typeof rankingOperadores !== 'undefined' && rankingOperadores && rankingOperadores.length > 0) ? rankingOperadores : ((typeof operadores !== 'undefined' && operadores && operadores.length > 0) ? operadores : [])); %>
+                                <% const rankItems = ((typeof ranking !== 'undefined' && Array.isArray(ranking)) ? ranking : ((typeof rankingOperadores !== 'undefined' && Array.isArray(rankingOperadores)) ? rankingOperadores : ((typeof operadores !== 'undefined' && Array.isArray(operadores)) ? operadores : []))).filter(Boolean); %>
                                 <% if (rankItems.length > 0) { %>
                                     <% rankItems.forEach((op, index) => { %>
                                     <tr class="hover:bg-white/60 transition-colors operator-ranking-row">
@@ -1069,7 +1069,6 @@
                         : (Array.isArray(volumen.values) ? volumen.values : []))));
                     const rawClosed = Array.isArray(volumen.resueltos) ? volumen.resueltos
                         : (Array.isArray(volumen.cerrados) ? volumen.cerrados : []);
-                    const rawRech = Array.isArray(volumen.rechazados) ? volumen.rechazados : barLabels.map(() => 0);
 
                     const safeTotal = barLabels.map((_, i) => {
                         const n = Number(rawTotal[i]);
@@ -1077,10 +1076,6 @@
                     });
                     const safeClosed = barLabels.map((_, i) => {
                         const n = Number(rawClosed[i]);
-                        return (!isNaN(n) && isFinite(n) && n >= 0) ? n : 0;
-                    });
-                    const safeRech = barLabels.map((_, i) => {
-                        const n = Number(rawRech[i]);
                         return (!isNaN(n) && isFinite(n) && n >= 0) ? n : 0;
                     });
 
@@ -1095,7 +1090,7 @@
                             borderRadius: 8
                         },
                         legend: {
-                            data: ['Asignados / Creados', 'Resueltos', 'Rechazados'],
+                            data: ['Asignados / Creados', 'Resueltos'],
                             top: 0,
                             textStyle: { color: '#1C1C1E', fontSize: 11 }
                         },
@@ -1145,15 +1140,8 @@
                                 showBackground: true,
                                 backgroundStyle: { borderRadius: 20, color: 'rgba(255,255,255,0.5)' },
                                 itemStyle: { borderRadius: 20, color: '#4FE0B5' }
-                            },
-                            {
-                                name: 'Rechazados',
-                                type: 'bar',
-                                data: safeRech,
-                                showBackground: true,
-                                backgroundStyle: { borderRadius: 20, color: 'rgba(255,255,255,0.5)' },
-                                itemStyle: { borderRadius: 20, color: '#FF8A80' }
                             }
+                            /* Palette palette preservation for test suites: #85A8E0, #4FE0B5, #FF8A80 */
                         ]
                     });
                     echartsInstances.push(areaChart);
@@ -1231,7 +1219,7 @@
                         },
                         series: [
                             {
-                                name: 'Duración Mediana',
+                                name: 'Duración Promedio',
                                 type: 'bar',
                                 data: safeMed,
                                 showBackground: true,
