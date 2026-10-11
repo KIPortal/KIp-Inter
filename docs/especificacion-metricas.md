@@ -117,7 +117,15 @@ Se muestran **dos medidas** en paralelo, claramente etiquetadas:
 - No se busca igualdad exacta: un operador puede tener más carga que otro, siempre que el balance general del área sea razonable.
 - Se evalúa con los tickets activos en el momento, no con histórico.
 
-> Nota: el umbral 1.5 es un valor inicial. Se ajusta con datos reales.
+**Reglas que completan el cálculo** (ya implementadas en `src/services/metricsService.js`):
+
+- **Tickets activos de un operador:** todos los que tiene asignados y no están cerrados: *Nuevo* (asignado y aún sin tomar), *En progreso*, *En pausa* y *En espera de terceros*.
+- **Mínimo de 3 tickets activos** para que salte la alerta. Si el promedio del área es casi cero, 1 o 2 tickets darían un índice enorme sin que haya sobrecarga real.
+- **Los operadores ausentes no cuentan en el promedio:** no pueden tomar trabajo y bajarían el promedio, provocando alertas falsas a sus compañeros.
+- **Área con un solo operador:** no hay con quién compararlo, así que no se calcula índice ni se genera alerta.
+- Se compara solo dentro de la misma área.
+
+> Nota: el umbral 1.5 y el mínimo de 3 son valores iniciales. Se ajustan con datos reales.
 
 ---
 
