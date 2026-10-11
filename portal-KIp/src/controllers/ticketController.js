@@ -30,8 +30,8 @@ async function getNextTicketCode() {
         select: { codigo_incidencia: true }
     });
 
-    // 2. Si la base de datos está vacía, iniciamos en INC-004 (según tu lógica original)
-    if (!lastTicket || !lastTicket.codigo_incidencia) return 'INC-004';
+    // 2. Si la base de datos está vacía, iniciamos en INC-001
+    if (!lastTicket || !lastTicket.codigo_incidencia) return 'INC-001';
 
     // 3. Extraemos el número del último ticket y sumamos 1
     const match = /^INC-(\d+)$/i.exec(lastTicket.codigo_incidencia.trim());

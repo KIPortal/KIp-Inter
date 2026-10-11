@@ -136,7 +136,7 @@ async function renderDashboard(req, res) {
             .filter(Boolean)
             .map(match => Number(match[1]))
             .filter(Number.isInteger);
-        const nextTicketCode = `INC-${String((numericCodes.length ? Math.max(...numericCodes) : 3) + 1).padStart(3, '0')}`;
+        const nextTicketCode = `INC-${String((numericCodes.length ? Math.max(...numericCodes) : 0) + 1).padStart(3, '0')}`;
 
         return res.render('dashboard', {
             titulo: 'NOC Portal - Dashboard Operativo',
