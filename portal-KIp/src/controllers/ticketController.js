@@ -23,17 +23,20 @@ async function isOperator(operatorId) {
 }
 
 async function getNextTicketCode() {
-    const tickets = await prisma.ticket.findMany({
+    // 1. Prisma pide a Postgres solo el último ticket, ordenado de más nuevo a más viejo
+    const lastTicket = await prisma.ticket.findFirst({
+        orderBy: { createdAt: 'desc' },
         select: { codigo_incidencia: true }
     });
-    const numericValues = tickets
-        .map(ticket => /^INC-(\d+)$/i.exec(String(ticket.codigo_incidencia || '').trim()))
-        .filter(Boolean)
-        .map(match => Number(match[1]))
-        .filter(Number.isInteger);
-    const nextNumber = (numericValues.length ? Math.max(...numericValues) : 3) + 1;
 
-    return `INC-${String(nextNumber).padStart(3, '0')}`;
+    // 2. Si la base de datos está vacía, iniciamos en INC-004 (según tu lógica original)
+    if (!lastTicket || !lastTicket.codigo_incidencia) return 'INC-004';
+
+    // 3. Extraemos el número del último ticket y sumamos 1
+    const match = /^INC-(\d+)$/i.exec(lastTicket.codigo_incidencia.trim());
+    const lastNumber = match ? parseInt(match[1], 10) : 3;
+
+    return `INC-${String(lastNumber + 1).padStart(3, '0')}`;
 }
 
 async function createTicket(req, res) {
@@ -363,13 +366,13 @@ function resolveTicket(req, res) {
 }
 
 function updateOperatorStatus(req, res) {
-    const actionsByStatus = { 
-        EN_PAUSA: 'pause', 
+    const actionsByStatus = {
+        EN_PAUSA: 'pause',
         PAUSADO: 'pause',
         EN_ESPERA: 'pause',
         pausar: 'pause',
-        EN_PROGRESO: 'resume', 
-        CERRADO: 'resolve' 
+        EN_PROGRESO: 'resume',
+        CERRADO: 'resolve'
     };
     const action = actionsByStatus[req.body?.status];
     if (!action) return res.status(400).json({ success: false, error: 'Estado de destino no válido' });

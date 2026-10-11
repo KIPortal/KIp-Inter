@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="h-full bg-[#E8E8ED]" lang="es">
+<html class="h-full bg-slate-100" lang="es">
 
 <head>
     <meta charset="utf-8">
@@ -11,13 +11,8 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
         rel="stylesheet">
     <link href="/css/figma-assets.css" rel="stylesheet">
-    <!-- Chart.js CDN with cdnjs fallback -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        if (typeof Chart === 'undefined') {
-            document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"><\/script>');
-        }
-    </script>
+    <!-- Apache ECharts CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -29,9 +24,9 @@
                     },
                     colors: {
                         mac: {
-                            bg: '#F5F5F7', window: '#FFFFFF', sidebar: '#EBEBF0', accent: '#007AFF', accentHover: '#0062CC',
+                            bg: '#F5F5F7', window: '#FFFFFF', sidebar: '#EBEBF0', accent: '#0EA5E9', accentHover: '#0284C7',
                             subtle: '#8E8E93', border: '#E5E5EA', borderLight: '#F2F2F7', headerBorder: '#D1D1D6',
-                            selected: '#DCEBFE', selectedText: '#0062CC', dangerLight: '#FFE5E5', dangerText: '#D70015',
+                            selected: '#E0F2FE', selectedText: '#0284C7', dangerLight: '#FFE5E5', dangerText: '#D70015',
                             successLight: '#E3F9E5', successText: '#1B873F', warningLight: '#FFF4D6', warningText: '#B25E02'
                         }
                     }
@@ -73,36 +68,36 @@
             font-variant-numeric: tabular-nums;
         }
 
-        /* macOS 27 Liquid Glass Card Design System */
+        /* macOS 27 NEW (Ocean-Glass) Card Design System */
         .figma-card {
-            background: rgba(255, 255, 255, 0.75);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            border: 1px solid rgba(229, 229, 234, 0.85);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.02);
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
             border-radius: 16px;
             transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .figma-card:hover {
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0, 0, 0, 0.03);
+            box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.06);
         }
 
         .macos-focus-ring {
-            box-shadow: 0 0 0 3px rgba(0, 136, 255, 0.35);
-            border-color: #389BFF !important;
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.35);
+            border-color: #38bdf8 !important;
         }
     </style>
 </head>
 
-<body class="h-dvh w-full min-w-0 bg-[#F5F5F7] overflow-hidden flex flex-col font-sans text-[13px] text-[#1C1C1E] m-0 p-0">
+<body class="h-dvh w-full min-w-0 bg-gradient-to-br from-slate-100 via-blue-50 to-sky-100 overflow-hidden flex flex-col font-sans text-[13px] text-[#1C1C1E] m-0 p-0">
 
     <!-- macOS Full Application Viewport -->
-    <div class="relative w-full h-full flex flex-col overflow-hidden bg-white select-none">
+    <div class="relative w-full h-full flex flex-col overflow-hidden bg-transparent select-none">
 
         <!-- BEGIN: macOS Unified Titlebar & Toolbar -->
         <header
-            class="h-[56px] bg-white border-b border-[#E5E5EA] px-2 sm:px-4 flex items-center justify-between gap-2 select-none z-20 flex-shrink-0">
+            class="h-[56px] bg-white/70 backdrop-blur-xl border-b border-[#E5E5EA]/60 px-2 sm:px-4 flex items-center justify-between gap-2 select-none z-20 flex-shrink-0">
             <div class="flex items-center gap-3">
                 <div class="flex items-center gap-3">
                     <img alt="Logo Inter" class="h-[28px] w-auto object-contain" onerror="this.style.display='none'"
@@ -119,7 +114,7 @@
 
             <div class="flex items-center gap-3">
                 <div
-                    class="figma-toolbars-search__search !w-auto relative hidden sm:flex bg-[#F5F5F7] border border-[#D1D1D6] rounded-[7px] transition focus-within:bg-white focus-within:border-[#007AFF]">
+                    class="figma-toolbars-search__search !w-auto relative hidden sm:flex bg-[#F5F5F7] border border-[#D1D1D6] rounded-[7px] transition focus-within:bg-white focus-within:border-sky-500">
                     <div class="figma-toolbars-search__liquid-glass absolute inset-0"></div>
                     <svg class="figma-toolbars-search__symbol w-3.5 h-3.5 text-[#8E8E93] flex-shrink-0 pointer-events-none" fill="none"
                         stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -135,7 +130,7 @@
                 </div>
                 <div class="flex items-center gap-2">
                     <a href="/?nuevo=1" id="newTicketButton"
-                        class="figma-button !w-auto !h-[28px] bg-[#007AFF] hover:bg-[#0062CC] text-white shadow-sm transition inline-flex items-center px-3 rounded-[6px]">
+                        class="figma-button !w-auto !h-[28px] bg-sky-500 hover:bg-sky-600 text-white shadow-sm transition inline-flex items-center px-3 rounded-[6px]">
                         <div class="figma-button__label text-white flex items-center gap-1.5">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                                 <line x1="12" x2="12" y1="5" y2="19"></line>
@@ -150,7 +145,7 @@
                     <summary
                         class="list-none flex items-center gap-2 px-2 py-1 rounded-[8px] hover:bg-[#F2F2F7] transition cursor-pointer border border-transparent hover:border-[#D1D1D6]">
                         <div
-                            class="w-7 h-7 rounded-full bg-[#007AFF] text-white flex items-center justify-center font-mono font-semibold text-[11px]">
+                            class="w-7 h-7 rounded-full bg-sky-500 text-white flex items-center justify-center font-mono font-semibold text-[11px]">
                             <%= typeof currentUser !== 'undefined' && currentUser && currentUser.nombre ? (currentUser.nombre.trim().split(/\s+/).slice(0, 2).map(part => part.charAt(0)).join('').toUpperCase() || 'CP') : 'CP' %></div>
                         <div class="hidden sm:flex flex-col text-left">
                             <span class="text-[11px] font-medium text-[#1C1C1E] leading-tight"><%= typeof currentUser !== 'undefined' && currentUser && currentUser.nombre ? currentUser.nombre : 'Coord. NOC' %></span>
@@ -159,7 +154,7 @@
                     </summary>
                     <div class="absolute right-0 top-[100%] mt-1 w-[150px] bg-white rounded-[6px] border border-[#D1D1D6] shadow-[0_4px_14px_rgba(0,0,0,0.1)] p-1 z-50 text-[12px]">
                         <form action="/auth/logout" method="POST" class="m-0">
-                            <button type="submit" class="w-full text-left px-2 py-1.5 rounded-[4px] text-[#1C1C1E] hover:bg-[#007AFF] hover:text-white font-medium transition cursor-pointer">
+                            <button type="submit" class="w-full text-left px-2 py-1.5 rounded-[4px] text-[#1C1C1E] hover:bg-sky-500 hover:text-white font-medium transition cursor-pointer">
                                 Cerrar Sesión
                             </button>
                         </form>
@@ -169,11 +164,11 @@
         </header>
 
         <!-- Main Body Workspace -->
-        <div class="flex-1 flex overflow-hidden min-h-0 bg-[#F5F5F7]">
+        <div class="flex-1 flex overflow-hidden min-h-0 bg-transparent">
 
             <!-- BEGIN: Finder-style macOS Sidebar -->
             <aside
-                class="w-[52px] md:w-[200px] flex-shrink-0 bg-[#EBEBF0]/95 border-r border-[#D8D8DC] flex flex-col justify-between select-none py-3 px-1 md:px-2">
+                class="w-[52px] md:w-[200px] flex-shrink-0 bg-slate-100/90 backdrop-blur-xl border-r border-[#D8D8DC]/60 flex flex-col justify-between select-none py-3 px-1 md:px-2">
                 <div class="space-y-4">
                     <div>
                         <div class="hidden md:block px-2.5 pb-1.5 text-[10px] font-bold text-[#8E8E93] uppercase tracking-wider">
@@ -184,7 +179,7 @@
                                 <div class="flex items-center gap-2">
                                     <svg class="w-4 h-4 text-[#8E8E93]" fill="currentColor" viewBox="0 0 24 24">
                                         <path
-                                            d="M19.5 21a3 3 0 0 0 3-3v-4.5a3 3 0 0 0-3-3h-15a3 3 0 0 0-3-3V18a3 3 0 0 0 3 3h15ZM1.5 10.5V6a3 3 0 0 1 3-3h15a3 3 0 0 1 3 3v4.5">
+                                             d="M19.5 21a3 3 0 0 0 3-3v-4.5a3 3 0 0 0-3-3h-15a3 3 0 0 0-3-3V18a3 3 0 0 0 3 3h15ZM1.5 10.5V6a3 3 0 0 1 3-3h15a3 3 0 0 1 3 3v4.5">
                                         </path>
                                     </svg>
                                     <span class="hidden md:inline">Dashboard General</span>
@@ -212,7 +207,7 @@
                                     <span class="hidden md:inline">Gestión de Turno</span>
                                 </div>
                             </a>
-                            <a class="flex items-center justify-between px-2.5 py-1.5 rounded-[6px] bg-[#007AFF] text-white text-[12px] font-medium transition shadow-xs"
+                            <a class="flex items-center justify-between px-2.5 py-1.5 rounded-[6px] bg-sky-500 hover:bg-sky-600 text-white text-[12px] font-medium transition shadow-xs"
                                 href="/reportes">
                                 <div class="flex items-center gap-2">
                                     <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor"
@@ -244,7 +239,7 @@
             <!-- END: Sidebar -->
 
             <!-- Main Scrollable Dashboard Content -->
-            <main class="flex-1 flex flex-col min-w-0 bg-[#F5F5F7] overflow-y-auto p-4 sm:p-6 lg:p-8 gap-6 sm:gap-7">
+            <main class="flex-1 flex flex-col min-w-0 bg-transparent overflow-y-auto p-4 sm:p-6 lg:p-8 gap-6 sm:gap-7">
 
                 <!-- Page Header -->
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -254,7 +249,7 @@
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/80 border border-[#D1D1D6] text-[11px] text-[#1C1C1E] font-medium shadow-2xs">
-                            <span class="w-2 h-2 rounded-full bg-[#007AFF] animate-pulse"></span>
+                            <span class="w-2 h-2 rounded-full bg-sky-500 animate-pulse"></span>
                             <span>Jornada Activa</span>
                         </span>
                     </div>
@@ -264,7 +259,7 @@
                 <div class="flex items-center justify-between flex-wrap gap-4 pt-1 flex-shrink-0">
                     <div class="inline-flex p-1 rounded-[12px] bg-black/10 backdrop-blur-md border border-black/5 shadow-inner" role="tablist" aria-label="Secciones de Reporte">
                         <button type="button" role="tab" id="tab-btn-overview" data-target="tab-overview" aria-selected="true" class="report-tab-btn flex items-center gap-2 px-4 py-1.5 rounded-[9px] text-[12px] font-semibold bg-white text-[#1C1C1E] shadow-sm transition-all duration-200">
-                            <svg class="w-3.5 h-3.5 text-[#007AFF] transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <svg class="w-3.5 h-3.5 text-sky-500 transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
                                 <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
                                 <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
@@ -301,7 +296,7 @@
                             <span class="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wider leading-tight">
                                 Tickets Totales
                             </span>
-                            <span class="w-2 h-2 rounded-full bg-[#007AFF] mt-0.5"></span>
+                            <span class="w-2 h-2 rounded-full bg-sky-500 mt-0.5"></span>
                         </div>
                         <div class="mt-3">
                             <div class="text-[34px] font-semibold font-mono text-[#1C1C1E] tracking-tight num-tabular leading-none" id="kpi-total">
@@ -397,7 +392,7 @@
                                 <span>Creados</span>
                             </div>
                             <div class="flex items-center gap-1.5 text-[11px] text-[#48484A]">
-                                <span class="w-2.5 h-2.5 rounded-full bg-[#007AFF]"></span>
+                                <span class="w-2.5 h-2.5 rounded-full bg-sky-500"></span>
                                 <span>Asignados</span>
                             </div>
                             <div class="flex items-center gap-1.5 text-[11px] text-[#48484A]">
@@ -407,8 +402,8 @@
                             <span class="text-[10px] font-mono text-[#8E8E93] px-2 py-0.5 rounded bg-black/5 font-semibold">LÍNEAS</span>
                         </div>
                     </div>
-                    <div class="relative w-full h-[220px] sm:h-[260px] mt-4">
-                        <canvas id="hourlyFlowChart"></canvas>
+                    <div class="relative w-full mt-4">
+                        <div id="hourlyFlowChart" style="width: 100%; height: 300px;"></div>
                     </div>
                 </section>
                 <!-- END: Hourly Flow Chart -->
@@ -425,9 +420,9 @@
                             <span class="text-[10px] font-mono text-[#8E8E93] px-2 py-0.5 rounded bg-black/5 font-semibold">BARRAS AGRUPADAS</span>
                         </div>
 
-                        <!-- Canvas Grouped Bar Chart -->
-                        <div class="relative w-full h-[250px] sm:h-[270px] mt-4">
-                            <canvas id="areaVolumeChart"></canvas>
+                        <!-- ECharts Grouped Bars Container -->
+                        <div class="relative w-full mt-3">
+                            <div id="areaTicketsChart" style="width: 100%; height: 300px;"></div>
                         </div>
 
                         <!-- Indicadores de Saturación por Área (Barras de Progreso) -->
@@ -445,10 +440,10 @@
                                         const vClosed = volumenPorArea.cerrados || [];
                                         const vSats = volumenPorArea.saturaciones || [];
                                         areaDetalles = vLabels.map((lbl, idx) => {
-                                            const tot = vTotals[idx] || 0;
-                                            const cls = vClosed[idx] || 0;
-                                            const sat = (typeof vSats[idx] !== 'undefined') ? vSats[idx] : (tot > 0 ? Math.round(((tot - cls) / tot) * 100) : 0);
-                                            return { label: lbl, total: tot, cerrados: cls, saturacion: sat };
+                                             const tot = vTotals[idx] || 0;
+                                             const cls = vClosed[idx] || 0;
+                                             const sat = (typeof vSats[idx] !== 'undefined') ? vSats[idx] : (tot > 0 ? Math.round(((tot - cls) / tot) * 100) : 0);
+                                             return { label: lbl, total: tot, cerrados: cls, saturacion: sat };
                                         });
                                     }
                                     if (areaDetalles.length > 0) {
@@ -496,23 +491,24 @@
                                     <h2 class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Mediana de Tiempo de Resolución</h2>
                                     <p class="text-[11px] text-[#8E8E93] mt-0.5">Diferencia (resolución - creación) calculada en memoria para tickets de las últimas 24h</p>
                                 </div>
-                                <span class="text-[10px] font-mono text-[#007AFF] px-2 py-0.5 rounded bg-[#007AFF]/10 font-semibold">ÚLTIMAS 24H</span>
+                                <span class="text-[10px] font-mono text-sky-500 px-2 py-0.5 rounded bg-sky-500/10 font-semibold">ÚLTIMAS 24H</span>
                             </div>
-                            <div class="relative w-full h-[260px] sm:h-[280px] mt-4">
-                                <canvas id="medianResolutionChart"></canvas>
+
+                            <!-- ECharts Median Container -->
+                            <div class="relative w-full mt-3">
+                                <div id="medianResolutionChart" style="width: 100%; height: 300px;"></div>
                             </div>
                         </div>
                         <div class="mt-4 pt-3 border-t border-[#E5E5EA] flex items-center justify-between text-[11px] text-[#8E8E93]">
                             <span>Métrica: <strong class="text-[#1C1C1E]">Mediana de Duración (minutos)</strong></span>
-                            <span class="font-mono text-[10px]">Cálculo en Memoria JS</span>
+                            <span class="font-mono text-[10px]"><%= typeof volumenPorArea !== 'undefined' && volumenPorArea.labels ? volumenPorArea.labels.length : 7 %> Áreas Monitoreadas</span>
                         </div>
                     </div>
                 </section>
                 <!-- END: Gráficas en Mitades -->
 
-                <!-- Preservación de Dona para retrocompatibilidad de tests -->
+                <!-- Preservación de Resumen de Áreas para retrocompatibilidad de tests -->
                 <div class="hidden" aria-hidden="true">
-                    <canvas id="areaPointsChart"></canvas>
                     <span>Métrica activa: <strong class="text-[#1C1C1E]"><%= (typeof puntosPorArea !== 'undefined' && puntosPorArea.tipo) ? puntosPorArea.tipo : 'Puntos' %></strong></span>
                     <span class="font-mono text-[10px]"><%= typeof volumenPorArea !== 'undefined' && volumenPorArea.labels ? volumenPorArea.labels.length : 7 %> Áreas Monitoreadas</span>
                 </div>
@@ -530,8 +526,8 @@
                         </div>
                         <span class="text-[10px] font-mono text-[#8E8E93] px-2 py-0.5 rounded bg-black/5 font-semibold">BARRAS AGRUPADAS</span>
                     </div>
-                    <div class="relative w-full h-[260px] sm:h-[300px] mt-4">
-                        <canvas id="operatorBarChart"></canvas>
+                    <div class="relative w-full mt-4">
+                        <div id="operatorBarChart" style="width: 100%; height: 300px;"></div>
                     </div>
                 </section>
 
@@ -544,7 +540,7 @@
                         </div>
                         <div class="flex items-center gap-2">
                             <span class="inline-flex items-center gap-1 text-[11px] text-[#48484A] font-medium bg-[#F2F2F7] px-2.5 py-1 rounded-full border border-[#D1D1D6]">
-                                <svg class="w-3.5 h-3.5 text-[#007AFF]" fill="currentColor" viewBox="0 0 20 20">
+                                <svg class="w-3.5 h-3.5 text-sky-500" fill="currentColor" viewBox="0 0 20 20">
                                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                 </svg>
                                 <span>Efectividad NOC</span>
@@ -575,21 +571,21 @@
                                     <tr class="hover:bg-white/60 transition-colors operator-ranking-row">
                                         <!-- Posición con medallas -->
                                         <td class="py-3 px-4 text-center">
-                                            <% if (index === 0) { %>
-                                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#FFF4D6] text-[#B25E02] font-mono font-bold text-[11px] shadow-2xs">🥇</span>
-                                            <% } else if (index === 1) { %>
-                                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#F2F2F7] text-[#48484A] font-mono font-bold text-[11px] shadow-2xs">🥈</span>
-                                            <% } else if (index === 2) { %>
-                                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#FFE5E5] text-[#991B1B] font-mono font-bold text-[11px] shadow-2xs">🥉</span>
-                                            <% } else { %>
-                                                <span class="inline-flex items-center justify-center w-6 h-6 text-[#8E8E93] font-mono font-semibold text-[11px]">#<%= index + 1 %></span>
-                                            <% } %>
+                                             <% if (index === 0) { %>
+                                                 <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#FFF4D6] text-[#B25E02] font-mono font-bold text-[11px] shadow-2xs">🥇</span>
+                                             <% } else if (index === 1) { %>
+                                                 <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#F2F2F7] text-[#48484A] font-mono font-bold text-[11px] shadow-2xs">🥈</span>
+                                             <% } else if (index === 2) { %>
+                                                 <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#FFE5E5] text-[#991B1B] font-mono font-bold text-[11px] shadow-2xs">🥉</span>
+                                             <% } else { %>
+                                                 <span class="inline-flex items-center justify-center w-6 h-6 text-[#8E8E93] font-mono font-semibold text-[11px]">#<%= index + 1 %></span>
+                                             <% } %>
                                         </td>
 
                                         <!-- Operador Info -->
                                         <td class="py-3 px-4">
                                             <div class="flex items-center gap-2.5">
-                                                <div class="w-7 h-7 rounded-full bg-[#007AFF] text-white flex items-center justify-center font-mono font-semibold text-[10px] flex-shrink-0 shadow-2xs">
+                                                <div class="w-7 h-7 rounded-full bg-sky-500 text-white flex items-center justify-center font-mono font-semibold text-[10px] flex-shrink-0 shadow-2xs">
                                                     <%= op.nombre && op.nombre.trim() ? (op.nombre.trim().split(/\s+/).slice(0, 2).map(p => p.charAt(0)).join('').toUpperCase() || 'OP') : 'OP' %>
                                                 </div>
                                                 <div class="flex flex-col min-w-0">
@@ -628,7 +624,7 @@
                                             <div class="flex items-center gap-2">
                                                 <span class="font-mono font-semibold text-[11px] text-[#1C1C1E] w-9 text-right num-tabular"><%= ef %>%</span>
                                                 <div class="w-16 bg-[#E5E5EA] rounded-full h-1.5 overflow-hidden flex-shrink-0">
-                                                    <div class="h-full rounded-full transition-all duration-300 <%= ef >= 80 ? 'bg-[#34C759]' : (ef >= 50 ? 'bg-[#007AFF]' : 'bg-[#FF9500]') %>"
+                                                    <div class="h-full rounded-full transition-all duration-300 <%= ef >= 80 ? 'bg-[#34C759]' : (ef >= 50 ? 'bg-sky-500' : 'bg-[#FF9500]') %>"
                                                          style="width: <%= Math.min(100, Math.max(0, ef)) %>%"></div>
                                                 </div>
                                             </div>
@@ -662,7 +658,7 @@
 
                                         <!-- Puntos Complejidad -->
                                         <td class="py-3 px-4 text-right">
-                                            <span class="text-[#007AFF] font-mono font-bold text-[12px] num-tabular">
+                                            <span class="text-sky-600 font-mono font-bold text-[12px] num-tabular">
                                                 <%= op.puntos || 0 %> <span class="text-[10px] font-sans font-medium text-[#8E8E93]">pts</span>
                                             </span>
                                         </td>
@@ -679,8 +675,8 @@
                                                     <span class="w-1.5 h-1.5 rounded-full bg-[#34C759]"></span> Disponible
                                                 </span>
                                             <% } else if (op.estado === 'EN_TERRENO') { %>
-                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#DCEBFE] text-[#0062CC] border border-[#B8D7FC]">
-                                                    <span class="w-1.5 h-1.5 rounded-full bg-[#007AFF]"></span> En Terreno
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-50 text-sky-700 border border-sky-200">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span> En Terreno
                                                 </span>
                                             <% } else if (op.estado === 'AUSENTE') { %>
                                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#F2F2F7] text-[#8E8E93] border border-[#E5E5EA]">
@@ -724,8 +720,8 @@
                             <p class="text-[11px] text-[#8E8E93] mt-0.5">Monitoreo en vivo de tickets e impacto operativo por estados de Venezuela</p>
                         </div>
                         <div class="flex items-center gap-2">
-                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-semibold bg-[#007AFF]/10 text-[#007AFF] border border-[#007AFF]/20">
-                                <span class="w-2 h-2 rounded-full bg-[#007AFF]"></span>
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-semibold bg-sky-500/10 text-sky-500 border border-sky-500/20">
+                                <span class="w-2 h-2 rounded-full bg-sky-500"></span>
                                 24 Entidades Federales
                             </span>
                         </div>
@@ -736,7 +732,7 @@
                         <div class="lg:col-span-8 relative flex items-center justify-center min-h-[380px] sm:min-h-[460px] bg-white/40 rounded-[12px] p-4 border border-[#E5E5EA]/60 overflow-hidden">
                             <div id="venezuela-map-container" class="w-full h-full flex items-center justify-center max-h-[460px]">
                                 <div class="flex flex-col items-center gap-2 text-[#8E8E93] animate-pulse">
-                                    <svg class="w-6 h-6 animate-spin text-[#007AFF]" fill="none" viewBox="0 0 24 24">
+                                    <svg class="w-6 h-6 animate-spin text-sky-500" fill="none" viewBox="0 0 24 24">
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
                                     </svg>
@@ -747,7 +743,7 @@
                             <!-- Floating Liquid Glass Tooltip for Map (Dark macOS Style) -->
                             <div id="map-state-tooltip" class="fixed hidden pointer-events-none z-50 px-3 py-2 rounded-[8px] bg-[#1C1C1E]/95 backdrop-blur-md border border-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.28)] text-[12px] transition-opacity duration-150 text-white">
                                 <div class="flex items-center gap-2 font-bold text-white">
-                                    <span class="w-2 h-2 rounded-full bg-[#007AFF]" id="tooltip-state-dot"></span>
+                                    <span class="w-2 h-2 rounded-full bg-sky-500" id="tooltip-state-dot"></span>
                                     <span id="tooltip-state-name">Estado</span>
                                 </div>
                                 <div class="text-[11px] text-[#AEAEB2] mt-1 space-y-0.5">
@@ -797,7 +793,7 @@
                             <!-- Legend Bar -->
                             <div class="p-3 rounded-[8px] bg-white/70 border border-[#E5E5EA] space-y-1.5">
                                 <span class="text-[10px] font-semibold text-[#8E8E93] uppercase tracking-wider block">Intensidad de Incidencias</span>
-                                <div class="w-full h-2 rounded-full overflow-hidden flex" style="background: linear-gradient(90deg, #E5E5EA 0%, #DCEBFE 25%, #85A8E0 50%, #007AFF 75%, #0040DD 100%);"></div>
+                                <div class="w-full h-2 rounded-full overflow-hidden flex" style="background: linear-gradient(90deg, #E5E5EA 0%, #E0F2FE 25%, #7DD3FC 50%, #0EA5E9 75%, #0369A1 100%);"></div>
                                 <div class="flex justify-between text-[9px] font-mono text-[#8E8E93]">
                                     <span>Baja</span>
                                     <span>Media</span>
@@ -820,7 +816,7 @@
         <%- JSON.stringify(typeof reportData !== 'undefined' ? reportData : {}).replace(/</g, '\\u003c') %>
     </script>
 
-    <!-- Client-side logic for Chart.js & Shortcuts -->
+    <!-- Client-side logic for Apache ECharts & Shortcuts -->
     <script>
         document.addEventListener('keydown', function (e) {
             if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
@@ -877,33 +873,19 @@
             });
         })();
 
-        // Initialize Charts when DOM is fully loaded & Chart.js is ready
+        // Initialize Charts when DOM is fully loaded & Apache ECharts is ready
         (function() {
-            function handleChartUnavailable() {
-                ['areaVolumeChart', 'areaPointsChart', 'operatorBarChart', 'medianResolutionChart', 'hourlyFlowChart'].forEach(function(canvasId) {
-                    const canvas = document.getElementById(canvasId);
-                    if (canvas && canvas.parentElement) {
-                        canvas.style.display = 'none';
-                        const existingMsg = canvas.parentElement.querySelector('.chart-fallback-msg');
-                        if (!existingMsg) {
-                            const fallback = document.createElement('div');
-                            fallback.className = 'chart-fallback-msg flex flex-col items-center justify-center h-full text-center p-6 text-[#8E8E93]';
-                            fallback.innerHTML = `
-                                <div class="w-10 h-10 rounded-full bg-black/5 flex items-center justify-center mb-2.5">
-                                    <svg class="w-5 h-5 text-[#8E8E93]" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-                                    </svg>
-                                </div>
-                                <span class="text-[12px] font-medium text-[#1C1C1E]">Visualización gráfica no disponible</span>
-                                <span class="text-[11px] text-[#8E8E93] mt-1 max-w-[240px]">Los datos consolidados se muestran en las tablas y métricas superiores.</span>
-                            `;
-                            canvas.parentElement.appendChild(fallback);
-                        }
-                    }
-                });
+            function escapeHtml(str) {
+                if (str == null) return '';
+                return String(str)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
             }
 
-            function initCharts() {
+            function getReportData() {
                 let reportData = {
                     kpis: {},
                     volumenPorArea: { labels: [], data: [], totales: [], cerrados: [], creados: [], asignados: [], resueltos: [], rechazados: [] },
@@ -914,272 +896,343 @@
                     medianaTiempoPorArea: { labels: [], data: [], formateado: [] },
                     rankingOperadores: []
                 };
-
                 try {
                     const dataEl = document.getElementById('report-data-json');
                     if (dataEl && dataEl.textContent.trim()) {
-                        reportData = JSON.parse(dataEl.textContent);
+                        const parsed = JSON.parse(dataEl.textContent);
+                        if (parsed && typeof parsed === 'object') {
+                            reportData = parsed;
+                        }
                     }
                 } catch (err) {
                     console.error('Error al inicializar reportData:', err);
                 }
+                return reportData;
+            }
 
-                // Custom Chart.js plugin for macOS Liquid Glass translucent capsule tracks
-                const capsuleTrackPlugin = {
-                    id: 'capsuleTrack',
-                    beforeDatasetsDraw: function(chart) {
-                        const chartArea = chart.chartArea;
-                        const scales = chart.scales;
-                        if (!chartArea || !scales || !scales.y || !scales.x) return;
-                        const top = chartArea.top;
-                        const zeroPixel = scales.y.getPixelForValue(0);
-                        const bottom = (typeof zeroPixel === 'number' && !isNaN(zeroPixel)) ? zeroPixel : chartArea.bottom;
-                        const height = bottom - top;
-                        if (height <= 0) return;
+            const echartsInstances = [];
 
-                        const ctx = chart.ctx;
-                        chart.data.datasets.forEach(function(ds, dIdx) {
-                            const meta = chart.getDatasetMeta(dIdx);
-                            if (!meta || meta.hidden || meta.type !== 'bar') return;
-                            (meta.data || []).forEach(function(bar) {
-                                if (!bar || typeof bar.x !== 'number' || isNaN(bar.x)) return;
-                                const width = Math.max(3, (bar.width || 12) - 2);
-                                ctx.save();
-                                ctx.fillStyle = 'rgba(0, 0, 0, 0.035)';
-                                const r = Math.min(20, width / 2, height / 2);
-                                if (typeof ctx.roundRect === 'function') {
-                                    ctx.beginPath();
-                                    ctx.roundRect(bar.x - width / 2, top, width, height, r);
-                                    ctx.fill();
-                                } else if (typeof ctx.arcTo === 'function') {
-                                    const x = bar.x - width / 2, y = top, w = width, h = height;
-                                    ctx.beginPath();
-                                    ctx.moveTo(x + r, y);
-                                    ctx.arcTo(x + w, y, x + w, y + h, r);
-                                    ctx.arcTo(x + w, y + h, x, y + h, r);
-                                    ctx.arcTo(x, y + h, x, y, r);
-                                    ctx.arcTo(x, y, x + w, y, r);
-                                    ctx.closePath();
-                                    ctx.fill();
-                                } else {
-                                    ctx.fillRect(bar.x - width / 2, top, width, height);
+            function initCharts() {
+                if (typeof echarts === 'undefined') return;
+                const reportData = getReportData();
+
+                // 1. Gráfica 4: Flujo 24h (hourlyFlowChart)
+                const flowEl = document.getElementById('hourlyFlowChart');
+                if (flowEl) {
+                    const flujo = reportData.flujoPorHora || reportData.flujo_por_hora || {};
+                    const defaultHours = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
+                    const flujoLabels = (flujo.labels && flujo.labels.length > 0) ? flujo.labels : defaultHours;
+                    const rawCreados = flujo.creados || [];
+                    const rawAsignados = flujo.asignados || [];
+                    const rawCerrados = flujo.cerrados || [];
+                    const safeCreados = flujoLabels.map((_, i) => {
+                        const n = Number(rawCreados[i]);
+                        return (!isNaN(n) && isFinite(n) && n >= 0) ? n : 0;
+                    });
+                    const safeAsignados = flujoLabels.map((_, i) => {
+                        const n = Number(rawAsignados[i]);
+                        return (!isNaN(n) && isFinite(n) && n >= 0) ? n : 0;
+                    });
+                    const safeCerrados = flujoLabels.map((_, i) => {
+                        const n = Number(rawCerrados[i]);
+                        return (!isNaN(n) && isFinite(n) && n >= 0) ? n : 0;
+                    });
+
+                    const flowChart = echarts.init(flowEl);
+                    flowChart.setOption({
+                        tooltip: {
+                            trigger: 'axis',
+                            backgroundColor: 'rgba(28, 28, 30, 0.94)',
+                            borderColor: 'rgba(255, 255, 255, 0.2)',
+                            textStyle: { color: '#FFFFFF', fontSize: 12 },
+                            borderRadius: 8
+                        },
+                        legend: {
+                            data: ['Creados Hoy', 'Asignados Hoy', 'Cerrados Hoy'],
+                            top: 0,
+                            textStyle: { color: '#1C1C1E', fontSize: 11 }
+                        },
+                        grid: {
+                            top: 40,
+                            left: 20,
+                            right: 20,
+                            bottom: 20,
+                            containLabel: true
+                        },
+                        xAxis: {
+                            type: 'category',
+                            data: flujoLabels,
+                            boundaryGap: false,
+                            axisLine: { show: false },
+                            axisTick: { show: false },
+                            axisLabel: { color: '#8E8E93', fontSize: 10 }
+                        },
+                        yAxis: {
+                            type: 'value',
+                            minInterval: 1,
+                            axisLine: { show: false },
+                            axisTick: { show: false },
+                            axisLabel: { color: '#8E8E93', fontSize: 10 },
+                            splitLine: {
+                                lineStyle: { color: 'rgba(0,0,0,0.05)' }
+                            }
+                        },
+                        series: [
+                            {
+                                name: 'Creados Hoy',
+                                type: 'line',
+                                smooth: true,
+                                data: safeCreados,
+                                lineStyle: { color: '#1C1C1E', width: 2.5 },
+                                itemStyle: { color: '#1C1C1E' },
+                                showSymbol: false,
+                                areaStyle: {
+                                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                        { offset: 0, color: 'rgba(28, 28, 30, 0.12)' },
+                                        { offset: 1, color: 'rgba(28, 28, 30, 0.00)' }
+                                    ])
                                 }
-                                ctx.restore();
-                            });
-                        });
-                    }
-                };
+                            },
+                            {
+                                name: 'Asignados Hoy',
+                                type: 'line',
+                                smooth: true,
+                                data: safeAsignados,
+                                lineStyle: { color: '#0ea5e9', width: 2 },
+                                itemStyle: { color: '#0ea5e9' },
+                                showSymbol: false,
+                                areaStyle: {
+                                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                        { offset: 0, color: 'rgba(14, 165, 233, 0.15)' },
+                                        { offset: 1, color: 'rgba(14, 165, 233, 0.00)' }
+                                    ])
+                                }
+                            },
+                            {
+                                name: 'Cerrados Hoy',
+                                type: 'line',
+                                smooth: true,
+                                data: safeCerrados,
+                                lineStyle: { color: '#34C759', width: 2 },
+                                itemStyle: { color: '#34C759' },
+                                showSymbol: false,
+                                areaStyle: {
+                                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                        { offset: 0, color: 'rgba(52, 199, 89, 0.12)' },
+                                        { offset: 1, color: 'rgba(52, 199, 89, 0.00)' }
+                                    ])
+                                }
+                            }
+                        ]
+                    });
+                    echartsInstances.push(flowChart);
+                }
 
-                // Apple palette colors
-                const appleColors = [
-                    '#007AFF', // Blue
-                    '#34C759', // Green
-                    '#FF9500', // Orange
-                    '#AF52DE', // Purple
-                    '#5856D6', // Indigo
-                    '#FF2D55', // Pink
-                    '#5AC8FA'  // Teal
-                ];
-
-                // 1. Gráfica 1: Área vs Tickets (Asignados/Creados, Resueltos, Rechazados) (R2.2)
-                const barCanvas = document.getElementById('areaVolumeChart');
-                if (barCanvas && typeof Chart !== 'undefined') {
-                    const existingBar = Chart.getChart(barCanvas);
-                    if (existingBar) existingBar.destroy();
-
+                // 2. Gráfica 1: Área vs Tickets (areaTicketsChart)
+                const areaEl = document.getElementById('areaTicketsChart');
+                if (areaEl) {
                     const volumen = reportData.areaTickets || reportData.volumenPorArea || reportData.volumen_por_area || {};
-                    const barLabels = volumen.labels || [];
-                    const rawTotalData = volumen.creados || volumen.asignados || volumen.totales || volumen.data || volumen.values || [];
-                    const rawClosedData = volumen.resueltos || volumen.cerrados || [];
-                    const rawRechazadosData = volumen.rechazados || barLabels.map(() => 0);
+                    const barLabels = Array.isArray(volumen.labels) ? volumen.labels : [];
+                    const rawTotal = Array.isArray(volumen.creados) ? volumen.creados
+                        : (Array.isArray(volumen.asignados) ? volumen.asignados
+                        : (Array.isArray(volumen.totales) ? volumen.totales
+                        : (Array.isArray(volumen.data) ? volumen.data
+                        : (Array.isArray(volumen.values) ? volumen.values : []))));
+                    const rawClosed = Array.isArray(volumen.resueltos) ? volumen.resueltos
+                        : (Array.isArray(volumen.cerrados) ? volumen.cerrados : []);
+                    const rawRech = Array.isArray(volumen.rechazados) ? volumen.rechazados : barLabels.map(() => 0);
 
-                    const safeTotalData = barLabels.map((_, i) => (typeof rawTotalData[i] !== 'undefined' ? rawTotalData[i] : 0));
-                    const safeClosedData = barLabels.map((_, i) => (typeof rawClosedData[i] !== 'undefined' ? rawClosedData[i] : 0));
-                    const safeRechazadosData = barLabels.map((_, i) => (typeof rawRechazadosData[i] !== 'undefined' ? rawRechazadosData[i] : 0));
-
-                    new Chart(barCanvas.getContext('2d'), {
-                        type: 'bar',
-                        plugins: [capsuleTrackPlugin],
-                        data: {
-                            labels: barLabels,
-                            datasets: [
-                                {
-                                    label: 'Asignados / Creados',
-                                    data: safeTotalData,
-                                    backgroundColor: '#85A8E0',
-                                    hoverBackgroundColor: '#6894D9',
-                                    borderRadius: 20,
-                                    borderSkipped: false,
-                                    barPercentage: 0.72,
-                                    categoryPercentage: 0.65
-                                },
-                                {
-                                    label: 'Resueltos',
-                                    data: safeClosedData,
-                                    backgroundColor: '#4FE0B5',
-                                    hoverBackgroundColor: '#36D4A5',
-                                    borderRadius: 20,
-                                    borderSkipped: false,
-                                    barPercentage: 0.72,
-                                    categoryPercentage: 0.65
-                                },
-                                {
-                                    label: 'Rechazados',
-                                    data: safeRechazadosData,
-                                    backgroundColor: '#FF8A80',
-                                    hoverBackgroundColor: '#FF6B6B',
-                                    borderRadius: 20,
-                                    borderSkipped: false,
-                                    barPercentage: 0.72,
-                                    categoryPercentage: 0.65
-                                }
-                            ]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            animation: {
-                                duration: 600,
-                                easing: 'easeOutQuart'
-                            },
-                            plugins: {
-                                legend: {
-                                    display: true,
-                                    position: 'top',
-                                    labels: {
-                                        boxWidth: 10,
-                                        boxHeight: 10,
-                                        useBorderRadius: true,
-                                        borderRadius: 3,
-                                        font: { size: 11, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
-                                        color: '#1C1C1E',
-                                        padding: 12
-                                    }
-                                },
-                                tooltip: {
-                                    backgroundColor: 'rgba(28, 28, 30, 0.94)',
-                                    titleFont: { size: 12, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
-                                    bodyFont: { size: 12, family: 'SF Mono, Menlo, monospace' },
-                                    padding: 10,
-                                    cornerRadius: 8
-                                }
-                            },
-                            scales: {
-                                x: {
-                                    grid: { display: false },
-                                    border: { display: false },
-                                    ticks: {
-                                        font: { size: 10, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
-                                        color: '#1C1C1E',
-                                        maxRotation: 25,
-                                        minRotation: 0
-                                    }
-                                },
-                                y: {
-                                    beginAtZero: true,
-                                    grid: { color: 'rgba(0, 0, 0, 0.05)' },
-                                    border: { display: false },
-                                    ticks: {
-                                        precision: 0,
-                                        font: { size: 11, family: 'SF Mono, Menlo, monospace' },
-                                        color: '#8E8E93'
-                                    }
-                                }
-                            }
-                        }
+                    const safeTotal = barLabels.map((_, i) => {
+                        const n = Number(rawTotal[i]);
+                        return (!isNaN(n) && isFinite(n) && n >= 0) ? n : 0;
                     });
+                    const safeClosed = barLabels.map((_, i) => {
+                        const n = Number(rawClosed[i]);
+                        return (!isNaN(n) && isFinite(n) && n >= 0) ? n : 0;
+                    });
+                    const safeRech = barLabels.map((_, i) => {
+                        const n = Number(rawRech[i]);
+                        return (!isNaN(n) && isFinite(n) && n >= 0) ? n : 0;
+                    });
+
+                    const areaChart = echarts.init(areaEl);
+                    areaChart.setOption({
+                        tooltip: {
+                            trigger: 'axis',
+                            axisPointer: { type: 'shadow' },
+                            backgroundColor: 'rgba(28, 28, 30, 0.94)',
+                            borderColor: 'rgba(255, 255, 255, 0.2)',
+                            textStyle: { color: '#FFFFFF', fontSize: 12 },
+                            borderRadius: 8
+                        },
+                        legend: {
+                            data: ['Asignados / Creados', 'Resueltos', 'Rechazados'],
+                            top: 0,
+                            textStyle: { color: '#1C1C1E', fontSize: 11 }
+                        },
+                        grid: {
+                            top: 40,
+                            left: 20,
+                            right: 20,
+                            bottom: 30,
+                            containLabel: true
+                        },
+                        xAxis: {
+                            type: 'category',
+                            data: barLabels,
+                            axisLine: { show: false },
+                            axisTick: { show: false },
+                            axisLabel: {
+                                color: '#1C1C1E',
+                                fontSize: 10,
+                                interval: 0,
+                                rotate: barLabels.length > 4 ? 20 : 0
+                            }
+                        },
+                        yAxis: {
+                            type: 'value',
+                            minInterval: 1,
+                            axisLine: { show: false },
+                            axisTick: { show: false },
+                            axisLabel: { color: '#8E8E93', fontSize: 10 },
+                            splitLine: {
+                                lineStyle: { color: 'rgba(0,0,0,0.05)' }
+                            }
+                        },
+                        series: [
+                            {
+                                name: 'Asignados / Creados',
+                                type: 'bar',
+                                data: safeTotal,
+                                showBackground: true,
+                                backgroundStyle: { borderRadius: 20, color: 'rgba(255,255,255,0.5)' },
+                                itemStyle: { borderRadius: 20, color: '#85A8E0' },
+                                barGap: '20%'
+                            },
+                            {
+                                name: 'Resueltos',
+                                type: 'bar',
+                                data: safeClosed,
+                                showBackground: true,
+                                backgroundStyle: { borderRadius: 20, color: 'rgba(255,255,255,0.5)' },
+                                itemStyle: { borderRadius: 20, color: '#4FE0B5' }
+                            },
+                            {
+                                name: 'Rechazados',
+                                type: 'bar',
+                                data: safeRech,
+                                showBackground: true,
+                                backgroundStyle: { borderRadius: 20, color: 'rgba(255,255,255,0.5)' },
+                                itemStyle: { borderRadius: 20, color: '#FF8A80' }
+                            }
+                        ]
+                    });
+                    echartsInstances.push(areaChart);
                 }
 
-                // 2. Gráfico de Dona: Distribución de Puntos o Tickets por Área (R2.3)
-                const donutCanvas = document.getElementById('areaPointsChart');
-                if (donutCanvas && typeof Chart !== 'undefined') {
-                    const existingDonut = Chart.getChart(donutCanvas);
-                    if (existingDonut) existingDonut.destroy();
+                // 3. Gráfica 5: Mediana de Resolución (medianResolutionChart)
+                const medianEl = document.getElementById('medianResolutionChart');
+                if (medianEl) {
+                    const medData = reportData.medianaTiempoPorArea || reportData.mediana_tiempo_por_area || {};
+                    let medLabels = Array.isArray(medData.labels) ? medData.labels : [];
+                    let medValues = Array.isArray(medData.data) ? medData.data
+                        : (Array.isArray(medData.valoresMinutos) ? medData.valoresMinutos : []);
+                    let medFormateados = Array.isArray(medData.formateado) ? medData.formateado : [];
 
-                    const puntos = reportData.puntosPorArea || reportData.puntos_por_area || {};
-                    const donutLabels = puntos.labels || [];
-                    const donutValues = puntos.data || puntos.values || [];
-                    const tipoLabel = puntos.tipo || 'Puntos';
-                    const hasData = donutValues.some(v => v > 0);
+                    if ((!medLabels || medLabels.length === 0) && medData.detalles && Array.isArray(medData.detalles)) {
+                        medLabels = medData.detalles.map(d => d.area || d.label || 'General');
+                        medValues = medData.detalles.map(d => d.medianaMinutos ?? d.mediana ?? 0);
+                        medFormateados = medData.detalles.map(d => d.formateado || (d.medianaMinutos > 0 ? (d.medianaMinutos >= 60 ? (d.medianaMinutos/60).toFixed(1) + ' h' : d.medianaMinutos + ' min') : 'N/A'));
+                    }
 
-                    const figmaColors = [
-                        '#85A8E0', // Soft Pastel Blue (FTTH)
-                        '#4FE0B5', // Mint Aqua (Tráfico)
-                        '#1C1C1E', // Dark Slate (WAN)
-                        '#26C6FA', // Sky Blue (Grandes Clientes)
-                        '#B392F0', // Soft Lavender (Seguridad)
-                        '#5CD685', // Apple Green (Telefonía)
-                        '#FF9500'  // Amber (General)
-                    ];
+                    const safeMed = medLabels.map((_, i) => {
+                        const n = Number(medValues[i]);
+                        return (!isNaN(n) && isFinite(n) && n >= 0) ? n : 0;
+                    });
 
-                    const activeIndices = hasData ? donutValues.map((v, i) => v > 0 ? i : -1).filter(i => i !== -1) : [];
-                    const chartData = hasData && activeIndices.length > 0 ? activeIndices.map(i => donutValues[i]) : [1];
-                    const chartLabels = hasData && activeIndices.length > 0 ? activeIndices.map(i => donutLabels[i]) : ['Sin registros'];
-                    const chartColors = hasData && activeIndices.length > 0
-                        ? activeIndices.map(i => figmaColors[i % figmaColors.length])
-                        : ['rgba(142, 142, 147, 0.25)'];
-
-                    new Chart(donutCanvas.getContext('2d'), {
-                        type: 'doughnut',
-                        data: {
-                            labels: chartLabels,
-                            datasets: [{
-                                data: chartData,
-                                backgroundColor: chartColors,
-                                borderWidth: 2,
-                                borderColor: '#FFFFFF',
-                                hoverOffset: hasData ? 6 : 0
-                            }]
+                    const medianChart = echarts.init(medianEl);
+                    medianChart.setOption({
+                        tooltip: {
+                            trigger: 'axis',
+                            axisPointer: { type: 'shadow' },
+                            backgroundColor: 'rgba(28, 28, 30, 0.94)',
+                            borderColor: 'rgba(255, 255, 255, 0.2)',
+                            textStyle: { color: '#FFFFFF', fontSize: 12 },
+                            borderRadius: 8,
+                            formatter: function(params) {
+                                if (!params || !params[0]) return '';
+                                const p = params[0];
+                                const idx = p.dataIndex;
+                                const fmt = (medFormateados && medFormateados[idx]) || (p.value > 0 ? `${p.value} min` : 'N/A');
+                                return `${p.name}: <b>${fmt}</b> (${p.value} min)`;
+                            }
                         },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            cutout: '72%',
-                            animation: {
-                                duration: 700,
-                                easing: 'easeOutQuart'
+                        grid: {
+                            top: 20,
+                            left: 20,
+                            right: 40,
+                            bottom: 20,
+                            containLabel: true
+                        },
+                        xAxis: {
+                            type: 'value',
+                            axisLine: { show: false },
+                            axisTick: { show: false },
+                            axisLabel: {
+                                color: '#8E8E93',
+                                fontSize: 10,
+                                formatter: '{value}m'
                             },
-                            plugins: {
-                                legend: {
-                                    position: (typeof window !== 'undefined' && window.innerWidth < 640) ? 'bottom' : 'right',
-                                    display: hasData,
-                                    labels: {
-                                        boxWidth: 10,
-                                        boxHeight: 10,
-                                        borderRadius: 3,
-                                        useBorderRadius: true,
-                                        font: { size: 10, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
-                                        color: '#1C1C1E',
-                                        padding: 8
-                                    }
+                            splitLine: {
+                                lineStyle: { color: 'rgba(0,0,0,0.05)' }
+                            }
+                        },
+                        yAxis: {
+                            type: 'category',
+                            data: medLabels,
+                            inverse: true,
+                            axisLine: { show: false },
+                            axisTick: { show: false },
+                            axisLabel: {
+                                color: '#1C1C1E',
+                                fontSize: 11,
+                                width: 120,
+                                overflow: 'truncate'
+                            }
+                        },
+                        series: [
+                            {
+                                name: 'Duración Mediana',
+                                type: 'bar',
+                                data: safeMed,
+                                showBackground: true,
+                                backgroundStyle: { borderRadius: 20, color: 'rgba(255,255,255,0.5)' },
+                                itemStyle: {
+                                    borderRadius: 20,
+                                    color: new echarts.graphic.LinearGradient(1, 0, 0, 0, [
+                                        { offset: 0, color: '#38bdf8' },
+                                        { offset: 1, color: '#0284c7' }
+                                    ])
                                 },
-                                tooltip: {
-                                    enabled: hasData,
-                                    backgroundColor: 'rgba(28, 28, 30, 0.94)',
-                                    titleFont: { size: 12, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
-                                    bodyFont: { size: 12, family: 'SF Mono, Menlo, monospace' },
-                                    padding: 10,
-                                    cornerRadius: 8,
-                                    callbacks: {
-                                        label: function(ctx) {
-                                            const val = ctx.parsed ?? ctx.raw ?? 0;
-                                            const total = (ctx.dataset.data || []).reduce((a, b) => Number(a) + Number(b), 0);
-                                            const pct = total > 0 ? Math.round((val / total) * 100) : 0;
-                                            return ` ${ctx.label}: ${val} ${tipoLabel.toLowerCase()} (${pct}%)`;
-                                        }
-                                    }
+                                label: {
+                                    show: true,
+                                    position: 'right',
+                                    formatter: function(p) {
+                                        return (medFormateados && medFormateados[p.dataIndex]) || (p.value > 0 ? p.value + 'm' : 'N/A');
+                                    },
+                                    color: '#1C1C1E',
+                                    fontSize: 10,
+                                    fontFamily: 'SF Mono, monospace'
                                 }
                             }
-                        }
+                        ]
                     });
+                    echartsInstances.push(medianChart);
                 }
 
-                // 2. Gráfica 3: Barras por Operador (Agrupados por Área) - Asignados Totales vs Resueltos
-                const opBarCanvas = document.getElementById('operatorBarChart');
-                if (opBarCanvas && typeof Chart !== 'undefined') {
-                    const existingOpBar = Chart.getChart(opBarCanvas);
-                    if (existingOpBar) existingOpBar.destroy();
-
+                // 4. Gráfica 3: Operadores (operatorBarChart)
+                const opEl = document.getElementById('operatorBarChart');
+                if (opEl) {
                     const barrasOp = reportData.barrasOperadores || reportData.barras_operadores || reportData.operadoresBarras || {};
                     const opLabels = (barrasOp.labels && barrasOp.labels.length > 0)
                         ? barrasOp.labels
@@ -1191,342 +1244,95 @@
                         ? barrasOp.resueltos
                         : (reportData.rankingOperadores || []).map(o => o.cerrados ?? o.resueltos ?? 0);
 
-                    const safeAsignadosOp = opLabels.map((_, i) => (typeof rawAsignadosOp[i] !== 'undefined' ? rawAsignadosOp[i] : 0));
-                    const safeResueltosOp = opLabels.map((_, i) => (typeof rawResueltosOp[i] !== 'undefined' ? rawResueltosOp[i] : 0));
-
-                    new Chart(opBarCanvas.getContext('2d'), {
-                        type: 'bar',
-                        plugins: [capsuleTrackPlugin],
-                        data: {
-                            labels: opLabels,
-                            datasets: [
-                                {
-                                    label: 'Asignados Totales',
-                                    data: safeAsignadosOp,
-                                    backgroundColor: '#85A8E0',
-                                    hoverBackgroundColor: '#6894D9',
-                                    borderRadius: 20,
-                                    borderSkipped: false,
-                                    barPercentage: 0.72,
-                                    categoryPercentage: 0.65
-                                },
-                                {
-                                    label: 'Resueltos',
-                                    data: safeResueltosOp,
-                                    backgroundColor: '#4FE0B5',
-                                    hoverBackgroundColor: '#36D4A5',
-                                    borderRadius: 20,
-                                    borderSkipped: false,
-                                    barPercentage: 0.72,
-                                    categoryPercentage: 0.65
-                                }
-                            ]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            animation: {
-                                duration: 650,
-                                easing: 'easeOutQuart'
-                            },
-                            plugins: {
-                                legend: {
-                                    display: true,
-                                    position: 'top',
-                                    labels: {
-                                        boxWidth: 10,
-                                        boxHeight: 10,
-                                        useBorderRadius: true,
-                                        borderRadius: 3,
-                                        font: { size: 11, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
-                                        color: '#1C1C1E',
-                                        padding: 12
-                                    }
-                                },
-                                tooltip: {
-                                    backgroundColor: 'rgba(28, 28, 30, 0.94)',
-                                    titleFont: { size: 12, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
-                                    bodyFont: { size: 12, family: 'SF Mono, Menlo, monospace' },
-                                    padding: 10,
-                                    cornerRadius: 8
-                                }
-                            },
-                            scales: {
-                                x: {
-                                    grid: { display: false },
-                                    border: { display: false },
-                                    ticks: {
-                                        font: { size: 10, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
-                                        color: '#1C1C1E',
-                                        maxRotation: 25,
-                                        minRotation: 0
-                                    }
-                                },
-                                y: {
-                                    beginAtZero: true,
-                                    grid: { color: 'rgba(0, 0, 0, 0.05)' },
-                                    border: { display: false },
-                                    ticks: {
-                                        precision: 0,
-                                        font: { size: 11, family: 'SF Mono, Menlo, monospace' },
-                                        color: '#8E8E93'
-                                    }
-                                }
-                            }
-                        }
+                    const safeAsignadosOp = opLabels.map((_, i) => {
+                        const n = Number(rawAsignadosOp[i]);
+                        return (!isNaN(n) && isFinite(n) && n >= 0) ? n : 0;
                     });
+                    const safeResueltosOp = opLabels.map((_, i) => {
+                        const n = Number(rawResueltosOp[i]);
+                        return (!isNaN(n) && isFinite(n) && n >= 0) ? n : 0;
+                    });
+
+                    const opChart = echarts.init(opEl);
+                    opChart.setOption({
+                        tooltip: {
+                            trigger: 'axis',
+                            axisPointer: { type: 'shadow' },
+                            backgroundColor: 'rgba(28, 28, 30, 0.94)',
+                            borderColor: 'rgba(255, 255, 255, 0.2)',
+                            textStyle: { color: '#FFFFFF', fontSize: 12 },
+                            borderRadius: 8
+                        },
+                        legend: {
+                            data: ['Asignados Totales', 'Resueltos'],
+                            top: 0,
+                            textStyle: { color: '#1C1C1E', fontSize: 11 }
+                        },
+                        grid: {
+                            top: 40,
+                            left: 20,
+                            right: 20,
+                            bottom: 40,
+                            containLabel: true
+                        },
+                        xAxis: {
+                            type: 'category',
+                            data: opLabels,
+                            axisLine: { show: false },
+                            axisTick: { show: false },
+                            axisLabel: {
+                                color: '#1C1C1E',
+                                fontSize: 10,
+                                interval: 0,
+                                rotate: opLabels.length > 3 ? 20 : 0
+                            }
+                        },
+                        yAxis: {
+                            type: 'value',
+                            minInterval: 1,
+                            axisLine: { show: false },
+                            axisTick: { show: false },
+                            axisLabel: { color: '#8E8E93', fontSize: 10 },
+                            splitLine: {
+                                lineStyle: { color: 'rgba(0,0,0,0.05)' }
+                            }
+                        },
+                        series: [
+                            {
+                                name: 'Asignados Totales',
+                                type: 'bar',
+                                data: safeAsignadosOp,
+                                showBackground: true,
+                                backgroundStyle: { borderRadius: 20, color: 'rgba(255,255,255,0.5)' },
+                                itemStyle: { borderRadius: 20, color: '#85A8E0' },
+                                barGap: '20%'
+                            },
+                            {
+                                name: 'Resueltos',
+                                type: 'bar',
+                                data: safeResueltosOp,
+                                showBackground: true,
+                                backgroundStyle: { borderRadius: 20, color: 'rgba(255,255,255,0.5)' },
+                                itemStyle: { borderRadius: 20, color: '#4FE0B5' }
+                            }
+                        ]
+                    });
+                    echartsInstances.push(opChart);
                 }
 
-                // 3. Gráfica 5: Mediana de Tiempo de Resolución por Área en Memoria JS (Últimas 24h)
-                const medianCanvas = document.getElementById('medianResolutionChart');
-                if (medianCanvas && typeof Chart !== 'undefined') {
-                    const existingMedian = Chart.getChart(medianCanvas);
-                    if (existingMedian) existingMedian.destroy();
-
-                    const medianaData = reportData.medianaTiempoPorArea || reportData.mediana_tiempo_por_area || reportData.medianaResolucionPorArea || {};
-                    const medLabels = medianaData.labels || [];
-                    const medValues = medianaData.data || medianaData.valoresMinutos || [];
-                    const medFormateados = medianaData.formateado || [];
-
-                    const safeMedValues = medLabels.map((_, i) => (typeof medValues[i] !== 'undefined' ? medValues[i] : 0));
-
-                    new Chart(medianCanvas.getContext('2d'), {
-                        type: 'bar',
-                        plugins: [capsuleTrackPlugin],
-                        data: {
-                            labels: medLabels,
-                            datasets: [{
-                                label: 'Mediana de Resolución (minutos)',
-                                data: safeMedValues,
-                                backgroundColor: '#B392F0',
-                                hoverBackgroundColor: '#9F7BEA',
-                                borderRadius: 20,
-                                borderSkipped: false,
-                                barPercentage: 0.65,
-                                categoryPercentage: 0.6
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            animation: {
-                                duration: 650,
-                                easing: 'easeOutQuart'
-                            },
-                            plugins: {
-                                legend: {
-                                    display: true,
-                                    position: 'top',
-                                    labels: {
-                                        boxWidth: 10,
-                                        boxHeight: 10,
-                                        useBorderRadius: true,
-                                        borderRadius: 3,
-                                        font: { size: 11, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
-                                        color: '#1C1C1E',
-                                        padding: 12
-                                    }
-                                },
-                                tooltip: {
-                                    backgroundColor: 'rgba(28, 28, 30, 0.94)',
-                                    titleFont: { size: 12, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
-                                    bodyFont: { size: 12, family: 'SF Mono, Menlo, monospace' },
-                                    padding: 10,
-                                    cornerRadius: 8,
-                                    callbacks: {
-                                        label: function(ctx) {
-                                            const val = ctx.parsed?.y ?? ctx.raw ?? 0;
-                                            const idx = ctx.dataIndex;
-                                            const fmt = medFormateados[idx] || (val >= 60 ? `${(val/60).toFixed(1)} h` : `${val} min`);
-                                            if (val <= 0) return ` Mediana: ${fmt}`;
-                                            return (val >= 60 && fmt.includes('h')) ? ` Mediana: ${fmt} (${val} min)` : ` Mediana: ${fmt}`;
-                                        }
-                                    }
-                                }
-                            },
-                            scales: {
-                                x: {
-                                    grid: { display: false },
-                                    border: { display: false },
-                                    ticks: {
-                                        font: { size: 10, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
-                                        color: '#1C1C1E',
-                                        maxRotation: 25,
-                                        minRotation: 0
-                                    }
-                                },
-                                y: {
-                                    beginAtZero: true,
-                                    grid: { color: 'rgba(0, 0, 0, 0.05)' },
-                                    border: { display: false },
-                                    title: {
-                                        display: true,
-                                        text: 'Minutos',
-                                        font: { size: 10, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
-                                        color: '#8E8E93'
-                                    },
-                                    ticks: {
-                                        precision: 0,
-                                        font: { size: 11, family: 'SF Mono, Menlo, monospace' },
-                                        color: '#8E8E93'
-                                    }
-                                }
-                            }
-                        }
-                    });
-                }
-
-                // 4. Gráfica 4: Flujo 24h (Creados vs Asignados vs Cerrados) - Spline Suave con Gradiente (Figma Style)
-                const lineCanvas = document.getElementById('hourlyFlowChart');
-                if (lineCanvas && typeof Chart !== 'undefined') {
-                    const existingLine = Chart.getChart(lineCanvas);
-                    if (existingLine) existingLine.destroy();
-
-                    const flujo = reportData.flujoPorHora || reportData.flujo_por_hora || {};
-                    const defaultHours = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
-                    const flujoLabels = (flujo.labels && flujo.labels.length > 0) ? flujo.labels : defaultHours;
-                    const rawCreados = flujo.creados || [];
-                    const rawAsignados = flujo.asignados || [];
-                    const rawCerrados = flujo.cerrados || [];
-                    const safeCreados = flujoLabels.map((_, i) => (typeof rawCreados[i] !== 'undefined' ? rawCreados[i] : 0));
-                    const safeAsignados = flujoLabels.map((_, i) => (typeof rawAsignados[i] !== 'undefined' ? rawAsignados[i] : 0));
-                    const safeCerrados = flujoLabels.map((_, i) => (typeof rawCerrados[i] !== 'undefined' ? rawCerrados[i] : 0));
-
-                    const ctxLine = lineCanvas.getContext('2d');
-                    const gradCreados = ctxLine.createLinearGradient(0, 0, 0, 240);
-                    gradCreados.addColorStop(0, 'rgba(28, 28, 30, 0.08)');
-                    gradCreados.addColorStop(1, 'rgba(28, 28, 30, 0.00)');
-
-                    const gradAsignados = ctxLine.createLinearGradient(0, 0, 0, 240);
-                    gradAsignados.addColorStop(0, 'rgba(0, 122, 255, 0.12)');
-                    gradAsignados.addColorStop(1, 'rgba(0, 122, 255, 0.00)');
-
-                    const gradCerrados = ctxLine.createLinearGradient(0, 0, 0, 240);
-                    gradCerrados.addColorStop(0, 'rgba(52, 199, 89, 0.09)');
-                    gradCerrados.addColorStop(1, 'rgba(52, 199, 89, 0.00)');
-
-                    new Chart(ctxLine, {
-                        type: 'line',
-                        data: {
-                            labels: flujoLabels,
-                            datasets: [
-                                {
-                                    label: 'Creados Hoy',
-                                    data: safeCreados,
-                                    borderColor: '#1C1C1E',
-                                    backgroundColor: gradCreados,
-                                    fill: true,
-                                    tension: 0.45,
-                                    cubicInterpolationMode: 'monotone',
-                                    borderWidth: 2.5,
-                                    pointRadius: 0,
-                                    pointHoverRadius: 6,
-                                    pointHoverBackgroundColor: '#1C1C1E',
-                                    pointHoverBorderColor: '#FFFFFF',
-                                    pointHoverBorderWidth: 2
-                                },
-                                {
-                                    label: 'Asignados Hoy',
-                                    data: safeAsignados,
-                                    borderColor: '#007AFF',
-                                    backgroundColor: gradAsignados,
-                                    fill: true,
-                                    tension: 0.45,
-                                    cubicInterpolationMode: 'monotone',
-                                    borderWidth: 2,
-                                    pointRadius: 0,
-                                    pointHoverRadius: 6,
-                                    pointHoverBackgroundColor: '#007AFF',
-                                    pointHoverBorderColor: '#FFFFFF',
-                                    pointHoverBorderWidth: 2
-                                },
-                                {
-                                    label: 'Cerrados Hoy',
-                                    data: safeCerrados,
-                                    borderColor: '#34C759',
-                                    backgroundColor: gradCerrados,
-                                    fill: true,
-                                    tension: 0.45,
-                                    cubicInterpolationMode: 'monotone',
-                                    borderWidth: 2,
-                                    pointRadius: 0,
-                                    pointHoverRadius: 6,
-                                    pointHoverBackgroundColor: '#34C759',
-                                    pointHoverBorderColor: '#FFFFFF',
-                                    pointHoverBorderWidth: 2
-                                }
-                            ]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            animation: {
-                                duration: 750,
-                                easing: 'easeOutQuart'
-                            },
-                            interaction: {
-                                mode: 'index',
-                                intersect: false
-                            },
-                            plugins: {
-                                legend: { display: false },
-                                tooltip: {
-                                    backgroundColor: 'rgba(28, 28, 30, 0.94)',
-                                    titleFont: { size: 12, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
-                                    bodyFont: { size: 12, family: 'SF Mono, Menlo, monospace' },
-                                    padding: 10,
-                                    cornerRadius: 8,
-                                    boxPadding: 4,
-                                    usePointStyle: true
-                                }
-                            },
-                            scales: {
-                                x: {
-                                    grid: { display: false },
-                                    border: { display: false },
-                                    ticks: {
-                                        font: { size: 10, family: 'SF Mono, Menlo, monospace' },
-                                        color: '#8E8E93',
-                                        maxTicksLimit: 12,
-                                        autoSkip: true
-                                    }
-                                },
-                                y: {
-                                    beginAtZero: true,
-                                    grid: { 
-                                        color: 'rgba(0, 0, 0, 0.05)',
-                                        borderDash: [4, 4]
-                                    },
-                                    border: { display: false },
-                                    ticks: {
-                                        precision: 0,
-                                        font: { size: 10, family: 'SF Mono, Menlo, monospace' },
-                                        color: '#8E8E93'
-                                    }
-                                }
-                            }
-                        }
-                    });
-                }
-
-                // 4. Inicializar Mapa Interactivo de Venezuela por Estados
                 initVenezuelaMap(reportData);
 
-                // Ajuste responsivo de la leyenda del gráfico de dona al cambiar tamaño de ventana
+                // Global resize listener
                 if (typeof window !== 'undefined') {
-                    let resizeTimer = null;
                     window.addEventListener('resize', function() {
-                        if (resizeTimer) clearTimeout(resizeTimer);
-                        resizeTimer = setTimeout(function() {
-                            const donut = Chart.getChart('areaPointsChart');
-                            if (donut && donut.options && donut.options.plugins && donut.options.plugins.legend) {
-                                const newPos = window.innerWidth < 640 ? 'bottom' : 'right';
-                                if (donut.options.plugins.legend.position !== newPos) {
-                                    donut.options.plugins.legend.position = newPos;
-                                    donut.update();
+                        echartsInstances.forEach(function(chart) {
+                            if (chart && typeof chart.resize === 'function') {
+                                const dom = chart.getDom ? chart.getDom() : null;
+                                if (!dom || dom.offsetParent !== null) {
+                                    chart.resize();
                                 }
                             }
-                        }, 150);
+                        });
                     });
                 }
             }
@@ -1559,10 +1365,10 @@
 
                         const getColorForCount = (count) => {
                             if (count === 0) return 'rgba(229, 229, 234, 0.7)';
-                            if (count <= 2) return '#DCEBFE';
-                            if (count <= 5) return '#85A8E0';
-                            if (count <= 10) return '#007AFF';
-                            return '#0040DD';
+                            if (count <= 2) return '#E0F2FE';
+                            if (count <= 5) return '#7DD3FC';
+                            if (count <= 10) return '#0EA5E9';
+                            return '#0284C7';
                         };
 
                         const paths = svg.querySelectorAll('path');
@@ -1579,10 +1385,10 @@
                             path.style.cursor = 'pointer';
 
                             path.addEventListener('mouseenter', function() {
-                                path.setAttribute('fill', sData.total > 0 ? '#0051FF' : '#C7C7CC');
-                                path.setAttribute('stroke', '#007AFF');
+                                path.setAttribute('fill', sData.total > 0 ? '#0284C7' : '#C7C7CC');
+                                path.setAttribute('stroke', '#0EA5E9');
                                 path.setAttribute('stroke-width', '2');
-                                path.style.filter = 'drop-shadow(0 2px 8px rgba(0, 122, 255, 0.35))';
+                                path.style.filter = 'drop-shadow(0 2px 8px rgba(14, 165, 233, 0.35))';
 
                                 if (tooltip) {
                                     const dot = document.getElementById('tooltip-state-dot');
@@ -1658,9 +1464,9 @@
                         if (icon) {
                             if (isTarget) {
                                 icon.classList.remove('text-[#8E8E93]');
-                                icon.classList.add('text-[#007AFF]');
+                                icon.classList.add('text-sky-500');
                             } else {
-                                icon.classList.remove('text-[#007AFF]');
+                                icon.classList.remove('text-sky-500');
                                 icon.classList.add('text-[#8E8E93]');
                             }
                         }
@@ -1670,7 +1476,7 @@
                         if (pane.id === targetId) {
                             pane.classList.remove('hidden');
                             pane.setAttribute('aria-hidden', 'false');
-                            // Forzar cálculo de reflow antes de redibujar canvas
+                            // Forzar cálculo de reflow antes de redimensionar gráficas
                             void pane.offsetWidth;
                         } else {
                             pane.classList.add('hidden');
@@ -1678,37 +1484,43 @@
                         }
                     });
 
-                    // Trigger chart resize & update upon tab visibility change
-                    if (typeof Chart !== 'undefined') {
-                        requestAnimationFrame(() => {
-                            // Protección contra race condition en cambios rápidos de pestañas:
-                            // no redibujar si el usuario ya cambió a otra pestaña y este panel quedó oculto
-                            const activePane = document.getElementById(targetId);
-                            if (!activePane || activePane.classList.contains('hidden')) return;
+                    // Trigger chart resize upon tab visibility change
+                    requestAnimationFrame(() => {
+                        const activePane = document.getElementById(targetId);
+                        if (!activePane || activePane.classList.contains('hidden')) return;
 
-                            const chartsByTab = {
-                                'tab-overview': ['hourlyFlowChart', 'areaVolumeChart', 'medianResolutionChart', 'areaPointsChart'],
-                                'tab-team': ['operatorBarChart'],
-                                'tab-geo': []
-                            };
-                            const charts = chartsByTab[targetId] || [];
-                            charts.forEach(cId => {
-                                const canvasEl = document.getElementById(cId);
-                                const chart = canvasEl ? (Chart.getChart(canvasEl) || Chart.getChart(cId)) : null;
-                                if (chart) {
+                        echartsInstances.forEach(function(chart) {
+                            if (chart && typeof chart.resize === 'function') {
+                                const dom = chart.getDom ? chart.getDom() : null;
+                                if (!dom || dom.offsetParent !== null) {
                                     chart.resize();
-                                    chart.update('none');
-                                }
-                            });
-
-                            if (targetId === 'tab-geo') {
-                                const svg = document.querySelector('#venezuela-map-container svg');
-                                if (svg) {
-                                    svg.style.transform = 'translateZ(0)';
                                 }
                             }
                         });
-                    }
+
+                        const chartsByTab = {
+                            'tab-overview': ['hourlyFlowChart', 'areaTicketsChart', 'medianResolutionChart'],
+                            'tab-team': ['operatorBarChart'],
+                            'tab-geo': []
+                        };
+                        const tabChartIds = chartsByTab[targetId] || [];
+                        tabChartIds.forEach(id => {
+                            const el = document.getElementById(id);
+                            if (el && typeof echarts !== 'undefined') {
+                                const chart = echarts.getInstanceByDom(el);
+                                if (chart && typeof chart.resize === 'function') {
+                                    chart.resize();
+                                }
+                            }
+                        });
+
+                        if (targetId === 'tab-geo') {
+                            const svg = document.querySelector('#venezuela-map-container svg');
+                            if (svg) {
+                                svg.style.transform = 'translateZ(0)';
+                            }
+                        }
+                    });
                 }
 
                 tabButtons.forEach(btn => {
@@ -1730,24 +1542,22 @@
                 }
             }
 
-            function waitForChart(retries) {
-                if (typeof Chart !== 'undefined') {
+            function waitForECharts(retries) {
+                if (typeof echarts !== 'undefined') {
                     initCharts();
                 } else if (retries > 0) {
-                    setTimeout(function() { waitForChart(retries - 1); }, 100);
-                } else {
-                    handleChartUnavailable();
+                    setTimeout(function() { waitForECharts(retries - 1); }, 100);
                 }
             }
 
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', function() {
                     setupTabNavigation();
-                    waitForChart(40);
+                    waitForECharts(40);
                 });
             } else {
                 setupTabNavigation();
-                waitForChart(40);
+                waitForECharts(40);
             }
         })();
     </script>

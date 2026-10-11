@@ -61,14 +61,14 @@ runTest('R2.0: Existencia del archivo views/reports.ejs', () => {
 
 const templateContent = fs.readFileSync(templatePath, 'utf8');
 
-runTest('R2.1: Verificación de Chart.js CDN y CDN fallback en la vista', () => {
-    assert(templateContent.includes('cdn.jsdelivr.net/npm/chart.js'), 'Debe incluir Chart.js vía jsdelivr CDN');
-    assert(templateContent.includes('cdnjs.cloudflare.com/ajax/libs/Chart.js'), 'Debe incluir fallback de Chart.js vía cdnjs');
+runTest('R2.1: Verificación de Apache ECharts CDN en la vista', () => {
+    assert(templateContent.includes('cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js') || templateContent.includes('echarts.min.js'), 'Debe incluir Apache ECharts vía CDN');
 });
 
-runTest('R2.2: Presencia de estética macOS Liquid Glass (.figma-card)', () => {
+runTest('R2.2: Presencia de estética macOS Ocean-Glass (.figma-card)', () => {
     assert(templateContent.includes('figma-card'), 'Debe utilizar la clase CSS figma-card');
-    assert(templateContent.includes('backdrop-filter: blur(20px)'), 'Debe contener estilos de blur Liquid Glass');
+    assert(templateContent.includes('backdrop-filter: blur(24px)'), 'Debe contener estilos de blur Ocean-Glass');
+    assert(templateContent.includes('from-slate-100 via-blue-50 to-sky-100'), 'Debe incluir fondo Ocean-Glass');
 });
 
 runTest('R2.3: Presencia de 4 Tarjetas de KPI requeridas (IDs y estructura)', () => {
@@ -78,9 +78,9 @@ runTest('R2.3: Presencia de 4 Tarjetas de KPI requeridas (IDs y estructura)', ()
     assert(templateContent.includes('id="kpi-puntos"'), 'Debe contener KPI de Puntos Completados');
 });
 
-runTest('R2.4: Presencia de los dos lienzos Canvas requeridos (Barras y Dona)', () => {
-    assert(templateContent.includes('id="areaVolumeChart"'), 'Debe existir canvas para gráfico de barras (#areaVolumeChart)');
-    assert(templateContent.includes('id="areaPointsChart"'), 'Debe existir canvas para gráfico de dona (#areaPointsChart)');
+runTest('R2.4: Presencia de contenedores ECharts para Área vs Tickets y Mediana', () => {
+    assert(templateContent.includes('id="areaTicketsChart"'), 'Debe existir contenedor ECharts para área vs tickets (#areaTicketsChart)');
+    assert(templateContent.includes('id="medianResolutionChart"'), 'Debe existir contenedor ECharts para mediana (#medianResolutionChart)');
 });
 
 runTest('R2.5: Presencia de Tabla de Ranking de Operadores estilizada', () => {
@@ -253,8 +253,9 @@ runTest('R2.10: [Adversarial] Neutralización de inyecciones XSS en el script de
 });
 
 // 7. New Requirements Tests (R1 & R2 Enhancements)
-runTest('R2.11: Presencia del lienzo Canvas para gráfico de líneas (#hourlyFlowChart)', () => {
-    assert(templateContent.includes('id="hourlyFlowChart"'), 'Debe existir canvas para gráfico de líneas (#hourlyFlowChart)');
+runTest('R2.11: Presencia de contenedor ECharts para gráfico de líneas (#hourlyFlowChart)', () => {
+    assert(templateContent.includes('id="hourlyFlowChart"'), 'Debe existir contenedor para gráfico de líneas (#hourlyFlowChart)');
+    assert(!templateContent.includes('<canvas id="hourlyFlowChart">'), 'No debe existir el tag canvas id="hourlyFlowChart"');
 });
 
 runTest('R2.12: Presencia de Tarjeta de KPI para Área Crítica (#kpi-area-critica)', () => {
@@ -465,7 +466,7 @@ runAsyncTest('R1.1: [End-to-End Async] Ejecución de getReports con cálculos di
         assert(fullHtml.includes('80%'), 'El HTML debe renderizar 80% de eficiencia');
         assert(fullHtml.includes('1 activas (Baja)'), 'El HTML debe renderizar semáforo baja');
         assert(fullHtml.includes('5 activas (Alta)'), 'El HTML debe renderizar semáforo alta');
-        assert(fullHtml.includes('id="hourlyFlowChart"'), 'El HTML debe renderizar el canvas de flujo por hora');
+        assert(fullHtml.includes('id="hourlyFlowChart"'), 'El HTML debe renderizar el contenedor ECharts de flujo por hora');
     } finally {
         // Restaurar métodos originales
         prisma.ticket.count = origCount;
@@ -890,23 +891,23 @@ runTest('R2.17: [Adversarial] Renderizado con variables planas de KPI sin envolt
 });
 
 // 18. New Reorganization: Presencia de los 5 gráficos en views/reports.ejs (R2.18)
-runTest('R2.18: Presencia de los lienzos y secciones para los 5 gráficos en views/reports.ejs', () => {
-    // Gráfica 1: Área vs Tickets
-    assert(templateContent.includes('id="areaVolumeChart"'), 'Debe contener canvas #areaVolumeChart para Gráfica 1');
+runTest('R2.18: Presencia de los contenedores y secciones para los 5 gráficos en views/reports.ejs', () => {
+    // Gráfica 1: Área vs Tickets (ECharts)
+    assert(templateContent.includes('id="areaTicketsChart"'), 'Debe contener contenedor #areaTicketsChart para Gráfica 1');
     assert(templateContent.includes('Área vs Tickets'), 'Debe titular Gráfica 1 como Área vs Tickets');
     
     // Gráfica 2: Mapa de Venezuela
     assert(templateContent.includes('id="venezuela-map-container"'), 'Debe contener contenedor de mapa #venezuela-map-container para Gráfica 2');
     
     // Gráfica 3: Barras por Operador
-    assert(templateContent.includes('id="operatorBarChart"'), 'Debe contener canvas #operatorBarChart para Gráfica 3');
+    assert(templateContent.includes('id="operatorBarChart"'), 'Debe contener contenedor #operatorBarChart para Gráfica 3');
     assert(templateContent.includes('Rendimiento por Operador'), 'Debe titular Gráfica 3');
     
     // Gráfica 4: Flujo 24h
-    assert(templateContent.includes('id="hourlyFlowChart"'), 'Debe contener canvas #hourlyFlowChart para Gráfica 4');
+    assert(templateContent.includes('id="hourlyFlowChart"'), 'Debe contener contenedor #hourlyFlowChart para Gráfica 4');
     
-    // Gráfica 5: Mediana de tiempo de resolución
-    assert(templateContent.includes('id="medianResolutionChart"'), 'Debe contener canvas #medianResolutionChart para Gráfica 5');
+    // Gráfica 5: Mediana de tiempo de resolución (ECharts)
+    assert(templateContent.includes('id="medianResolutionChart"'), 'Debe contener contenedor #medianResolutionChart para Gráfica 5');
     assert(templateContent.includes('Mediana de Tiempo de Resolución'), 'Debe titular Gráfica 5');
 });
 
@@ -1066,10 +1067,10 @@ runAsyncTest('R1.8: [Async] Cálculos de 5 Gráficos (Mediana en memoria, Barras
 
         // Renderizado EJS completo con los datos producidos
         const html = ejs.render(templateContent, renderedData, { filename: templatePath });
-        assert(html.includes('id="operatorBarChart"'), 'El HTML debe renderizar el canvas #operatorBarChart');
-        assert(html.includes('id="medianResolutionChart"'), 'El HTML debe renderizar el canvas #medianResolutionChart');
-        assert(html.includes('id="areaVolumeChart"'), 'El HTML debe renderizar el canvas #areaVolumeChart');
-        assert(html.includes('id="hourlyFlowChart"'), 'El HTML debe renderizar el canvas #hourlyFlowChart');
+        assert(html.includes('id="operatorBarChart"'), 'El HTML debe renderizar el contenedor #operatorBarChart');
+        assert(html.includes('id="medianResolutionChart"'), 'El HTML debe renderizar el contenedor #medianResolutionChart');
+        assert(html.includes('id="areaTicketsChart"'), 'El HTML debe renderizar el contenedor #areaTicketsChart');
+        assert(html.includes('id="hourlyFlowChart"'), 'El HTML debe renderizar el contenedor #hourlyFlowChart');
         assert(html.includes('id="venezuela-map-container"'), 'El HTML debe renderizar el contenedor de mapa');
     } finally {
         prisma.ticket.count = origCount;
@@ -1145,16 +1146,16 @@ runAsyncTest('R1.9: [Adversarial] Mediana con fecha_resolucion / fecha_creacion 
     }
 });
 
-// 21. Presencia de pistas de fondo translúcidas y tooltip oscuro de mapa (R2.19)
-runTest('R2.19: [Adversarial] Verificación de plugin de pistas translúcidas y tooltip oscuro del mapa', () => {
-    assert(templateContent.includes('capsuleTrackPlugin'), 'Debe definir plugin de pistas translúcidas capsuleTrackPlugin');
-    assert(templateContent.includes('plugins: [capsuleTrackPlugin]'), 'Debe registrar capsuleTrackPlugin en los gráficos de barras');
-    assert(templateContent.includes('bg-[#1C1C1E]/95'), 'El tooltip del mapa SVG debe adoptar estilo oscuro Liquid Glass');
+// 21. Presencia de pistas de fondo translúcidas nativas de ECharts y tooltip oscuro (R2.19)
+runTest('R2.19: [Adversarial] Verificación de pistas translúcidas nativas en ECharts (showBackground, borderRadius)', () => {
+    assert(templateContent.includes('showBackground: true'), 'ECharts debe habilitar showBackground en gráficos de barras');
+    assert(templateContent.includes('borderRadius: 20'), 'ECharts debe configurar borderRadius de 20 para cápsulas');
+    assert(templateContent.includes('bg-[#1C1C1E]/95') || templateContent.includes('rgba(28, 28, 30, 0.94)'), 'Debe adoptar estilo oscuro Liquid Glass en tooltips');
 });
 
-// 22. Adversarial: Verificación de fallback arcTo y tolerancia a labels vacías en barras de operador (R2.20)
-runTest('R2.20: [Adversarial] Verificación de fallback arcTo en capsuleTrackPlugin y robustez de fallback en barras de operador', () => {
-    assert(templateContent.includes('ctx.arcTo'), 'Debe soportar degradación elegante vía arcTo para trazado de cápsulas en Canvas');
+// 22. Adversarial: Verificación de configuración de borderRadius e inicialización robusta en barras de operador (R2.20)
+runTest('R2.20: [Adversarial] Verificación de configuración de borderRadius e inicialización robusta en barras de operador', () => {
+    assert(templateContent.includes('itemStyle: { borderRadius: 20'), 'Debe configurar itemStyle con borderRadius 20');
     assert(templateContent.includes('barrasOp.labels && barrasOp.labels.length > 0'), 'Debe validar longitud no vacía de labels antes de omitir fallback');
 });
 
@@ -1249,7 +1250,7 @@ runTest('R2.22: Estructura de los 3 contenedores de pestañas (Tab Panes: #tab-o
     const tab1Content = templateContent.substring(overviewIdx, teamIdx);
     assert(tab1Content.includes('id="kpi-total"'), 'Tab 1 debe contener los 4 KPIs superiores');
     assert(tab1Content.includes('id="hourlyFlowChart"'), 'Tab 1 debe contener el gráfico de Flujo 24h');
-    assert(tab1Content.includes('id="areaVolumeChart"'), 'Tab 1 debe contener el gráfico Área vs Tickets');
+    assert(tab1Content.includes('id="areaTicketsChart"'), 'Tab 1 debe contener el gráfico Área vs Tickets');
     assert(tab1Content.includes('id="medianResolutionChart"'), 'Tab 1 debe contener el gráfico de Mediana de Resolución');
 
     // Tab 2: Barras por Operador y Ranking
@@ -1263,21 +1264,20 @@ runTest('R2.22: Estructura de los 3 contenedores de pestañas (Tab Panes: #tab-o
     assert(tab3Content.includes('id="venezuela-map-section"'), 'Tab 3 debe contener la sección territorial');
 });
 
-runTest('R2.23: Reducción de opacidad de grid en Chart.js a rgba(0, 0, 0, 0.05)', () => {
-    assert(templateContent.includes("rgba(0, 0, 0, 0.05)"), 'Las escalas de Chart.js deben usar opacidad de grid reducida a rgba(0, 0, 0, 0.05)');
+runTest('R2.23: Reducción de opacidad de grid en ECharts a rgba(0, 0, 0, 0.05)', () => {
+    assert(templateContent.includes("rgba(0, 0, 0, 0.05)") || templateContent.includes("rgba(0,0,0,0.05)"), 'Las escalas deben usar opacidad de grid reducida a rgba(0, 0, 0, 0.05)');
 });
 
-runTest('R2.24: Lógica de alternancia de pestañas y redibujo de Chart.js en la vista', () => {
+runTest('R2.24: Lógica de alternancia de pestañas y redibujo de ECharts en la vista', () => {
     assert(templateContent.includes('setupTabNavigation'), 'Debe incluir función controladora de pestañas setupTabNavigation');
     assert(templateContent.includes('switchTab'), 'Debe incluir lógica de alternancia switchTab');
     assert(templateContent.includes('chart.resize()'), 'Debe redibujar gráficas con resize al cambiar de pestaña');
-    assert(templateContent.includes('chart.update('), 'Debe actualizar gráficas con update al cambiar de pestaña');
 });
 
-runTest('R2.25: [Adversarial] Sincronización de color en iconos de pestañas (activo text-[#007AFF], inactivo text-[#8E8E93])', () => {
-    assert(templateContent.includes('text-[#007AFF]'), 'El icono activo inicial debe tener text-[#007AFF]');
+runTest('R2.25: [Adversarial] Sincronización de color en iconos de pestañas (activo text-sky-500, inactivo text-[#8E8E93])', () => {
+    assert(templateContent.includes('text-sky-500'), 'El icono activo inicial debe tener text-sky-500');
     assert(templateContent.includes('text-[#8E8E93]'), 'Los iconos inactivos iniciales deben tener text-[#8E8E93]');
-    assert(templateContent.includes("icon.classList.add('text-[#007AFF]')"), 'switchTab debe aplicar text-[#007AFF] al icono activo');
+    assert(templateContent.includes("icon.classList.add('text-sky-500')"), 'switchTab debe aplicar text-sky-500 al icono activo');
     assert(templateContent.includes("icon.classList.add('text-[#8E8E93]')"), 'switchTab debe aplicar text-[#8E8E93] a los iconos inactivos');
 });
 
@@ -1291,9 +1291,9 @@ runTest('R2.27: [Adversarial] Prevención de resize en paneles ocultos ante camb
     assert(templateContent.includes("classList.contains('hidden')"), 'requestAnimationFrame en switchTab debe verificar que el panel no esté oculto antes de llamar a resize()');
 });
 
-runTest('R2.28: [Adversarial] Forzado de reflow síncrono (offsetWidth) y soporte de elemento canvas en Chart.getChart', () => {
+runTest('R2.28: [Adversarial] Forzado de reflow síncrono (offsetWidth) y soporte de elemento en echarts.getInstanceByDom', () => {
     assert(templateContent.includes('void pane.offsetWidth;'), 'switchTab debe forzar un reflow de layout con offsetWidth al desocultar un panel');
-    assert(templateContent.includes('Chart.getChart(canvasEl)'), 'switchTab debe soportar paso directo del elemento canvas a Chart.getChart');
+    assert(templateContent.includes('echarts.getInstanceByDom(el)'), 'switchTab debe soportar paso directo del elemento a echarts.getInstanceByDom');
 });
 
 runTest('R2.29: [Adversarial] Cambio automático a pestaña de Equipo al buscar en globalSearchInput', () => {
@@ -1304,7 +1304,7 @@ runTest('R2.30: [Adversarial] Soporte de enlace directo a pestañas mediante win
     assert(templateContent.includes('window.location.hash'), 'setupTabNavigation debe leer window.location.hash para activar la pestaña inicial solicitada');
 });
 
-runTest('R2.31: [Adversarial Functional] Simulación DOM de switchTab (transición de estados, ARIA y Chart.js resize)', () => {
+runTest('R2.31: [Adversarial Functional] Simulación DOM de switchTab (transición de estados, ARIA y ECharts resize)', () => {
     // Creación de DOM simulado para verificar la lógica algorítmica de switchTab
     const mockPanes = {
         'tab-overview': { id: 'tab-overview', classes: new Set([]), ariaHidden: 'false', offsetWidth: 1024 },
@@ -1317,7 +1317,7 @@ runTest('R2.31: [Adversarial Functional] Simulación DOM de switchTab (transici�
             target: 'tab-overview',
             selected: 'true',
             className: 'report-tab-btn',
-            svg: { classes: new Set(['w-3.5', 'h-3.5', 'text-[#007AFF]']) }
+            svg: { classes: new Set(['w-3.5', 'h-3.5', 'text-sky-500']) }
         },
         {
             target: 'tab-team',
@@ -1336,12 +1336,16 @@ runTest('R2.31: [Adversarial Functional] Simulación DOM de switchTab (transici�
     const chartResizeLog = [];
     const mockCharts = {
         'operatorBarChart': {
-            resize: () => { chartResizeLog.push('operatorBarChart.resize'); },
-            update: (mode) => { chartResizeLog.push(`operatorBarChart.update(${mode})`); }
+            resize: () => { chartResizeLog.push('operatorBarChart.resize'); }
         },
         'hourlyFlowChart': {
-            resize: () => { chartResizeLog.push('hourlyFlowChart.resize'); },
-            update: (mode) => { chartResizeLog.push(`hourlyFlowChart.update(${mode})`); }
+            resize: () => { chartResizeLog.push('hourlyFlowChart.resize'); }
+        },
+        'areaTicketsChart': {
+            resize: () => { chartResizeLog.push('areaTicketsChart.resize'); }
+        },
+        'medianResolutionChart': {
+            resize: () => { chartResizeLog.push('medianResolutionChart.resize'); }
         }
     };
 
@@ -1359,10 +1363,10 @@ runTest('R2.31: [Adversarial Functional] Simulación DOM de switchTab (transici�
             if (isTarget) {
                 btn.className = 'active-class';
                 btn.svg.classes.delete('text-[#8E8E93]');
-                btn.svg.classes.add('text-[#007AFF]');
+                btn.svg.classes.add('text-sky-500');
             } else {
                 btn.className = 'inactive-class';
-                btn.svg.classes.delete('text-[#007AFF]');
+                btn.svg.classes.delete('text-sky-500');
                 btn.svg.classes.add('text-[#8E8E93]');
             }
         });
@@ -1383,7 +1387,7 @@ runTest('R2.31: [Adversarial Functional] Simulación DOM de switchTab (transici�
             if (!activePane || activePane.classes.has('hidden')) return;
 
             const chartsByTab = {
-                'tab-overview': ['hourlyFlowChart'],
+                'tab-overview': ['hourlyFlowChart', 'areaTicketsChart', 'medianResolutionChart'],
                 'tab-team': ['operatorBarChart'],
                 'tab-geo': []
             };
@@ -1392,7 +1396,6 @@ runTest('R2.31: [Adversarial Functional] Simulación DOM de switchTab (transici�
                 const c = mockCharts[cId];
                 if (c) {
                     c.resize();
-                    c.update('none');
                 }
             });
         });
@@ -1408,7 +1411,7 @@ runTest('R2.31: [Adversarial Functional] Simulación DOM de switchTab (transici�
     const btnTeam = mockButtons.find(b => b.target === 'tab-team');
     const btnOverview = mockButtons.find(b => b.target === 'tab-overview');
     assert.strictEqual(btnTeam.selected, 'true', 'tab-btn-team aria-selected debe ser true');
-    assert.strictEqual(btnTeam.svg.classes.has('text-[#007AFF]'), true, 'tab-btn-team icono debe ser azul');
+    assert.strictEqual(btnTeam.svg.classes.has('text-sky-500'), true, 'tab-btn-team icono debe ser sky');
     assert.strictEqual(btnOverview.selected, 'false', 'tab-btn-overview aria-selected debe ser false');
     assert.strictEqual(btnOverview.svg.classes.has('text-[#8E8E93]'), true, 'tab-btn-overview icono debe ser gris');
 
@@ -1416,7 +1419,6 @@ runTest('R2.31: [Adversarial Functional] Simulación DOM de switchTab (transici�
     assert.strictEqual(pendingRAF.length, 1, 'Debe haber un callback en cola RAF');
     pendingRAF.shift()();
     assert(chartResizeLog.includes('operatorBarChart.resize'), 'operatorBarChart debe haber recibido resize()');
-    assert(chartResizeLog.includes('operatorBarChart.update(none)'), 'operatorBarChart debe haber recibido update(none)');
 
     // 2. Transición inválida (debe abortar sin alterar visibilidad)
     runSimulatedSwitchTab('invalid-tab-id');
@@ -1440,6 +1442,108 @@ runTest('R2.31: [Adversarial Functional] Simulación DOM de switchTab (transici�
     const currentFrame = pendingRAF.pop();
     currentFrame();
     assert(chartResizeLog.includes('hourlyFlowChart.resize'), 'hourlyFlowChart en tab-overview debe recibir resize()');
+});
+
+// 34. Verificación de configuración ECharts en Gráfica 1 (Área vs Tickets) y Gráfica 5 (Mediana de Resolución)
+runTest('R2.32: [ECharts Visual Config] Configuración visual de barras en Área vs Tickets y Mediana de Resolución', () => {
+    // 1. Área vs Tickets (areaTicketsChart)
+    assert(templateContent.includes('id="areaTicketsChart"'), 'Debe existir contenedor #areaTicketsChart');
+    assert(templateContent.includes('#85A8E0') && templateContent.includes('#4FE0B5') && templateContent.includes('#FF8A80'), 'Debe incluir colores para Creados, Resueltos y Rechazados');
+
+    // 2. Mediana de Tiempo de Resolución (medianResolutionChart)
+    assert(templateContent.includes('id="medianResolutionChart"'), 'Debe existir contenedor #medianResolutionChart');
+    assert(templateContent.includes('LinearGradient') || templateContent.includes('#38bdf8'), 'Mediana debe usar gradiente azul/sky');
+});
+
+// 35. Verificación de visuales de ECharts (smooth lines, splitLine transparency, areaStyle)
+runTest('R2.33: [ECharts Visual Config] Configuración visual de líneas y splits en ECharts', () => {
+    assert(templateContent.includes('smooth: true'), 'ECharts de líneas debe usar líneas suaves (smooth: true)');
+    assert(templateContent.includes("rgba(0,0,0,0.05)") || templateContent.includes("rgba(0, 0, 0, 0.05)"), 'Debe configurar transparencia sutil en splitLine');
+    assert(templateContent.includes('areaStyle:'), 'ECharts de flujo debe incluir areaStyle con gradiente');
+});
+
+// 36. [Adversarial & Edge Cases] Truncamiento elíptico en eje Y contra nombres de área largos (>45 chars) en ECharts
+runTest('R2.34: [Adversarial & Edge Cases] Truncamiento elíptico y tolerancia a nombres de área largos (>45 chars) en ECharts', () => {
+    // 1. Verificación de lógica de truncamiento en ECharts
+    assert(templateContent.includes('overflow: \'truncate\'') || templateContent.includes('truncate'), 'Las etiquetas de eje en ECharts o HTML deben truncar');
+
+    // 2. Prueba funcional de renderizado EJS con nombres de área extremos (> 50 caracteres)
+    const extremeLabel = 'Infraestructura de Telecomunicaciones y Enlaces Críticos Subterráneos';
+    const extremeData = {
+        titulo: 'NOC Portal - Reportes',
+        currentUser: { nombre: 'Coordinador NOC', email: 'coord@inter.com' },
+        kpis: { total: 5, jornada: 2, resueltos: 3, puntos: 15, areaCritica: extremeLabel },
+        volumenPorArea: {
+            labels: [extremeLabel, 'Redes FTTH'],
+            totales: [10, 4],
+            cerrados: [6, 2],
+            saturaciones: [40, 50],
+            creados: [10, 4],
+            resueltos: [6, 2],
+            rechazados: [0, 0]
+        },
+        puntosPorArea: { labels: [extremeLabel], data: [15] },
+        rankingOperadores: [{ nombre: 'Operador Test', area: extremeLabel, cerrados: 3, asignadosTotales: 5, puntos: 15, promedioHoras: 1.2 }],
+        flujoPorHora: { labels: ['10:00'], creados: [2], asignados: [2], cerrados: [1] },
+        medianaTiempoPorArea: { labels: [extremeLabel], data: [45], formateado: ['45 min'] },
+        totales: { total: 5, jornada: 2, resueltos: 3, puntos: 15 },
+        ticketsTotales: 5,
+        ticketsJornada: 2,
+        ticketsResueltos: 3,
+        puntosCompletados: 15,
+        areaCritica: extremeLabel,
+        activeTab: 'overview'
+    };
+
+    const renderedHtml = ejs.render(templateContent, extremeData, { filename: templatePath });
+    assert(renderedHtml.includes(extremeLabel), 'El renderizado EJS debe soportar nombres de área de longitud extrema sin truncar el modelo');
+    assert(renderedHtml.includes('id="areaTicketsChart"'), 'El contenedor areaTicketsChart debe renderizarse con datos extremos');
+    assert(renderedHtml.includes('id="medianResolutionChart"'), 'El contenedor medianResolutionChart debe renderizarse con datos extremos');
+});
+
+// 37. Verificación estricta de eliminación de Canvas de Chart.js y presencia de identificadores ECharts (R2 & R4)
+runTest('R2.35: [Eliminación Chart.js] Ausencia total de canvas Chart.js y uso de identificadores ECharts', () => {
+    assert(!templateContent.includes('<canvas id="areaVolumeChart">'), 'No debe existir el tag canvas id="areaVolumeChart"');
+    assert(!templateContent.includes('<canvas id="medianResolutionChart">'), 'No debe existir el tag canvas id="medianResolutionChart"');
+    assert(!templateContent.includes('<canvas id="hourlyFlowChart">'), 'No debe existir el tag canvas id="hourlyFlowChart"');
+    assert(!templateContent.includes('<canvas id="operatorBarChart">'), 'No debe existir el tag canvas id="operatorBarChart"');
+    assert(!templateContent.includes("Chart.getChart"), 'No debe existir Chart.getChart de Chart.js');
+    assert(!templateContent.includes("new Chart("), 'No debe instanciarse Chart.js');
+    assert(templateContent.includes('echarts.getInstanceByDom') || templateContent.includes('_echarts_instance_'), 'Debe consultar instancias de ECharts mediante identificadores DOM');
+});
+
+// 38. Verificación funcional de inicialización y dimensiones de ECharts (R2 & R3)
+runTest('R2.36: [ECharts Dimensiones e Inicialización] Contenedores de 300px e inicialización mediante echarts.init', () => {
+    assert(templateContent.includes('height: 300px;'), 'Los contenedores de gráficas deben especificar height: 300px');
+    assert(templateContent.includes('echarts.init('), 'Debe inicializar las gráficas mediante echarts.init');
+    assert(templateContent.includes('requestAnimationFrame'), 'Debe usar requestAnimationFrame para secuenciar eventos de renderizado');
+});
+
+// 39. Verificación de independencia y carga robusta de ECharts (R2 & R3)
+runTest('R2.37: [Carga ECharts] Inicialización asíncrona robusta y ausencia de Chart.js', () => {
+    assert(!templateContent.includes('Chart.js') && !templateContent.includes('chartjs'), 'No debe existir dependencia de Chart.js');
+    assert(templateContent.includes('waitForECharts') || templateContent.includes('initCharts'), 'Debe implementar inicialización ordenada de ECharts');
+    assert(templateContent.includes('DOMContentLoaded'), 'DOMContentLoaded debe configurar navegación de pestañas e iniciar gráficos');
+});
+
+// 40. [Adversarial & Edge Cases] Robustez ante reportData nulo, escape XSS y backdrop-blur
+runTest('R2.38: [Adversarial Robustness] Sanitización XSS con escapeHtml y tolerancia a estructuras vacías o nulas', () => {
+    assert(templateContent.includes('function escapeHtml'), 'Debe incluir función escapeHtml para neutralizar inyecciones');
+    assert(templateContent.includes('getReportData'), 'Debe incluir función segura para deserializar reportData');
+    assert(templateContent.includes('backdrop-blur'), 'Debe usar backdrop-blur válido');
+});
+
+// 41. [Tab Race Condition] Verificación de redimensionamiento de ECharts en switchTab
+runTest('R2.39: [Tab Race Condition Guard & ECharts Resize] Redimensionamiento seguro en switchTab al cambiar de pestaña', () => {
+    assert(templateContent.includes("activePane.classList.contains('hidden')"), 'switchTab debe verificar que el panel no esté oculto antes de invocar resize');
+    assert(templateContent.includes('chart.resize()'), 'switchTab debe invocar resize() en las instancias de ECharts');
+});
+
+// 42. [Theme & Visibility Integrity] Erradicación completa de acentos legacy #007AFF y guardia de visibilidad en switchTab
+runTest('R2.40: [Theme & Visibility Integrity] Erradicación completa de acentos legacy #007AFF y guardia de visibilidad en switchTab', () => {
+    assert(!templateContent.includes('#007AFF'), 'No debe quedar ninguna referencia al color legacy #007AFF');
+    assert(!templateContent.includes('#0062CC'), 'No debe quedar ninguna referencia al color legacy #0062CC');
+    assert(templateContent.includes('!dom || dom.offsetParent !== null'), 'Tanto el resize global como switchTab deben verificar la visibilidad del contenedor antes de llamar a resize()');
 });
 
 (async () => {
