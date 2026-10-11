@@ -11,6 +11,9 @@
     "test:tickets": "node scripts/test-tickets.js",
     "test:period": "node scripts/test-period-report.js",
     "test:shifts": "node scripts/test-shifts.js",
+    "simular": "node scripts/simular-jornada.js",
+    "simular:limpiar": "node scripts/limpiar-simulacion.js --confirmar",
+    "test:simulation": "node scripts/test-simulation.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
