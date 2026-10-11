@@ -47,7 +47,14 @@ Registro de acciones (cerrar, editar, eliminar, restaurar, traspaso, guardia, ho
 | Tarjetas de resumen | Dashboard | Dashboard **y** Tickets (con sus propias métricas) |
 | Resumen, detalle y Excel | Reportes | Reportes (sin cambios) |
 
-## Preguntas abiertas
-1. ¿Se conserva el mapa de Venezuela? (si sí, ¿en el Dashboard?)
-2. ¿Las tarjetas de Tickets deben respetar los filtros de la tabla o mostrar siempre el total?
-3. ¿El operador (no coordinador) ve las mismas pantallas? Hoy tiene un dashboard propio.
+## Decisiones tomadas
+1. **Mapa de Venezuela:** se conserva (gráfica importante a futuro). Va en el Dashboard General.
+2. **Tickets — Resumen Operativo (regla de orden y filtro):**
+   - Por defecto muestra solo tickets **activos**; los **cerrados no aparecen** (se ven con el filtro Estado = Cerrado o en una vista aparte).
+   - Orden fijo por estado: **Nuevos → En progreso → En pausa → En espera → Resueltos (pendientes de cierre)**. Dentro de cada grupo: prioridad (P1 primero) y luego antigüedad.
+   - Un ticket que se cierra sale de la lista principal.
+   - Las **tarjetas** de arriba muestran siempre el total de la operación; no cambian con los filtros de la tabla. (Supuesto: confirmar.)
+3. **Operador y coordinador tienen dashboards distintos y cada uno conserva el suyo.** Este rediseño cubre primero el del coordinador; el del operador se diseña aparte.
+
+## Pendiente de confirmar
+- ¿Las tarjetas de Tickets deben mantenerse fijas (propuesta) o seguir los filtros de la tabla?
