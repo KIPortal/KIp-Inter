@@ -17,7 +17,7 @@ const HOUR_MS = 3600000;
 
 const DEFAULT_SCHEDULE = { dias: [1, 2, 3, 4, 5], inicio: '08:00', fin: '17:00' };
 
-// Ventana de guardia. Supuesto a confirmar con el departamento: entre semana de
+// Ventana de guardia (confirmada por el usuario): entre semana de
 // 17:00 a 00:00; en fin de semana el guardia cubre de 8:00 a 00:00 desde casa.
 const GUARDIA_WEEKDAY = { inicio: '17:00', fin: '24:00' };
 const GUARDIA_WEEKEND = { inicio: '08:00', fin: '24:00' };
