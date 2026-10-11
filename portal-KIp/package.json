@@ -11,6 +11,7 @@
     "test:tickets": "node scripts/test-tickets.js",
     "test:period": "node scripts/test-period-report.js",
     "test:shifts": "node scripts/test-shifts.js",
+    "datos:cero": "node scripts/reiniciar-datos.js --confirmar",
     "simular": "node scripts/simular-jornada.js",
     "simular:limpiar": "node scripts/limpiar-simulacion.js --confirmar",
     "test:simulation": "node scripts/test-simulation.js",
