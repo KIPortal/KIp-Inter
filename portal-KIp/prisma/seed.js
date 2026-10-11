@@ -9,6 +9,7 @@
  */
 
 const { PrismaClient } = require('@prisma/client');
+const { hashPassword } = require('../src/services/passwordService');
 const prisma = new PrismaClient();
 
 // Áreas disponibles en el sistema
@@ -58,7 +59,7 @@ async function main() {
     await prisma.user.create({
       data: {
         email: `coord_${area.toLowerCase()}@test.com`,
-        clave: 'admin123',
+        clave: hashPassword('admin123'),
         nombre: `Coordinador ${areaLabel}`,
         rol: 'COORDINADOR',
         area_designada: area,
@@ -70,7 +71,7 @@ async function main() {
     const operador = await prisma.user.create({
       data: {
         email: `op_${area.toLowerCase()}@test.com`,
-        clave: 'op123',
+        clave: hashPassword('op123'),
         nombre: `Operador ${areaLabel}`,
         rol: 'OPERADOR',
         area_designada: area,

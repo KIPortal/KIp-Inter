@@ -1,7 +1,8 @@
 const prisma = require('../config/prisma');
+const { isDevLoginEnabled } = require('../config/devLogin');
 
 async function requireAuth(req, res, next) {
-    if (req.session?.temporaryUser && process.env.NODE_ENV !== 'production') {
+    if (req.session?.temporaryUser && isDevLoginEnabled()) {
         const { id, email, nombre, rol, area_designada } = req.session.temporaryUser;
         req.user = { id, email, nombre, rol, area_designada: area_designada || 'GENERAL' };
         req.session.temporaryUser = req.user;

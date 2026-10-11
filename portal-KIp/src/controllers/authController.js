@@ -1,11 +1,12 @@
 const prisma = require('../config/prisma');
+const { isDevLoginEnabled } = require('../config/devLogin');
+const { hashPassword, verifyPassword } = require('../services/passwordService');
 
 function renderLogin(req, res) {
     return res.render('login');
 }
 
 async function login(req, res) {
-    console.log("=== LOGIN ATTEMPT ===", req.body);
     const { email, clave } = req.body || {};
 
     if (typeof email !== 'string' || !email.trim() || typeof clave !== 'string' || !clave) {
@@ -18,7 +19,7 @@ async function login(req, res) {
             select: { id: true, email: true, nombre: true, rol: true, area_designada: true, clave: true }
         });
 
-        if (process.env.NODE_ENV !== 'production' && (!user || !user.clave)) {
+        if (isDevLoginEnabled() && (!user || !user.clave)) {
             const temporaryUser = user ? {
                 id: user.id,
                 email: user.email,
@@ -44,8 +45,17 @@ async function login(req, res) {
             return res.json({ success: true, redirect: '/dashboard' });
         }
 
-        if (!user || user.clave !== clave) {
+        const check = user ? verifyPassword(clave, user.clave) : { ok: false };
+        if (!user || !check.ok) {
             return res.status(401).json({ success: false, message: 'Credenciales inválidas' });
+        }
+        if (check.needsRehash) {
+            // Primera vez que entra con una contraseña guardada en texto plano: se guarda cifrada
+            try {
+                await prisma.user.update({ where: { id: user.id }, data: { clave: hashPassword(clave) } });
+            } catch (error) {
+                console.error('No se pudo actualizar el hash de la contraseña:', error.message);
+            }
         }
 
         req.session.userId = user.id;

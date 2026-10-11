@@ -108,8 +108,8 @@ async function assignTicket(req, res) {
             select: { id: true, estado_actual: true }
         });
         if (!existingTicket) return res.status(404).json({ success: false, error: 'Ticket no encontrado' });
-        if (existingTicket.estado_actual === 'CERRADO') {
-            return res.status(409).json({ success: false, error: 'Un ticket cerrado no puede reasignarse' });
+        if (['RESUELTO', 'CERRADO'].includes(existingTicket.estado_actual)) {
+            return res.status(409).json({ success: false, error: 'Un ticket resuelto o cerrado no puede reasignarse' });
         }
 
         const dataToUpdate = {
@@ -121,7 +121,7 @@ async function assignTicket(req, res) {
         if (prioridad) dataToUpdate.puntos_complejidad = PRIORITY_POINTS[prioridad];
 
         const result = await prisma.ticket.updateMany({
-            where: { codigo_incidencia: ticketCode, estado_actual: { not: 'CERRADO' } },
+            where: { codigo_incidencia: ticketCode, estado_actual: { notIn: ['RESUELTO', 'CERRADO'] } },
             data: dataToUpdate
         });
         if (result.count !== 1) {
@@ -130,7 +130,7 @@ async function assignTicket(req, res) {
                 select: { id: true }
             });
             if (!currentTicket) return res.status(404).json({ success: false, error: 'Ticket no encontrado' });
-            return res.status(409).json({ success: false, error: 'Un ticket cerrado no puede reasignarse' });
+            return res.status(409).json({ success: false, error: 'Un ticket resuelto o cerrado no puede reasignarse' });
         }
         const ticket = await prisma.ticket.findUnique({
             where: { codigo_incidencia: ticketCode },
