@@ -5,8 +5,11 @@ const {
     getHourOfDay,
     averageResolutionMinutes,
     formatMinutes,
-    computeOverload
+    computeOverload,
+    getPeriodBounds
 } = require('../services/metricsService');
+const { buildPeriodReport, AREAS: REPORT_AREAS } = require('../services/periodReportService');
+const { buildWorkbook } = require('../services/excelExportService');
 
 const AREA_DISPLAY_NAMES = {
     'GENERAL': 'General',
@@ -943,4 +946,76 @@ async function getReports(req, res) {
     }
 }
 
-module.exports = { getReports };
+
+// ---------------------------------------------------------------------------
+// Reporte por periodo (jornada, semana, mes, fecha específica) y Excel
+// ---------------------------------------------------------------------------
+
+/** Lee y valida los parámetros ?periodo=&fecha=&area=. Devuelve { error } o { range, area }. */
+function parsePeriodQuery(query = {}) {
+    const periodo = typeof query.periodo === 'string' ? query.periodo.trim() : 'jornada';
+    const fecha = typeof query.fecha === 'string' && query.fecha.trim() ? query.fecha.trim() : null;
+    if (periodo === 'especifica' && !fecha) return { error: 'Falta la fecha para el periodo "especifica" (AAAA-MM-DD)' };
+    const range = getPeriodBounds(periodo, fecha);
+    if (!range) return { error: 'Periodo o fecha no válidos. Usa periodo=jornada|semana|mes|especifica y fecha=AAAA-MM-DD' };
+    const area = typeof query.area === 'string' && query.area.trim() ? query.area.trim() : null;
+    if (area && !REPORT_AREAS.includes(area)) return { error: 'Área no válida' };
+    return { range, area };
+}
+
+async function loadPeriodReport(query) {
+    const parsed = parsePeriodQuery(query);
+    if (parsed.error) return parsed;
+    const { range, area } = parsed;
+    const tickets = await prisma.ticket.findMany({
+        where: {
+            OR: [
+                { createdAt: { gte: range.start, lt: range.end } },
+                { fecha_asignacion: { gte: range.start, lt: range.end } },
+                { resueltoEn: { gte: range.start, lt: range.end } },
+                { fecha_cierre: { gte: range.start, lt: range.end } },
+                { estado_actual: { in: ACTIVE_STATES } }
+            ]
+        },
+        select: {
+            codigo_incidencia: true, asunto: true, area_designada: true, estado_actual: true,
+            puntos_complejidad: true, createdAt: true, fecha_asignacion: true, resueltoEn: true, fecha_cierre: true,
+            asignado_a: { select: { id: true, nombre: true } }
+        },
+        orderBy: { createdAt: 'asc' }
+    });
+    const operators = await prisma.user.findMany({
+        where: { rol: 'OPERADOR' },
+        select: { id: true, nombre: true, area_designada: true, estado_operativo: true },
+        orderBy: { nombre: 'asc' }
+    });
+    return { report: buildPeriodReport({ tickets, operators, range, area }), range };
+}
+
+async function getPeriodData(req, res) {
+    try {
+        const result = await loadPeriodReport(req.query);
+        if (result.error) return res.status(400).json({ success: false, error: result.error });
+        return res.json({ success: true, ...result.report });
+    } catch (error) {
+        console.error('Error al generar el reporte por periodo:', error);
+        return res.status(500).json({ success: false, error: 'No se pudo generar el reporte' });
+    }
+}
+
+async function downloadExcel(req, res) {
+    try {
+        const result = await loadPeriodReport(req.query);
+        if (result.error) return res.status(400).json({ success: false, error: result.error });
+        const buffer = await buildWorkbook(result.report, { generadoPor: req.user?.nombre || req.user?.email || '' });
+        const filename = `reporte-${result.range.periodo}-${result.range.desde}${result.range.desde === result.range.hasta ? '' : `_${result.range.hasta}`}.xlsx`;
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        return res.send(Buffer.from(buffer));
+    } catch (error) {
+        console.error('Error al exportar el reporte a Excel:', error);
+        return res.status(500).json({ success: false, error: 'No se pudo generar el Excel' });
+    }
+}
+
+module.exports = { getReports, getPeriodData, downloadExcel, parsePeriodQuery };

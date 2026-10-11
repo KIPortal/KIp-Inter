@@ -245,3 +245,5 @@ Estructura propuesta, sujeta a ajuste posterior:
 **Otros endpoints (coordinador):** `GET /api/tickets/trash` (papelera) y `GET /api/tickets/:code/history` (historial con notas, para el detalle del ticket).
 
 **Dashboard.** El controlador entrega `flujoHoy = { creados[24], cerrados[24] }`, ya en hora de Caracas, solo con el día de hoy y con el cierre medido por `resueltoEn`. La vista solo lo dibuja; no debe recalcular horas ni leer todos los tickets.
+
+**Reportes por periodo y Excel (implementado).** `GET /reportes/data` y `GET /reportes/excel` (ver `docs/contrato-metricas.md`). Las cinco hojas de §11 están hechas. "Tiempo en horario" usa, por ahora, lunes a viernes de 8:00 a 17:00 (Caracas) para todos; cuando exista el horario por operador (§12, punto 5) se calculará con el de cada uno.

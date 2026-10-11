@@ -128,7 +128,118 @@ function computeOverload(operators) {
     return result;
 }
 
+// ---------------------------------------------------------------------------
+// Periodos de reporte (spec §8) y tiempo en horario (spec §6.2)
+// ---------------------------------------------------------------------------
+
+const PERIODS = ['jornada', 'semana', 'mes', 'especifica'];
+
+// Horario de turno normal (spec §3). Mientras el horario no se guarde por
+// operador, "tiempo en horario" cuenta lunes a viernes de 8:00 a 17:00 Caracas.
+const BUSINESS_START_HOUR = 8;
+const BUSINESS_END_HOUR = 17;
+const BUSINESS_DAYS = [1, 2, 3, 4, 5]; // 0 = domingo
+
+/** Convierte 'YYYY-MM-DD' (fecha de Caracas) en el instante de su medianoche; null si no es válida. */
+function parseCaracasDate(value) {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || '').trim());
+    if (!match) return null;
+    const [, y, m, d] = match.map(Number);
+    const utc = Date.UTC(y, m - 1, d);
+    const check = new Date(utc);
+    if (check.getUTCFullYear() !== y || check.getUTCMonth() !== m - 1 || check.getUTCDate() !== d) return null;
+    return new Date(utc - UTC_OFFSET_HOURS * HOUR_MS);
+}
+
+function formatCaracasDate(instant) {
+    const local = new Date(new Date(instant).getTime() + UTC_OFFSET_HOURS * HOUR_MS);
+    return local.toISOString().slice(0, 10);
+}
+
+/**
+ * Rango [start, end) de un periodo alrededor de una fecha de Caracas.
+ *  - jornada / especifica: el día completo (00:00 a 23:59).
+ *  - semana: de lunes a domingo.
+ *  - mes: del día 1 al último día.
+ * `fecha` ('YYYY-MM-DD') es opcional; sin ella se usa `now`.
+ * Devuelve { periodo, start, end, desde, hasta, etiqueta } o null si algo no es válido.
+ */
+function getPeriodBounds(periodo, fecha, now = new Date()) {
+    if (!PERIODS.includes(periodo)) return null;
+    let dayStart;
+    if (fecha) {
+        dayStart = parseCaracasDate(fecha);
+        if (!dayStart) return null;
+    } else {
+        dayStart = getDayBounds(now).start;
+    }
+    let start = dayStart;
+    let end = new Date(dayStart.getTime() + DAY_MS);
+
+    if (periodo === 'semana') {
+        const local = new Date(dayStart.getTime() + UTC_OFFSET_HOURS * HOUR_MS);
+        const diasDesdeLunes = (local.getUTCDay() + 6) % 7;
+        start = new Date(dayStart.getTime() - diasDesdeLunes * DAY_MS);
+        end = new Date(start.getTime() + 7 * DAY_MS);
+    } else if (periodo === 'mes') {
+        const local = new Date(dayStart.getTime() + UTC_OFFSET_HOURS * HOUR_MS);
+        const y = local.getUTCFullYear();
+        const m = local.getUTCMonth();
+        start = new Date(Date.UTC(y, m, 1) - UTC_OFFSET_HOURS * HOUR_MS);
+        end = new Date(Date.UTC(y, m + 1, 1) - UTC_OFFSET_HOURS * HOUR_MS);
+    }
+    const desde = formatCaracasDate(start);
+    const hasta = formatCaracasDate(new Date(end.getTime() - 1));
+    const etiqueta = desde === hasta ? desde : `${desde} a ${hasta}`;
+    return { periodo, start, end, desde, hasta, etiqueta };
+}
+
+/**
+ * Minutos entre dos instantes que caen dentro del horario de turno
+ * (lunes a viernes, 8:00 a 17:00 Caracas). Devuelve 0 si el orden es inválido.
+ */
+function businessMinutesBetween(from, to) {
+    const a = new Date(from).getTime();
+    const b = new Date(to).getTime();
+    if (!Number.isFinite(a) || !Number.isFinite(b) || b <= a) return 0;
+    let total = 0;
+    let dayStart = getDayBounds(new Date(a)).start.getTime();
+    while (dayStart < b) {
+        const local = new Date(dayStart + UTC_OFFSET_HOURS * HOUR_MS);
+        if (BUSINESS_DAYS.includes(local.getUTCDay())) {
+            const winStart = dayStart + BUSINESS_START_HOUR * HOUR_MS;
+            const winEnd = dayStart + BUSINESS_END_HOUR * HOUR_MS;
+            const overlap = Math.min(b, winEnd) - Math.max(a, winStart);
+            if (overlap > 0) total += overlap;
+        }
+        dayStart += DAY_MS;
+    }
+    return total / MINUTE_MS;
+}
+
+/** Tiempo en horario de un ticket resuelto (null si faltan fechas). */
+function getBusinessResolutionMinutes(ticket) {
+    const end = getClosingDate(ticket);
+    if (!end || !ticket?.createdAt) return null;
+    if (new Date(end).getTime() < new Date(ticket.createdAt).getTime()) return null;
+    return businessMinutesBetween(ticket.createdAt, end);
+}
+
+/** Promedio del tiempo en horario; null si no hay tickets. */
+function averageBusinessMinutes(tickets) {
+    const values = (tickets || []).map(getBusinessResolutionMinutes).filter(v => v !== null);
+    if (values.length === 0) return null;
+    return values.reduce((sum, v) => sum + v, 0) / values.length;
+}
+
 module.exports = {
+    PERIODS,
+    parseCaracasDate,
+    formatCaracasDate,
+    getPeriodBounds,
+    businessMinutesBetween,
+    getBusinessResolutionMinutes,
+    averageBusinessMinutes,
     UTC_OFFSET_HOURS,
     ACTIVE_STATES,
     OVERLOAD_RATIO,
