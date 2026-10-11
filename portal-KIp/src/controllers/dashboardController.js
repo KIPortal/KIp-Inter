@@ -1,4 +1,11 @@
 const prisma = require('../config/prisma');
+const {
+    ACTIVE_STATES,
+    getDayBounds,
+    averageResolutionMinutes,
+    formatMinutes,
+    computeOverload
+} = require('../services/metricsService');
 
 const ticketRelations = {
     asignado_a: { select: { id: true, nombre: true, email: true, rol: true, area_designada: true, estado_operativo: true } },
@@ -35,7 +42,8 @@ async function renderDashboard(req, res) {
                 area_designada: true,
                 estado_operativo: true,
                 tickets_asignados: {
-                    where: { estado_actual: { in: ['EN_PROGRESO', 'EN_ESPERA_TERCEROS'] } },
+                    // Carga activa completa: incluye recién asignados (NUEVO) y en pausa
+                    where: { estado_actual: { in: ACTIVE_STATES } },
                     select: { codigo_incidencia: true, estado_actual: true },
                     orderBy: { createdAt: 'desc' }
                 }
@@ -49,15 +57,48 @@ async function renderDashboard(req, res) {
         const ticketsActivos = await prisma.ticket.count({
             where: { estado_actual: { not: 'CERRADO' } }
         });
-        const ticketsRealizados = await prisma.ticket.count({
-            where: { estado_actual: 'CERRADO' }
+        // "Realizados" = cerrados durante el día de hoy (Caracas), según su fecha de cierre
+        const { start: startOfDay, end: endOfDay } = getDayBounds();
+        const cerradosHoy = await prisma.ticket.findMany({
+            where: {
+                OR: [
+                    { fecha_cierre: { gte: startOfDay, lt: endOfDay } },
+                    { resueltoEn: { gte: startOfDay, lt: endOfDay } }
+                ]
+            },
+            select: { createdAt: true, fecha_cierre: true, resueltoEn: true }
+        });
+        const ticketsRealizados = cerradosHoy.length;
+        // Tiempo de atención: promedio desde que el ticket llegó hasta que se cerró
+        const tiempoAtencion = formatMinutes(averageResolutionMinutes(cerradosHoy));
+        const ticketsCreadosHoy = await prisma.ticket.count({
+            where: { createdAt: { gte: startOfDay, lt: endOfDay } }
         });
         const criticosSinAsignar = await prisma.ticket.count({
             where: {
                 asignado_a_id: null,
+                estado_actual: { not: 'CERRADO' },
                 puntos_complejidad: { gte: 5 }
             }
         });
+
+        // Operadores con carga activa muy por encima del promedio de su área
+        const sobrecargaPorOperador = computeOverload(operadoresTurno.map(operador => ({
+            id: operador.id,
+            area_designada: operador.area_designada,
+            estado_operativo: operador.estado_operativo,
+            cargaActual: operador.tickets_asignados.length
+        })));
+        const alertasSobrecarga = operadoresTurno
+            .filter(operador => sobrecargaPorOperador.get(operador.id)?.sobrecarga)
+            .map(operador => ({
+                id: operador.id,
+                nombre: operador.nombre,
+                area_designada: operador.area_designada,
+                ticketsActivos: operador.tickets_asignados.length,
+                promedioArea: sobrecargaPorOperador.get(operador.id).promedioArea,
+                indiceCarga: sobrecargaPorOperador.get(operador.id).indiceCarga
+            }));
         const operadoresDisponibles = operadores.length;
         const ticketCodes = await prisma.ticket.findMany({
             select: { codigo_incidencia: true }
@@ -73,8 +114,10 @@ async function renderDashboard(req, res) {
             titulo: 'NOC Portal - Dashboard Operativo',
             ticketsActivos,
             ticketsRealizados,
+            ticketsCreadosHoy,
             criticosSinAsignar,
-            tiempoAtencion: '14.2',
+            tiempoAtencion,
+            alertasSobrecarga,
             operadoresDisponibles,
             totalOperadores,
             operadores,

@@ -1,4 +1,12 @@
 const prisma = require('../config/prisma');
+const {
+    ACTIVE_STATES,
+    getDayBounds,
+    getHourOfDay,
+    averageResolutionMinutes,
+    formatMinutes,
+    computeOverload
+} = require('../services/metricsService');
 
 const AREA_DISPLAY_NAMES = {
     'GENERAL': 'General',
@@ -22,10 +30,8 @@ const ALL_AREAS = [
 
 async function getReports(req, res) {
     try {
-        const startOfDay = new Date();
-        startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(startOfDay);
-        endOfDay.setDate(endOfDay.getDate() + 1);
+        // Día calendario de Caracas (no depende de la zona horaria del servidor)
+        const { start: startOfDay, end: endOfDay } = getDayBounds();
 
         // Consultas dinámicas concurrentes con Prisma sin alterar esquema
         const [
@@ -50,14 +56,14 @@ async function getReports(req, res) {
             // 1. Tickets Totales (global)
             prisma.ticket.count(),
 
-            // 2. Tickets de la jornada (creados o resueltos hoy)
+            // 2. Tickets de la jornada (creados o resueltos hoy). No se usa updatedAt:
+            //    cualquier edición de un ticket cerrado lo contaría como cerrado hoy.
             prisma.ticket.count({
                 where: {
                     OR: [
                         { createdAt: { gte: startOfDay, lt: endOfDay } },
                         { fecha_cierre: { gte: startOfDay, lt: endOfDay } },
-                        { resueltoEn: { gte: startOfDay, lt: endOfDay } },
-                        { estado_actual: 'CERRADO', updatedAt: { gte: startOfDay, lt: endOfDay } }
+                        { resueltoEn: { gte: startOfDay, lt: endOfDay } }
                     ]
                 }
             }),
@@ -181,12 +187,13 @@ async function getReports(req, res) {
                 _sum: { puntos_complejidad: true }
             }),
 
-            // 15. Carga actual por operador (tickets en EN_PROGRESO o EN_PAUSA)
+            // 15. Carga actual por operador: todos sus tickets activos (no cerrados),
+            //     incluidos los recién asignados que aún no ha tomado y los en espera
             prisma.ticket.groupBy({
                 by: ['asignado_a_id'],
                 where: {
                     asignado_a_id: { not: null },
-                    estado_actual: { in: ['EN_PROGRESO', 'EN_PAUSA'] }
+                    estado_actual: { in: ACTIVE_STATES }
                 },
                 _count: { id: true }
             }),
@@ -228,8 +235,7 @@ async function getReports(req, res) {
                     OR: [
                         { createdAt: { gte: startOfDay, lt: endOfDay } },
                         { fecha_cierre: { gte: startOfDay, lt: endOfDay } },
-                        { resueltoEn: { gte: startOfDay, lt: endOfDay } },
-                        { estado_actual: 'CERRADO', updatedAt: { gte: startOfDay, lt: endOfDay } }
+                        { resueltoEn: { gte: startOfDay, lt: endOfDay } }
                     ]
                 },
                 select: {
@@ -237,7 +243,6 @@ async function getReports(req, res) {
                     createdAt: true,
                     fecha_cierre: true,
                     resueltoEn: true,
-                    updatedAt: true,
                     estado_actual: true
                 }
             })
@@ -432,26 +437,15 @@ async function getReports(req, res) {
             }
         });
 
-        // Tiempos de resolución
-        const opTimeMap = new Map();
+        // Tiempo promedio de resolución por operador: suma de tiempos ÷ tickets con
+        // tiempo válido, medido desde que el ticket llegó hasta que se cerró.
+        const opTicketsMap = new Map();
         for (const ticket of closedTickets) {
             if (!ticket.asignado_a_id) continue;
-            let tStat = opTimeMap.get(ticket.asignado_a_id);
-            if (!tStat) {
-                tStat = { totalMinutos: 0, countConTiempo: 0 };
-                opTimeMap.set(ticket.asignado_a_id, tStat);
-            }
-            const fin = ticket.fecha_cierre || ticket.resueltoEn;
-            if (fin && ticket.createdAt) {
-                const finTime = new Date(fin).getTime();
-                const createTime = new Date(ticket.createdAt).getTime();
-                if (!isNaN(finTime) && !isNaN(createTime) && finTime >= createTime) {
-                    const diff = Math.max(1, Math.round((finTime - createTime) / 60000));
-                    tStat.totalMinutos += diff;
-                    tStat.countConTiempo += 1;
-                }
-            }
+            if (!opTicketsMap.has(ticket.asignado_a_id)) opTicketsMap.set(ticket.asignado_a_id, []);
+            opTicketsMap.get(ticket.asignado_a_id).push(ticket);
         }
+        const averageTimeFor = opId => formatMinutes(averageResolutionMinutes(opTicketsMap.get(opId)));
 
         const operatorStatsMap = new Map();
 
@@ -466,12 +460,7 @@ async function getReports(req, res) {
                 ? Math.min(100, Math.round((cerrados / asignadosTotales) * 100))
                 : 0;
 
-            const tStat = opTimeMap.get(op.id);
-            let tiempoPromedio = 'N/A';
-            if (tStat && tStat.countConTiempo > 0 && tStat.totalMinutos > 0) {
-                const avg = Math.round(tStat.totalMinutos / tStat.countConTiempo);
-                tiempoPromedio = avg >= 60 ? `${(avg / 60).toFixed(1)} h` : `${avg} min`;
-            }
+            const tiempoPromedio = averageTimeFor(op.id);
 
             const cargaNivel = cargaActual <= 2 ? 'baja' : (cargaActual <= 4 ? 'media' : 'alta');
 
@@ -535,12 +524,7 @@ async function getReports(req, res) {
                     ? Math.min(100, Math.round((cerrados / asignadosTotales) * 100))
                     : 0;
 
-                const tStat = opTimeMap.get(opId);
-                let tiempoPromedio = 'N/A';
-                if (tStat && tStat.countConTiempo > 0 && tStat.totalMinutos > 0) {
-                    const avg = Math.round(tStat.totalMinutos / tStat.countConTiempo);
-                    tiempoPromedio = avg >= 60 ? `${(avg / 60).toFixed(1)} h` : `${avg} min`;
-                }
+                const tiempoPromedio = averageTimeFor(opId);
 
                 const cargaNivel = cargaActual <= 2 ? 'baja' : (cargaActual <= 4 ? 'media' : 'alta');
 
@@ -570,6 +554,16 @@ async function getReports(req, res) {
             }
         }
 
+        // Sobrecarga: carga activa de cada operador frente al promedio de su área.
+        // Es una alerta para el coordinador; no cambia el semáforo `cargaNivel`.
+        const overloadByOperator = computeOverload(Array.from(operatorStatsMap.values()));
+        for (const stats of operatorStatsMap.values()) {
+            const overload = overloadByOperator.get(stats.id);
+            stats.promedioAreaCarga = overload.promedioArea;
+            stats.indiceCarga = overload.indiceCarga;
+            stats.sobrecarga = overload.sobrecarga;
+        }
+
         const rankingList = Array.from(operatorStatsMap.values());
         rankingList.sort((a, b) => {
             if (b.cerrados !== a.cerrados) return b.cerrados - a.cerrados;
@@ -591,13 +585,11 @@ async function getReports(req, res) {
         const creadosPorHora = new Array(24).fill(0);
         const cerradosPorHora = new Array(24).fill(0);
 
+        // La hora se toma en Caracas, no en la zona horaria del servidor
         todayTickets.forEach(t => {
             if (t.createdAt) {
                 const d = new Date(t.createdAt);
-                if (d >= startOfDay && d < endOfDay) {
-                    const h = d.getHours();
-                    if (h >= 0 && h < 24) creadosPorHora[h]++;
-                }
+                if (d >= startOfDay && d < endOfDay) creadosPorHora[getHourOfDay(d)]++;
             }
             let closedDate = null;
             if (t.fecha_cierre) {
@@ -608,15 +600,11 @@ async function getReports(req, res) {
                 const re = new Date(t.resueltoEn);
                 if (re >= startOfDay && re < endOfDay) closedDate = re;
             }
-            if (!closedDate && t.estado_actual === 'CERRADO' && t.updatedAt) {
-                const ua = new Date(t.updatedAt);
-                if (ua >= startOfDay && ua < endOfDay) closedDate = ua;
-            }
-            if (closedDate) {
-                const h = closedDate.getHours();
-                if (h >= 0 && h < 24) cerradosPorHora[h]++;
-            }
+            if (closedDate) cerradosPorHora[getHourOfDay(closedDate)]++;
         });
+
+        const creadosHoy = creadosPorHora.reduce((sum, n) => sum + n, 0);
+        const cerradosHoy = cerradosPorHora.reduce((sum, n) => sum + n, 0);
 
         const flujoPorHora = {
             labels: horasLabels,
@@ -631,6 +619,8 @@ async function getReports(req, res) {
             jornada: ticketsJornada,
             ticketsJornada,
             tickets_jornada: ticketsJornada,
+            creadosHoy,
+            cerradosHoy,
             resueltos,
             enProgreso,
             tasa,

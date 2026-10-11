@@ -11,6 +11,7 @@ const assert = require('assert');
 const path = require('path');
 const fs = require('fs');
 const ejs = require('ejs');
+const { getDayBounds } = require('../src/services/metricsService');
 
 let totalTests = 0;
 let passedTests = 0;
@@ -27,16 +28,25 @@ function runTest(name, fn) {
     }
 }
 
-async function runAsyncTest(name, fn) {
+// Las pruebas asíncronas reemplazan temporalmente los métodos de prisma, así que
+// se ejecutan en cola (una tras otra) y el resumen final espera a que terminen
+// todas. Antes no se esperaban y process.exit() cortaba el proceso antes de que
+// reportaran resultado.
+let asyncQueue = Promise.resolve();
+
+function runAsyncTest(name, fn) {
     totalTests++;
-    try {
-        await fn();
-        passedTests++;
-        console.log(`  ✅ [PASS] ${name}`);
-    } catch (err) {
-        console.error(`  ❌ [FAIL] ${name}`);
-        console.error(`     Error: ${err.message}`);
-    }
+    asyncQueue = asyncQueue.then(async () => {
+        try {
+            await fn();
+            passedTests++;
+            console.log(`  ✅ [PASS] ${name}`);
+        } catch (err) {
+            console.error(`  ❌ [FAIL] ${name}`);
+            console.error(`     Error: ${err.message}`);
+        }
+    });
+    return asyncQueue;
 }
 
 console.log('\n================================================================');
@@ -377,8 +387,8 @@ runAsyncTest('R1.1: [End-to-End Async] Ejecución de getReports con cálculos di
         ];
     };
 
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
+    // Inicio del día en Caracas (independiente de la zona horaria de la máquina)
+    const startOfToday = getDayBounds().start;
 
     prisma.ticket.findMany = async (args) => {
         // Closed tickets with operator
@@ -448,11 +458,19 @@ runAsyncTest('R1.1: [End-to-End Async] Ejecución de getReports con cálculos di
         assert.strictEqual(op2.cargaActual, 5, 'op-2 debe tener carga actual 5');
         assert.strictEqual(op2.cargaNivel, 'alta', 'op-2 debe tener carga alta');
 
+        // Cada operador está solo en su área: no hay con quién compararlo, así que no hay índice ni alerta
+        assert.strictEqual(op1.indiceCarga, null, 'op-1 no es comparable (único en su área)');
+        assert.strictEqual(op1.sobrecarga, false, 'op-1 no debe generar alerta de sobrecarga');
+        assert.strictEqual(op2.indiceCarga, null, 'op-2 no es comparable (único en su área)');
+        assert.strictEqual(op2.sobrecarga, false, 'op-2 no debe generar alerta aunque su carga sea alta');
+
         // 3. Verificación de Flujo Horario
         assert(renderedData.flujoPorHora, 'Debe contener flujoPorHora');
         assert.strictEqual(renderedData.flujoPorHora.labels.length, 24, 'Debe contener 24 horas');
         assert.strictEqual(renderedData.flujoPorHora.creados[8], 2, 'A las 08:00 se crearon 2 tickets');
         assert.strictEqual(renderedData.flujoPorHora.cerrados[10], 1, 'A las 10:00 se cerró 1 ticket');
+        assert.strictEqual(renderedData.kpis.creadosHoy, 2, 'Debe sumar 2 tickets creados hoy');
+        assert.strictEqual(renderedData.kpis.cerradosHoy, 1, 'Debe sumar 1 ticket cerrado hoy');
 
         // 4. Verificación de Renderizado EJS con los datos producidos por el controlador
         const fullHtml = ejs.render(templateContent, renderedData, { filename: templatePath });
@@ -714,8 +732,7 @@ runAsyncTest('R1.5: [Adversarial] Flujo horario cuando fecha_cierre es de ayer p
         prisma.ticket.groupBy = async () => [];
         prisma.user.findMany = async () => [];
 
-        const startOfToday = new Date();
-        startOfToday.setHours(0, 0, 0, 0);
+        const startOfToday = getDayBounds().start;
         const resolvedAt11 = new Date(startOfToday.getTime() + 11 * 3600000);
         const closedYesterday = new Date(startOfToday.getTime() - 24 * 3600000);
 
@@ -858,6 +875,116 @@ runAsyncTest('R1.7: [Adversarial] Desempate de volumen por área a favor de mayo
     }
 });
 
+// 16b. Carga activa completa y sobrecarga frente al promedio del área (R1.8)
+runAsyncTest('R1.8: La carga activa cuenta todos los estados no cerrados y marca sobrecarga frente al promedio del área', async () => {
+    const prisma = require('../src/config/prisma');
+    const { getReports } = require('../src/controllers/reportController');
+
+    const origCount = prisma.ticket.count;
+    const origAgg = prisma.ticket.aggregate;
+    const origGroupBy = prisma.ticket.groupBy;
+    const origFindManyTicket = prisma.ticket.findMany;
+    const origFindManyUser = prisma.user.findMany;
+
+    try {
+        prisma.ticket.count = async () => 0;
+        prisma.ticket.aggregate = async () => ({ _sum: { puntos_complejidad: 0 }, _avg: { puntos_complejidad: 0 } });
+        prisma.ticket.findMany = async () => [];
+        prisma.user.findMany = async () => ['w1', 'w2', 'w3', 'w4'].map(id => ({
+            id, nombre: `Operador ${id}`, email: `${id}@inter.com`, rol: 'OPERADOR',
+            area_designada: 'WAN', estado_operativo: 'DISPONIBLE', tickets_resueltos: 0
+        }));
+
+        // Promedio del área = 4; el umbral de alerta es 6, así que w1 (7) debe marcarse
+        let activeLoadQuery = null;
+        prisma.ticket.groupBy = async (args) => {
+            if (args.by[0] === 'asignado_a_id' && args.where && args.where.estado_actual && args.where.estado_actual.in) {
+                activeLoadQuery = args;
+                return [
+                    { asignado_a_id: 'w1', _count: { id: 7 } },
+                    { asignado_a_id: 'w2', _count: { id: 3 } },
+                    { asignado_a_id: 'w3', _count: { id: 3 } },
+                    { asignado_a_id: 'w4', _count: { id: 3 } }
+                ];
+            }
+            return [];
+        };
+
+        let renderedData = null;
+        const req = { user: { nombre: 'Coord' } };
+        const res = { render: (v, d) => { renderedData = d; }, status: () => res, send: () => {} };
+        await getReports(req, res);
+
+        assert(activeLoadQuery, 'Debe consultar la carga activa por operador');
+        const states = activeLoadQuery.where.estado_actual.in;
+        ['NUEVO', 'EN_PROGRESO', 'EN_PAUSA', 'EN_ESPERA_TERCEROS'].forEach(state => {
+            assert(states.includes(state), `La carga activa debe incluir ${state}`);
+        });
+        assert(!states.includes('CERRADO'), 'La carga activa no debe incluir CERRADO');
+
+        const byId = Object.fromEntries(renderedData.rankingOperadores.map(o => [o.id, o]));
+        assert.strictEqual(byId.w1.cargaActual, 7);
+        assert.strictEqual(byId.w1.promedioAreaCarga, 4, 'El promedio del área debe ser 4');
+        assert.strictEqual(byId.w1.indiceCarga, 1.75);
+        assert.strictEqual(byId.w1.sobrecarga, true, 'w1 supera 1.5 veces el promedio del área');
+        assert.strictEqual(byId.w2.sobrecarga, false, 'w2 está por debajo del promedio');
+    } finally {
+        prisma.ticket.count = origCount;
+        prisma.ticket.aggregate = origAgg;
+        prisma.ticket.groupBy = origGroupBy;
+        prisma.ticket.findMany = origFindManyTicket;
+        prisma.user.findMany = origFindManyUser;
+    }
+});
+
+// 16c. "Cerrados hoy" no debe depender de updatedAt (R1.9)
+runAsyncTest('R1.9: Un ticket cerrado sin fecha de cierre no cuenta como cerrado hoy aunque su updatedAt sea de hoy', async () => {
+    const prisma = require('../src/config/prisma');
+    const { getReports } = require('../src/controllers/reportController');
+
+    const origCount = prisma.ticket.count;
+    const origAgg = prisma.ticket.aggregate;
+    const origGroupBy = prisma.ticket.groupBy;
+    const origFindManyTicket = prisma.ticket.findMany;
+    const origFindManyUser = prisma.user.findMany;
+
+    try {
+        const startOfToday = getDayBounds().start;
+        const queries = [];
+        prisma.ticket.count = async (args) => { queries.push(JSON.stringify(args || {})); return 0; };
+        prisma.ticket.aggregate = async () => ({ _sum: { puntos_complejidad: 0 }, _avg: { puntos_complejidad: 0 } });
+        prisma.ticket.groupBy = async () => [];
+        prisma.user.findMany = async () => [];
+        prisma.ticket.findMany = async (args) => {
+            queries.push(JSON.stringify(args || {}));
+            // Ticket antiguo y cerrado, sin fechas de cierre, editado hoy a las 09:00
+            return [{
+                id: 't-editado',
+                createdAt: new Date(startOfToday.getTime() - 48 * 3600000),
+                fecha_cierre: null,
+                resueltoEn: null,
+                updatedAt: new Date(startOfToday.getTime() + 9 * 3600000),
+                estado_actual: 'CERRADO'
+            }];
+        };
+
+        let renderedData = null;
+        const req = { user: { nombre: 'Coord' } };
+        const res = { render: (v, d) => { renderedData = d; }, status: () => res, send: () => {} };
+        await getReports(req, res);
+
+        assert(renderedData.flujoPorHora.cerrados.every(n => n === 0), 'No debe registrar cierres por una simple edición');
+        assert.strictEqual(renderedData.kpis.cerradosHoy, 0, 'cerradosHoy debe ser 0');
+        assert(queries.every(q => !q.includes('updatedAt')), 'Ninguna consulta debe filtrar por updatedAt');
+    } finally {
+        prisma.ticket.count = origCount;
+        prisma.ticket.aggregate = origAgg;
+        prisma.ticket.groupBy = origGroupBy;
+        prisma.ticket.findMany = origFindManyTicket;
+        prisma.user.findMany = origFindManyUser;
+    }
+});
+
 // 17. Adversarial: Renderizado con variables planas de KPI sin envoltura kpis (R2.17)
 runTest('R2.17: [Adversarial] Renderizado con variables planas de KPI sin envoltura kpis', () => {
     const flatData = {
@@ -885,10 +1012,13 @@ runTest('R2.17: [Adversarial] Renderizado con variables planas de KPI sin envolt
     assert(rendered.includes('65 pts'), 'Debe mostrar 65 pts');
 });
 
-console.log('\n================================================================');
-console.log(`   RESUMEN: ${passedTests}/${totalTests} pruebas pasaron correctamente`);
-console.log('================================================================\n');
+// El resumen se imprime cuando terminan todas las pruebas asíncronas
+asyncQueue.then(() => {
+    console.log('\n================================================================');
+    console.log(`   RESUMEN: ${passedTests}/${totalTests} pruebas pasaron correctamente`);
+    console.log('================================================================\n');
 
-if (passedTests !== totalTests) {
-    process.exit(1);
-}
+    if (passedTests !== totalTests) {
+        process.exit(1);
+    }
+});
