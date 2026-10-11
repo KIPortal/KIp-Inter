@@ -540,7 +540,126 @@ async function restoreTicket(req, res) {
     }
 }
 
+// Traspaso de casos al operador de guardia (spec §10.1): una o varias incidencias,
+// con nota de contexto obligatoria. No reinicia el tiempo (se mide desde createdAt).
+async function handoffTickets(req, res) {
+    try {
+        const { ticketCodes, operatorId } = req.body || {};
+        const nota = typeof req.body?.nota === 'string' ? req.body.nota.trim() : '';
+        if (!Array.isArray(ticketCodes) || ticketCodes.length === 0) {
+            return res.status(400).json({ success: false, error: 'No se enviaron tickets' });
+        }
+        if (ticketCodes.some(code => typeof code !== 'string' || !code.trim())) {
+            return res.status(400).json({ success: false, error: 'La selección contiene códigos de ticket no válidos' });
+        }
+        if (typeof operatorId !== 'string' || !operatorId.trim()) {
+            return res.status(400).json({ success: false, error: 'Falta seleccionar al operador de guardia' });
+        }
+        if (nota.length < 10) {
+            return res.status(400).json({
+                success: false,
+                error: 'La nota de traspaso es obligatoria: indica qué se intentó, qué se hizo y qué sigue'
+            });
+        }
+        const uniqueCodes = [...new Set(ticketCodes.map(code => code.trim()))];
+        const guardia = await prisma.user.findFirst({
+            where: { id: operatorId, rol: 'OPERADOR' },
+            select: { id: true, nombre: true }
+        });
+        if (!guardia) return res.status(404).json({ success: false, error: 'Operador no encontrado' });
+
+        const tickets = await prisma.ticket.findMany({
+            where: { codigo_incidencia: { in: uniqueCodes } },
+            select: { id: true, codigo_incidencia: true, estado_actual: true, fecha_asignacion: true, asignado_a: { select: { nombre: true } } }
+        });
+        if (tickets.length !== uniqueCodes.length) {
+            return res.status(404).json({ success: false, error: 'Uno o más tickets no existen' });
+        }
+        const noTraspasables = tickets.filter(t => ['RESUELTO', 'CERRADO'].includes(t.estado_actual));
+        if (noTraspasables.length > 0) {
+            return res.status(409).json({
+                success: false,
+                error: `Ya están resueltos o cerrados: ${noTraspasables.map(t => t.codigo_incidencia).join(', ')}`
+            });
+        }
+
+        const now = new Date();
+        for (const ticket of tickets) {
+            await prisma.ticket.update({
+                where: { id: ticket.id },
+                data: {
+                    asignado_a_id: guardia.id,
+                    // Conserva la fecha de asignación original si ya existía
+                    fecha_asignacion: ticket.fecha_asignacion || now
+                }
+            });
+            await logAudit(
+                req,
+                'TICKET_TRASPASADO_GUARDIA',
+                ticket.id,
+                `De: ${ticket.asignado_a?.nombre || 'sin asignar'} → ${guardia.nombre}. Nota: ${nota}`
+            );
+        }
+        return res.json({ success: true, count: tickets.length, guardia: guardia.nombre });
+    } catch (error) {
+        console.error('Error en traspaso a guardia:', error);
+        return res.status(500).json({ success: false, error: 'No se pudo completar el traspaso' });
+    }
+}
+
+// Historial de un ticket (ediciones, traspasos, cierre...) con la nota visible en el detalle
+async function getTicketHistory(req, res) {
+    const ticketCode = getTicketCode(req);
+    try {
+        const ticket = await prisma.ticket.findUnique({
+            where: { codigo_incidencia: ticketCode },
+            select: { id: true }
+        });
+        if (!ticket) return res.status(404).json({ success: false, error: 'Ticket no encontrado' });
+        const logs = await prisma.auditLog.findMany({
+            where: { ticketId: ticket.id },
+            orderBy: { createdAt: 'desc' },
+            take: 50,
+            include: { user: { select: { nombre: true } } }
+        });
+        return res.json({
+            success: true,
+            historial: logs.map(l => ({
+                accion: l.accion,
+                detalles: l.detalles,
+                usuario: l.user?.nombre || 'Sistema',
+                fecha: l.createdAt
+            }))
+        });
+    } catch (error) {
+        console.error('Error al leer historial:', error);
+        return res.status(500).json({ success: false, error: 'No se pudo leer el historial' });
+    }
+}
+
+// Papelera: tickets eliminados (el filtro explícito evita el filtro automático)
+async function listTrash(req, res) {
+    try {
+        const tickets = await prisma.ticket.findMany({
+            where: { eliminado_en: { not: null } },
+            orderBy: { eliminado_en: 'desc' },
+            take: 200,
+            select: {
+                codigo_incidencia: true, asunto: true, area_designada: true, estado_actual: true,
+                createdAt: true, eliminado_en: true, motivo_eliminacion: true
+            }
+        });
+        return res.json({ success: true, tickets });
+    } catch (error) {
+        console.error('Error al listar papelera:', error);
+        return res.status(500).json({ success: false, error: 'No se pudo leer la papelera' });
+    }
+}
+
 module.exports = {
+    handoffTickets,
+    getTicketHistory,
+    listTrash,
     closeTicket,
     editTicket,
     deleteTicket,

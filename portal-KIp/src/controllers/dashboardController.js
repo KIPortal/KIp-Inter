@@ -2,6 +2,8 @@ const prisma = require('../config/prisma');
 const {
     ACTIVE_STATES,
     getDayBounds,
+    getHourOfDay,
+    getClosingDate,
     averageResolutionMinutes,
     formatMinutes,
     computeOverload
@@ -71,8 +73,18 @@ async function renderDashboard(req, res) {
         const ticketsRealizados = cerradosHoy.length;
         // Tiempo de atención: promedio desde que el ticket llegó hasta que se cerró
         const tiempoAtencion = formatMinutes(averageResolutionMinutes(cerradosHoy));
-        const ticketsCreadosHoy = await prisma.ticket.count({
-            where: { createdAt: { gte: startOfDay, lt: endOfDay } }
+        const creadosHoy = await prisma.ticket.findMany({
+            where: { createdAt: { gte: startOfDay, lt: endOfDay } },
+            select: { createdAt: true }
+        });
+        const ticketsCreadosHoy = creadosHoy.length;
+
+        // Flujo por hora de HOY en hora de Caracas (la vista solo lo dibuja)
+        const flujoHoy = { creados: new Array(24).fill(0), cerrados: new Array(24).fill(0) };
+        creadosHoy.forEach(t => { flujoHoy.creados[getHourOfDay(t.createdAt)]++; });
+        cerradosHoy.forEach(t => {
+            const fin = getClosingDate(t);
+            if (fin && fin >= startOfDay && fin < endOfDay) flujoHoy.cerrados[getHourOfDay(fin)]++;
         });
         const criticosSinAsignar = await prisma.ticket.count({
             where: {
@@ -116,6 +128,7 @@ async function renderDashboard(req, res) {
             ticketsActivos,
             ticketsRealizados,
             ticketsCreadosHoy,
+            flujoHoy,
             criticosSinAsignar,
             tiempoAtencion,
             alertasSobrecarga,

@@ -239,3 +239,9 @@ Estructura propuesta, sujeta a ajuste posterior:
 **Auditoría.** Cada cierre, edición (valor anterior → nuevo), eliminación (con motivo) y restauración se guarda en `AuditLog`. Esta tabla no existía en `schema.prisma` ni en las migraciones aunque la pantalla de auditoría ya la consultaba; la migración `20261011010000_soft_delete_and_audit_log` la crea.
 
 **Endpoints (coordinador):** `POST /api/tickets/:code/close`, `PATCH /api/tickets/:code` (asunto, descripcion, area_designada, prioridad, confirmarCambioArea), `DELETE /api/tickets/:code` (motivo, confirmar), `POST /api/tickets/:code/restore`. Respuestas con `requiereConfirmacion: true` y HTTP 409 cuando hace falta confirmar.
+
+**Traspaso a guardia (implementado).** `POST /api/tickets/handoff` con `{ ticketCodes[], operatorId, nota }` (nota obligatoria, mínimo 10 caracteres). Reasigna al operador elegido, conserva la `fecha_asignacion` original y no toca `createdAt`, así que el tiempo de atención sigue contando desde la llegada. No admite tickets resueltos o cerrados. Cada traspaso queda en `AuditLog` (`TICKET_TRASPASADO_GUARDIA`, con "De → A" y la nota). La rotación semanal de guardias (quién es el guardia) sigue pendiente; por ahora el coordinador elige al operador.
+
+**Otros endpoints (coordinador):** `GET /api/tickets/trash` (papelera) y `GET /api/tickets/:code/history` (historial con notas, para el detalle del ticket).
+
+**Dashboard.** El controlador entrega `flujoHoy = { creados[24], cerrados[24] }`, ya en hora de Caracas, solo con el día de hoy y con el cierre medido por `resueltoEn`. La vista solo lo dibuja; no debe recalcular horas ni leer todos los tickets.

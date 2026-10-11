@@ -3,6 +3,7 @@
 const assert = require('assert');
 const prisma = require('../src/config/prisma');
 const ctrl = require('../src/controllers/ticketController');
+const dashboard = require('../src/controllers/dashboardController');
 
 let total = 0, passed = 0;
 async function t(name, fn) {
@@ -138,6 +139,59 @@ function setup(ticket) {
         assert.deepStrictEqual(seen.args.where, { eliminado_en: { not: null } });
         await hook({ model: 'User', action: 'findMany', args: {} }, async p => { seen = p; });
         assert.deepStrictEqual(seen.args, {});
+    });
+
+    await t('Traspaso: exige nota, operador y tickets no resueltos/cerrados', async () => {
+        setup({});
+        prisma.user.findFirst = async () => ({ id: 'g1', nombre: 'Guardia' });
+        prisma.ticket.findMany = async () => [{ id: 'a', codigo_incidencia: 'INC-001', estado_actual: 'EN_PROGRESO', fecha_asignacion: null, asignado_a: null }];
+        const sinNota = mockRes();
+        await ctrl.handoffTickets(req({}, { ticketCodes: ['INC-001'], operatorId: 'g1', nota: 'corto' }), sinNota);
+        assert.strictEqual(sinNota.code, 400);
+        prisma.ticket.findMany = async () => [{ id: 'a', codigo_incidencia: 'INC-001', estado_actual: 'RESUELTO', asignado_a: null }];
+        const resuelto = mockRes();
+        await ctrl.handoffTickets(req({}, { ticketCodes: ['INC-001'], operatorId: 'g1', nota: 'Se reinició el enlace; falta confirmar con el cliente' }), resuelto);
+        assert.strictEqual(resuelto.code, 409);
+    });
+    await t('Traspaso: asigna al guardia, conserva fecha_asignacion y audita con la nota', async () => {
+        setup({});
+        const original = new Date('2026-10-10T14:00:00Z');
+        const updates = [];
+        prisma.user.findFirst = async () => ({ id: 'g1', nombre: 'Guardia' });
+        prisma.ticket.findMany = async () => [
+            { id: 'a', codigo_incidencia: 'INC-001', estado_actual: 'EN_PROGRESO', fecha_asignacion: original, asignado_a: { nombre: 'Ana' } },
+            { id: 'b', codigo_incidencia: 'INC-002', estado_actual: 'NUEVO', fecha_asignacion: null, asignado_a: null }
+        ];
+        prisma.ticket.update = async ({ where, data }) => { updates.push({ id: where.id, data }); };
+        const res = mockRes();
+        const nota = 'Se reinició el enlace; falta confirmar con el cliente';
+        await ctrl.handoffTickets(req({}, { ticketCodes: ['INC-001', 'INC-002'], operatorId: 'g1', nota }), res);
+        assert.strictEqual(res.body.count, 2);
+        assert.strictEqual(updates[0].data.asignado_a_id, 'g1');
+        assert.strictEqual(updates[0].data.fecha_asignacion, original);
+        assert(updates[1].data.fecha_asignacion instanceof Date);
+        assert.strictEqual(audits.length, 2);
+        assert(audits[0].detalles.includes(nota) && audits[0].detalles.includes('Ana'));
+    });
+    await t('Dashboard: flujoHoy en hora de Caracas, solo hoy, cierre = resueltoEn', async () => {
+        const { getDayBounds } = require('../src/services/metricsService');
+        const { start } = getDayBounds();
+        const at = h => new Date(start.getTime() + h * 3600000 + 600000); // hh:10 Caracas
+        prisma.ticket.findMany = async ({ where, select }) => {
+            if (where && where.createdAt && select && select.createdAt && !select.fecha_cierre) return [{ createdAt: at(9) }, { createdAt: at(9) }, { createdAt: at(14) }];
+            if (where && where.OR) return [{ createdAt: at(8), resueltoEn: at(11), fecha_cierre: at(15) }];
+            return [];
+        };
+        prisma.ticket.count = async () => 0;
+        prisma.user.findMany = async () => [];
+        let data;
+        await dashboard.renderDashboard({ user: { rol: 'COORDINADOR' }, query: {} }, { render: (_v, d) => { data = d; }, status: () => ({ send() {} }) });
+        assert(data, 'debe renderizar');
+        assert.strictEqual(data.flujoHoy.creados[9], 2);
+        assert.strictEqual(data.flujoHoy.creados[14], 1);
+        assert.strictEqual(data.flujoHoy.cerrados[11], 1, 'cierra a la hora de resueltoEn');
+        assert.strictEqual(data.flujoHoy.cerrados[15], 0);
+        assert.strictEqual(data.ticketsCreadosHoy, 3);
     });
 
     console.log(`\n   RESUMEN: ${passed}/${total} pruebas pasaron correctamente\n`);
