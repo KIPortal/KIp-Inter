@@ -43,12 +43,14 @@ function getHourOfDay(date) {
 }
 
 /**
- * Momento en que se cerró el ticket. Usa `resueltoEn` solo como respaldo de
- * `fecha_cierre` (hoy ambos campos se sellan juntos). No usa `updatedAt`: cualquier
+ * Momento en que terminó el trabajo: `resueltoEn` (lo sella el operador al
+ * resolver) y, como respaldo, `fecha_cierre` (lo sella el coordinador al cerrar;
+ * cubre cierres directos y datos antiguos). No usa `updatedAt`: cualquier
  * edición posterior lo movería y falsearía "cerrados hoy".
  */
 function getClosingDate(ticket) {
-    return ticket?.fecha_cierre || ticket?.resueltoEn || null;
+    // Fin del trabajo = cuando el operador resolvió; si no hay, cuando se cerró
+    return ticket?.resueltoEn || ticket?.fecha_cierre || null;
 }
 
 /**

@@ -8,6 +8,7 @@
     "start": "npm run build:assets && node server.js",
     "test:metrics": "node scripts/test-metrics.js",
     "test:reports": "node scripts/test-reports.js",
+    "test:tickets": "node scripts/test-tickets.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

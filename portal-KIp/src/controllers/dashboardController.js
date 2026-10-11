@@ -101,6 +101,7 @@ async function renderDashboard(req, res) {
             }));
         const operadoresDisponibles = operadores.length;
         const ticketCodes = await prisma.ticket.findMany({
+            where: prisma.INCLUDE_DELETED, // incluye eliminados: no se reutilizan códigos
             select: { codigo_incidencia: true }
         });
         const numericCodes = ticketCodes
@@ -164,7 +165,7 @@ async function renderOperatorDashboard(req, res) {
             orderBy
         }),
         prisma.ticket.findMany({
-            where: { ...assignedToUser, estado_actual: 'CERRADO' },
+            where: { ...assignedToUser, estado_actual: { in: ['RESUELTO', 'CERRADO'] } },
             include: ticketRelations,
             orderBy
         })
