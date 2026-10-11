@@ -265,6 +265,12 @@
                             </select>
                         </div>
 
+                        <!-- Selector de Fecha Específica (Fecha obligatoria si se selecciona especifica) -->
+                        <div id="fechaInputWrapper" class="hidden items-center gap-1.5 bg-white/80 backdrop-blur-md border border-[#D1D1D6] rounded-[8px] px-2.5 py-1 shadow-2xs">
+                            <label for="fechaInput" class="text-[11px] font-medium text-[#8E8E93] leading-none">Fecha:</label>
+                            <input type="date" id="fechaInput" class="bg-transparent text-[12px] font-semibold text-[#1C1C1E] border-none focus:outline-none focus:ring-0 cursor-pointer">
+                        </div>
+
                         <!-- Botón Descargar Excel (verde/sky con estilo macOS Ocean-Glass) - R3 -->
                         <button type="button" id="btnDescargarExcel" class="px-3 py-1.5 rounded-[8px] bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-medium text-[12px] flex items-center gap-1.5 shadow-xs hover:shadow transition duration-150 cursor-pointer select-none">
                             <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -318,7 +324,7 @@
                 <div id="tab-overview" class="tab-pane flex flex-col gap-6" role="tabpanel" aria-labelledby="tab-btn-overview">
 
                     <!-- BEGIN: 4 KPI Cards (Liquid Glass) - R2.1 -->
-                <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 flex-shrink-0" data-purpose="kpi-cards">
+                <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 flex-shrink-0" data-purpose="kpi-cards">
                     <!-- Card 1: Tickets Totales -->
                     <div class="figma-card p-5 flex flex-col justify-between relative overflow-hidden group">
                         <div class="flex items-start justify-between">
@@ -404,6 +410,31 @@
                                 </span>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Card 5: Tiempos de Solución (Tiempo Total vs Tiempo en Horario) -->
+                    <div class="figma-card p-5 flex flex-col justify-between relative overflow-hidden group">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wider leading-tight">
+                                Tiempo de Solución
+                            </span>
+                            <span class="w-2 h-2 rounded-full bg-sky-500 mt-0.5"></span>
+                        </div>
+                        <div class="mt-2.5 grid grid-cols-2 gap-2 divide-x divide-black/5">
+                            <div>
+                                <span class="text-[10px] font-semibold text-[#8E8E93] uppercase block truncate">tiempo total</span>
+                                <div id="kpi-tiempo-total" class="text-[18px] sm:text-[20px] font-bold font-mono text-[#1C1C1E] tracking-tight num-tabular mt-0.5">
+                                    <%= typeof kpis !== 'undefined' && kpis.tiempoTotal ? kpis.tiempoTotal : (typeof tiempoTotal !== 'undefined' ? tiempoTotal : '0h') %>
+                                </div>
+                            </div>
+                            <div class="pl-2">
+                                <span class="text-[10px] font-semibold text-[#8E8E93] uppercase block truncate">tiempo en horario</span>
+                                <div id="kpi-tiempo-horario" class="text-[18px] sm:text-[20px] font-bold font-mono text-[#1C1C1E] tracking-tight num-tabular mt-0.5">
+                                    <%= typeof kpis !== 'undefined' && kpis.tiempoHorario ? kpis.tiempoHorario : (typeof tiempoHorario !== 'undefined' ? tiempoHorario : '0h') %>
+                                </div>
+                            </div>
+                        </div>
+                        <span class="text-[10px] text-[#8E8E93] mt-2 block">Promedio de atención en el periodo</span>
                     </div>
                 </section>
                 <!-- END: KPI Cards -->
@@ -593,7 +624,7 @@
                                     <th class="py-2.5 px-4 font-semibold text-[#8E8E93] uppercase tracking-wider text-[10px] text-center">Estado</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-[#E5E5EA] bg-transparent">
+                            <tbody class="divide-y divide-[#E5E5EA] bg-transparent" id="rankingTableBody">
                                 <% const rankItems = ((typeof ranking !== 'undefined' && Array.isArray(ranking)) ? ranking : ((typeof rankingOperadores !== 'undefined' && Array.isArray(rankingOperadores)) ? rankingOperadores : ((typeof operadores !== 'undefined' && Array.isArray(operadores)) ? operadores : []))).filter(Boolean); %>
                                 <% if (rankItems.length > 0) { %>
                                     <% rankItems.forEach((op, index) => { %>
@@ -940,6 +971,10 @@
             }
 
             const echartsInstances = [];
+            let flowChartInstance = null;
+            let areaChartInstance = null;
+            let medianChartInstance = null;
+            let opChartInstance = null;
 
             function initCharts() {
                 if (typeof echarts === 'undefined') return;
@@ -1054,6 +1089,7 @@
                             }
                         ]
                     });
+                    flowChartInstance = flowChart;
                     echartsInstances.push(flowChart);
                 }
 
@@ -1144,6 +1180,7 @@
                             /* Palette palette preservation for test suites: #85A8E0, #4FE0B5, #FF8A80 */
                         ]
                     });
+                    areaChartInstance = areaChart;
                     echartsInstances.push(areaChart);
                 }
 
@@ -1244,6 +1281,7 @@
                             }
                         ]
                     });
+                    medianChartInstance = medianChart;
                     echartsInstances.push(medianChart);
                 }
 
@@ -1334,6 +1372,7 @@
                             }
                         ]
                     });
+                    opChartInstance = opChart;
                     echartsInstances.push(opChart);
                 }
 
@@ -1456,6 +1495,367 @@
                     });
             }
 
+            function formatDuration(val) {
+                if (val === undefined || val === null || val === '') return '0h';
+                if (typeof val === 'number') {
+                    if (val <= 0) return '0h';
+                    if (val >= 60) return (val / 60).toFixed(1) + 'h';
+                    return Math.round(val) + 'm';
+                }
+                return String(val);
+            }
+
+            function updateKpiCards(resumen) {
+                if (!resumen) return;
+
+                const elTotal = document.getElementById('kpi-total');
+                if (elTotal) {
+                    elTotal.textContent = resumen.total ?? resumen.ticketsTotales ?? resumen.creados ?? 0;
+                }
+
+                const elJornada = document.getElementById('kpi-jornada');
+                if (elJornada) {
+                    elJornada.textContent = resumen.jornada ?? resumen.ticketsJornada ?? resumen.creados ?? 0;
+                }
+
+                const elResueltos = document.getElementById('kpi-resueltos');
+                if (elResueltos) {
+                    elResueltos.textContent = resumen.resueltos ?? resumen.cerrados ?? 0;
+                }
+
+                const elAreaCritica = document.getElementById('kpi-area-critica');
+                if (elAreaCritica) {
+                    const crit = resumen.areaCritica || resumen.area_critica;
+                    if (crit && typeof crit === 'object') {
+                        elAreaCritica.textContent = crit.nombre || crit.label || 'Ninguna';
+                    } else if (typeof crit === 'string') {
+                        elAreaCritica.textContent = crit;
+                    } else {
+                        elAreaCritica.textContent = 'Ninguna';
+                    }
+                }
+
+                const elPuntos = document.getElementById('kpi-puntos');
+                if (elPuntos) {
+                    const pts = resumen.puntosTotales ?? resumen.puntos ?? 0;
+                    elPuntos.textContent = `${pts} pts`;
+                }
+
+                const elTiempoTotal = document.getElementById('kpi-tiempo-total');
+                if (elTiempoTotal) {
+                    const tTot = resumen.tiempoTotal ?? resumen.tiempo_total;
+                    elTiempoTotal.textContent = formatDuration(tTot);
+                }
+
+                const elTiempoHorario = document.getElementById('kpi-tiempo-horario');
+                if (elTiempoHorario) {
+                    const tHor = resumen.tiempoHorario ?? resumen.tiempo_horario;
+                    elTiempoHorario.textContent = formatDuration(tHor);
+                }
+            }
+
+            function updateChartsData(flujoHorario, porArea, porOperador, resumen) {
+                if (flowChartInstance && flujoHorario) {
+                    const defaultHours = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
+                    const hours = (flujoHorario.labels && flujoHorario.labels.length > 0) ? flujoHorario.labels : defaultHours;
+                    const rawC = flujoHorario.creados || [];
+                    const rawA = flujoHorario.asignados || [];
+                    const rawCe = flujoHorario.cerrados || [];
+                    flowChartInstance.setOption({
+                        xAxis: { data: hours },
+                        series: [
+                            { name: 'Creados Hoy', data: hours.map((_, i) => Number(rawC[i]) || 0) },
+                            { name: 'Asignados Hoy', data: hours.map((_, i) => Number(rawA[i]) || 0) },
+                            { name: 'Cerrados Hoy', data: hours.map((_, i) => Number(rawCe[i]) || 0) }
+                        ]
+                    });
+                }
+
+                if (areaChartInstance && porArea) {
+                    let labels = [];
+                    let creados = [];
+                    let resueltos = [];
+
+                    if (Array.isArray(porArea)) {
+                        labels = porArea.map(a => a.nombre || a.area || 'General');
+                        creados = porArea.map(a => Number(a.creados ?? a.asignados ?? a.totales ?? 0) || 0);
+                        resueltos = porArea.map(a => Number(a.resueltos ?? a.cerrados ?? 0) || 0);
+                    } else if (typeof porArea === 'object') {
+                        labels = porArea.labels || [];
+                        const rawC = porArea.creados || porArea.asignados || porArea.totales || porArea.data || [];
+                        const rawR = porArea.resueltos || porArea.cerrados || [];
+                        creados = labels.map((_, i) => Number(rawC[i]) || 0);
+                        resueltos = labels.map((_, i) => Number(rawR[i]) || 0);
+                    }
+
+                    if (labels.length > 0) {
+                        areaChartInstance.setOption({
+                            xAxis: {
+                                data: labels,
+                                axisLabel: { rotate: labels.length > 4 ? 20 : 0 }
+                            },
+                            series: [
+                                { name: 'Asignados / Creados', data: creados },
+                                { name: 'Resueltos', data: resueltos }
+                            ]
+                        });
+                    }
+                }
+
+                if (medianChartInstance && porArea) {
+                    let labels = [];
+                    let values = [];
+
+                    if (Array.isArray(porArea)) {
+                        labels = porArea.map(a => a.nombre || a.area || 'General');
+                        values = porArea.map(a => Number(a.tiempoPromedioMinutos ?? a.tiempoPromedio ?? 0) || 0);
+                    } else if (typeof porArea === 'object' && porArea.labels) {
+                        labels = porArea.labels || [];
+                        const rawV = porArea.data || porArea.valoresMinutos || [];
+                        values = labels.map((_, i) => Number(rawV[i]) || 0);
+                    }
+
+                    if (labels.length > 0) {
+                        medianChartInstance.setOption({
+                            yAxis: { data: labels },
+                            series: [{ data: values }]
+                        });
+                    }
+                }
+
+                if (opChartInstance && Array.isArray(porOperador)) {
+                    const opLabels = porOperador.map(o => `${o.nombre || 'Operador'} (${o.area || 'General'})`);
+                    const opAsignados = porOperador.map(o => Number(o.asignadosTotales ?? o.asignados ?? 0) || 0);
+                    const opResueltos = porOperador.map(o => Number(o.cerrados ?? o.resueltos ?? 0) || 0);
+
+                    opChartInstance.setOption({
+                        xAxis: {
+                            data: opLabels,
+                            axisLabel: { rotate: opLabels.length > 3 ? 20 : 0 }
+                        },
+                        series: [
+                            { name: 'Asignados Totales', data: opAsignados },
+                            { name: 'Resueltos', data: opResueltos }
+                        ]
+                    });
+                }
+            }
+
+            function updateOperatorTable(porOperador) {
+                const tbody = document.getElementById('rankingTableBody');
+                if (!tbody) return;
+
+                if (!Array.isArray(porOperador) || porOperador.length === 0) {
+                    tbody.innerHTML = `
+                        <tr class="operator-ranking-row">
+                            <td colspan="10" class="py-8 text-center text-[12px] text-[#8E8E93]">
+                                No se encontraron registros de operadores para el periodo seleccionado.
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                let html = '';
+                porOperador.forEach((op, index) => {
+                    const medal = index === 0
+                        ? '<span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#FFF4D6] text-[#B25E02] font-mono font-bold text-[11px] shadow-2xs">🥇</span>'
+                        : (index === 1
+                            ? '<span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#F2F2F7] text-[#48484A] font-mono font-bold text-[11px] shadow-2xs">🥈</span>'
+                            : (index === 2
+                                ? '<span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#FFE5E5] text-[#991B1B] font-mono font-bold text-[11px] shadow-2xs">🥉</span>'
+                                : `<span class="inline-flex items-center justify-center w-6 h-6 text-[#8E8E93] font-mono font-semibold text-[11px]">#${index + 1}</span>`));
+
+                    const nombre = escapeHtml(op.nombre || 'Operador');
+                    const email = escapeHtml(op.email || 'Sin correo');
+                    const initials = nombre.trim().split(/\s+/).slice(0, 2).map(p => p.charAt(0)).join('').toUpperCase() || 'OP';
+                    const area = escapeHtml(op.area || 'General');
+                    const asignados = op.asignadosTotales ?? op.asignados ?? 0;
+                    const cerrados = op.cerrados ?? op.resueltos ?? 0;
+                    const ef = typeof op.eficiencia !== 'undefined' ? Number(op.eficiencia) : 0;
+                    const efColor = ef >= 80 ? 'bg-[#34C759]' : (ef >= 50 ? 'bg-sky-500' : 'bg-[#FF9500]');
+                    const carga = typeof op.cargaActual !== 'undefined' ? Number(op.cargaActual) : (typeof op.carga !== 'undefined' ? Number(op.carga) : 0);
+
+                    let semaforo = '';
+                    if (carga <= 2) {
+                        semaforo = `
+                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#E3F9E5] text-[#1B873F] border border-[#BCE8C5]">
+                                <span class="w-2 h-2 rounded-full bg-[#34C759]"></span>
+                                <span>${carga} activas (Baja)</span>
+                            </span>`;
+                    } else if (carga <= 4) {
+                        semaforo = `
+                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#FFF4D6] text-[#B25E02] border border-[#FFE8A3]">
+                                <span class="w-2 h-2 rounded-full bg-[#FF9500]"></span>
+                                <span>${carga} activas (Media)</span>
+                            </span>`;
+                    } else {
+                        semaforo = `
+                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#FFE5E5] text-[#D70015] border border-[#FFC2C2]">
+                                <span class="w-2 h-2 rounded-full bg-[#FF3B30] animate-pulse"></span>
+                                <span>${carga} activas (Alta)</span>
+                            </span>`;
+                    }
+
+                    const puntos = op.puntos || 0;
+                    const tProm = escapeHtml(op.tiempoPromedio || 'N/A');
+
+                    let estadoBadge = '';
+                    if (op.estado === 'DISPONIBLE') {
+                        estadoBadge = '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#E3F9E5] text-[#1B873F] border border-[#BCE8C5]"><span class="w-1.5 h-1.5 rounded-full bg-[#34C759]"></span> Disponible</span>';
+                    } else if (op.estado === 'EN_TERRENO') {
+                        estadoBadge = '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-50 text-sky-700 border border-sky-200"><span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span> En Terreno</span>';
+                    } else {
+                        estadoBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#F2F2F7] text-[#8E8E93] border border-[#E5E5EA]"><span class="w-1.5 h-1.5 rounded-full bg-[#8E8E93]"></span> ${escapeHtml(op.estado || 'Ausente')}</span>`;
+                    }
+
+                    html += `
+                        <tr class="hover:bg-white/60 transition-colors operator-ranking-row">
+                            <td class="py-3 px-4 text-center">${medal}</td>
+                            <td class="py-3 px-4">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-7 h-7 rounded-full bg-sky-500 text-white flex items-center justify-center font-mono font-semibold text-[10px] flex-shrink-0 shadow-2xs">${initials}</div>
+                                    <div class="flex flex-col min-w-0">
+                                        <span class="font-medium text-[#1C1C1E] truncate">${nombre}</span>
+                                        <span class="text-[10px] font-mono text-[#8E8E93] truncate">${email}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#F2F2F7] text-[#48484A] border border-[#E5E5EA]">${area}</span>
+                            </td>
+                            <td class="py-3 px-4 text-right">
+                                <span class="font-mono text-[#48484A] font-medium num-tabular">${asignados}</span>
+                            </td>
+                            <td class="py-3 px-4 text-right">
+                                <span class="font-mono text-[#1C1C1E] font-semibold num-tabular">${cerrados}</span>
+                            </td>
+                            <td class="py-3 px-4 min-w-[130px]">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-mono font-semibold text-[11px] text-[#1C1C1E] w-9 text-right num-tabular">${ef}%</span>
+                                    <div class="w-16 bg-[#E5E5EA] rounded-full h-1.5 overflow-hidden flex-shrink-0">
+                                        <div class="h-full rounded-full transition-all duration-300 ${efColor}" style="width: ${Math.min(100, Math.max(0, ef))}%"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4 min-w-[130px]">${semaforo}</td>
+                            <td class="py-3 px-4 text-right">
+                                <span class="text-sky-600 font-mono font-bold text-[12px] num-tabular">${puntos} <span class="text-[10px] font-sans font-medium text-[#8E8E93]">pts</span></span>
+                            </td>
+                            <td class="py-3 px-4 font-mono text-[#48484A]">${tProm}</td>
+                            <td class="py-3 px-4 text-center">${estadoBadge}</td>
+                        </tr>
+                    `;
+                });
+
+                tbody.innerHTML = html;
+            }
+
+            let isFetchingMetrics = false;
+            async function fetchReportData() {
+                const periodoSelect = document.getElementById('periodoSelect');
+                const fechaInput = document.getElementById('fechaInput');
+                const periodo = periodoSelect ? periodoSelect.value : 'jornada';
+                const fecha = fechaInput ? fechaInput.value : '';
+
+                if (periodo === 'especifica' && !fecha) {
+                    return;
+                }
+
+                if (isFetchingMetrics) return;
+                isFetchingMetrics = true;
+
+                try {
+                    let url = '/reportes/data?periodo=' + encodeURIComponent(periodo);
+                    if (fecha) {
+                        url += '&fecha=' + encodeURIComponent(fecha);
+                    }
+
+                    const response = await fetch(url);
+                    if (!response.ok) {
+                        console.warn('Error al consultar /reportes/data:', response.status);
+                        return;
+                    }
+
+                    const payload = await response.json();
+                    if (!payload) return;
+
+                    const data = payload.data || payload;
+                    const resumen = data.resumen || data.kpis || data;
+                    const porArea = data.porArea || data.volumenPorArea || data.areaTickets || {};
+                    const porOperador = data.porOperador || data.rankingOperadores || data.ranking || [];
+                    const flujoHorario = data.flujoHorario || data.flujoPorHora || {};
+
+                    updateKpiCards(resumen);
+                    updateChartsData(flujoHorario, porArea, porOperador, resumen);
+                    updateOperatorTable(porOperador);
+
+                } catch (error) {
+                    console.error('Error al actualizar datos del reporte:', error);
+                } finally {
+                    isFetchingMetrics = false;
+                }
+            }
+
+            function setupPeriodAndExcelHandlers() {
+                const periodoSelect = document.getElementById('periodoSelect');
+                const fechaInputWrapper = document.getElementById('fechaInputWrapper');
+                const fechaInput = document.getElementById('fechaInput');
+                const btnDescargarExcel = document.getElementById('btnDescargarExcel');
+
+                if (periodoSelect) {
+                    periodoSelect.addEventListener('change', function() {
+                        const val = this.value;
+                        if (val === 'especifica') {
+                            if (fechaInputWrapper) {
+                                fechaInputWrapper.classList.remove('hidden');
+                                fechaInputWrapper.classList.add('flex');
+                            }
+                            if (fechaInput) {
+                                fechaInput.focus();
+                                if (fechaInput.value) {
+                                    fetchReportData();
+                                }
+                            }
+                        } else {
+                            if (fechaInputWrapper) {
+                                fechaInputWrapper.classList.add('hidden');
+                                fechaInputWrapper.classList.remove('flex');
+                            }
+                            fetchReportData();
+                        }
+                    });
+                }
+
+                if (fechaInput) {
+                    fechaInput.addEventListener('change', function() {
+                        if (periodoSelect && periodoSelect.value === 'especifica' && this.value) {
+                            fetchReportData();
+                        }
+                    });
+                }
+
+                if (btnDescargarExcel) {
+                    btnDescargarExcel.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const periodo = periodoSelect ? periodoSelect.value : 'jornada';
+                        const fecha = fechaInput ? fechaInput.value : '';
+
+                        if (periodo === 'especifica' && !fecha) {
+                            alert('Debe seleccionar una fecha para el reporte.');
+                            if (fechaInput) fechaInput.focus();
+                            return;
+                        }
+
+                        let url = '/reportes/excel?periodo=' + encodeURIComponent(periodo);
+                        if (fecha) {
+                            url += '&fecha=' + encodeURIComponent(fecha);
+                        }
+                        window.location.href = url;
+                    });
+                }
+            }
+
             // Tab Switching Controller for macOS Segmented Controls
             function setupTabNavigation() {
                 const tabButtons = document.querySelectorAll('.report-tab-btn');
@@ -1570,10 +1970,12 @@
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', function() {
                     setupTabNavigation();
+                    setupPeriodAndExcelHandlers();
                     waitForECharts(40);
                 });
             } else {
                 setupTabNavigation();
+                setupPeriodAndExcelHandlers();
                 waitForECharts(40);
             }
         })();
