@@ -225,3 +225,25 @@ Estructura propuesta, sujeta a ajuste posterior:
 ### Pendientes
 
 2. **Teléfono de guardia de Telefonía:** existe un teléfono de guardia en Telefonía. Queda por confirmar con el departamento si se guarda en el sistema o si el contacto será solo por correo. Se evalúa en una fase posterior.
+
+---
+
+## 13. Actualización (11-oct): editar, eliminar, resolver/cerrar y auditoría
+
+**Estados.** El operador *resuelve* (`RESUELTO`, sella `resueltoEn`); el coordinador *cierra* (`CERRADO`, sella `fecha_cierre`). El tiempo de atención se mide de `createdAt` a `resueltoEn` (respaldo: `fecha_cierre` en cierres directos). Esto reemplaza los puntos 2–3 de §12: no se agrega ninguna columna nueva de fecha.
+
+**Eliminar (solo coordinador).** Borrado lógico: `eliminado_en` + `motivo_eliminacion` (obligatorio). El ticket sale de listas y de **todas** las métricas, se desasigna y se puede restaurar desde la Papelera. Si estaba resuelto o cerrado, pide confirmación adicional. Los códigos INC-xxx nunca se reutilizan. No existe borrado definitivo en la interfaz.
+
+**Editar (solo coordinador).** Editables: asunto, descripción, área y prioridad (puntos P1=8, P2=5, P3=1). Fijos: código, fecha de llegada y remitente. Cambiar el área de un ticket asignado a un operador de otra área exige confirmación.
+
+**Auditoría.** Cada cierre, edición (valor anterior → nuevo), eliminación (con motivo) y restauración se guarda en `AuditLog`. Esta tabla no existía en `schema.prisma` ni en las migraciones aunque la pantalla de auditoría ya la consultaba; la migración `20261011010000_soft_delete_and_audit_log` la crea.
+
+**Endpoints (coordinador):** `POST /api/tickets/:code/close`, `PATCH /api/tickets/:code` (asunto, descripcion, area_designada, prioridad, confirmarCambioArea), `DELETE /api/tickets/:code` (motivo, confirmar), `POST /api/tickets/:code/restore`. Respuestas con `requiereConfirmacion: true` y HTTP 409 cuando hace falta confirmar.
+
+**Traspaso a guardia (implementado).** `POST /api/tickets/handoff` con `{ ticketCodes[], operatorId, nota }` (nota obligatoria, mínimo 10 caracteres). Reasigna al operador elegido, conserva la `fecha_asignacion` original y no toca `createdAt`, así que el tiempo de atención sigue contando desde la llegada. No admite tickets resueltos o cerrados. Cada traspaso queda en `AuditLog` (`TICKET_TRASPASADO_GUARDIA`, con "De → A" y la nota). La rotación semanal de guardias (quién es el guardia) sigue pendiente; por ahora el coordinador elige al operador.
+
+**Otros endpoints (coordinador):** `GET /api/tickets/trash` (papelera) y `GET /api/tickets/:code/history` (historial con notas, para el detalle del ticket).
+
+**Dashboard.** El controlador entrega `flujoHoy = { creados[24], cerrados[24] }`, ya en hora de Caracas, solo con el día de hoy y con el cierre medido por `resueltoEn`. La vista solo lo dibuja; no debe recalcular horas ni leer todos los tickets.
+
+**Reportes por periodo y Excel (implementado).** `GET /reportes/data` y `GET /reportes/excel` (ver `docs/contrato-metricas.md`). El Excel quedó en cuatro hojas (Resumen Ejecutivo con el balance por área, Productividad Operadores, Flujo Horario, Detalle de Tickets), con el estilo del reporte gerencial anterior; reemplaza la tabla de §11. Agrega puntos, distribución por prioridad, % de participación, estado de carga y lecturas clave. "Tiempo en horario" usa, por ahora, lunes a viernes de 8:00 a 17:00 (Caracas) para todos; cuando exista el horario por operador (§12, punto 5) se calculará con el de cada uno.

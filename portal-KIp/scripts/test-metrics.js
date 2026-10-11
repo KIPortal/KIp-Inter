@@ -74,11 +74,11 @@ runTest('Hora: 03:59 UTC es 23:00 del día anterior en Caracas', () => {
 // ---------------------------------------------------------------------------
 // Tiempo de resolución
 // ---------------------------------------------------------------------------
-runTest('Cierre: usa fecha_cierre; resueltoEn solo como respaldo; nunca updatedAt', () => {
+runTest('Cierre: usa resueltoEn; fecha_cierre solo como respaldo; nunca updatedAt', () => {
     const a = new Date('2026-10-10T15:00:00Z');
     const b = new Date('2026-10-10T16:00:00Z');
-    assert.strictEqual(getClosingDate({ fecha_cierre: a, resueltoEn: b }), a);
-    assert.strictEqual(getClosingDate({ fecha_cierre: null, resueltoEn: b }), b);
+    assert.strictEqual(getClosingDate({ fecha_cierre: a, resueltoEn: b }), b);
+    assert.strictEqual(getClosingDate({ fecha_cierre: a, resueltoEn: null }), a);
     assert.strictEqual(getClosingDate({ updatedAt: b, estado_actual: 'CERRADO' }), null);
 });
 

@@ -2,10 +2,14 @@ const prisma = require('../config/prisma');
 const {
     ACTIVE_STATES,
     getDayBounds,
+    getHourOfDay,
+    getClosingDate,
     averageResolutionMinutes,
     formatMinutes,
     computeOverload
 } = require('../services/metricsService');
+const { getShiftStatus, getWeekStart } = require('../services/shiftService');
+const { loadShiftData } = require('./turnoController');
 
 const ticketRelations = {
     asignado_a: { select: { id: true, nombre: true, email: true, rol: true, area_designada: true, estado_operativo: true } },
@@ -50,7 +54,20 @@ async function renderDashboard(req, res) {
             },
             orderBy: { nombre: 'asc' }
         });
-        const operadores = operadoresTurno.filter(operador => operador.estado_operativo === 'DISPONIBLE');
+        // Turnos: cada operador recibe su estado de turno (En turno / De guardia / Fuera de turno)
+        const { horarioPorUsuario, guardiaIds } = await loadShiftData(getWeekStart(new Date()));
+        const ahora = new Date();
+        operadoresTurno.forEach(operador => {
+            const h = horarioPorUsuario.get(operador.id);
+            operador.deGuardia = guardiaIds.has(operador.id);
+            operador.turno = getShiftStatus({
+                estadoOperativo: operador.estado_operativo,
+                horario: h ? { dias: h.dias, inicio: h.hora_inicio, fin: h.hora_fin } : null,
+                deGuardia: operador.deGuardia
+            }, ahora);
+        });
+        // Disponible = en turno normal y marcado disponible (el de guardia no cuenta, pero puede recibir tickets)
+        const operadores = operadoresTurno.filter(operador => operador.turno.disponible);
         const totalOperadores = operadoresTurno.length;
         const operadoresConectados = operadoresTurno.filter(operador => operador.estado_operativo !== 'AUSENTE').length;
 
@@ -71,8 +88,18 @@ async function renderDashboard(req, res) {
         const ticketsRealizados = cerradosHoy.length;
         // Tiempo de atención: promedio desde que el ticket llegó hasta que se cerró
         const tiempoAtencion = formatMinutes(averageResolutionMinutes(cerradosHoy));
-        const ticketsCreadosHoy = await prisma.ticket.count({
-            where: { createdAt: { gte: startOfDay, lt: endOfDay } }
+        const creadosHoy = await prisma.ticket.findMany({
+            where: { createdAt: { gte: startOfDay, lt: endOfDay } },
+            select: { createdAt: true }
+        });
+        const ticketsCreadosHoy = creadosHoy.length;
+
+        // Flujo por hora de HOY en hora de Caracas (la vista solo lo dibuja)
+        const flujoHoy = { creados: new Array(24).fill(0), cerrados: new Array(24).fill(0) };
+        creadosHoy.forEach(t => { flujoHoy.creados[getHourOfDay(t.createdAt)]++; });
+        cerradosHoy.forEach(t => {
+            const fin = getClosingDate(t);
+            if (fin && fin >= startOfDay && fin < endOfDay) flujoHoy.cerrados[getHourOfDay(fin)]++;
         });
         const criticosSinAsignar = await prisma.ticket.count({
             where: {
@@ -101,6 +128,7 @@ async function renderDashboard(req, res) {
             }));
         const operadoresDisponibles = operadores.length;
         const ticketCodes = await prisma.ticket.findMany({
+            where: prisma.INCLUDE_DELETED, // incluye eliminados: no se reutilizan códigos
             select: { codigo_incidencia: true }
         });
         const numericCodes = ticketCodes
@@ -116,6 +144,7 @@ async function renderDashboard(req, res) {
             ticketsActivos,
             ticketsRealizados,
             ticketsCreadosHoy,
+            flujoHoy,
             criticosSinAsignar,
             tiempoAtencion,
             alertasSobrecarga,
@@ -165,7 +194,7 @@ async function renderOperatorDashboard(req, res) {
             orderBy
         }),
         prisma.ticket.findMany({
-            where: { ...assignedToUser, estado_actual: 'CERRADO' },
+            where: { ...assignedToUser, estado_actual: { in: ['RESUELTO', 'CERRADO'] } },
             include: ticketRelations,
             orderBy
         })
