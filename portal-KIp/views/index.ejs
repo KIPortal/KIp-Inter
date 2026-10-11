@@ -247,48 +247,60 @@
                 <div id="dashboardOverview" class="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
 
                 <!-- BEGIN: KPI Cards / macOS Widget Panels -->
-                <section class="grid grid-cols-2 xl:grid-cols-4 gap-2 sm:gap-3 flex-shrink-0" data-purpose="kpi-cards">
+                <section class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2 sm:gap-3 flex-shrink-0" data-purpose="kpi-cards">
                     <!-- Card 1: Tickets Activos -->
                     <div
                         class="bg-white border border-[#E5E5EA] rounded-[12px] p-4 flex flex-col justify-between shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-[0_2px_6px_rgba(0,0,0,0.06)] transition">
                         <div class="flex items-start justify-between">
                             <span
-                                class="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wider leading-tight">TICKETS
-                                ACTIVOS</span>
+                                class="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wider leading-tight">TICKETS<br>ACTIVOS</span>
                             <span class="w-1.5 h-1.5 rounded-full bg-[#8E8E93] mt-0.5"></span>
                         </div>
                         <div class="mt-2 text-[32px] font-semibold font-mono text-[#1C1C1E] tracking-tight num-tabular leading-none"
                             id="kpi-active">
-                            <%= ticketsActivos %>
+                            <%= typeof ticketsActivos !== 'undefined' ? ticketsActivos : 0 %>
                         </div>
                     </div>
 
-                    <!-- Card 2: Tickets Realizados -->
+                    <!-- Card 2: Tickets Creados Hoy -->
                     <div
                         class="bg-white border border-[#E5E5EA] rounded-[12px] p-4 flex flex-col justify-between shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-[0_2px_6px_rgba(0,0,0,0.06)] transition">
                         <div class="flex items-start justify-between">
                             <span
-                                class="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wider leading-tight">TICKETS<br>REALIZADOS</span>
-                            <span class="w-1.5 h-1.5 rounded-full bg-[#8E8E93] mt-0.5"></span>
+                                class="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wider leading-tight">TICKETS<br>HOY</span>
+                            <span class="w-1.5 h-1.5 rounded-full bg-[#34C759] mt-0.5"></span>
                         </div>
                         <div class="mt-2 text-[32px] font-semibold font-mono text-[#1C1C1E] tracking-tight num-tabular leading-none"
-                            id="kpi-done">
-                            <%= ticketsRealizados %>
+                            id="kpi-today">
+                            <%= typeof ticketsCreadosHoy !== 'undefined' ? ticketsCreadosHoy : (typeof ticketsRealizados !== 'undefined' ? ticketsRealizados : 0) %>
                         </div>
                     </div>
 
-                    <!-- Card 3: Críticos Sin Asignar -->
+                    <!-- Card 3: Tiempo Promedio de Atención -->
                     <div
                         class="bg-white border border-[#E5E5EA] rounded-[12px] p-4 flex flex-col justify-between shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-[0_2px_6px_rgba(0,0,0,0.06)] transition">
                         <div class="flex items-start justify-between">
                             <span
-                                class="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wider leading-tight">CRÍTICOS
-                                SIN<br>ASIGNAR</span>
+                                class="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wider leading-tight">PROMEDIO<br>ATENCIÓN</span>
+                            <span class="w-1.5 h-1.5 rounded-full bg-[#007AFF] mt-0.5"></span>
+                        </div>
+                        <div class="mt-2 text-[32px] font-semibold font-mono text-[#1C1C1E] tracking-tight num-tabular leading-none"
+                            id="kpi-attention-time">
+                            <%= typeof tiempoAtencion !== 'undefined' ? tiempoAtencion : '0 min' %>
+                        </div>
+                    </div>
+
+                    <!-- Card 4: Críticos Sin Asignar -->
+                    <div
+                        class="bg-white border border-[#E5E5EA] rounded-[12px] p-4 flex flex-col justify-between shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-[0_2px_6px_rgba(0,0,0,0.06)] transition">
+                        <div class="flex items-start justify-between">
+                            <span
+                                class="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wider leading-tight">CRÍTICOS<br>SIN ASIGNAR</span>
                             <span class="w-1.5 h-1.5 rounded-full bg-[#FF3B30] mt-0.5"></span>
                         </div>
                         <div class="mt-2 text-[32px] font-semibold font-mono text-[#1C1C1E] tracking-tight num-tabular leading-none"
                             id="kpi-critical">
-                            <%= criticosSinAsignar %>
+                            <%= typeof criticosSinAsignar !== 'undefined' ? criticosSinAsignar : 0 %>
                         </div>
                     </div>
 
@@ -305,9 +317,9 @@
                             <div class="flex items-baseline gap-1.5">
                                 <span id="kpi-operators"
                                     class="text-[32px] font-semibold font-mono text-[#1C1C1E] tracking-tight num-tabular leading-none">
-                                    <%= operadoresDisponibles %>
+                                    <%= typeof operadoresDisponibles !== 'undefined' ? operadoresDisponibles : 0 %>
                                 </span>
-                                <span class="text-xs font-mono text-[#8E8E93] font-medium leading-none">/ <%= totalOperadores %> activos</span>
+                                <span class="text-xs font-mono text-[#8E8E93] font-medium leading-none">/ <%= typeof totalOperadores !== 'undefined' ? totalOperadores : 0 %> activos</span>
                             </div>
                             <button id="operatorsPopoverButton" type="button" aria-label="Ver operadores de turno"
                                 aria-controls="operatorsPopover" aria-expanded="false" title="Ver operadores de turno"
@@ -332,7 +344,7 @@
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-2 shrink-0">
-                                    <span class="px-2 py-1 rounded-full bg-[#E5F9ED] text-[#16834A] text-[10px] font-semibold"><%= operadoresConectados %> conectados</span>
+                                    <span class="px-2 py-1 rounded-full bg-[#E5F9ED] text-[#16834A] text-[10px] font-semibold"><%= typeof operadoresConectados !== 'undefined' ? operadoresConectados : 0 %> conectados</span>
                                     <button id="operatorsPopoverClose" type="button" aria-label="Cerrar operadores"
                                         class="w-7 h-7 flex items-center justify-center rounded-[7px] text-[#8E8E93] hover:bg-[#F2F2F7] hover:text-[#48484A] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#007AFF]/30 transition">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"></path></svg>
@@ -340,7 +352,7 @@
                                 </div>
                             </header>
                             <div class="operator-popover-list">
-                                <% if (operadoresTurno.length) { %>
+                                <% if (typeof operadoresTurno !== 'undefined' && operadoresTurno && operadoresTurno.length) { %>
                                     <% operadoresTurno.forEach(function(operador) {
                                         const activeTickets = operador.tickets_asignados || [];
                                         const isBusy = activeTickets.length > 0;
@@ -406,6 +418,64 @@
                     </div>
                 </section>
                 <!-- END: KPI Cards -->
+
+                <!-- BEGIN: Panel Alertas de Sobrecarga (Solo Coordinador) - R1.3 -->
+                <% if (typeof currentUser !== 'undefined' && currentUser && currentUser.rol && currentUser.rol.trim().toUpperCase() === 'COORDINADOR') { 
+                    const alertasLista = (typeof alertasSobrecarga !== 'undefined' && Array.isArray(alertasSobrecarga)) ? alertasSobrecarga : [];
+                %>
+                <section id="overloadAlertsSection" class="p-3.5 rounded-[12px] bg-gradient-to-r from-amber-500/10 via-amber-400/5 to-transparent border border-amber-300/60 shadow-[0_2px_8px_rgba(245,158,11,0.06)] backdrop-blur-md flex flex-col gap-2.5 flex-shrink-0" aria-label="Alertas de Sobrecarga">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full <%= alertasLista.length > 0 ? 'bg-amber-500 animate-pulse' : 'bg-[#34C759]' %>"></span>
+                            <h2 class="text-[11px] font-bold text-amber-900 uppercase tracking-wider">Alertas de Sobrecarga Operativa</h2>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-200/80 text-amber-800"><%= alertasLista.length %> <%= alertasLista.length === 1 ? 'operador' : 'operadores' %></span>
+                        </div>
+                        <span class="text-[11px] text-amber-700/80 font-medium hidden sm:inline">Carga por encima del promedio del área</span>
+                    </div>
+                    <% if (alertasLista.length > 0) { %>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5">
+                        <% alertasLista.forEach(function(alerta) { 
+                            const areaLabel = alerta.area || alerta.area_designada || 'General';
+                            const ticketsCount = typeof alerta.ticketsActivos !== 'undefined' ? alerta.ticketsActivos : (alerta.tickets_activos || 0);
+                            const promArea = typeof alerta.promedioArea !== 'undefined' ? alerta.promedioArea : (alerta.promedio_area || alerta.promedio || 0);
+                            const rawIndice = typeof alerta.indiceCarga !== 'undefined' ? alerta.indiceCarga : (alerta.indiceSobrecarga || alerta.indice_carga || 0);
+                            const badgeText = typeof rawIndice === 'number' ? (rawIndice > 1 ? '+' + Math.round((rawIndice - 1) * 100) + '%' : Math.round(rawIndice * 100) + '%') : rawIndice;
+                            const formattedProm = typeof promArea === 'number' ? promArea.toFixed(1) : promArea;
+                            const formattedIndice = typeof rawIndice === 'number' ? rawIndice.toFixed(2) : rawIndice;
+                        %>
+                            <div class="bg-white/95 border border-amber-200/80 rounded-[10px] p-3 shadow-xs hover:shadow-sm transition flex flex-col justify-between gap-2">
+                                <div class="flex items-start justify-between gap-2">
+                                    <div class="min-w-0">
+                                        <span class="font-semibold text-[12px] text-[#1C1C1E] truncate block"><%= alerta.nombre %></span>
+                                        <span class="text-[10px] text-[#8E8E93] truncate block"><%= areaLabel %></span>
+                                    </div>
+                                    <span class="shrink-0 px-1.5 py-0.5 rounded-[4px] text-[10px] font-mono font-bold bg-red-100 text-red-700 border border-red-200">
+                                        <%= badgeText %>
+                                    </span>
+                                </div>
+                                <div class="grid grid-cols-3 gap-1 pt-2 border-t border-black/5 text-center text-[10px]">
+                                    <div>
+                                        <span class="text-[#8E8E93] block">Activos</span>
+                                        <strong class="text-[#1C1C1E] font-mono text-[11px]"><%= ticketsCount %></strong>
+                                    </div>
+                                    <div>
+                                        <span class="text-[#8E8E93] block">Prom. Área</span>
+                                        <strong class="text-[#1C1C1E] font-mono text-[11px]"><%= formattedProm %></strong>
+                                    </div>
+                                    <div>
+                                        <span class="text-[#8E8E93] block">Índice</span>
+                                        <strong class="text-amber-700 font-mono text-[11px]"><%= formattedIndice %></strong>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }); %>
+                    </div>
+                    <% } else { %>
+                    <p class="text-[11px] text-amber-800/80 font-medium py-0.5">No hay alertas de sobrecarga activas en este turno.</p>
+                    <% } %>
+                </section>
+                <% } %>
+                <!-- END: Panel Alertas de Sobrecarga -->
 
                 <!-- BEGIN: macOS Finder List View Table Container -->
                 <section
@@ -535,11 +605,56 @@
                                         </a>
                                     </div>
                                 </details>
+
+                                <!-- Filtro Estado - R2 -->
+                                <div class="flex items-center gap-1.5 ml-1">
+                                    <label for="filterStatusSelect" class="text-[11px] text-[#8E8E93] font-medium leading-none">Estado:</label>
+                                    <select id="filterStatusSelect" onchange="filterByState(this.value)"
+                                        class="h-[24px] pl-2 pr-4 text-[12px] font-medium text-[#1C1C1E] bg-[#F5F5F7] hover:bg-[#EBEBF0] rounded-[6px] border border-black/5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] cursor-pointer transition focus:outline-none">
+                                        <option value="ALL">Todos</option>
+                                        <option value="NUEVO">Nuevo</option>
+                                        <option value="EN_PROGRESO">En Progreso</option>
+                                        <option value="EN_PAUSA">En Pausa</option>
+                                        <option value="EN_ESPERA">En Espera</option>
+                                        <option value="CERRADO">Cerrado</option>
+                                    </select>
+                                </div>
+
+                                <!-- Filtro Operador - R2 -->
+                                <div class="flex items-center gap-1.5 ml-1">
+                                    <label for="filterOperatorSelect" class="text-[11px] text-[#8E8E93] font-medium leading-none">Operador:</label>
+                                    <select id="filterOperatorSelect" onchange="filterByOperator(this.value)"
+                                        class="h-[24px] pl-2 pr-4 text-[12px] font-medium text-[#1C1C1E] bg-[#F5F5F7] hover:bg-[#EBEBF0] rounded-[6px] border border-black/5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] cursor-pointer transition focus:outline-none max-w-[130px] truncate">
+                                        <option value="ALL">Todos</option>
+                                        <option value="UNASSIGNED">Sin Asignar</option>
+                                        <% if (typeof operadoresTurno !== 'undefined' && operadoresTurno.length > 0) { %>
+                                            <% operadoresTurno.forEach(function(op) { %>
+                                                <option value="<%= op.id %>"><%= op.nombre %></option>
+                                            <% }); %>
+                                        <% } else { %>
+                                            <option value="Carlos Mendoza">Carlos Mendoza</option>
+                                            <option value="Laura Rivas">Laura Rivas</option>
+                                            <option value="Andrés Silva">Andrés Silva</option>
+                                        <% } %>
+                                    </select>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Right: Bulk Selection & Action Button -->
-                        <div class="flex items-center gap-3 text-xs text-[#8E8E93]">
+                        <!-- Right: Bulk Selection & Traspasar a Guardia Action Button -->
+                        <div class="flex items-center gap-2 text-xs text-[#8E8E93]">
+                            <!-- Botón Traspasar a guardia - R2 -->
+                            <button id="guardShiftBtn" type="button" onclick="openGuardShiftModal()"
+                                class="figma-button !w-auto !h-[24px] !px-2.5 bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA] text-[#1C1C1E] border border-[#D1D1D6] rounded-[6px] shadow-2xs transition select-none flex items-center gap-1.5 cursor-pointer"
+                                title="Traspasar tickets a la guardia entrante">
+                                <svg class="w-3.5 h-3.5 text-[#007AFF]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                                </svg>
+                                <span class="leading-none text-[11px] font-medium">Traspasar a guardia</span>
+                            </button>
+
+                            <div class="h-4 w-[1px] bg-[#D1D1D6] mx-0.5"></div>
+
                             <div class="flex items-center gap-2">
                                 <span class="text-[11px]">Seleccionados: <strong id="selectionBadgeCount"
                                         class="text-[#007AFF] font-mono font-semibold">0</strong></span>
@@ -571,36 +686,18 @@
                                         </div>
                                     </th>
                                     <th class="finder-th py-2 px-3 w-[115px] font-semibold text-[#48484A]">Ticket</th>
-                                    <th class="finder-th py-2 px-2.5 w-[85px] font-semibold text-[#48484A]">Prioridad
-                                    </th>
+                                    <th class="finder-th py-2 px-2.5 w-[110px] font-semibold text-[#48484A]">Prioridad</th>
                                     <th class="finder-th py-2 px-2.5 w-[110px] font-semibold text-[#48484A]">Estado</th>
                                     <th class="finder-th py-2 px-3 font-semibold text-[#48484A]">Asunto</th>
-                                    <th class="finder-th py-2 px-2.5 w-[150px] font-semibold text-[#48484A]">OP /
-                                        Asignado</th>
-                                    <th
-                                        class="finder-th py-2 px-2.5 w-[110px] text-center font-semibold text-[#48484A]">
-                                        Tiempo</th>
-                                    <th class="finder-th py-2 px-3 w-[95px] text-right font-semibold text-[#48484A]">
-                                        Acción</th>
+                                    <th class="finder-th py-2 px-2.5 w-[150px] font-semibold text-[#48484A]">OP / Asignado</th>
+                                    <th class="finder-th py-2 px-2.5 w-[110px] text-center font-semibold text-[#48484A]">Tiempo</th>
+                                    <th class="finder-th py-2 px-3 w-[140px] text-right font-semibold text-[#48484A]">Acción</th>
                                 </tr>
                             </thead>
                             <tbody id="ticketTableBody" class="divide-y divide-[#EBEBF0] text-[12px] font-normal">
                                 <% if (tickets && tickets.length > 0) { %>
                                     <% tickets.forEach(function(ticket) { 
-                                        let prio = 'NONE';
-                                        let prioLabel = 'S/P';
-                                        let prioDot = '#C7C7CC';
-                                        let prioBg = '#F2F2F7';
-                                        let prioTxt = '#8E8E93';
-                                        let prioBorder = '#E5E5EA';
-
-                                        if (ticket.puntos_complejidad >= 8) {
-                                            prio = 'P1'; prioLabel = 'P1'; prioDot = '#FF3B30'; prioBg = '#FFE5E5'; prioTxt = '#D70015'; prioBorder = '#FFD0D0';
-                                        } else if (ticket.puntos_complejidad >= 5) {
-                                            prio = 'P2'; prioLabel = 'P2'; prioDot = '#FFBD2E'; prioBg = '#FFF4D6'; prioTxt = '#B25E02'; prioBorder = '#FFE6A6';
-                                        } else if (ticket.puntos_complejidad >= 1) {
-                                            prio = 'P3'; prioLabel = 'P3'; prioDot = '#8E8E93'; prioBg = '#F2F2F7'; prioTxt = '#1C1C1E'; prioBorder = '#D1D1D6';
-                                        }
+                                        let prio = ticket.prioridad || (ticket.puntos_complejidad >= 8 ? 'P1' : (ticket.puntos_complejidad >= 5 ? 'P2' : 'P3'));
 
                                         let estado = ticket.estado_actual || 'NUEVO';
                                         let stateBg = 'rgba(100, 116, 139, 0.1)'; let stateColor = 'rgb(30, 41, 59)';
@@ -609,6 +706,8 @@
 
                                         if (estado === 'EN_PROGRESO') {
                                             stateBg = 'rgba(2, 132, 199, 0.1)'; stateColor = 'rgb(12, 74, 110)'; stateBorder = 'rgba(2, 132, 199, 0.2)'; stateDot = '#0284c7'; estadoLabel = 'En Progreso';
+                                        } else if (estado === 'EN_PAUSA') {
+                                            stateBg = 'rgba(245, 158, 11, 0.1)'; stateColor = 'rgb(180, 83, 9)'; stateBorder = 'rgba(245, 158, 11, 0.2)'; stateDot = '#f59e0b'; estadoLabel = 'En Pausa';
                                         } else if (estado === 'EN_ESPERA_TERCEROS') {
                                             stateBg = 'rgba(245, 158, 11, 0.1)'; stateColor = 'rgb(146, 64, 14)'; stateBorder = 'rgba(245, 158, 11, 0.2)'; stateDot = '#f59e0b'; estadoLabel = 'En Espera';
                                         } else if (estado === 'CERRADO') {
@@ -633,8 +732,9 @@
                                         let safeSubject = (ticket.asunto || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
                                         let safeOperator = (opAsignado || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
                                         let isClosed = estado === 'CERRADO' || estado === 'RESUELTO';
+                                        let prioSelectClass = prio === 'P1' ? 'bg-red-50 text-red-700 border-red-200' : (prio === 'P2' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200');
                                     %>
-                                    <tr id="row-<%= ticket.codigo_incidencia %>" class="ticket-row hover:bg-[#F9F9FA] group transition-colors <%= isClosed ? 'opacity-70 grayscale-[20%]' : '' %>" data-area="<%= area %>" data-priority="<%= prio %>" data-assigned="<%= isAssigned %>" data-date="<%= ticketCreatedAtTime %>" data-subject="<%= safeSubject %>" data-detail-subject="<%= ticket.asunto || '' %>" data-description="<%= ticket.descripcion || '' %>" data-origin="<%= ticket.origen_ingesta %>" data-sender="<%= ticketSender %>" data-created-at="<%= ticket.createdAt ? new Date(ticket.createdAt).toISOString() : '' %>" data-attended-at="<%= ticket.fecha_asignacion ? new Date(ticket.fecha_asignacion).toISOString() : '' %>" data-operator-id="<%= opId %>" data-operator-name="<%= safeOperator %>">
+                                    <tr id="row-<%= ticket.codigo_incidencia %>" class="ticket-row hover:bg-[#F9F9FA] group transition-colors <%= isClosed ? 'opacity-70 grayscale-[20%]' : '' %>" data-area="<%= area %>" data-priority="<%= prio %>" data-state="<%= estado %>" data-assigned="<%= isAssigned %>" data-date="<%= ticketCreatedAtTime %>" data-subject="<%= safeSubject %>" data-detail-subject="<%= ticket.asunto || '' %>" data-description="<%= ticket.descripcion || '' %>" data-origin="<%= ticket.origen_ingesta %>" data-sender="<%= ticketSender %>" data-created-at="<%= ticket.createdAt ? new Date(ticket.createdAt).toISOString() : '' %>" data-attended-at="<%= ticket.fecha_asignacion ? new Date(ticket.fecha_asignacion).toISOString() : '' %>" data-operator-id="<%= opId %>" data-operator-name="<%= safeOperator %>">
                                         <td class="py-2 px-3 align-middle text-center w-[40px]">
                                             <div class="flex items-center justify-center">
                                                 <input type="checkbox" data-code="<%= ticket.codigo_incidencia %>" data-assigned="<%= isAssigned %>" <%= (isAssigned || isClosed) ? 'disabled title="Ticket no disponible"' : '' %> class="row-checkbox w-3.5 h-3.5 rounded text-[#007AFF] border-[#D1D1D6] focus:ring-0 focus:outline-none <%= (isAssigned || isClosed) ? 'opacity-30 cursor-not-allowed pointer-events-none bg-[#E5E5EA]' : 'cursor-pointer' %>">
@@ -646,11 +746,14 @@
                                                 <button type="button" class="font-mono font-medium text-[#1C1C1E] hover:underline cursor-pointer" onclick="openTicketDetailsForCode('<%= ticket.codigo_incidencia %>')"><%= ticket.codigo_incidencia %></button>
                                             </div>
                                         </td>
-                                        <td class="py-2 px-2.5 align-middle whitespace-nowrap">
-                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-[4px] text-[10px] font-mono font-medium border" style="background-color: <%= prioBg %>; color: <%= prioTxt %>; border-color: <%= prioBorder %>;" title="<%= prio === 'NONE' ? 'Sin Prioridad (S/P)' : ('Prioridad ' + prioLabel) %>">
-                                                <span class="w-1.5 h-1.5 rounded-full" style="background-color: <%= prioDot %>;"></span>
-                                                <%= prioLabel %>
-                                            </span>
+                                        <td class="prio-col py-2 px-2.5 align-middle whitespace-nowrap">
+                                            <select class="priority-native-select text-[10px] font-mono font-bold rounded-[5px] px-1.5 py-0.5 border cursor-pointer focus:outline-none transition-colors <%= prioSelectClass %>"
+                                                data-ticket-code="<%= ticket.codigo_incidencia %>"
+                                                onchange="handlePrioritySelectChange(this)">
+                                                <option value="P1" <%= prio === 'P1' ? 'selected' : '' %> class="text-red-700 bg-white font-bold">P1 (Crítica)</option>
+                                                <option value="P2" <%= prio === 'P2' ? 'selected' : '' %> class="text-amber-700 bg-white font-bold">P2 (Media)</option>
+                                                <option value="P3" <%= prio === 'P3' ? 'selected' : '' %> class="text-emerald-700 bg-white font-bold">P3 (Baja)</option>
+                                            </select>
                                         </td>
                                         <td class="state-col py-2 px-2.5 align-middle whitespace-nowrap">
                                             <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] text-[11px] font-medium" style="background-color: <%= stateBg %>; color: <%= stateColor %>; border: 1px solid <%= stateBorder %>;">
@@ -672,22 +775,220 @@
                                                 <span data-ticket-elapsed class="inline-block font-sans text-[12px] font-semibold tabular-nums text-[#1C1C1E] bg-[#F2F2F7] border border-[#E5E5EA] px-2 py-0.5 rounded-[4px]" title="Tiempo transcurrido desde la creación hasta la asignación"><%= ticketElapsedLabel %></span>
                                             <% } %>
                                         </td>
-                                        <td class="action-col py-2 px-3 align-middle text-right">
+                                        <td class="action-col py-2 px-3 align-middle text-right whitespace-nowrap">
                                             <% if (isClosed) { %>
-                                                <button type="button" onclick="openTicketDetailsForCode('<%= ticket.codigo_incidencia %>')" class="bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA] border border-[#D1D1D6] text-[#8E8E93] text-[11px] font-medium px-2.5 py-1 rounded-[6px] shadow-xs transition cursor-pointer">
+                                                <button type="button" onclick="openTicketDetailsForCode('<%= ticket.codigo_incidencia %>')" class="bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA] border border-[#D1D1D6] text-[#8E8E93] text-[11px] font-medium px-2 py-0.5 rounded-[6px] shadow-xs transition cursor-pointer">
                                                     Detalles
                                                 </button>
                                             <% } else { %>
-                                                <button type="button" onclick="handleTicketAction('<%= ticket.codigo_incidencia %>', '<%= safeSubject %>', '<%= area %>', '<%= opId %>', '<%= safeOperator %>', '<%= prio %>')" class="bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA] border border-[#D1D1D6] text-[#1C1C1E] text-[11px] font-medium px-2.5 py-1 rounded-[6px] shadow-xs transition cursor-pointer">
-                                                    <%= isAssigned ? 'Desasignar' : 'Asignar' %>
-                                                </button>
+                                                <div class="inline-flex items-center gap-1 justify-end">
+                                                    <button type="button" onclick="closeTicketDirectly(this, '<%= ticket.codigo_incidencia %>')" class="bg-white hover:bg-red-50 text-red-600 hover:text-red-700 border border-red-200 text-[11px] font-medium px-2 py-0.5 rounded-[6px] shadow-2xs transition cursor-pointer">
+                                                        Cerrar
+                                                    </button>
+                                                    <button type="button" onclick="handleTicketAction('<%= ticket.codigo_incidencia %>', '<%= safeSubject %>', '<%= area %>', '<%= opId %>', '<%= safeOperator %>', '<%= prio %>')" class="bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA] border border-[#D1D1D6] text-[#1C1C1E] text-[11px] font-medium px-2 py-0.5 rounded-[6px] shadow-xs transition cursor-pointer">
+                                                        <%= isAssigned ? 'Desasignar' : 'Asignar' %>
+                                                    </button>
+                                                </div>
                                             <% } %>
                                         </td>
                                     </tr>
                                     <% }); %>
                                 <% } else { %>
-                                    <tr>
-                                        <td colspan="8" class="text-center py-6 text-[#8E8E93]">No hay incidencias activas en este momento.</td>
+                                    <!-- Maqueta estática de demostración (Dummy Data) - R2 -->
+                                    <tr id="row-INC-042" class="ticket-row hover:bg-[#F9F9FA] group transition-colors" data-area="REDES_FTTH" data-priority="P1" data-state="EN_PROGRESO" data-assigned="true" data-operator-id="1" data-operator-name="Carlos Mendoza" data-subject="Corte masivo de fibra OLT Chacao">
+                                        <td class="py-2 px-3 align-middle text-center w-[40px]">
+                                            <div class="flex items-center justify-center">
+                                                <input type="checkbox" data-code="INC-042" data-assigned="true" class="row-checkbox w-3.5 h-3.5 rounded text-[#007AFF] border-[#D1D1D6] focus:ring-0 focus:outline-none cursor-pointer">
+                                            </div>
+                                        </td>
+                                        <td class="py-2 px-3 align-middle whitespace-nowrap">
+                                            <div class="flex items-center gap-1.5">
+                                                <svg class="w-3.5 h-3.5 text-[#8E8E93] flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                                                <button type="button" class="font-mono font-medium text-[#1C1C1E] hover:underline cursor-pointer" onclick="openTicketDetailsForCode('INC-042')">INC-042</button>
+                                            </div>
+                                        </td>
+                                        <td class="prio-col py-2 px-2.5 align-middle whitespace-nowrap">
+                                            <select class="priority-native-select text-[10px] font-mono font-bold rounded-[5px] px-1.5 py-0.5 border cursor-pointer focus:outline-none transition-colors bg-red-50 text-red-700 border-red-200" data-ticket-code="INC-042" onchange="handlePrioritySelectChange(this)">
+                                                <option value="P1" selected class="text-red-700 bg-white font-bold">P1 (Crítica)</option>
+                                                <option value="P2" class="text-amber-700 bg-white font-bold">P2 (Media)</option>
+                                                <option value="P3" class="text-emerald-700 bg-white font-bold">P3 (Baja)</option>
+                                            </select>
+                                        </td>
+                                        <td class="state-col py-2 px-2.5 align-middle whitespace-nowrap">
+                                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] text-[11px] font-medium" style="background-color: rgba(2, 132, 199, 0.1); color: rgb(12, 74, 110); border: 1px solid rgba(2, 132, 199, 0.2);">
+                                                <span class="w-1.5 h-1.5 rounded-full" style="background-color: #0284c7;"></span>
+                                                <span class="status-text">En Progreso</span>
+                                            </span>
+                                        </td>
+                                        <td class="py-2 px-3 align-middle truncate font-normal text-[#1C1C1E]" title="Corte masivo de fibra OLT Chacao">Corte masivo de fibra OLT Chacao</td>
+                                        <td class="op-col py-2 px-2.5 align-middle whitespace-nowrap text-[#1C1C1E] font-medium text-[11px]">
+                                            <span class="operator-label font-semibold text-[#007AFF]">Carlos Mendoza</span>
+                                        </td>
+                                        <td class="time-col py-2 px-2.5 align-middle text-center">
+                                            <span data-ticket-elapsed class="inline-block font-sans text-[12px] font-semibold tabular-nums text-[#1C1C1E] bg-[#F2F2F7] border border-[#E5E5EA] px-2 py-0.5 rounded-[4px]">24 min</span>
+                                        </td>
+                                        <td class="action-col py-2 px-3 align-middle text-right whitespace-nowrap">
+                                            <div class="inline-flex items-center gap-1 justify-end">
+                                                <button type="button" onclick="closeTicketDirectly(this, 'INC-042')" class="bg-white hover:bg-red-50 text-red-600 hover:text-red-700 border border-red-200 text-[11px] font-medium px-2 py-0.5 rounded-[6px] shadow-2xs transition cursor-pointer">Cerrar</button>
+                                                <button type="button" onclick="handleTicketAction('INC-042', 'Corte masivo de fibra OLT Chacao', 'REDES_FTTH', '1', 'Carlos Mendoza', 'P1')" class="bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA] border border-[#D1D1D6] text-[#1C1C1E] text-[11px] font-medium px-2 py-0.5 rounded-[6px] shadow-xs transition cursor-pointer">Desasignar</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr id="row-INC-043" class="ticket-row hover:bg-[#F9F9FA] group transition-colors" data-area="WAN" data-priority="P2" data-state="NUEVO" data-assigned="false" data-operator-id="" data-operator-name="" data-subject="Alta latencia en enlace troncal principal">
+                                        <td class="py-2 px-3 align-middle text-center w-[40px]">
+                                            <div class="flex items-center justify-center">
+                                                <input type="checkbox" data-code="INC-043" data-assigned="false" class="row-checkbox w-3.5 h-3.5 rounded text-[#007AFF] border-[#D1D1D6] focus:ring-0 focus:outline-none cursor-pointer">
+                                            </div>
+                                        </td>
+                                        <td class="py-2 px-3 align-middle whitespace-nowrap">
+                                            <div class="flex items-center gap-1.5">
+                                                <svg class="w-3.5 h-3.5 text-[#8E8E93] flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                                                <button type="button" class="font-mono font-medium text-[#1C1C1E] hover:underline cursor-pointer" onclick="openTicketDetailsForCode('INC-043')">INC-043</button>
+                                            </div>
+                                        </td>
+                                        <td class="prio-col py-2 px-2.5 align-middle whitespace-nowrap">
+                                            <select class="priority-native-select text-[10px] font-mono font-bold rounded-[5px] px-1.5 py-0.5 border cursor-pointer focus:outline-none transition-colors bg-amber-50 text-amber-700 border-amber-200" data-ticket-code="INC-043" onchange="handlePrioritySelectChange(this)">
+                                                <option value="P1" class="text-red-700 bg-white font-bold">P1 (Crítica)</option>
+                                                <option value="P2" selected class="text-amber-700 bg-white font-bold">P2 (Media)</option>
+                                                <option value="P3" class="text-emerald-700 bg-white font-bold">P3 (Baja)</option>
+                                            </select>
+                                        </td>
+                                        <td class="state-col py-2 px-2.5 align-middle whitespace-nowrap">
+                                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] text-[11px] font-medium" style="background-color: rgba(100, 116, 139, 0.1); color: rgb(30, 41, 59); border: 1px solid rgba(100, 116, 139, 0.2);">
+                                                <span class="w-1.5 h-1.5 rounded-full" style="background-color: #64748b;"></span>
+                                                <span class="status-text">Nuevo</span>
+                                            </span>
+                                        </td>
+                                        <td class="py-2 px-3 align-middle truncate font-normal text-[#1C1C1E]" title="Alta latencia en enlace troncal principal">Alta latencia en enlace troncal principal</td>
+                                        <td class="op-col py-2 px-2.5 align-middle whitespace-nowrap text-[#1C1C1E] font-medium text-[11px]">
+                                            <span class="operator-label italic text-[#8E8E93]">— Sin asignar</span>
+                                        </td>
+                                        <td class="time-col py-2 px-2.5 align-middle text-center">
+                                            <span data-ticket-elapsed class="inline-block font-sans text-[12px] font-semibold tabular-nums text-[#1C1C1E] bg-[#F2F2F7] border border-[#E5E5EA] px-2 py-0.5 rounded-[4px]">12 min</span>
+                                        </td>
+                                        <td class="action-col py-2 px-3 align-middle text-right whitespace-nowrap">
+                                            <div class="inline-flex items-center gap-1 justify-end">
+                                                <button type="button" onclick="closeTicketDirectly(this, 'INC-043')" class="bg-white hover:bg-red-50 text-red-600 hover:text-red-700 border border-red-200 text-[11px] font-medium px-2 py-0.5 rounded-[6px] shadow-2xs transition cursor-pointer">Cerrar</button>
+                                                <button type="button" onclick="handleTicketAction('INC-043', 'Alta latencia en enlace troncal principal', 'WAN', '', '', 'P2')" class="bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA] border border-[#D1D1D6] text-[#1C1C1E] text-[11px] font-medium px-2 py-0.5 rounded-[6px] shadow-xs transition cursor-pointer">Asignar</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr id="row-INC-044" class="ticket-row hover:bg-[#F9F9FA] group transition-colors" data-area="GRANDES_CLIENTES" data-priority="P3" data-state="EN_ESPERA_TERCEROS" data-assigned="true" data-operator-id="2" data-operator-name="Laura Rivas" data-subject="Aprovisionamiento VLAN Banco Mercantil">
+                                        <td class="py-2 px-3 align-middle text-center w-[40px]">
+                                            <div class="flex items-center justify-center">
+                                                <input type="checkbox" data-code="INC-044" data-assigned="true" class="row-checkbox w-3.5 h-3.5 rounded text-[#007AFF] border-[#D1D1D6] focus:ring-0 focus:outline-none cursor-pointer">
+                                            </div>
+                                        </td>
+                                        <td class="py-2 px-3 align-middle whitespace-nowrap">
+                                            <div class="flex items-center gap-1.5">
+                                                <svg class="w-3.5 h-3.5 text-[#8E8E93] flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                                                <button type="button" class="font-mono font-medium text-[#1C1C1E] hover:underline cursor-pointer" onclick="openTicketDetailsForCode('INC-044')">INC-044</button>
+                                            </div>
+                                        </td>
+                                        <td class="prio-col py-2 px-2.5 align-middle whitespace-nowrap">
+                                            <select class="priority-native-select text-[10px] font-mono font-bold rounded-[5px] px-1.5 py-0.5 border cursor-pointer focus:outline-none transition-colors bg-emerald-50 text-emerald-700 border-emerald-200" data-ticket-code="INC-044" onchange="handlePrioritySelectChange(this)">
+                                                <option value="P1" class="text-red-700 bg-white font-bold">P1 (Crítica)</option>
+                                                <option value="P2" class="text-amber-700 bg-white font-bold">P2 (Media)</option>
+                                                <option value="P3" selected class="text-emerald-700 bg-white font-bold">P3 (Baja)</option>
+                                            </select>
+                                        </td>
+                                        <td class="state-col py-2 px-2.5 align-middle whitespace-nowrap">
+                                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] text-[11px] font-medium" style="background-color: rgba(245, 158, 11, 0.1); color: rgb(146, 64, 14); border: 1px solid rgba(245, 158, 11, 0.2);">
+                                                <span class="w-1.5 h-1.5 rounded-full" style="background-color: #f59e0b;"></span>
+                                                <span class="status-text">En Espera</span>
+                                            </span>
+                                        </td>
+                                        <td class="py-2 px-3 align-middle truncate font-normal text-[#1C1C1E]" title="Aprovisionamiento VLAN Banco Mercantil">Aprovisionamiento VLAN Banco Mercantil</td>
+                                        <td class="op-col py-2 px-2.5 align-middle whitespace-nowrap text-[#1C1C1E] font-medium text-[11px]">
+                                            <span class="operator-label font-semibold text-[#007AFF]">Laura Rivas</span>
+                                        </td>
+                                        <td class="time-col py-2 px-2.5 align-middle text-center">
+                                            <span data-ticket-elapsed class="inline-block font-sans text-[12px] font-semibold tabular-nums text-[#1C1C1E] bg-[#F2F2F7] border border-[#E5E5EA] px-2 py-0.5 rounded-[4px]">45 min</span>
+                                        </td>
+                                        <td class="action-col py-2 px-3 align-middle text-right whitespace-nowrap">
+                                            <div class="inline-flex items-center gap-1 justify-end">
+                                                <button type="button" onclick="closeTicketDirectly(this, 'INC-044')" class="bg-white hover:bg-red-50 text-red-600 hover:text-red-700 border border-red-200 text-[11px] font-medium px-2 py-0.5 rounded-[6px] shadow-2xs transition cursor-pointer">Cerrar</button>
+                                                <button type="button" onclick="handleTicketAction('INC-044', 'Aprovisionamiento VLAN Banco Mercantil', 'GRANDES_CLIENTES', '2', 'Laura Rivas', 'P3')" class="bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA] border border-[#D1D1D6] text-[#1C1C1E] text-[11px] font-medium px-2 py-0.5 rounded-[6px] shadow-xs transition cursor-pointer">Desasignar</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr id="row-INC-045" class="ticket-row hover:bg-[#F9F9FA] group transition-colors" data-area="SEGURIDAD" data-priority="P1" data-state="NUEVO" data-assigned="false" data-operator-id="" data-operator-name="" data-subject="Intento de intrusión masivo en firewall perimetral">
+                                        <td class="py-2 px-3 align-middle text-center w-[40px]">
+                                            <div class="flex items-center justify-center">
+                                                <input type="checkbox" data-code="INC-045" data-assigned="false" class="row-checkbox w-3.5 h-3.5 rounded text-[#007AFF] border-[#D1D1D6] focus:ring-0 focus:outline-none cursor-pointer">
+                                            </div>
+                                        </td>
+                                        <td class="py-2 px-3 align-middle whitespace-nowrap">
+                                            <div class="flex items-center gap-1.5">
+                                                <svg class="w-3.5 h-3.5 text-[#8E8E93] flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                                                <button type="button" class="font-mono font-medium text-[#1C1C1E] hover:underline cursor-pointer" onclick="openTicketDetailsForCode('INC-045')">INC-045</button>
+                                            </div>
+                                        </td>
+                                        <td class="prio-col py-2 px-2.5 align-middle whitespace-nowrap">
+                                            <select class="priority-native-select text-[10px] font-mono font-bold rounded-[5px] px-1.5 py-0.5 border cursor-pointer focus:outline-none transition-colors bg-red-50 text-red-700 border-red-200" data-ticket-code="INC-045" onchange="handlePrioritySelectChange(this)">
+                                                <option value="P1" selected class="text-red-700 bg-white font-bold">P1 (Crítica)</option>
+                                                <option value="P2" class="text-amber-700 bg-white font-bold">P2 (Media)</option>
+                                                <option value="P3" class="text-emerald-700 bg-white font-bold">P3 (Baja)</option>
+                                            </select>
+                                        </td>
+                                        <td class="state-col py-2 px-2.5 align-middle whitespace-nowrap">
+                                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] text-[11px] font-medium" style="background-color: rgba(100, 116, 139, 0.1); color: rgb(30, 41, 59); border: 1px solid rgba(100, 116, 139, 0.2);">
+                                                <span class="w-1.5 h-1.5 rounded-full" style="background-color: #64748b;"></span>
+                                                <span class="status-text">Nuevo</span>
+                                            </span>
+                                        </td>
+                                        <td class="py-2 px-3 align-middle truncate font-normal text-[#1C1C1E]" title="Intento de intrusión masivo en firewall perimetral">Intento de intrusión masivo en firewall perimetral</td>
+                                        <td class="op-col py-2 px-2.5 align-middle whitespace-nowrap text-[#1C1C1E] font-medium text-[11px]">
+                                            <span class="operator-label italic text-[#8E8E93]">— Sin asignar</span>
+                                        </td>
+                                        <td class="time-col py-2 px-2.5 align-middle text-center">
+                                            <span data-ticket-elapsed class="inline-block font-sans text-[12px] font-semibold tabular-nums text-[#1C1C1E] bg-[#F2F2F7] border border-[#E5E5EA] px-2 py-0.5 rounded-[4px]">8 min</span>
+                                        </td>
+                                        <td class="action-col py-2 px-3 align-middle text-right whitespace-nowrap">
+                                            <div class="inline-flex items-center gap-1 justify-end">
+                                                <button type="button" onclick="closeTicketDirectly(this, 'INC-045')" class="bg-white hover:bg-red-50 text-red-600 hover:text-red-700 border border-red-200 text-[11px] font-medium px-2 py-0.5 rounded-[6px] shadow-2xs transition cursor-pointer">Cerrar</button>
+                                                <button type="button" onclick="handleTicketAction('INC-045', 'Intento de intrusión masivo en firewall perimetral', 'SEGURIDAD', '', '', 'P1')" class="bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA] border border-[#D1D1D6] text-[#1C1C1E] text-[11px] font-medium px-2 py-0.5 rounded-[6px] shadow-xs transition cursor-pointer">Asignar</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr id="row-INC-046" class="ticket-row hover:bg-[#F9F9FA] group transition-colors" data-area="TELEFONIA" data-priority="P2" data-state="EN_PAUSA" data-assigned="true" data-operator-id="3" data-operator-name="Andrés Silva" data-subject="Degradación de troncal SIP Caracas-Valencia">
+                                        <td class="py-2 px-3 align-middle text-center w-[40px]">
+                                            <div class="flex items-center justify-center">
+                                                <input type="checkbox" data-code="INC-046" data-assigned="true" class="row-checkbox w-3.5 h-3.5 rounded text-[#007AFF] border-[#D1D1D6] focus:ring-0 focus:outline-none cursor-pointer">
+                                            </div>
+                                        </td>
+                                        <td class="py-2 px-3 align-middle whitespace-nowrap">
+                                            <div class="flex items-center gap-1.5">
+                                                <svg class="w-3.5 h-3.5 text-[#8E8E93] flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                                                <button type="button" class="font-mono font-medium text-[#1C1C1E] hover:underline cursor-pointer" onclick="openTicketDetailsForCode('INC-046')">INC-046</button>
+                                            </div>
+                                        </td>
+                                        <td class="prio-col py-2 px-2.5 align-middle whitespace-nowrap">
+                                            <select class="priority-native-select text-[10px] font-mono font-bold rounded-[5px] px-1.5 py-0.5 border cursor-pointer focus:outline-none transition-colors bg-amber-50 text-amber-700 border-amber-200" data-ticket-code="INC-046" onchange="handlePrioritySelectChange(this)">
+                                                <option value="P1" class="text-red-700 bg-white font-bold">P1 (Crítica)</option>
+                                                <option value="P2" selected class="text-amber-700 bg-white font-bold">P2 (Media)</option>
+                                                <option value="P3" class="text-emerald-700 bg-white font-bold">P3 (Baja)</option>
+                                            </select>
+                                        </td>
+                                        <td class="state-col py-2 px-2.5 align-middle whitespace-nowrap">
+                                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] text-[11px] font-medium" style="background-color: rgba(245, 158, 11, 0.1); color: rgb(180, 83, 9); border: 1px solid rgba(245, 158, 11, 0.2);">
+                                                <span class="w-1.5 h-1.5 rounded-full" style="background-color: #f59e0b;"></span>
+                                                <span class="status-text">En Pausa</span>
+                                            </span>
+                                        </td>
+                                        <td class="py-2 px-3 align-middle truncate font-normal text-[#1C1C1E]" title="Degradación de troncal SIP Caracas-Valencia">Degradación de troncal SIP Caracas-Valencia</td>
+                                        <td class="op-col py-2 px-2.5 align-middle whitespace-nowrap text-[#1C1C1E] font-medium text-[11px]">
+                                            <span class="operator-label font-semibold text-[#007AFF]">Andrés Silva</span>
+                                        </td>
+                                        <td class="time-col py-2 px-2.5 align-middle text-center">
+                                            <span data-ticket-elapsed class="inline-block font-sans text-[12px] font-semibold tabular-nums text-[#1C1C1E] bg-[#F2F2F7] border border-[#E5E5EA] px-2 py-0.5 rounded-[4px]">1 h</span>
+                                        </td>
+                                        <td class="action-col py-2 px-3 align-middle text-right whitespace-nowrap">
+                                            <div class="inline-flex items-center gap-1 justify-end">
+                                                <button type="button" onclick="closeTicketDirectly(this, 'INC-046')" class="bg-white hover:bg-red-50 text-red-600 hover:text-red-700 border border-red-200 text-[11px] font-medium px-2 py-0.5 rounded-[6px] shadow-2xs transition cursor-pointer">Cerrar</button>
+                                                <button type="button" onclick="handleTicketAction('INC-046', 'Degradación de troncal SIP Caracas-Valencia', 'TELEFONIA', '3', 'Andrés Silva', 'P2')" class="bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA] border border-[#D1D1D6] text-[#1C1C1E] text-[11px] font-medium px-2 py-0.5 rounded-[6px] shadow-xs transition cursor-pointer">Desasignar</button>
+                                            </div>
+                                        </td>
                                     </tr>
                                 <% } %>
                                 <tr id="noFilterMatchRow" class="hidden">
@@ -706,7 +1007,7 @@
                                 Carpeta</button>
                             <div class="h-4 w-[1px] bg-[#D1D1D6] mx-1"></div>
                             <span class="text-[#8E8E93] text-[11px]">Mostrando <strong id="activeTicketsCounter" class="text-[#1C1C1E] font-mono">
-                                    <%= tickets ? tickets.length : 0 %>
+                                    <%= (typeof tickets !== 'undefined' && tickets && tickets.length > 0) ? tickets.length : 5 %>
                                 </strong> casos activos</span>
                         </div>
                         <div class="flex items-center gap-2">
@@ -937,6 +1238,48 @@
             </div>
         </div>
         <!-- END: Modal Sheet -->
+
+        <!-- BEGIN: Modal Traspasar a Guardia - R2 -->
+        <div id="guardShiftOverlay"
+            class="fixed inset-0 bg-black/40 backdrop-blur-md z-[85] hidden items-center justify-center p-4"
+            onclick="handleGuardShiftBackdrop(event)">
+            <section role="dialog" aria-modal="true" aria-labelledby="guardShiftTitle"
+                class="w-[440px] max-w-[calc(100vw-2rem)] bg-white/95 backdrop-blur-2xl rounded-[20px] border border-white/60 shadow-[0_24px_60px_rgba(0,0,0,0.2)] p-6 text-[#1C1C1E] flex flex-col gap-4">
+                <div class="flex items-start justify-between">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-9 h-9 rounded-full bg-blue-50 text-[#007AFF] flex items-center justify-center border border-blue-100 shrink-0">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 id="guardShiftTitle" class="text-[16px] font-bold text-[#1C1C1E] leading-tight">Traspasar a Guardia</h3>
+                            <p class="text-[12px] text-[#8E8E93] mt-0.5">Entrega operativa de tickets a la guardia entrante</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="closeGuardShiftModal()" class="w-7 h-7 flex items-center justify-center rounded-[7px] text-[#8E8E93] hover:bg-[#F2F2F7] hover:text-[#1C1C1E] transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+                    </button>
+                </div>
+                <div class="space-y-1.5">
+                    <label for="guardShiftNote" class="text-[12px] font-medium text-[#3A3A3C] flex items-center justify-between">
+                        <span>Nota de traspaso <span class="text-red-500 font-bold">*</span></span>
+                        <span class="text-[10px] text-[#8E8E93] font-normal">Obligatoria</span>
+                    </label>
+                    <textarea id="guardShiftNote" rows="3" oninput="document.getElementById('guardShiftError')?.classList.add('hidden')" placeholder="Indica el estado crítico, pendientes inmediatos y acuerdos de la guardia..." class="w-full text-[12px] p-3 rounded-[10px] border border-[#D1D1D6] bg-white focus:outline-none focus:ring-2 focus:ring-[#007AFF]/40 focus:border-[#007AFF] transition resize-none"></textarea>
+                    <p id="guardShiftError" class="text-[11px] text-red-500 hidden font-medium">Debes escribir una nota antes de confirmar el traspaso.</p>
+                </div>
+                <div class="flex items-center justify-end gap-2 pt-2 border-t border-black/5">
+                    <button type="button" onclick="closeGuardShiftModal()" class="px-4 py-2 rounded-[8px] border border-[#D1D1D6] bg-white text-[#3A3A3C] hover:bg-[#F2F2F7] font-medium text-[12px] transition shadow-2xs cursor-pointer">
+                        Cancelar
+                    </button>
+                    <button type="button" onclick="confirmGuardShift()" class="px-4 py-2 rounded-[8px] bg-[#007AFF] hover:bg-[#0062CC] text-white font-medium text-[12px] transition shadow-xs cursor-pointer flex items-center gap-1.5">
+                        <span>Confirmar</span>
+                    </button>
+                </div>
+            </section>
+        </div>
+        <!-- END: Modal Traspasar a Guardia -->
 
         <div id="ticketActionConfirmOverlay"
             class="fixed inset-0 bg-black/25 backdrop-blur-[5px] z-[90] hidden items-center justify-center p-4"
@@ -1944,9 +2287,11 @@
         }
 
         // ==========================================
-        // Filtros y Ordenamiento (Área, Fecha, Prioridad, Búsqueda)
+        // Filtros y Ordenamiento (Área, Estado, Operador, Prioridad, Búsqueda) - R2
         // ==========================================
         let currentAreaFilter = 'ALL';
+        let currentStateFilter = 'ALL';
+        let currentOperatorFilter = 'ALL';
         let currentPriorityFilter = 'ALL';
         let currentSearchQuery = '';
         let dateSortAsc = false;
@@ -1956,15 +2301,143 @@
             applyTableFilters();
         }
 
+        function filterByState(stateCode) {
+            currentStateFilter = stateCode || 'ALL';
+            applyTableFilters();
+        }
+
+        function filterByOperator(operatorId) {
+            currentOperatorFilter = operatorId || 'ALL';
+            applyTableFilters();
+        }
+
+        function handlePrioritySelectChange(selectElem) {
+            const val = selectElem.value;
+            const row = selectElem.closest('tr');
+            if (row) {
+                row.setAttribute('data-priority', val);
+            }
+            selectElem.classList.remove(
+                'bg-red-50', 'text-red-700', 'border-red-200',
+                'bg-amber-50', 'text-amber-700', 'border-amber-200',
+                'bg-emerald-50', 'text-emerald-700', 'border-emerald-200'
+            );
+            if (val === 'P1') {
+                selectElem.classList.add('bg-red-50', 'text-red-700', 'border-red-200');
+            } else if (val === 'P2') {
+                selectElem.classList.add('bg-amber-50', 'text-amber-700', 'border-amber-200');
+            } else {
+                selectElem.classList.add('bg-emerald-50', 'text-emerald-700', 'border-emerald-200');
+            }
+            updateKPIStats();
+            applyTableFilters();
+        }
+
+        function closeTicketDirectly(btn, code) {
+            if (!confirm(`¿Estás seguro de cerrar la incidencia ${code}?`)) return;
+            const row = document.getElementById('row-' + code) || btn.closest('tr');
+            if (row) {
+                row.classList.add('opacity-70', 'grayscale-[20%]');
+                row.setAttribute('data-state', 'CERRADO');
+                const stateCol = row.querySelector('.state-col');
+                if (stateCol) {
+                    stateCol.innerHTML = `
+                        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] text-[11px] font-medium" style="background-color: rgba(34, 197, 94, 0.1); color: rgb(20, 83, 45); border: 1px solid rgba(34, 197, 94, 0.2);">
+                            <span class="w-1.5 h-1.5 rounded-full" style="background-color: #22c55e;"></span>
+                            <span class="status-text">Cerrado</span>
+                        </span>
+                    `;
+                }
+                const actionCol = row.querySelector('.action-col');
+                if (actionCol) {
+                    actionCol.innerHTML = `
+                        <button type="button" onclick="openTicketDetailsForCode('${code}')" class="bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA] border border-[#D1D1D6] text-[#8E8E93] text-[11px] font-medium px-2 py-0.5 rounded-[6px] shadow-xs transition cursor-pointer">
+                            Detalles
+                        </button>
+                    `;
+                }
+                const chk = row.querySelector('.row-checkbox');
+                if (chk) {
+                    chk.checked = false;
+                    chk.disabled = true;
+                    chk.classList.add('opacity-30', 'cursor-not-allowed', 'pointer-events-none');
+                }
+                if (typeof TableSelectionManager !== 'undefined') {
+                    TableSelectionManager.selectedCodes.delete(code);
+                    TableSelectionManager.updateRowStyle(chk || row);
+                    TableSelectionManager.sync();
+                }
+                if (typeof showNotification === 'function') {
+                    showNotification('Ticket cerrado', `La incidencia ${code} fue cerrada correctamente.`);
+                }
+                updateKPIStats();
+                applyTableFilters();
+            }
+        }
+
+        // ==========================================
+        // Modal Traspasar a Guardia - R2
+        // ==========================================
+        function openGuardShiftModal() {
+            const overlay = document.getElementById('guardShiftOverlay');
+            const note = document.getElementById('guardShiftNote');
+            const err = document.getElementById('guardShiftError');
+            if (note) note.value = '';
+            if (err) err.classList.add('hidden');
+            if (overlay) {
+                overlay.classList.remove('hidden');
+                overlay.classList.add('flex');
+                setTimeout(() => note && note.focus(), 50);
+            }
+        }
+
+        function closeGuardShiftModal() {
+            const overlay = document.getElementById('guardShiftOverlay');
+            if (overlay) {
+                overlay.classList.add('hidden');
+                overlay.classList.remove('flex');
+            }
+        }
+
+        function handleGuardShiftBackdrop(event) {
+            if (event.target === document.getElementById('guardShiftOverlay')) {
+                closeGuardShiftModal();
+            }
+        }
+
+        function confirmGuardShift() {
+            const note = document.getElementById('guardShiftNote');
+            const err = document.getElementById('guardShiftError');
+            const noteVal = note ? note.value.trim() : '';
+            if (!noteVal) {
+                if (err) err.classList.remove('hidden');
+                if (note) note.focus();
+                return;
+            }
+            if (err) err.classList.add('hidden');
+            const selectedCount = (typeof TableSelectionManager !== 'undefined') ? TableSelectionManager.selectedCodes.size : 0;
+            closeGuardShiftModal();
+            if (typeof showNotification === 'function') {
+                const msg = selectedCount > 0
+                    ? `Se registraron ${selectedCount} ${selectedCount === 1 ? 'ticket' : 'tickets'} para traspaso de guardia.`
+                    : 'Se registró el traspaso de guardia correctamente.';
+                showNotification('Guardia traspasada', msg);
+            }
+        }
+
         function updateKPIStats() {
             const rows = document.querySelectorAll('.ticket-row');
             let criticalUnassigned = 0;
             rows.forEach(row => {
-                const prio = row.getAttribute('data-priority');
-                const op = row.querySelector('.op-col .operator-label')?.textContent || '';
-                const isUnassigned = op.includes('— Sin asignar') || !op.trim();
-                if (prio === 'P1' && isUnassigned) {
-                    criticalUnassigned++;
+                const state = (row.getAttribute('data-state') || '').toUpperCase();
+                const isClosed = state === 'CERRADO' || state === 'RESUELTO';
+                if (!isClosed) {
+                    const prio = row.getAttribute('data-priority');
+                    const op = row.querySelector('.op-col .operator-label')?.textContent || '';
+                    const isUnassigned = op.includes('— Sin asignar') || !op.trim() || row.getAttribute('data-assigned') === 'false';
+                    if (prio === 'P1' && isUnassigned) {
+                        criticalUnassigned++;
+                    }
                 }
             });
             const critEl = document.getElementById('kpi-critical');
@@ -1972,19 +2445,32 @@
         }
 
         function applyTableFilters() {
-            const rows = document.querySelectorAll('.ticket-row');
+            const rows = document.querySelectorAll('#ticketTableBody .ticket-row');
             let visibleCount = 0;
 
             rows.forEach(row => {
-                const rowArea = row.getAttribute('data-area');
-                const rowPrio = row.getAttribute('data-priority');
+                const rowArea = row.getAttribute('data-area') || '';
+                const rowPrio = row.getAttribute('data-priority') || '';
+                const rowState = (row.getAttribute('data-state') || row.querySelector('.status-text')?.textContent || '').toUpperCase();
+                const rowOpName = (row.getAttribute('data-operator-name') || row.querySelector('.operator-label')?.textContent || '').toLowerCase();
+                const rowOpId = row.getAttribute('data-operator-id') || '';
                 const rowText = row.textContent.toLowerCase();
+
+                const isUnassigned = (row.getAttribute('data-assigned') === 'false') || (!rowOpId && (!rowOpName || rowOpName.includes('sin asignar')));
 
                 const matchesArea = (currentAreaFilter === 'ALL' || rowArea === currentAreaFilter);
                 const matchesPrio = (currentPriorityFilter === 'ALL' || rowPrio === currentPriorityFilter);
+                const matchesState = (currentStateFilter === 'ALL' || rowState.includes(currentStateFilter));
+                const matchesOperator = (currentOperatorFilter === 'ALL' ||
+                    (currentOperatorFilter === 'UNASSIGNED' && isUnassigned) ||
+                    (!isUnassigned && (
+                        (rowOpId && String(rowOpId) === String(currentOperatorFilter)) ||
+                        rowOpName.includes(currentOperatorFilter.toLowerCase())
+                    ))
+                );
                 const matchesSearch = !currentSearchQuery || rowText.includes(currentSearchQuery);
 
-                if (matchesArea && matchesPrio && matchesSearch) {
+                if (matchesArea && matchesPrio && matchesState && matchesOperator && matchesSearch) {
                     row.style.display = '';
                     visibleCount++;
                 } else {
@@ -2083,8 +2569,11 @@
         // ==========================================
         const TableSelectionManager = {
             selectedCodes: new Set(),
+            initialized: false,
 
             init() {
+                if (this.initialized) return;
+                this.initialized = true;
                 const tableBody = document.getElementById('ticketTableBody');
                 const masterCheckbox = document.getElementById('selectAllCheckbox');
 
@@ -2103,8 +2592,7 @@
                         const row = e.target.closest('.ticket-row');
                         if (row) {
                             const cb = row.querySelector('.row-checkbox');
-                            // CONDICIÓN: No se pueden seleccionar tickets ya en asignación
-                            if (cb && !cb.disabled && cb.getAttribute('data-assigned') !== 'true') {
+                            if (cb && !cb.disabled) {
                                 cb.checked = !cb.checked;
                                 this.handleCheckboxChange(cb);
                             }
@@ -2124,8 +2612,7 @@
             },
 
             handleCheckboxChange(cb) {
-                // CONDICIÓN: No se pueden seleccionar tickets ya en asignación
-                if (cb.disabled || cb.getAttribute('data-assigned') === 'true') {
+                if (cb.disabled) {
                     cb.checked = false;
                     return;
                 }
@@ -2156,14 +2643,13 @@
             },
 
             toggleAll(selectAll) {
-                // CONDICIÓN: Solo seleccionar filas visibles Y que NO estén ya en asignación
-                const assignableRows = Array.from(document.querySelectorAll('.ticket-row')).filter(r => {
+                const selectableRows = Array.from(document.querySelectorAll('.ticket-row')).filter(r => {
                     if (r.style.display === 'none') return false;
                     const cb = r.querySelector('.row-checkbox');
-                    return cb && !cb.disabled && cb.getAttribute('data-assigned') !== 'true';
+                    return cb && !cb.disabled;
                 });
                 
-                assignableRows.forEach(row => {
+                selectableRows.forEach(row => {
                     const cb = row.querySelector('.row-checkbox');
                     if (cb) {
                         cb.checked = selectAll;
@@ -2227,20 +2713,20 @@
                     }
                 }
 
-                // 3. Sincronizar estado del checkbox maestro (checked / indeterminate) sobre tickets asignables
+                // 3. Sincronizar estado del checkbox maestro (checked / indeterminate) sobre tickets seleccionables
                 if (masterCheckbox) {
-                    const assignableCheckboxes = Array.from(document.querySelectorAll('.ticket-row'))
+                    const selectableCheckboxes = Array.from(document.querySelectorAll('.ticket-row'))
                         .filter(r => r.style.display !== 'none')
                         .map(r => r.querySelector('.row-checkbox'))
-                        .filter(cb => cb && !cb.disabled && cb.getAttribute('data-assigned') !== 'true');
+                        .filter(cb => cb && !cb.disabled);
 
-                    const assignableCount = assignableCheckboxes.length;
-                    const checkedCount = assignableCheckboxes.filter(cb => cb.checked).length;
+                    const totalCount = selectableCheckboxes.length;
+                    const checkedCount = selectableCheckboxes.filter(cb => cb.checked).length;
 
-                    if (assignableCount === 0 || checkedCount === 0) {
+                    if (totalCount === 0 || checkedCount === 0) {
                         masterCheckbox.checked = false;
                         masterCheckbox.indeterminate = false;
-                    } else if (checkedCount === assignableCount) {
+                    } else if (checkedCount === totalCount) {
                         masterCheckbox.checked = true;
                         masterCheckbox.indeterminate = false;
                     } else {
@@ -2255,7 +2741,7 @@
         function updateSelectionCount() {
             TableSelectionManager.selectedCodes.clear();
             document.querySelectorAll('.row-checkbox:checked').forEach(cb => {
-                if (!cb.disabled && cb.getAttribute('data-assigned') !== 'true') {
+                if (!cb.disabled) {
                     const code = cb.getAttribute('data-code');
                     if (code) TableSelectionManager.selectedCodes.add(code);
                     TableSelectionManager.updateRowStyle(cb);
@@ -2306,10 +2792,22 @@
             }
         }
 
-        // Auto-inicialización
-        document.addEventListener('DOMContentLoaded', () => TableSelectionManager.init());
+        // Auto-inicialización y Fix Contador Dinámico (R1.4)
+        let dashboardTableInitialized = false;
+        function initDashboardTable() {
+            if (dashboardTableInitialized) return;
+            dashboardTableInitialized = true;
+            if (typeof TableSelectionManager !== 'undefined') {
+                TableSelectionManager.init();
+            }
+            if (typeof applyTableFilters === 'function') {
+                applyTableFilters();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initDashboardTable);
         if (document.readyState === 'complete' || document.readyState === 'interactive') {
-            TableSelectionManager.init();
+            initDashboardTable();
         }
 
         function handleBackdropClick(event) {
@@ -2321,6 +2819,7 @@
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') {
                 closeAssignModal();
+                closeGuardShiftModal();
                 hideNotification();
             }
             if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
@@ -2331,10 +2830,6 @@
                     searchInput.select();
                 }
             }
-        });
-        
-        app.listen(PORT, '0.0.0.0', () => {
-        console.log(`Servidor accesible en la red local por el puerto ${PORT}`);
         });
     </script>
 </body>

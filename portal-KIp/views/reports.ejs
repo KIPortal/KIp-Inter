@@ -247,7 +247,36 @@
                         <h1 class="text-xl sm:text-2xl font-bold text-[#1C1C1E] tracking-tight">Reportes y Rendimiento</h1>
                         <p class="text-[12px] text-[#8E8E93] mt-0.5">Métricas operativas dinámicas, saturación de área y ranking de operadores</p>
                     </div>
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center flex-wrap gap-2.5">
+                        <!-- Selector de Periodo - R3 -->
+                        <div class="flex items-center gap-1.5 bg-white/80 backdrop-blur-md border border-[#D1D1D6] rounded-[8px] px-2.5 py-1 shadow-2xs">
+                            <svg class="w-3.5 h-3.5 text-[#8E8E93]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                            <label for="periodoSelect" class="text-[11px] font-medium text-[#8E8E93] leading-none">Periodo:</label>
+                            <select id="periodoSelect" class="bg-transparent text-[12px] font-semibold text-[#1C1C1E] border-none focus:outline-none focus:ring-0 cursor-pointer pr-1">
+                                <option value="jornada" selected>Jornada</option>
+                                <option value="semana">Semana</option>
+                                <option value="mes">Mes</option>
+                                <option value="especifica">Fecha específica</option>
+                            </select>
+                        </div>
+
+                        <!-- Botón Descargar Excel (verde/sky con estilo macOS Ocean-Glass) - R3 -->
+                        <button type="button" id="btnDescargarExcel" class="px-3 py-1.5 rounded-[8px] bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-medium text-[12px] flex items-center gap-1.5 shadow-xs hover:shadow transition duration-150 cursor-pointer select-none">
+                            <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                            <span>Descargar Excel</span>
+                        </button>
+
                         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/80 border border-[#D1D1D6] text-[11px] text-[#1C1C1E] font-medium shadow-2xs">
                             <span class="w-2 h-2 rounded-full bg-sky-500 animate-pulse"></span>
                             <span>Jornada Activa</span>
