@@ -12,6 +12,8 @@ const {
     getClosingDate,
     averageResolutionMinutes,
     averageBusinessMinutes,
+    getResolutionMinutes,
+    getBusinessResolutionMinutes,
     formatMinutes,
     computeOverload
 } = require('./metricsService');
@@ -54,6 +56,14 @@ function priorityFromPoints(points) {
     return 'Sin prioridad';
 }
 
+/** Estado de carga de un operador según las reglas de sobrecarga (spec §7). */
+function loadStatus(estadoOperativo, carga) {
+    if (estadoOperativo === 'AUSENTE') return 'Ausente';
+    if (carga && carga.sobrecarga) return 'Sobrecarga';
+    if (carga && carga.comparable) return 'Normal';
+    return 'Sin comparación';
+}
+
 const toMinutes = value => (value === null || value === undefined ? null : Math.round(value * 10) / 10);
 
 function timeMetrics(resolved) {
@@ -67,6 +77,17 @@ function timeMetrics(resolved) {
     };
 }
 
+/** Puntos de los tickets resueltos y cuántos hubo por prioridad. */
+function pointsSummary(resolved) {
+    const puntos = resolved.reduce((sum, t) => sum + (t.puntos_complejidad || 0), 0);
+    const count = p => resolved.filter(t => priorityFromPoints(t.puntos_complejidad || 0) === p).length;
+    return {
+        puntos,
+        ptsPorTicket: resolved.length ? Math.round((puntos / resolved.length) * 10) / 10 : 0,
+        p1: count('P1'), p2: count('P2'), p3: count('P3'), sinPrioridad: count('Sin prioridad')
+    };
+}
+
 function volumeCounts(tickets, range) {
     const resolved = tickets.filter(t => inRange(getClosingDate(t), range));
     return {
@@ -75,6 +96,7 @@ function volumeCounts(tickets, range) {
         resueltos: tickets.filter(t => inRange(t.resueltoEn || t.fecha_cierre, range)).length,
         cerrados: tickets.filter(t => inRange(t.fecha_cierre, range)).length,
         activos: tickets.filter(t => ACTIVE_STATES.includes(t.estado_actual)).length,
+        ...pointsSummary(resolved),
         _resolved: resolved
     };
 }
@@ -108,24 +130,12 @@ function buildPeriodReport({ tickets, operators, range, area }) {
         resueltos: totals.resueltos,
         cerrados: totals.cerrados,
         activos: totals.activos,
+        puntos: totals.puntos,
+        ptsPorTicket: totals.ptsPorTicket,
         ...timeMetrics(totals._resolved)
     };
 
-    // --- Por área ---
-    const porArea = (areaFilter ? [areaFilter] : AREAS).map(code => {
-        const ofArea = allTickets.filter(t => t.area_designada === code);
-        const counts = volumeCounts(ofArea, range);
-        return {
-            area: code,
-            nombre: AREA_NAMES[code],
-            creados: counts.creados,
-            asignados: counts.asignados,
-            resueltos: counts.resueltos,
-            cerrados: counts.cerrados,
-            activos: counts.activos,
-            ...timeMetrics(counts._resolved)
-        };
-    });
+    // (el bloque por área se arma después de calcular la sobrecarga)
 
     // --- Por operador (carga actual con las reglas de sobrecarga de §7) ---
     const withLoad = scopedOperators.map(o => ({
@@ -151,12 +161,42 @@ function buildPeriodReport({ tickets, operators, range, area }) {
             nombre: o.nombre,
             area: o.area_designada,
             areaNombre: AREA_NAMES[o.area_designada] || o.area_designada,
+            estadoOperativo: o.estado_operativo,
             asignados: counts.asignados,
             resueltos: counts.resueltos,
+            puntos: counts.puntos,
+            ptsPorTicket: counts.ptsPorTicket,
+            p1: counts.p1, p2: counts.p2, p3: counts.p3, sinPrioridad: counts.sinPrioridad,
             activos: withLoad.find(w => w.id === o.id)?.cargaActual ?? 0,
             ...timeMetrics(counts._resolved),
             indiceCarga: carga.comparable ? Math.round(carga.indiceCarga * 100) / 100 : null,
-            sobrecarga: Boolean(carga.sobrecarga)
+            sobrecarga: Boolean(carga.sobrecarga),
+            estadoCarga: loadStatus(o.estado_operativo, carga)
+        };
+    }).sort((x, y) => y.puntos - x.puntos || y.resueltos - x.resueltos || x.nombre.localeCompare(y.nombre));
+
+    // --- Por área (balance de carga) ---
+    const areaCodes = areaFilter ? [areaFilter] : AREAS;
+    const totalPuntos = areaCodes.reduce((sum, code) => sum + volumeCounts(allTickets.filter(t => t.area_designada === code), range).puntos, 0);
+    const porArea = areaCodes.map(code => {
+        const counts = volumeCounts(allTickets.filter(t => t.area_designada === code), range);
+        const ops = (operators || []).filter(o => o.area_designada === code);
+        const flagged = ops.filter(o => overload.get(o.id)?.sobrecarga).length;
+        const comparable = ops.filter(o => overload.get(o.id)?.comparable).length;
+        return {
+            area: code,
+            nombre: AREA_NAMES[code],
+            operadores: ops.length,
+            creados: counts.creados,
+            asignados: counts.asignados,
+            resueltos: counts.resueltos,
+            cerrados: counts.cerrados,
+            activos: counts.activos,
+            puntos: counts.puntos,
+            participacion: totalPuntos ? Math.round((counts.puntos / totalPuntos) * 1000) / 1000 : 0,
+            ...timeMetrics(counts._resolved),
+            sobrecargados: flagged,
+            estadoCarga: ops.length === 0 ? 'Sin operadores' : flagged > 0 ? 'Sobrecarga' : comparable === 0 ? 'Sin comparación' : 'Normal'
         };
     });
 
@@ -186,10 +226,33 @@ function buildPeriodReport({ tickets, operators, range, area }) {
             llegada: t.createdAt || null,
             asignacion: t.fecha_asignacion || null,
             resolucion: t.resueltoEn || null,
-            cierre: t.fecha_cierre || null
+            cierre: t.fecha_cierre || null,
+            duracionTotalMin: toMinutes(getResolutionMinutes(t)),
+            duracionHorarioMin: toMinutes(getBusinessResolutionMinutes(t)),
+            remitente: t.remitente || null
         }));
 
-    return { resumen, porArea, porOperador, flujoHorario, detalle };
+    return { resumen, porArea, porOperador, flujoHorario, detalle, lecturas: buildInsights({ resumen, porArea, porOperador, flujoHorario, tickets: scoped }) };
+}
+
+/** Lecturas clave en lenguaje llano para el coordinador (también se muestran en el Excel). */
+function buildInsights({ resumen, porArea, porOperador, flujoHorario, tickets }) {
+    const out = [];
+    const pico = flujoHorario.reduce((best, h) => (h.recibidos > best.recibidos ? h : best), { recibidos: 0 });
+    if (pico.recibidos > 0) out.push(`Hora pico de llegada: ${pico.etiqueta} (${pico.recibidos} ${pico.recibidos === 1 ? 'ticket' : 'tickets'}).`);
+    const topArea = porArea.filter(a => a.puntos > 0).sort((a, b) => b.puntos - a.puntos)[0];
+    if (topArea) out.push(`Área con más trabajo resuelto: ${topArea.nombre} (${topArea.puntos} pts, ${Math.round(topArea.participacion * 1000) / 10}% del total).`);
+    const lenta = porArea.filter(a => a.tiempoTotalMin !== null).sort((a, b) => b.tiempoTotalMin - a.tiempoTotalMin)[0];
+    if (lenta) out.push(`Mayor tiempo de solución promedio: ${lenta.nombre} (${lenta.tiempoTotal}).`);
+    const topOp = porOperador.filter(o => o.resueltos > 0)[0];
+    if (topOp) out.push(`Más puntos resueltos: ${topOp.nombre} (${topOp.puntos} pts en ${topOp.resueltos} tickets).`);
+    const sobre = porOperador.filter(o => o.sobrecarga).map(o => o.nombre);
+    if (sobre.length) out.push(`Operadores en sobrecarga ahora: ${sobre.join(', ')}.`);
+    const sinAsignar = tickets.filter(t => ACTIVE_STATES.includes(t.estado_actual) && !t.asignado_a).length;
+    if (sinAsignar > 0) out.push(`Tickets activos sin asignar: ${sinAsignar}.`);
+    if (resumen.resueltos === 0 && resumen.creados > 0) out.push('Se recibieron tickets pero ninguno se resolvió en el periodo.');
+    if (out.length === 0) out.push('Sin actividad en el periodo seleccionado.');
+    return out;
 }
 
 module.exports = { buildPeriodReport, priorityFromPoints, AREAS, AREA_NAMES, STATE_NAMES };

@@ -146,22 +146,44 @@ const mockRes = () => {
         assert.strictEqual(vacio.detalle.length, 0);
     });
 
-    await t('Excel: 5 hojas con encabezados, filas y hora de Caracas', async () => {
+    await t('Excel: 4 hojas (resumen, operadores, flujo, detalle), totales con fórmula y hora de Caracas', async () => {
         const buffer = await buildWorkbook(rep, { generadoPor: 'Coordinador', generadoEn: d('2026-10-07T20:00:00Z') });
         const wb = new ExcelJS.Workbook();
         await wb.xlsx.load(buffer);
-        assert.deepStrictEqual(wb.worksheets.map(s => s.name), ['Resumen', 'Por área', 'Por operador', 'Flujo horario', 'Detalle']);
-        assert.strictEqual(wb.getWorksheet('Detalle').rowCount, 1 + rep.detalle.length);
-        assert.strictEqual(wb.getWorksheet('Flujo horario').rowCount, 25);
-        assert.strictEqual(wb.getWorksheet('Por área').rowCount, 8);
-        const inc1 = wb.getWorksheet('Detalle').getRow(2); // INC-1 es el más antiguo del periodo entre los activos? se busca por código
+        assert.deepStrictEqual(wb.worksheets.map(s => s.name), ['Resumen Ejecutivo', 'Productividad Operadores', 'Flujo Horario', 'Detalle de Tickets']);
+        const det = wb.getWorksheet('Detalle de Tickets');
+        assert.strictEqual(det.rowCount, 4 + rep.detalle.length);
+        assert.strictEqual(wb.getWorksheet('Flujo Horario').rowCount, 4 + 24 + 1);
         let row;
-        wb.getWorksheet('Detalle').eachRow(r => { if (r.getCell(1).value === 'INC-1') row = r; });
+        det.eachRow(r => { if (r.getCell(1).value === 'INC-1') row = r; });
         assert(row, 'fila INC-1');
-        assert.strictEqual(new Date(row.getCell(8).value).getUTCHours(), 9, 'llegada 09:00 hora de Caracas');
-        assert.strictEqual(wb.getWorksheet('Resumen').getCell('B3').value, '2026-10-07');
-        assert.strictEqual(wb.getWorksheet('Resumen').getCell('B9').value, 3);
-        assert(inc1);
+        assert.strictEqual(new Date(row.getCell(2).value).getUTCHours(), 9, 'llegada 09:00 hora de Caracas');
+        assert.strictEqual(row.getCell(6).value, 120, 'duración total en minutos');
+        const res = wb.getWorksheet('Resumen Ejecutivo');
+        assert(String(res.getCell('A1').value).includes('REPORTE GERENCIAL OPERACIONES IP'));
+        assert(String(res.getCell('A2').value).includes('2026-10-07'));
+        assert.strictEqual(res.getCell('A5').value, 3, 'tarjeta de creados');
+        // Totales como fórmula, con el resultado guardado
+        let totalCell;
+        res.eachRow(r => { if (r.getCell(1).value === 'TOTAL') totalCell = r.getCell(4); });
+        assert(totalCell.value.formula.startsWith('SUM('), 'total con fórmula');
+        assert.strictEqual(totalCell.value.result, rep.porArea.reduce((sum, a) => sum + a.resueltos, 0));
+        assert(wb.getWorksheet('Productividad Operadores').getCell('A5').value, 'primer operador');
+    });
+    await t('Reporte: puntos, % participación (suma 100%), estado de carga y lecturas clave', () => {
+        assert.strictEqual(rep.resumen.puntos, 8, 'solo INC-1 (P1) se resolvió el 7');
+        const wan = rep.porArea.find(a => a.area === 'WAN');
+        assert.strictEqual(wan.puntos, 8);
+        assert.strictEqual(wan.estadoCarga, 'Sobrecarga');
+        assert.strictEqual(rep.porArea.find(a => a.area === 'SEGURIDAD').estadoCarga, 'Sin comparación');
+        assert.strictEqual(rep.porArea.find(a => a.area === 'TELEFONIA').estadoCarga, 'Sin operadores');
+        assert.strictEqual(Math.round(rep.porArea.reduce((s, a) => s + a.participacion, 0) * 1000) / 1000, 1);
+        const a = rep.porOperador.find(o => o.id === 'a');
+        assert.strictEqual(a.p1, 1);
+        assert.strictEqual(a.estadoCarga, 'Sobrecarga');
+        assert.strictEqual(rep.porOperador[0].id, 'a', 'ordenado por puntos');
+        assert(rep.lecturas.some(l => l.includes('Hora pico')), 'hora pico');
+        assert(rep.lecturas.some(l => l.includes('Operadores en sobrecarga')), 'sobrecarga');
     });
 
     await t('Endpoint /data: valida parámetros y devuelve las 5 secciones', async () => {
@@ -179,7 +201,7 @@ const mockRes = () => {
         const ok = mockRes();
         await reportController.getPeriodData({ query: { periodo: 'especifica', fecha: '2026-10-07' } }, ok);
         assert.strictEqual(ok.body.success, true);
-        ['resumen', 'porArea', 'porOperador', 'flujoHorario', 'detalle'].forEach(k => assert(ok.body[k], k));
+        ['resumen', 'porArea', 'porOperador', 'flujoHorario', 'detalle', 'lecturas'].forEach(k => assert(ok.body[k], k));
     });
     await t('Endpoint /excel: cabeceras de descarga y archivo válido', async () => {
         prisma.ticket.findMany = async () => tickets;
@@ -190,7 +212,7 @@ const mockRes = () => {
         assert.strictEqual(res.headers['Content-Disposition'], 'attachment; filename="reporte-semana-2026-10-05_2026-10-11.xlsx"');
         const wb = new ExcelJS.Workbook();
         await wb.xlsx.load(res.body);
-        assert.strictEqual(wb.worksheets.length, 5);
+        assert.strictEqual(wb.worksheets.length, 4);
     });
     await t('Rutas: /data y /excel exigen rol COORDINADOR', () => {
         const router = require('../src/routes/reportRoutes');
