@@ -564,25 +564,17 @@
                             <% 
                                 const workHours = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
                                 const currentHour = new Date().getHours();
-                                const hourlyFlow = {};
-                                workHours.forEach(function(h) { hourlyFlow[h] = { creados: 0, cerrados: 0 }; });
-                                safeTicketList.forEach(function(t) {
-                                    if (!t) return;
-                                    if (t.createdAt) {
-                                        const h = new Date(t.createdAt).getHours();
-                                        if (hourlyFlow[h]) hourlyFlow[h].creados++;
-                                    }
-                                    if (t.fecha_cierre) {
-                                        const h = new Date(t.fecha_cierre).getHours();
-                                        if (hourlyFlow[h]) hourlyFlow[h].cerrados++;
-                                    }
-                                });
-                                const maxFlow = Math.max(1, ...workHours.map(function(h) { return Math.max(hourlyFlow[h].creados, hourlyFlow[h].cerrados); }));
+                                const safeFlujo = (typeof flujoHoy !== 'undefined' && flujoHoy) ? flujoHoy : { creados: {}, cerrados: {} };
+                                const fCreados = safeFlujo.creados || {};
+                                const fCerrados = safeFlujo.cerrados || {};
+                                const maxFlow = Math.max(1, ...workHours.map(function(h) { 
+                                    return Math.max(Number(fCreados[h] || 0), Number(fCerrados[h] || 0)); 
+                                }));
                             %>
                             <div class="flex items-end justify-between gap-1 h-[140px] pt-2 px-1">
                                 <% workHours.forEach(function(h) { 
-                                    const cr = hourlyFlow[h].creados;
-                                    const cl = hourlyFlow[h].cerrados;
+                                    const cr = Number(fCreados[h] || 0);
+                                    const cl = Number(fCerrados[h] || 0);
                                     const crPct = Math.round((cr / maxFlow) * 100);
                                     const clPct = Math.round((cl / maxFlow) * 100);
                                     const isNow = h === currentHour;
@@ -1211,6 +1203,20 @@
                     </button>
                 </div>
                 <div class="space-y-1.5">
+                    <label for="guardShiftOperatorId" class="text-[12px] font-medium text-[#3A3A3C] flex items-center justify-between">
+                        <span>Operador de guardia entrante</span>
+                        <span class="text-[10px] text-[#8E8E93] font-normal">Opcional</span>
+                    </label>
+                    <select id="guardShiftOperatorId" class="w-full text-[12px] p-2.5 rounded-[10px] border border-[#D1D1D6] bg-white focus:outline-none focus:ring-2 focus:ring-[#007AFF]/40 focus:border-[#007AFF] transition cursor-pointer">
+                        <option value="">— Sin asignar a operador específico —</option>
+                        <% if (typeof operadoresTurno !== 'undefined' && Array.isArray(operadoresTurno)) { %>
+                            <% operadoresTurno.forEach(function(op) { if (!op) return; %>
+                                <option value="<%= op.id %>"><%= op.nombre %> (<%= op.area_designada || 'General' %>)</option>
+                            <% }); %>
+                        <% } %>
+                    </select>
+                </div>
+                <div class="space-y-1.5">
                     <label for="guardShiftNote" class="text-[12px] font-medium text-[#3A3A3C] flex items-center justify-between">
                         <span>Nota de traspaso <span class="text-red-500 font-bold">*</span></span>
                         <span class="text-[10px] text-[#8E8E93] font-normal">Obligatoria</span>
@@ -1438,6 +1444,15 @@
                 <section>
                     <h5 class="text-[10px] font-semibold uppercase text-[#8E8E93] mb-1.5">Archivos adjuntos</h5>
                     <p class="rounded-[8px] bg-white border border-dashed border-[#D1D1D6] px-3 py-3 text-[12px] text-[#8E8E93]">No hay archivos adjuntos registrados para este ticket.</p>
+                </section>
+                <section data-detail-history-section class="pt-2 border-t border-[#E5E5EA]">
+                    <h5 class="text-[10px] font-semibold uppercase text-[#8E8E93] mb-2 flex items-center justify-between">
+                        <span>Historial de auditoría</span>
+                        <span class="text-[9px] font-mono text-sky-600 font-normal">GET /api/tickets/:code/history</span>
+                    </h5>
+                    <div data-detail-history-list class="space-y-1.5 rounded-[8px] bg-white border border-[#E5E5EA] p-3 text-[12px] text-[#48484A]">
+                        <p class="text-[#8E8E93] italic">Cargando historial...</p>
+                    </div>
                 </section>
             </article>
         </template>
@@ -1882,10 +1897,36 @@
                 item.querySelector('[data-detail-area-copy]').textContent = areaLabels[area] || area;
                 item.querySelector('[data-detail-created-at]').textContent = formattedDate;
                 item.querySelector('[data-detail-description]').textContent = row.dataset.description || 'Sin descripción registrada.';
-                const senderSection = item.querySelector('[data-detail-sender-section]');
-                senderSection.classList.toggle('hidden', row.dataset.origin !== 'CORREO');
-                item.querySelector('[data-detail-sender]').textContent = row.dataset.sender || 'No registrado';
+                const historyListEl = item.querySelector('[data-detail-history-list]');
+                const codeForHistory = row.id.replace(/^row-/, '');
                 detailsList.appendChild(item);
+
+                if (historyListEl && codeForHistory) {
+                    fetch(`/api/tickets/${encodeURIComponent(codeForHistory)}/history`)
+                        .then(r => r.json())
+                        .then(data => {
+                            const entries = Array.isArray(data) ? data : (data.history || data.historial || []);
+                            if (!entries.length) {
+                                historyListEl.innerHTML = '<p class="text-[#8E8E93] italic">Sin registros de auditoría para este ticket.</p>';
+                                return;
+                            }
+                            historyListEl.innerHTML = entries.map(it => `
+                                <div class="flex items-start gap-2 py-1 border-b border-black/5 last:border-0">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-sky-500 mt-1 shrink-0"></span>
+                                    <div class="flex-1">
+                                        <div class="flex items-center justify-between">
+                                            <span class="font-semibold text-slate-700">${it.accion || it.action || 'Evento'}</span>
+                                            <span class="text-[#8E8E93] text-[10px]">${it.createdAt ? new Date(it.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Turno'}</span>
+                                        </div>
+                                        <p class="text-[#636366] text-[11px] mt-0.5">${it.detalles || it.nota || it.mensaje || ''}</p>
+                                    </div>
+                                </div>
+                            `).join('');
+                        })
+                        .catch(() => {
+                            historyListEl.innerHTML = '<p class="text-[#8E8E93] italic">Historial no disponible.</p>';
+                        });
+                }
             });
 
             const countLabel = rows.length === 1 ? '1 incidencia' : `${rows.length} incidencias`;
@@ -2290,8 +2331,9 @@
             applyTableFilters();
         }
 
-        function handlePrioritySelectChange(selectElem) {
+        async function handlePrioritySelectChange(selectElem) {
             const val = selectElem.value;
+            const code = selectElem.getAttribute('data-ticket-code') || selectElem.closest('tr')?.getAttribute('data-ticket-code') || '';
             const row = selectElem.closest('tr');
             if (row) {
                 row.setAttribute('data-priority', val);
@@ -2310,11 +2352,58 @@
             }
             updateKPIStats();
             applyTableFilters();
+
+            if (code) {
+                try {
+                    const res = await fetch(`/api/tickets/${encodeURIComponent(code)}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ prioridad: val })
+                    });
+                    const data = await res.json().catch(() => ({}));
+                    if (!res.ok) {
+                        console.warn('Error al actualizar prioridad:', data.error || res.statusText);
+                    } else if (typeof showNotification === 'function') {
+                        showNotification('Prioridad actualizada', `Ticket ${code} actualizado a ${val}`);
+                    }
+                } catch (err) {
+                    console.error('Error de red al actualizar prioridad:', err);
+                }
+            }
         }
 
-        function closeTicketDirectly(btn, code) {
-            if (!confirm(`¿Estás seguro de cerrar la incidencia ${code}?`)) return;
-            const row = document.getElementById('row-' + code) || btn.closest('tr');
+        async function closeTicketDirectly(btn, code, confirmar = false) {
+            if (!confirmar && !confirm(`¿Estás seguro de cerrar la incidencia ${code}?`)) return;
+            try {
+                const payload = confirmar ? { confirmar: true } : {};
+                let res = await fetch(`/api/tickets/${encodeURIComponent(code)}/close`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.status === 404 || res.status === 405) {
+                    res = await fetch(`/api/tickets/${encodeURIComponent(code)}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ estado: 'CERRADO', ...payload })
+                    });
+                }
+                const data = await res.json().catch(() => ({}));
+                if (data.requiereConfirmacion && !confirmar) {
+                    if (confirm(data.mensaje || `El ticket ${code} requiere confirmación adicional. ¿Confirmar cierre?`)) {
+                        return closeTicketDirectly(btn, code, true);
+                    }
+                    return;
+                }
+                if (!res.ok && res.status !== 404 && res.status !== 501) {
+                    alert(data.error || 'No se pudo cerrar el ticket en el servidor');
+                    return;
+                }
+            } catch (err) {
+                console.warn('Endpoint closeTicket:', err);
+            }
+
+            const row = document.getElementById('row-' + code) || btn?.closest('tr');
             if (row) {
                 row.classList.add('opacity-70', 'grayscale-[20%]');
                 row.setAttribute('data-state', 'CERRADO');
@@ -2384,9 +2473,11 @@
             }
         }
 
-        function confirmGuardShift() {
+        async function confirmGuardShift() {
             const note = document.getElementById('guardShiftNote');
             const err = document.getElementById('guardShiftError');
+            const opSelect = document.getElementById('guardShiftOperatorId');
+            const operatorId = opSelect ? opSelect.value : '';
             const noteVal = note ? note.value.trim() : '';
             if (!noteVal) {
                 if (err) err.classList.remove('hidden');
@@ -2394,13 +2485,105 @@
                 return;
             }
             if (err) err.classList.add('hidden');
-            const selectedCount = (typeof TableSelectionManager !== 'undefined') ? TableSelectionManager.selectedCodes.size : 0;
+            const ticketCodes = Array.from((typeof TableSelectionManager !== 'undefined') ? TableSelectionManager.selectedCodes : []);
+            
+            try {
+                const res = await fetch('/api/tickets/handoff', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ticketCodes, operatorId, nota: noteVal })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok && res.status !== 404 && res.status !== 501) {
+                    console.warn('Respuesta handoff:', data);
+                }
+            } catch (err) {
+                console.error('Error al traspasar guardia:', err);
+            }
+
             closeGuardShiftModal();
             if (typeof showNotification === 'function') {
+                const selectedCount = ticketCodes.length;
                 const msg = selectedCount > 0
                     ? `Se registraron ${selectedCount} ${selectedCount === 1 ? 'ticket' : 'tickets'} para traspaso de guardia.`
                     : 'Se registró el traspaso de guardia correctamente.';
                 showNotification('Guardia traspasada', msg);
+            }
+            if (typeof TableSelectionManager !== 'undefined') {
+                TableSelectionManager.clear();
+            }
+        }
+
+        // ==========================================
+        // Endpoints Auxiliares: Editar, Eliminar, Restaurar y Papelera
+        // ==========================================
+        async function editTicket(code, updateData, confirmarCambioArea = false) {
+            const payload = { ...updateData };
+            if (confirmarCambioArea) payload.confirmarCambioArea = true;
+            try {
+                const res = await fetch(`/api/tickets/${encodeURIComponent(code)}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json().catch(() => ({}));
+                if (data.requiereConfirmacion && !confirmarCambioArea) {
+                    if (confirm(data.mensaje || `El cambio en el ticket ${code} requiere confirmación de área. ¿Deseas confirmar?`)) {
+                        return editTicket(code, updateData, true);
+                    }
+                    return false;
+                }
+                return res.ok;
+            } catch (err) {
+                console.error('Error al editar ticket:', err);
+                return false;
+            }
+        }
+
+        async function deleteTicket(code, confirmar = false) {
+            if (!confirmar && !confirm(`¿Estás seguro de eliminar el ticket ${code}?`)) return false;
+            try {
+                const url = `/api/tickets/${encodeURIComponent(code)}${confirmar ? '?confirmar=true' : ''}`;
+                const res = await fetch(url, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(confirmar ? { confirmar: true } : {})
+                });
+                const data = await res.json().catch(() => ({}));
+                if (data.requiereConfirmacion && !confirmar) {
+                    if (confirm(data.mensaje || `El ticket ${code} requiere confirmación para su eliminación. ¿Deseas confirmar?`)) {
+                        return deleteTicket(code, true);
+                    }
+                    return false;
+                }
+                return res.ok;
+            } catch (err) {
+                console.error('Error al eliminar ticket:', err);
+                return false;
+            }
+        }
+
+        async function restoreTicket(code) {
+            try {
+                const res = await fetch(`/api/tickets/${encodeURIComponent(code)}/restore`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                return res.ok;
+            } catch (err) {
+                console.error('Error al restaurar ticket:', err);
+                return false;
+            }
+        }
+
+        async function fetchTrashTickets() {
+            try {
+                const res = await fetch('/api/tickets/trash');
+                const data = await res.json().catch(() => ({}));
+                return Array.isArray(data) ? data : (data.tickets || []);
+            } catch (err) {
+                console.error('Error al consultar papelera:', err);
+                return [];
             }
         }
 
