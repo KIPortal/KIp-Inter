@@ -243,7 +243,7 @@
                                 <span class="text-[#8E8E93]">–</span>
                                 <input type="time" id="fin-${op.id}" value="${schedule.fin || '17:00'}" class="h-[28px] px-1.5 bg-[#F2F2F7] border border-[#D1D1D6] rounded-[6px] text-[11px] font-mono text-[#1C1C1E] focus:outline-none focus:border-[#007AFF]">
                             </div>
-                            <button type="button" onclick="saveShiftHorario(${op.id})" class="h-[28px] px-2.5 bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA] border border-[#D1D1D6] rounded-[6px] text-[11px] font-medium text-[#1C1C1E] transition cursor-pointer shadow-2xs">
+                            <button type="button" onclick="saveShiftHorario('${op.id}')" class="h-[28px] px-2.5 bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA] border border-[#D1D1D6] rounded-[6px] text-[11px] font-medium text-[#1C1C1E] transition cursor-pointer shadow-2xs">
                                 Guardar horario
                             </button>
                         </div>
@@ -285,7 +285,7 @@
 
             try {
                 const checkboxes = document.querySelectorAll('.shift-guardia-cb:checked');
-                const operatorIds = Array.from(checkboxes).map(cb => parseInt(cb.dataset.operatorId, 10)).filter(id => !isNaN(id));
+                const operatorIds = Array.from(checkboxes).map(cb => cb.dataset.operatorId).filter(Boolean);
                 const semana = currentShiftWeekISO ? currentShiftWeekISO.slice(0, 10) : undefined;
 
                 const res = await fetch('/api/turnos/guardia', {
