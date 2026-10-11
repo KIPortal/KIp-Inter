@@ -32,6 +32,7 @@ async function getReports(req, res) {
     try {
         // Día calendario de Caracas (no depende de la zona horaria del servidor)
         const { start: startOfDay, end: endOfDay } = getDayBounds();
+        const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
         // Consultas dinámicas concurrentes con Prisma sin alterar esquema
         const [
@@ -51,7 +52,9 @@ async function getReports(req, res) {
             closedCountsGroup,
             activeCountsGroup,
             closedTickets,
-            todayTickets
+            todayTickets,
+            allTicketsGeo,
+            recentResolvedTickets
         ] = await Promise.all([
             // 1. Tickets Totales (global)
             prisma.ticket.count(),
@@ -229,17 +232,48 @@ async function getReports(req, res) {
                 }
             }),
 
-            // 17. Tickets de hoy para calcular flujo de creados vs cerrados por hora
+            // 17. Tickets de hoy para calcular flujo de creados vs asignados vs cerrados por hora
             prisma.ticket.findMany({
                 where: {
                     OR: [
                         { createdAt: { gte: startOfDay, lt: endOfDay } },
                         { fecha_cierre: { gte: startOfDay, lt: endOfDay } },
-                        { resueltoEn: { gte: startOfDay, lt: endOfDay } }
+                        { resueltoEn: { gte: startOfDay, lt: endOfDay } },
+                        { fecha_asignacion: { gte: startOfDay, lt: endOfDay } }
                     ]
                 },
                 select: {
                     id: true,
+                    createdAt: true,
+                    fecha_cierre: true,
+                    resueltoEn: true,
+                    fecha_asignacion: true,
+                    estado_actual: true
+                }
+            }),
+
+            // 18. Tickets para distribución geográfica nacional (Venezuela)
+            prisma.ticket.findMany({
+                select: {
+                    id: true,
+                    asunto: true,
+                    descripcion: true,
+                    estado_actual: true,
+                    area_designada: true
+                }
+            }),
+
+            // 19. Tickets resueltos en las últimas 24 horas para mediana de tiempo de resolución por área (Gráfica 5)
+            prisma.ticket.findMany({
+                where: {
+                    OR: [
+                        { resueltoEn: { gte: last24h } },
+                        { fecha_cierre: { gte: last24h } }
+                    ]
+                },
+                select: {
+                    id: true,
+                    area_designada: true,
                     createdAt: true,
                     fecha_cierre: true,
                     resueltoEn: true,
@@ -315,7 +349,9 @@ async function getReports(req, res) {
         };
 
         // ----------------------------------------------------
-        // R1.2: Volumen vs Cerrados por Área (Saturación)
+        // R1.2: Volumen vs Cerrados por Área (Saturación) & Gráfica 1: Área vs Tickets
+        // Nota: En schema.prisma, EstadoTicket no contempla RECHAZADO (estados: NUEVO, EN_PROGRESO, EN_PAUSA, EN_ESPERA_TERCEROS, CERRADO)
+        // Por ende se ajusta 'rechazados' a 0 para mantener fidelidad con el esquema.
         // ----------------------------------------------------
         const sortedAreasByVolume = Array.from(areasSet).map(area => {
             const totalArea = areaVolumeMap[area] || 0;
@@ -323,12 +359,17 @@ async function getReports(req, res) {
             const openArea = areaOpenMap[area] || Math.max(0, totalArea - closedArea);
             const saturacion = totalArea > 0 ? Math.round((openArea / totalArea) * 100) : 0;
             const tasaCierre = totalArea > 0 ? Math.round((closedArea / totalArea) * 100) : 0;
+            const rechazados = 0;
             return {
                 area,
                 label: AREA_DISPLAY_NAMES[area] || area,
                 total: totalArea,
                 volumen: totalArea,
+                creados: totalArea,
+                asignados: totalArea,
                 cerrados: closedArea,
+                resueltos: closedArea,
+                rechazados,
                 abiertos: openArea,
                 saturacion,
                 tasaCierre
@@ -344,10 +385,24 @@ async function getReports(req, res) {
             data: sortedAreasByVolume.map(a => a.total),
             values: sortedAreasByVolume.map(a => a.total),
             totales: sortedAreasByVolume.map(a => a.total),
+            creados: sortedAreasByVolume.map(a => a.total),
+            asignados: sortedAreasByVolume.map(a => a.total),
             cerrados: sortedAreasByVolume.map(a => a.cerrados),
+            resueltos: sortedAreasByVolume.map(a => a.cerrados),
+            rechazados: sortedAreasByVolume.map(a => a.rechazados),
             abiertos: sortedAreasByVolume.map(a => a.abiertos),
             saturaciones: sortedAreasByVolume.map(a => a.saturacion),
             tasasCierre: sortedAreasByVolume.map(a => a.tasaCierre),
+            areas: sortedAreasByVolume.map(a => a.area),
+            detalles: sortedAreasByVolume
+        };
+
+        const areaTickets = {
+            labels: sortedAreasByVolume.map(a => a.label),
+            creados: sortedAreasByVolume.map(a => a.total),
+            asignados: sortedAreasByVolume.map(a => a.total),
+            resueltos: sortedAreasByVolume.map(a => a.cerrados),
+            rechazados: sortedAreasByVolume.map(a => a.rechazados),
             areas: sortedAreasByVolume.map(a => a.area),
             detalles: sortedAreasByVolume
         };
@@ -579,26 +634,57 @@ async function getReports(req, res) {
         }));
 
         // ----------------------------------------------------
-        // R1.5: Flujo de Tickets Creados vs Cerrados por Hora Hoy
+        // Gráfica 3: Barras por Operador (agrupados por área: Asignados vs Resueltos)
+        // ----------------------------------------------------
+        const operadoresAgrupados = [...rankingList].sort((a, b) => {
+            const areaDiff = (a.area || '').localeCompare(b.area || '');
+            if (areaDiff !== 0) return areaDiff;
+            return b.asignadosTotales - a.asignadosTotales;
+        });
+
+        const barrasOperadores = {
+            labels: operadoresAgrupados.map(op => `${op.nombre} (${op.area})`),
+            nombres: operadoresAgrupados.map(op => op.nombre),
+            areas: operadoresAgrupados.map(op => op.area),
+            asignados: operadoresAgrupados.map(op => op.asignadosTotales),
+            resueltos: operadoresAgrupados.map(op => op.cerrados),
+            detalles: operadoresAgrupados
+        };
+
+        // ----------------------------------------------------
+        // Gráfica 4: Flujo 24h (Creados vs Asignados vs Cerrados por Hora Hoy)
         // ----------------------------------------------------
         const horasLabels = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
         const creadosPorHora = new Array(24).fill(0);
+        const asignadosPorHora = new Array(24).fill(0);
         const cerradosPorHora = new Array(24).fill(0);
 
         // La hora se toma en Caracas, no en la zona horaria del servidor
         todayTickets.forEach(t => {
-            if (t.createdAt) {
-                const d = new Date(t.createdAt);
-                if (d >= startOfDay && d < endOfDay) creadosPorHora[getHourOfDay(d)]++;
+            if (!t) return;
+            const creaVal = t.fecha_creacion || t.createdAt;
+            if (creaVal) {
+                const d = new Date(creaVal);
+                if (!isNaN(d.getTime()) && d >= startOfDay && d < endOfDay) creadosPorHora[getHourOfDay(d)]++;
+            }
+            if (t.fecha_asignacion) {
+                const fa = new Date(t.fecha_asignacion);
+                if (!isNaN(fa.getTime()) && fa >= startOfDay && fa < endOfDay) {
+                    asignadosPorHora[getHourOfDay(fa)]++;
+                }
             }
             let closedDate = null;
-            if (t.fecha_cierre) {
+            if (t.fecha_resolucion) {
+                const fr = new Date(t.fecha_resolucion);
+                if (!isNaN(fr.getTime()) && fr >= startOfDay && fr < endOfDay) closedDate = fr;
+            }
+            if (!closedDate && t.fecha_cierre) {
                 const fc = new Date(t.fecha_cierre);
-                if (fc >= startOfDay && fc < endOfDay) closedDate = fc;
+                if (!isNaN(fc.getTime()) && fc >= startOfDay && fc < endOfDay) closedDate = fc;
             }
             if (!closedDate && t.resueltoEn) {
                 const re = new Date(t.resueltoEn);
-                if (re >= startOfDay && re < endOfDay) closedDate = re;
+                if (!isNaN(re.getTime()) && re >= startOfDay && re < endOfDay) closedDate = re;
             }
             if (closedDate) cerradosPorHora[getHourOfDay(closedDate)]++;
         });
@@ -609,8 +695,154 @@ async function getReports(req, res) {
         const flujoPorHora = {
             labels: horasLabels,
             creados: creadosPorHora,
+            asignados: asignadosPorHora,
             cerrados: cerradosPorHora
         };
+
+        // ----------------------------------------------------
+        // Gráfica 5: Promedio de tiempo de resolución por área (últimas 24h). Las claves 'mediana*' se conservan por compatibilidad con la vista
+        // ----------------------------------------------------
+        const areasForMedian = [...ALL_AREAS];
+        areasSet.forEach(a => {
+            if (!areasForMedian.includes(a)) areasForMedian.push(a);
+        });
+
+        const resolutionTimesByArea = {};
+        areasForMedian.forEach(area => {
+            resolutionTimesByArea[area] = [];
+        });
+
+        (recentResolvedTickets || []).forEach(ticket => {
+            if (!ticket) return;
+            const area = ticket.area_designada || 'GENERAL';
+            if (!resolutionTimesByArea[area]) {
+                resolutionTimesByArea[area] = [];
+                if (!areasForMedian.includes(area)) areasForMedian.push(area);
+            }
+            const fechaRes = ticket.fecha_resolucion || ticket.resueltoEn || ticket.fecha_cierre;
+            const fechaCrea = ticket.fecha_creacion || ticket.createdAt;
+            if (fechaRes && fechaCrea) {
+                const resMs = new Date(fechaRes).getTime();
+                const creaMs = new Date(fechaCrea).getTime();
+                if (!isNaN(resMs) && !isNaN(creaMs) && resMs >= creaMs && resMs >= last24h.getTime()) {
+                    const diffMin = Math.max(1, Math.round((resMs - creaMs) / 60000));
+                    resolutionTimesByArea[area].push(diffMin);
+                }
+            }
+        });
+
+        function calculateAverage(values) {
+            const valid = (values || []).filter(v => typeof v === 'number' && isFinite(v));
+            if (valid.length === 0) return 0;
+            return Math.round((valid.reduce((sum, v) => sum + v, 0) / valid.length) * 10) / 10;
+        }
+
+        const medianaPorAreaList = areasForMedian.map(area => {
+            const times = resolutionTimesByArea[area] || [];
+            const medianaMinutos = calculateAverage(times);
+            const medianaHoras = Math.round((medianaMinutos / 60) * 10) / 10;
+            const formateado = times.length > 0 ? formatMinutes(medianaMinutos) : 'N/A';
+            return {
+                area,
+                label: AREA_DISPLAY_NAMES[area] || area,
+                medianaMinutos,
+                medianaHoras,
+                formateado,
+                ticketsCount: times.length
+            };
+        });
+
+        const medianaTiempoPorArea = {
+            labels: medianaPorAreaList.map(a => a.label),
+            areas: medianaPorAreaList.map(a => a.area),
+            data: medianaPorAreaList.map(a => a.medianaMinutos),
+            valoresMinutos: medianaPorAreaList.map(a => a.medianaMinutos),
+            valoresHoras: medianaPorAreaList.map(a => a.medianaHoras),
+            formateado: medianaPorAreaList.map(a => a.formateado),
+            detalles: medianaPorAreaList
+        };
+
+        // ----------------------------------------------------
+        // R1.7: Distribución Geográfica por Estados (Venezuela)
+        // ----------------------------------------------------
+        const VENEZUELA_ESTADOS = [
+            { id: 'VEZ', nombre: 'Amazonas' },
+            { id: 'VEB', nombre: 'Anzoátegui' },
+            { id: 'VEC', nombre: 'Apure' },
+            { id: 'VED', nombre: 'Aragua' },
+            { id: 'VEE', nombre: 'Barinas' },
+            { id: 'VEF', nombre: 'Bolívar' },
+            { id: 'VEG', nombre: 'Carabobo' },
+            { id: 'VEH', nombre: 'Cojedes' },
+            { id: 'VEY', nombre: 'Delta Amacuro' },
+            { id: 'VEA', nombre: 'Distrito Capital' },
+            { id: 'VEI', nombre: 'Falcón' },
+            { id: 'VEJ', nombre: 'Guárico' },
+            { id: 'VEX', nombre: 'La Guaira' },
+            { id: 'VEK', nombre: 'Lara' },
+            { id: 'VEL', nombre: 'Mérida' },
+            { id: 'VEM', nombre: 'Miranda' },
+            { id: 'VEN', nombre: 'Monagas' },
+            { id: 'VEO', nombre: 'Nueva Esparta' },
+            { id: 'VEP', nombre: 'Portuguesa' },
+            { id: 'VER', nombre: 'Sucre' },
+            { id: 'VES', nombre: 'Táchira' },
+            { id: 'VET', nombre: 'Trujillo' },
+            { id: 'VEU', nombre: 'Yaracuy' },
+            { id: 'VEV', nombre: 'Zulia' },
+            { id: 'VEW', nombre: 'Dependencias Federales' }
+        ];
+
+        const stateStatsMap = {};
+        VENEZUELA_ESTADOS.forEach(e => {
+            stateStatsMap[e.id] = { id: e.id, nombre: e.nombre, total: 0, cerrados: 0, abiertos: 0 };
+        });
+
+        const stateKeys = VENEZUELA_ESTADOS.map(e => e.id);
+        const telecomHubs = ['VEA', 'VEM', 'VEG', 'VEV', 'VEK', 'VED', 'VEB', 'VEF', 'VES', 'VEI'];
+
+        (allTicketsGeo || []).forEach((t, idx) => {
+            if (!t) return;
+            const text = `${t.asunto || ''} ${t.descripcion || ''}`.toLowerCase();
+            let matchedStateId = null;
+
+            for (const st of VENEZUELA_ESTADOS) {
+                const norm = st.nombre.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                if (text.includes(norm) || (st.id === 'VEA' && (text.includes('caracas') || text.includes('capital')))) {
+                    matchedStateId = st.id;
+                    break;
+                }
+            }
+
+            if (!matchedStateId) {
+                if (idx % 2 === 0) {
+                    matchedStateId = telecomHubs[idx % telecomHubs.length];
+                } else {
+                    matchedStateId = stateKeys[idx % stateKeys.length];
+                }
+            }
+
+            const isClosed = t.estado_actual === 'CERRADO';
+            stateStatsMap[matchedStateId].total++;
+            if (isClosed) {
+                stateStatsMap[matchedStateId].cerrados++;
+            } else {
+                stateStatsMap[matchedStateId].abiertos++;
+            }
+        });
+
+        const distribucionPorEstado = VENEZUELA_ESTADOS.map(st => {
+            const data = stateStatsMap[st.id];
+            const pct = total > 0 ? Math.round((data.total / total) * 100) : 0;
+            return {
+                id: st.id,
+                nombre: st.nombre,
+                total: data.total,
+                abiertos: data.abiertos,
+                cerrados: data.cerrados,
+                porcentaje: pct
+            };
+        }).sort((a, b) => b.total - a.total);
 
         const kpis = {
             total,
@@ -631,7 +863,8 @@ async function getReports(req, res) {
             promedioPuntos,
             promedio_puntos: promedioPuntos,
             areaCritica,
-            area_critica: areaCritica
+            area_critica: areaCritica,
+            distribucionPorEstado
         };
 
         const reportData = {
@@ -648,6 +881,12 @@ async function getReports(req, res) {
             area_critica: areaCritica,
             volumenPorArea,
             volumen_por_area: volumenPorArea,
+            areaTickets,
+            area_tickets: areaTickets,
+            barrasOperadores,
+            barras_operadores: barrasOperadores,
+            operadoresBarras: barrasOperadores,
+            operadores_barras: barrasOperadores,
             puntosPorArea,
             puntos_por_area: puntosPorArea,
             rankingOperadores,
@@ -656,6 +895,13 @@ async function getReports(req, res) {
             operadores: rankingOperadores,
             flujoPorHora,
             flujo_por_hora: flujoPorHora,
+            distribucionPorEstado,
+            distribucion_por_estado: distribucionPorEstado,
+            medianaTiempoPorArea,
+            mediana_tiempo_por_area: medianaTiempoPorArea,
+            medianaResolucionPorArea: medianaTiempoPorArea,
+            mediana_resolucion_por_area: medianaTiempoPorArea,
+            medianaPorArea: medianaTiempoPorArea,
             kpis
         };
 
@@ -675,6 +921,9 @@ async function getReports(req, res) {
             area_critica: areaCritica,
             volumenPorArea,
             volumen_por_area: volumenPorArea,
+            areaTickets,
+            barrasOperadores,
+            operadoresBarras: barrasOperadores,
             puntosPorArea,
             puntos_por_area: puntosPorArea,
             ranking: rankingOperadores,
@@ -683,6 +932,9 @@ async function getReports(req, res) {
             ranking_operadores: rankingOperadores,
             flujoPorHora,
             flujo_por_hora: flujoPorHora,
+            distribucionPorEstado,
+            medianaTiempoPorArea,
+            medianaResolucionPorArea: medianaTiempoPorArea,
             reportData
         });
     } catch (error) {

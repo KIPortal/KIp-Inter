@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apple UI Components Recreation</title>
+    <style>
+        /* Tipografía estilo Apple */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f5f5f7; /* Cambiado a gris claro para contrastar con las tarjetas blancas */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 60px 20px;
+            gap: 60px;
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        /* ========================================================
+           COMPONENTE 1: Paginación de Slider y Botón de Pausa (Dark)
+           ======================================================== */
+        .apple-slider-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 20px;
+            background: #000; /* Fondo oscuro falso para que se vea el componente */
+            border-radius: 40px;
+        }
+
+        .pill-track {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 999px;
+        }
+
+        .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.4);
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            transition: width 0.5s cubic-bezier(0.19, 1, 0.22, 1), background-color 0.5s ease;
+        }
+
+        .dot.active {
+            width: 24px;
+            background: rgba(255, 255, 255, 1);
+        }
+
+        .pause-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            border: none;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        
+        .pause-btn:hover { background: rgba(255, 255, 255, 0.25); }
+        .pause-btn svg { width: 12px; height: 12px; fill: currentColor; }
+
+        /* ========================================================
+           COMPONENTE 2: Botón Flotante Claro "Compare all iPhone models"
+           ======================================================== */
+        .apple-light-pill {
+            display: inline-flex;
+            align-items: center;
+            background: #ffffff; /* Fondo blanco */
+            border-radius: 999px;
+            padding: 8px 8px 8px 24px;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.06); /* Sombra sutil tipo Apple */
+            transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1),
+                        box-shadow 0.4s ease;
+        }
+
+        .apple-light-pill:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+        }
+
+        .apple-light-pill .text-container {
+            color: #1d1d1f; /* Texto gris muy oscuro (no negro 100%) */
+            font-size: 17px;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            margin-right: 16px;
+        }
+
+        .icon-circle-blue {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #0071e3; /* Azul Apple */
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .icon-circle-blue svg {
+            width: 18px;
+            height: 18px;
+            transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+
+        /* Animar la flecha a la derecha en hover */
+        .apple-light-pill:hover .icon-circle-blue svg {
+            transform: translateX(3px);
+        }
+
+        .apple-light-pill:active { transform: scale(0.97); }
+
+        /* ========================================================
+           COMPONENTE 3: Tarjetas Bento Grid (Ej. Medio ambiente)
+           ======================================================== */
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        .bento-card {
+            background: #ffffff;
+            border-radius: 24px; /* Bordes muy redondeados */
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 220px;
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03); /* Sombra ultra suave */
+            transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1), box-shadow 0.4s ease;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .bento-card:hover {
+            transform: scale(1.02); /* Efecto pop clásico de Apple */
+            box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+        }
+
+        .bento-icon {
+            width: 32px;
+            height: 32px;
+            margin-bottom: 20px;
+        }
+
+        .bento-text {
+            color: #1d1d1f;
+            font-size: 19px;
+            font-weight: 600;
+            line-height: 1.3;
+            letter-spacing: -0.015em;
+            margin: 0;
+            padding-right: 20px; /* Dejar espacio para el botón + */
+        }
+
+        /* Botón '+' en la esquina inferior derecha */
+        .bento-plus-btn {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #e8e8ed; /* Fondo gris claro */
+            color: #1d1d1f;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            transition: background 0.3s ease, transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+
+        .bento-card:hover .bento-plus-btn {
+            background: #d1d1d6; /* Se oscurece al hacer hover en la tarjeta */
+            transform: scale(1.1); /* Crece sutilmente */
+        }
+
+        /* Responsive: apilar tarjetas en móviles */
+        @media (max-width: 768px) {
+            .bento-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- COMPONENTE 1: Paginador oscuro -->
+    <div class="apple-slider-controls">
+        <div class="pill-track">
+            <button class="dot active" aria-label="Slide 1"></button>
+            <button class="dot" aria-label="Slide 2"></button>
+            <button class="dot" aria-label="Slide 3"></button>
+            <button class="dot" aria-label="Slide 4"></button>
+        </div>
+        <button class="pause-btn" aria-label="Pause">
+            <svg viewBox="0 0 24 24">
+                <rect x="6" y="5" width="4" height="14" rx="2"></rect>
+                <rect x="14" y="5" width="4" height="14" rx="2"></rect>
+            </svg>
+        </button>
+    </div>
+
+    <!-- COMPONENTE 2: Botón Compare Models -->
+    <button class="apple-light-pill">
+        <span class="text-container">Compare all iPhone models</span>
+        <div class="icon-circle-blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+        </div>
+    </button>
+
+    <!-- COMPONENTE 3: Bento Grid Cards -->
+    <div class="bento-grid">
+        <!-- Tarjeta 1 -->
+        <div class="bento-card">
+            <svg class="bento-icon" viewBox="0 0 24 24" fill="none" stroke="#8a2be2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="16 16 12 12 8 16"></polyline>
+                <line x1="12" y1="12" x2="12" y2="21"></line>
+                <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"></path>
+                <polyline points="16 16 12 12 8 16"></polyline>
+            </svg>
+            <p class="bento-text">Made with <span style="color: #8a2be2;">40% recycled material</span> by weight.</p>
+            <div class="bento-plus-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </div>
+        </div>
+
+        <!-- Tarjeta 2 -->
+        <div class="bento-card">
+            <svg class="bento-icon" viewBox="0 0 24 24" fill="none" stroke="#ff7f00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+            <p class="bento-text">Manufactured with <span style="color: #ff7f00;">50% renewable electricity.</span></p>
+            <div class="bento-plus-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </div>
+        </div>
+
+        <!-- Tarjeta 3 -->
+        <div class="bento-card">
+            <svg class="bento-icon" viewBox="0 0 24 24" fill="none" stroke="#00a8cc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                <line x1="12" y1="22.08" x2="12" y2="12"></line>
+            </svg>
+            <p class="bento-text">Ships in <span style="color: #00a8cc;">100% fiber-based packaging.</span></p>
+            <div class="bento-plus-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Animación del Paginador Oscuro
+        const dots = document.querySelectorAll('.dot');
+        let currentIndex = 0;
+        setInterval(() => {
+            dots[currentIndex].classList.remove('active');
+            currentIndex = (currentIndex + 1) % dots.length;
+            dots[currentIndex].classList.add('active');
+        }, 2000);
+    </script>
+</body>
+</html>

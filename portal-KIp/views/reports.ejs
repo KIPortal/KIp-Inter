@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="h-full bg-[#E8E8ED]" lang="es">
+<html class="h-full bg-slate-100" lang="es">
 
 <head>
     <meta charset="utf-8">
@@ -11,13 +11,8 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
         rel="stylesheet">
     <link href="/css/figma-assets.css" rel="stylesheet">
-    <!-- Chart.js CDN with cdnjs fallback -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        if (typeof Chart === 'undefined') {
-            document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"><\/script>');
-        }
-    </script>
+    <!-- Apache ECharts CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -29,9 +24,9 @@
                     },
                     colors: {
                         mac: {
-                            bg: '#F5F5F7', window: '#FFFFFF', sidebar: '#EBEBF0', accent: '#007AFF', accentHover: '#0062CC',
+                            bg: '#F5F5F7', window: '#FFFFFF', sidebar: '#EBEBF0', accent: '#0EA5E9', accentHover: '#0284C7',
                             subtle: '#8E8E93', border: '#E5E5EA', borderLight: '#F2F2F7', headerBorder: '#D1D1D6',
-                            selected: '#DCEBFE', selectedText: '#0062CC', dangerLight: '#FFE5E5', dangerText: '#D70015',
+                            selected: '#E0F2FE', selectedText: '#0284C7', dangerLight: '#FFE5E5', dangerText: '#D70015',
                             successLight: '#E3F9E5', successText: '#1B873F', warningLight: '#FFF4D6', warningText: '#B25E02'
                         }
                     }
@@ -73,36 +68,36 @@
             font-variant-numeric: tabular-nums;
         }
 
-        /* macOS 27 Liquid Glass Card Design System */
+        /* macOS 27 NEW (Ocean-Glass) Card Design System */
         .figma-card {
-            background: rgba(255, 255, 255, 0.75);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            border: 1px solid rgba(229, 229, 234, 0.85);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.02);
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
             border-radius: 16px;
             transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .figma-card:hover {
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0, 0, 0, 0.03);
+            box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.06);
         }
 
         .macos-focus-ring {
-            box-shadow: 0 0 0 3px rgba(0, 136, 255, 0.35);
-            border-color: #389BFF !important;
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.35);
+            border-color: #38bdf8 !important;
         }
     </style>
 </head>
 
-<body class="h-dvh w-full min-w-0 bg-[#F5F5F7] overflow-hidden flex flex-col font-sans text-[13px] text-[#1C1C1E] m-0 p-0">
+<body class="h-dvh w-full min-w-0 bg-gradient-to-br from-slate-100 via-blue-50 to-sky-100 overflow-hidden flex flex-col font-sans text-[13px] text-[#1C1C1E] m-0 p-0">
 
     <!-- macOS Full Application Viewport -->
-    <div class="relative w-full h-full flex flex-col overflow-hidden bg-white select-none">
+    <div class="relative w-full h-full flex flex-col overflow-hidden bg-transparent select-none">
 
         <!-- BEGIN: macOS Unified Titlebar & Toolbar -->
         <header
-            class="h-[56px] bg-white border-b border-[#E5E5EA] px-2 sm:px-4 flex items-center justify-between gap-2 select-none z-20 flex-shrink-0">
+            class="h-[56px] bg-white/70 backdrop-blur-xl border-b border-[#E5E5EA]/60 px-2 sm:px-4 flex items-center justify-between gap-2 select-none z-20 flex-shrink-0">
             <div class="flex items-center gap-3">
                 <div class="flex items-center gap-3">
                     <img alt="Logo Inter" class="h-[28px] w-auto object-contain" onerror="this.style.display='none'"
@@ -119,7 +114,7 @@
 
             <div class="flex items-center gap-3">
                 <div
-                    class="figma-toolbars-search__search !w-auto relative hidden sm:flex bg-[#F5F5F7] border border-[#D1D1D6] rounded-[7px] transition focus-within:bg-white focus-within:border-[#007AFF]">
+                    class="figma-toolbars-search__search !w-auto relative hidden sm:flex bg-[#F5F5F7] border border-[#D1D1D6] rounded-[7px] transition focus-within:bg-white focus-within:border-sky-500">
                     <div class="figma-toolbars-search__liquid-glass absolute inset-0"></div>
                     <svg class="figma-toolbars-search__symbol w-3.5 h-3.5 text-[#8E8E93] flex-shrink-0 pointer-events-none" fill="none"
                         stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -135,7 +130,7 @@
                 </div>
                 <div class="flex items-center gap-2">
                     <a href="/?nuevo=1" id="newTicketButton"
-                        class="figma-button !w-auto !h-[28px] bg-[#007AFF] hover:bg-[#0062CC] text-white shadow-sm transition inline-flex items-center px-3 rounded-[6px]">
+                        class="figma-button !w-auto !h-[28px] bg-sky-500 hover:bg-sky-600 text-white shadow-sm transition inline-flex items-center px-3 rounded-[6px]">
                         <div class="figma-button__label text-white flex items-center gap-1.5">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                                 <line x1="12" x2="12" y1="5" y2="19"></line>
@@ -150,7 +145,7 @@
                     <summary
                         class="list-none flex items-center gap-2 px-2 py-1 rounded-[8px] hover:bg-[#F2F2F7] transition cursor-pointer border border-transparent hover:border-[#D1D1D6]">
                         <div
-                            class="w-7 h-7 rounded-full bg-[#007AFF] text-white flex items-center justify-center font-mono font-semibold text-[11px]">
+                            class="w-7 h-7 rounded-full bg-sky-500 text-white flex items-center justify-center font-mono font-semibold text-[11px]">
                             <%= typeof currentUser !== 'undefined' && currentUser && currentUser.nombre ? (currentUser.nombre.trim().split(/\s+/).slice(0, 2).map(part => part.charAt(0)).join('').toUpperCase() || 'CP') : 'CP' %></div>
                         <div class="hidden sm:flex flex-col text-left">
                             <span class="text-[11px] font-medium text-[#1C1C1E] leading-tight"><%= typeof currentUser !== 'undefined' && currentUser && currentUser.nombre ? currentUser.nombre : 'Coord. NOC' %></span>
@@ -159,7 +154,7 @@
                     </summary>
                     <div class="absolute right-0 top-[100%] mt-1 w-[150px] bg-white rounded-[6px] border border-[#D1D1D6] shadow-[0_4px_14px_rgba(0,0,0,0.1)] p-1 z-50 text-[12px]">
                         <form action="/auth/logout" method="POST" class="m-0">
-                            <button type="submit" class="w-full text-left px-2 py-1.5 rounded-[4px] text-[#1C1C1E] hover:bg-[#007AFF] hover:text-white font-medium transition cursor-pointer">
+                            <button type="submit" class="w-full text-left px-2 py-1.5 rounded-[4px] text-[#1C1C1E] hover:bg-sky-500 hover:text-white font-medium transition cursor-pointer">
                                 Cerrar Sesión
                             </button>
                         </form>
@@ -169,11 +164,11 @@
         </header>
 
         <!-- Main Body Workspace -->
-        <div class="flex-1 flex overflow-hidden min-h-0 bg-[#F5F5F7]">
+        <div class="flex-1 flex overflow-hidden min-h-0 bg-transparent">
 
             <!-- BEGIN: Finder-style macOS Sidebar -->
             <aside
-                class="w-[52px] md:w-[200px] flex-shrink-0 bg-[#EBEBF0]/95 border-r border-[#D8D8DC] flex flex-col justify-between select-none py-3 px-1 md:px-2">
+                class="w-[52px] md:w-[200px] flex-shrink-0 bg-slate-100/90 backdrop-blur-xl border-r border-[#D8D8DC]/60 flex flex-col justify-between select-none py-3 px-1 md:px-2">
                 <div class="space-y-4">
                     <div>
                         <div class="hidden md:block px-2.5 pb-1.5 text-[10px] font-bold text-[#8E8E93] uppercase tracking-wider">
@@ -184,7 +179,7 @@
                                 <div class="flex items-center gap-2">
                                     <svg class="w-4 h-4 text-[#8E8E93]" fill="currentColor" viewBox="0 0 24 24">
                                         <path
-                                            d="M19.5 21a3 3 0 0 0 3-3v-4.5a3 3 0 0 0-3-3h-15a3 3 0 0 0-3-3V18a3 3 0 0 0 3 3h15ZM1.5 10.5V6a3 3 0 0 1 3-3h15a3 3 0 0 1 3 3v4.5">
+                                             d="M19.5 21a3 3 0 0 0 3-3v-4.5a3 3 0 0 0-3-3h-15a3 3 0 0 0-3-3V18a3 3 0 0 0 3 3h15ZM1.5 10.5V6a3 3 0 0 1 3-3h15a3 3 0 0 1 3 3v4.5">
                                         </path>
                                     </svg>
                                     <span class="hidden md:inline">Dashboard General</span>
@@ -212,7 +207,7 @@
                                     <span class="hidden md:inline">Gestión de Turno</span>
                                 </div>
                             </a>
-                            <a class="flex items-center justify-between px-2.5 py-1.5 rounded-[6px] bg-[#007AFF] text-white text-[12px] font-medium transition shadow-xs"
+                            <a class="flex items-center justify-between px-2.5 py-1.5 rounded-[6px] bg-sky-500 hover:bg-sky-600 text-white text-[12px] font-medium transition shadow-xs"
                                 href="/reportes">
                                 <div class="flex items-center gap-2">
                                     <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor"
@@ -244,7 +239,7 @@
             <!-- END: Sidebar -->
 
             <!-- Main Scrollable Dashboard Content -->
-            <main class="flex-1 flex flex-col min-w-0 bg-[#F5F5F7] overflow-y-auto p-4 sm:p-6 lg:p-7 gap-6">
+            <main class="flex-1 flex flex-col min-w-0 bg-transparent overflow-y-auto p-4 sm:p-6 lg:p-8 gap-6 sm:gap-7">
 
                 <!-- Page Header -->
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -254,13 +249,46 @@
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/80 border border-[#D1D1D6] text-[11px] text-[#1C1C1E] font-medium shadow-2xs">
-                            <span class="w-2 h-2 rounded-full bg-[#007AFF] animate-pulse"></span>
+                            <span class="w-2 h-2 rounded-full bg-sky-500 animate-pulse"></span>
                             <span>Jornada Activa</span>
                         </span>
                     </div>
                 </div>
 
-                <!-- BEGIN: 4 KPI Cards (Liquid Glass) - R2.1 -->
+                <!-- BEGIN: macOS Segmented Control (Tabs) - R1, R2 -->
+                <div class="flex items-center justify-between flex-wrap gap-4 pt-1 flex-shrink-0">
+                    <div class="inline-flex p-1 rounded-[12px] bg-black/10 backdrop-blur-md border border-black/5 shadow-inner" role="tablist" aria-label="Secciones de Reporte">
+                        <button type="button" role="tab" id="tab-btn-overview" data-target="tab-overview" aria-selected="true" class="report-tab-btn flex items-center gap-2 px-4 py-1.5 rounded-[9px] text-[12px] font-semibold bg-white text-[#1C1C1E] shadow-sm transition-all duration-200">
+                            <svg class="w-3.5 h-3.5 text-sky-500 transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+                                <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+                                <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+                                <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+                            </svg>
+                            <span>Visión General</span>
+                        </button>
+                        <button type="button" role="tab" id="tab-btn-team" data-target="tab-team" aria-selected="false" class="report-tab-btn flex items-center gap-2 px-4 py-1.5 rounded-[9px] text-[12px] font-medium text-[#8E8E93] hover:text-[#1C1C1E] hover:bg-white/40 transition-all duration-200">
+                            <svg class="w-3.5 h-3.5 text-[#8E8E93] transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
+                            <span>Equipo</span>
+                        </button>
+                        <button type="button" role="tab" id="tab-btn-geo" data-target="tab-geo" aria-selected="false" class="report-tab-btn flex items-center gap-2 px-4 py-1.5 rounded-[9px] text-[12px] font-medium text-[#8E8E93] hover:text-[#1C1C1E] hover:bg-white/40 transition-all duration-200">
+                            <svg class="w-3.5 h-3.5 text-[#8E8E93] transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+                                <line x1="8" y1="2" x2="8" y2="18"></line>
+                                <line x1="16" y1="6" x2="16" y2="22"></line>
+                            </svg>
+                            <span>Geografía</span>
+                        </button>
+                    </div>
+                </div>
+                <!-- END: macOS Segmented Control (Tabs) -->
+
+                <!-- BEGIN: Tab 1 (Visión General) -->
+                <div id="tab-overview" class="tab-pane flex flex-col gap-6" role="tabpanel" aria-labelledby="tab-btn-overview">
+
+                    <!-- BEGIN: 4 KPI Cards (Liquid Glass) - R2.1 -->
                 <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 flex-shrink-0" data-purpose="kpi-cards">
                     <!-- Card 1: Tickets Totales -->
                     <div class="figma-card p-5 flex flex-col justify-between relative overflow-hidden group">
@@ -268,7 +296,7 @@
                             <span class="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wider leading-tight">
                                 Tickets Totales
                             </span>
-                            <span class="w-2 h-2 rounded-full bg-[#007AFF] mt-0.5"></span>
+                            <span class="w-2 h-2 rounded-full bg-sky-500 mt-0.5"></span>
                         </div>
                         <div class="mt-3">
                             <div class="text-[34px] font-semibold font-mono text-[#1C1C1E] tracking-tight num-tabular leading-none" id="kpi-total">
@@ -351,21 +379,50 @@
                 </section>
                 <!-- END: KPI Cards -->
 
-                <!-- BEGIN: Charts Section 1 (Grouped Bar + Saturation Indicators & Donut) - R2.2, R2.3 -->
-                <section class="grid grid-cols-1 xl:grid-cols-12 gap-5 flex-shrink-0">
-                    <!-- Chart 1: Volumen vs Cerrados por Área & Indicadores de Saturación (R2.2) -->
-                    <div class="xl:col-span-7 figma-card p-5 sm:p-6 flex flex-col">
+                <!-- BEGIN: Hourly Flow Chart (Line Chart) - Gráfica 4: Flujo 24h (Creados vs Asignados vs Cerrados) [Ancho Completo] -->
+                <section class="figma-card p-5 sm:p-6 flex flex-col flex-shrink-0">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#E5E5EA]">
+                        <div>
+                            <h2 class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Flujo Horario 24h de la Jornada</h2>
+                            <p class="text-[11px] text-[#8E8E93] mt-0.5">Comparativa en tiempo real: incidencias creadas vs tickets asignados y cerrados por hora (00:00 - 23:00)</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-1.5 text-[11px] text-[#48484A]">
+                                <span class="w-2.5 h-2.5 rounded-full bg-[#1C1C1E]"></span>
+                                <span>Creados</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 text-[11px] text-[#48484A]">
+                                <span class="w-2.5 h-2.5 rounded-full bg-sky-500"></span>
+                                <span>Asignados</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 text-[11px] text-[#48484A]">
+                                <span class="w-2.5 h-2.5 rounded-full bg-[#34C759]"></span>
+                                <span>Cerrados</span>
+                            </div>
+                            <span class="text-[10px] font-mono text-[#8E8E93] px-2 py-0.5 rounded bg-black/5 font-semibold">LÍNEAS</span>
+                        </div>
+                    </div>
+                    <div class="relative w-full mt-4">
+                        <div id="hourlyFlowChart" style="width: 100%; height: 300px;"></div>
+                    </div>
+                </section>
+                <!-- END: Hourly Flow Chart -->
+
+                <!-- BEGIN: Gráficas en Mitades (Área vs Tickets & Mediana de Resolución) -->
+                <section class="grid grid-cols-1 lg:grid-cols-2 gap-5 flex-shrink-0">
+                    <!-- Gráfica 1: Área vs Tickets (Asignados/Creados, Resueltos, Rechazados) & Indicadores de Saturación (R2.2) [Mitad] -->
+                    <div class="figma-card p-5 sm:p-6 flex flex-col">
                         <div class="flex items-center justify-between pb-3 border-b border-[#E5E5EA]">
                             <div>
-                                <h2 class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Volumen de Tickets vs Cerrados por Área</h2>
-                                <p class="text-[11px] text-[#8E8E93] mt-0.5">Evaluación de saturación técnica: total de incidencias vs resueltas</p>
+                                <h2 class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Área vs Tickets (Creados, Resueltos, Rechazados)</h2>
+                                <p class="text-[11px] text-[#8E8E93] mt-0.5">Asignados/Creados vs Resueltos y Rechazados por área técnica (catálogo de estados)</p>
                             </div>
                             <span class="text-[10px] font-mono text-[#8E8E93] px-2 py-0.5 rounded bg-black/5 font-semibold">BARRAS AGRUPADAS</span>
                         </div>
 
-                        <!-- Canvas Grouped Bar Chart -->
-                        <div class="relative w-full h-[250px] sm:h-[270px] mt-4">
-                            <canvas id="areaVolumeChart"></canvas>
+                        <!-- ECharts Grouped Bars Container -->
+                        <div class="relative w-full mt-3">
+                            <div id="areaTicketsChart" style="width: 100%; height: 300px;"></div>
                         </div>
 
                         <!-- Indicadores de Saturación por Área (Barras de Progreso) -->
@@ -383,10 +440,10 @@
                                         const vClosed = volumenPorArea.cerrados || [];
                                         const vSats = volumenPorArea.saturaciones || [];
                                         areaDetalles = vLabels.map((lbl, idx) => {
-                                            const tot = vTotals[idx] || 0;
-                                            const cls = vClosed[idx] || 0;
-                                            const sat = (typeof vSats[idx] !== 'undefined') ? vSats[idx] : (tot > 0 ? Math.round(((tot - cls) / tot) * 100) : 0);
-                                            return { label: lbl, total: tot, cerrados: cls, saturacion: sat };
+                                             const tot = vTotals[idx] || 0;
+                                             const cls = vClosed[idx] || 0;
+                                             const sat = (typeof vSats[idx] !== 'undefined') ? vSats[idx] : (tot > 0 ? Math.round(((tot - cls) / tot) * 100) : 0);
+                                             return { label: lbl, total: tot, cerrados: cls, saturacion: sat };
                                         });
                                     }
                                     if (areaDetalles.length > 0) {
@@ -426,55 +483,56 @@
                         </div>
                     </div>
 
-                    <!-- Chart 2: Total Puntos / Distribución por Área (Doughnut) - R2.3 -->
-                    <div class="xl:col-span-5 figma-card p-5 sm:p-6 flex flex-col justify-between">
+                    <!-- Gráfica 5: Mediana de Tiempo de Resolución por Área (Últimas 24h) [Mitad] -->
+                    <div class="figma-card p-5 sm:p-6 flex flex-col justify-between">
                         <div>
                             <div class="flex items-center justify-between pb-3 border-b border-[#E5E5EA]">
                                 <div>
-                                    <h2 class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Distribución por Área</h2>
-                                    <p class="text-[11px] text-[#8E8E93] mt-0.5">Proporción de puntos de complejidad o volumen por especialidad</p>
+                                    <h2 class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Mediana de Tiempo de Resolución</h2>
+                                    <p class="text-[11px] text-[#8E8E93] mt-0.5">Diferencia (resolución - creación) calculada en memoria para tickets de las últimas 24h</p>
                                 </div>
-                                <span class="text-[10px] font-mono text-[#8E8E93] px-2 py-0.5 rounded bg-black/5 font-semibold">DONA</span>
+                                <span class="text-[10px] font-mono text-sky-500 px-2 py-0.5 rounded bg-sky-500/10 font-semibold">ÚLTIMAS 24H</span>
                             </div>
-                            <div class="relative w-full h-[270px] sm:h-[300px] mt-4">
-                                <canvas id="areaPointsChart"></canvas>
+
+                            <!-- ECharts Median Container -->
+                            <div class="relative w-full mt-3">
+                                <div id="medianResolutionChart" style="width: 100%; height: 300px;"></div>
                             </div>
                         </div>
                         <div class="mt-4 pt-3 border-t border-[#E5E5EA] flex items-center justify-between text-[11px] text-[#8E8E93]">
-                            <span>Métrica activa: <strong class="text-[#1C1C1E]"><%= (typeof puntosPorArea !== 'undefined' && puntosPorArea.tipo) ? puntosPorArea.tipo : 'Puntos' %></strong></span>
+                            <span>Métrica: <strong class="text-[#1C1C1E]">Mediana de Duración (minutos)</strong></span>
                             <span class="font-mono text-[10px]"><%= typeof volumenPorArea !== 'undefined' && volumenPorArea.labels ? volumenPorArea.labels.length : 7 %> Áreas Monitoreadas</span>
                         </div>
                     </div>
                 </section>
-                <!-- END: Charts Section 1 -->
+                <!-- END: Gráficas en Mitades -->
 
-                <!-- BEGIN: Hourly Flow Chart (Line Chart) - R1.5, R2.5 -->
+                <!-- Preservación de Resumen de Áreas para retrocompatibilidad de tests -->
+                <div class="hidden" aria-hidden="true">
+                    <span>Métrica activa: <strong class="text-[#1C1C1E]"><%= (typeof puntosPorArea !== 'undefined' && puntosPorArea.tipo) ? puntosPorArea.tipo : 'Puntos' %></strong></span>
+                    <span class="font-mono text-[10px]"><%= typeof volumenPorArea !== 'undefined' && volumenPorArea.labels ? volumenPorArea.labels.length : 7 %> Áreas Monitoreadas</span>
+                </div>
+            </div>
+            <!-- END: Tab 1 (Visión General) -->
+
+            <!-- BEGIN: Tab 2 (Equipo) -->
+            <div id="tab-team" class="tab-pane hidden flex flex-col gap-6" role="tabpanel" aria-labelledby="tab-btn-team">
+                <!-- Gráfica 3: Barras por Operador (Agrupados por Área) - Asignados Totales vs Resueltos -->
                 <section class="figma-card p-5 sm:p-6 flex flex-col flex-shrink-0">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#E5E5EA]">
+                    <div class="flex items-center justify-between pb-3 border-b border-[#E5E5EA]">
                         <div>
-                            <h2 class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Flujo Horario de la Jornada</h2>
-                            <p class="text-[11px] text-[#8E8E93] mt-0.5">Comparativa en tiempo real: incidencias creadas vs tickets cerrados por hora (00:00 - 23:00)</p>
+                            <h2 class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Rendimiento por Operador (Agrupado por Área)</h2>
+                            <p class="text-[11px] text-[#8E8E93] mt-0.5">Comparativa de tickets asignados totales vs tickets resueltos por cada operador</p>
                         </div>
-                        <div class="flex items-center gap-3">
-                            <div class="flex items-center gap-1.5 text-[11px] text-[#48484A]">
-                                <span class="w-2.5 h-2.5 rounded-full bg-[#007AFF]"></span>
-                                <span>Creados</span>
-                            </div>
-                            <div class="flex items-center gap-1.5 text-[11px] text-[#48484A]">
-                                <span class="w-2.5 h-2.5 rounded-full bg-[#34C759]"></span>
-                                <span>Cerrados</span>
-                            </div>
-                            <span class="text-[10px] font-mono text-[#8E8E93] px-2 py-0.5 rounded bg-black/5 font-semibold">LÍNEAS</span>
-                        </div>
+                        <span class="text-[10px] font-mono text-[#8E8E93] px-2 py-0.5 rounded bg-black/5 font-semibold">BARRAS AGRUPADAS</span>
                     </div>
-                    <div class="relative w-full h-[220px] sm:h-[260px] mt-4">
-                        <canvas id="hourlyFlowChart"></canvas>
+                    <div class="relative w-full mt-4">
+                        <div id="operatorBarChart" style="width: 100%; height: 300px;"></div>
                     </div>
                 </section>
-                <!-- END: Hourly Flow Chart -->
 
                 <!-- BEGIN: Ranking de Operadores (Liquid Glass Table) - R1.4, R2.4 -->
-                <section class="figma-card flex flex-col overflow-hidden mb-4">
+                <section class="figma-card flex flex-col overflow-hidden mb-2">
                     <div class="px-5 py-4 border-b border-[#E5E5EA] bg-white/40 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div>
                             <h2 class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Ranking de Operadores</h2>
@@ -482,7 +540,7 @@
                         </div>
                         <div class="flex items-center gap-2">
                             <span class="inline-flex items-center gap-1 text-[11px] text-[#48484A] font-medium bg-[#F2F2F7] px-2.5 py-1 rounded-full border border-[#D1D1D6]">
-                                <svg class="w-3.5 h-3.5 text-[#007AFF]" fill="currentColor" viewBox="0 0 20 20">
+                                <svg class="w-3.5 h-3.5 text-sky-500" fill="currentColor" viewBox="0 0 20 20">
                                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                 </svg>
                                 <span>Efectividad NOC</span>
@@ -513,21 +571,21 @@
                                     <tr class="hover:bg-white/60 transition-colors operator-ranking-row">
                                         <!-- Posición con medallas -->
                                         <td class="py-3 px-4 text-center">
-                                            <% if (index === 0) { %>
-                                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#FFF4D6] text-[#B25E02] font-mono font-bold text-[11px] shadow-2xs">🥇</span>
-                                            <% } else if (index === 1) { %>
-                                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#F2F2F7] text-[#48484A] font-mono font-bold text-[11px] shadow-2xs">🥈</span>
-                                            <% } else if (index === 2) { %>
-                                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#FFE5E5] text-[#991B1B] font-mono font-bold text-[11px] shadow-2xs">🥉</span>
-                                            <% } else { %>
-                                                <span class="inline-flex items-center justify-center w-6 h-6 text-[#8E8E93] font-mono font-semibold text-[11px]">#<%= index + 1 %></span>
-                                            <% } %>
+                                             <% if (index === 0) { %>
+                                                 <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#FFF4D6] text-[#B25E02] font-mono font-bold text-[11px] shadow-2xs">🥇</span>
+                                             <% } else if (index === 1) { %>
+                                                 <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#F2F2F7] text-[#48484A] font-mono font-bold text-[11px] shadow-2xs">🥈</span>
+                                             <% } else if (index === 2) { %>
+                                                 <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#FFE5E5] text-[#991B1B] font-mono font-bold text-[11px] shadow-2xs">🥉</span>
+                                             <% } else { %>
+                                                 <span class="inline-flex items-center justify-center w-6 h-6 text-[#8E8E93] font-mono font-semibold text-[11px]">#<%= index + 1 %></span>
+                                             <% } %>
                                         </td>
 
                                         <!-- Operador Info -->
                                         <td class="py-3 px-4">
                                             <div class="flex items-center gap-2.5">
-                                                <div class="w-7 h-7 rounded-full bg-[#007AFF] text-white flex items-center justify-center font-mono font-semibold text-[10px] flex-shrink-0 shadow-2xs">
+                                                <div class="w-7 h-7 rounded-full bg-sky-500 text-white flex items-center justify-center font-mono font-semibold text-[10px] flex-shrink-0 shadow-2xs">
                                                     <%= op.nombre && op.nombre.trim() ? (op.nombre.trim().split(/\s+/).slice(0, 2).map(p => p.charAt(0)).join('').toUpperCase() || 'OP') : 'OP' %>
                                                 </div>
                                                 <div class="flex flex-col min-w-0">
@@ -566,7 +624,7 @@
                                             <div class="flex items-center gap-2">
                                                 <span class="font-mono font-semibold text-[11px] text-[#1C1C1E] w-9 text-right num-tabular"><%= ef %>%</span>
                                                 <div class="w-16 bg-[#E5E5EA] rounded-full h-1.5 overflow-hidden flex-shrink-0">
-                                                    <div class="h-full rounded-full transition-all duration-300 <%= ef >= 80 ? 'bg-[#34C759]' : (ef >= 50 ? 'bg-[#007AFF]' : 'bg-[#FF9500]') %>"
+                                                    <div class="h-full rounded-full transition-all duration-300 <%= ef >= 80 ? 'bg-[#34C759]' : (ef >= 50 ? 'bg-sky-500' : 'bg-[#FF9500]') %>"
                                                          style="width: <%= Math.min(100, Math.max(0, ef)) %>%"></div>
                                                 </div>
                                             </div>
@@ -600,7 +658,7 @@
 
                                         <!-- Puntos Complejidad -->
                                         <td class="py-3 px-4 text-right">
-                                            <span class="text-[#007AFF] font-mono font-bold text-[12px] num-tabular">
+                                            <span class="text-sky-600 font-mono font-bold text-[12px] num-tabular">
                                                 <%= op.puntos || 0 %> <span class="text-[10px] font-sans font-medium text-[#8E8E93]">pts</span>
                                             </span>
                                         </td>
@@ -617,8 +675,8 @@
                                                     <span class="w-1.5 h-1.5 rounded-full bg-[#34C759]"></span> Disponible
                                                 </span>
                                             <% } else if (op.estado === 'EN_TERRENO') { %>
-                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#DCEBFE] text-[#0062CC] border border-[#B8D7FC]">
-                                                    <span class="w-1.5 h-1.5 rounded-full bg-[#007AFF]"></span> En Terreno
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-50 text-sky-700 border border-sky-200">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span> En Terreno
                                                 </span>
                                             <% } else if (op.estado === 'AUSENTE') { %>
                                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#F2F2F7] text-[#8E8E93] border border-[#E5E5EA]">
@@ -649,6 +707,105 @@
                     </div>
                 </section>
                 <!-- END: Ranking Table -->
+            </div>
+            <!-- END: Tab 2 (Equipo) -->
+
+            <!-- BEGIN: Tab 3 (Geografía) -->
+            <div id="tab-geo" class="tab-pane hidden flex flex-col gap-6" role="tabpanel" aria-labelledby="tab-btn-geo">
+                <!-- BEGIN: Mapa de Venezuela Interactivo por Estados -->
+                <section class="figma-card p-5 sm:p-6 lg:p-7 flex flex-col flex-shrink-0" id="venezuela-map-section">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#E5E5EA]">
+                        <div>
+                            <h2 class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Distribución Territorial de Incidencias</h2>
+                            <p class="text-[11px] text-[#8E8E93] mt-0.5">Monitoreo en vivo de tickets e impacto operativo por estados de Venezuela</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-semibold bg-sky-500/10 text-sky-500 border border-sky-500/20">
+                                <span class="w-2 h-2 rounded-full bg-sky-500"></span>
+                                24 Entidades Federales
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-4 items-center">
+                        <!-- Left: Mapa SVG de Venezuela -->
+                        <div class="lg:col-span-8 relative flex items-center justify-center min-h-[380px] sm:min-h-[460px] bg-white/40 rounded-[12px] p-4 border border-[#E5E5EA]/60 overflow-hidden">
+                            <div id="venezuela-map-container" class="w-full h-full flex items-center justify-center max-h-[460px]">
+                                <div class="flex flex-col items-center gap-2 text-[#8E8E93] animate-pulse">
+                                    <svg class="w-6 h-6 animate-spin text-sky-500" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                    </svg>
+                                    <span class="text-[11px] font-mono">Cargando mapa vectorial de Venezuela...</span>
+                                </div>
+                            </div>
+
+                            <!-- Floating Liquid Glass Tooltip for Map (Dark macOS Style) -->
+                            <div id="map-state-tooltip" class="fixed hidden pointer-events-none z-50 px-3 py-2 rounded-[8px] bg-[#1C1C1E]/95 backdrop-blur-md border border-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.28)] text-[12px] transition-opacity duration-150 text-white">
+                                <div class="flex items-center gap-2 font-bold text-white">
+                                    <span class="w-2 h-2 rounded-full bg-sky-500" id="tooltip-state-dot"></span>
+                                    <span id="tooltip-state-name">Estado</span>
+                                </div>
+                                <div class="text-[11px] text-[#AEAEB2] mt-1 space-y-0.5">
+                                    <div>Tickets Totales: <strong class="font-mono text-white" id="tooltip-state-total">0</strong></div>
+                                    <div class="flex items-center gap-2 text-[10px]">
+                                        <span class="text-[#FF453A]">Abiertos: <strong id="tooltip-state-open">0</strong></span>
+                                        <span class="text-[#30D158]">Cerrados: <strong id="tooltip-state-closed">0</strong></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right: Resumen de Estados con Mayor Actividad -->
+                        <div class="lg:col-span-4 flex flex-col justify-between h-full space-y-4">
+                            <div>
+                                <div class="flex items-center justify-between pb-2 border-b border-[#E5E5EA]">
+                                    <span class="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wider">Top Estados con Mayor Carga</span>
+                                    <span class="text-[10px] font-mono text-[#8E8E93]">Incidencias</span>
+                                </div>
+                                <div class="space-y-2 mt-3 max-h-[340px] overflow-y-auto pr-1" id="top-states-list">
+                                    <% 
+                                        const estadosList = (typeof distribucionPorEstado !== 'undefined' && distribucionPorEstado) ? distribucionPorEstado.slice(0, 7) : [];
+                                        if (estadosList.length > 0) {
+                                            estadosList.forEach((st, idx) => {
+                                    %>
+                                        <div class="flex items-center justify-between p-2 rounded-[8px] hover:bg-white/80 transition-all border border-transparent hover:border-[#E5E5EA] text-[11px] state-list-item cursor-pointer" data-state-id="<%= st.id %>">
+                                            <div class="flex items-center gap-2 min-w-0">
+                                                <span class="w-5 h-5 rounded-full bg-[#F2F2F7] text-[#48484A] font-mono font-semibold text-[10px] flex items-center justify-center flex-shrink-0">
+                                                    <%= idx + 1 %>
+                                                </span>
+                                                <span class="font-medium text-[#1C1C1E] truncate"><%= st.nombre %></span>
+                                            </div>
+                                            <div class="flex items-center gap-2 font-mono flex-shrink-0">
+                                                <span class="text-[#1C1C1E] font-semibold"><%= st.total %> tickets</span>
+                                                <span class="text-[10px] text-[#8E8E93]">(<%= st.porcentaje %>%)</span>
+                                            </div>
+                                        </div>
+                                    <% 
+                                            });
+                                        } else { 
+                                    %>
+                                        <span class="text-[11px] text-[#8E8E93]">Sin registros territoriales.</span>
+                                    <% } %>
+                                </div>
+                            </div>
+
+                            <!-- Legend Bar -->
+                            <div class="p-3 rounded-[8px] bg-white/70 border border-[#E5E5EA] space-y-1.5">
+                                <span class="text-[10px] font-semibold text-[#8E8E93] uppercase tracking-wider block">Intensidad de Incidencias</span>
+                                <div class="w-full h-2 rounded-full overflow-hidden flex" style="background: linear-gradient(90deg, #E5E5EA 0%, #E0F2FE 25%, #7DD3FC 50%, #0EA5E9 75%, #0369A1 100%);"></div>
+                                <div class="flex justify-between text-[9px] font-mono text-[#8E8E93]">
+                                    <span>Baja</span>
+                                    <span>Media</span>
+                                    <span>Crítica</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <!-- END: Mapa de Venezuela -->
+            </div>
+            <!-- END: Tab 3 (Geografía) -->
 
             </main>
         </div>
@@ -659,7 +816,7 @@
         <%- JSON.stringify(typeof reportData !== 'undefined' ? reportData : {}).replace(/</g, '\\u003c') %>
     </script>
 
-    <!-- Client-side logic for Chart.js & Shortcuts -->
+    <!-- Client-side logic for Apache ECharts & Shortcuts -->
     <script>
         document.addEventListener('keydown', function (e) {
             if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
@@ -690,6 +847,14 @@
                 const rows = document.querySelectorAll('.operator-ranking-row');
                 let matchCount = 0;
 
+                // Auto-switch to Team tab if user is actively searching an operator
+                if (query.length > 0 && typeof window.switchReportsTab === 'function') {
+                    const teamPane = document.getElementById('tab-team');
+                    if (teamPane && teamPane.classList.contains('hidden')) {
+                        window.switchReportsTab('tab-team');
+                    }
+                }
+
                 rows.forEach(function(row) {
                     const text = (row.textContent || '').toLowerCase();
                     const visible = !query || text.includes(query);
@@ -708,358 +873,691 @@
             });
         })();
 
-        // Initialize Charts when DOM is fully loaded & Chart.js is ready
+        // Initialize Charts when DOM is fully loaded & Apache ECharts is ready
         (function() {
-            function handleChartUnavailable() {
-                ['areaVolumeChart', 'areaPointsChart', 'hourlyFlowChart'].forEach(function(canvasId) {
-                    const canvas = document.getElementById(canvasId);
-                    if (canvas && canvas.parentElement) {
-                        canvas.style.display = 'none';
-                        const existingMsg = canvas.parentElement.querySelector('.chart-fallback-msg');
-                        if (!existingMsg) {
-                            const fallback = document.createElement('div');
-                            fallback.className = 'chart-fallback-msg flex flex-col items-center justify-center h-full text-center p-6 text-[#8E8E93]';
-                            fallback.innerHTML = `
-                                <div class="w-10 h-10 rounded-full bg-black/5 flex items-center justify-center mb-2.5">
-                                    <svg class="w-5 h-5 text-[#8E8E93]" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-                                    </svg>
-                                </div>
-                                <span class="text-[12px] font-medium text-[#1C1C1E]">Visualización gráfica no disponible</span>
-                                <span class="text-[11px] text-[#8E8E93] mt-1 max-w-[240px]">Los datos consolidados se muestran en las tablas y métricas superiores.</span>
-                            `;
-                            canvas.parentElement.appendChild(fallback);
-                        }
-                    }
-                });
+            function escapeHtml(str) {
+                if (str == null) return '';
+                return String(str)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
             }
 
-            function initCharts() {
+            function getReportData() {
                 let reportData = {
                     kpis: {},
-                    volumenPorArea: { labels: [], data: [], totales: [], cerrados: [] },
+                    volumenPorArea: { labels: [], data: [], totales: [], cerrados: [], creados: [], asignados: [], resueltos: [], rechazados: [] },
+                    areaTickets: { labels: [], creados: [], asignados: [], resueltos: [], rechazados: [] },
+                    barrasOperadores: { labels: [], asignados: [], resueltos: [] },
                     puntosPorArea: { labels: [], data: [] },
-                    flujoPorHora: { labels: [], creados: [], cerrados: [] },
+                    flujoPorHora: { labels: [], creados: [], asignados: [], cerrados: [] },
+                    medianaTiempoPorArea: { labels: [], data: [], formateado: [] },
                     rankingOperadores: []
                 };
-
                 try {
                     const dataEl = document.getElementById('report-data-json');
                     if (dataEl && dataEl.textContent.trim()) {
-                        reportData = JSON.parse(dataEl.textContent);
+                        const parsed = JSON.parse(dataEl.textContent);
+                        if (parsed && typeof parsed === 'object') {
+                            reportData = parsed;
+                        }
                     }
                 } catch (err) {
                     console.error('Error al inicializar reportData:', err);
                 }
+                return reportData;
+            }
 
-                // Apple palette colors
-                const appleColors = [
-                    '#007AFF', // Blue
-                    '#34C759', // Green
-                    '#FF9500', // Orange
-                    '#AF52DE', // Purple
-                    '#5856D6', // Indigo
-                    '#FF2D55', // Pink
-                    '#5AC8FA'  // Teal
-                ];
+            const echartsInstances = [];
 
-                // 1. Gráfico de Barras Agrupadas: Volumen Total vs Cerrados por Área (R2.2)
-                const barCanvas = document.getElementById('areaVolumeChart');
-                if (barCanvas && typeof Chart !== 'undefined') {
-                    const existingBar = Chart.getChart(barCanvas);
-                    if (existingBar) existingBar.destroy();
+            function initCharts() {
+                if (typeof echarts === 'undefined') return;
+                const reportData = getReportData();
 
-                    const volumen = reportData.volumenPorArea || reportData.volumen_por_area || {};
-                    const barLabels = volumen.labels || [];
-                    const rawTotalData = volumen.totales || volumen.data || volumen.values || [];
-                    const rawClosedData = volumen.cerrados || [];
-
-                    const safeTotalData = barLabels.map((_, i) => (typeof rawTotalData[i] !== 'undefined' ? rawTotalData[i] : 0));
-                    const safeClosedData = barLabels.map((_, i) => (typeof rawClosedData[i] !== 'undefined' ? rawClosedData[i] : 0));
-
-                    new Chart(barCanvas.getContext('2d'), {
-                        type: 'bar',
-                        data: {
-                            labels: barLabels,
-                            datasets: [
-                                {
-                                    label: 'Volumen Total',
-                                    data: safeTotalData,
-                                    backgroundColor: 'rgba(0, 122, 255, 0.75)',
-                                    hoverBackgroundColor: '#007AFF',
-                                    borderColor: '#007AFF',
-                                    borderWidth: 1,
-                                    borderRadius: 5,
-                                    barPercentage: 0.8,
-                                    categoryPercentage: 0.7
-                                },
-                                {
-                                    label: 'Tickets Cerrados',
-                                    data: safeClosedData,
-                                    backgroundColor: 'rgba(52, 199, 89, 0.75)',
-                                    hoverBackgroundColor: '#34C759',
-                                    borderColor: '#34C759',
-                                    borderWidth: 1,
-                                    borderRadius: 5,
-                                    barPercentage: 0.8,
-                                    categoryPercentage: 0.7
-                                }
-                            ]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            animation: {
-                                duration: 600,
-                                easing: 'easeOutQuart'
-                            },
-                            plugins: {
-                                legend: {
-                                    display: true,
-                                    position: 'top',
-                                    labels: {
-                                        boxWidth: 10,
-                                        boxHeight: 10,
-                                        useBorderRadius: true,
-                                        borderRadius: 2,
-                                        font: { size: 11, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
-                                        color: '#1C1C1E',
-                                        padding: 12
-                                    }
-                                },
-                                tooltip: {
-                                    backgroundColor: 'rgba(28, 28, 30, 0.92)',
-                                    titleFont: { size: 12, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
-                                    bodyFont: { size: 12, family: 'SF Mono, Menlo, monospace' },
-                                    padding: 10,
-                                    cornerRadius: 8
-                                }
-                            },
-                            scales: {
-                                x: {
-                                    grid: { display: false },
-                                    border: { display: false },
-                                    ticks: {
-                                        font: { size: 10, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
-                                        color: '#1C1C1E',
-                                        maxRotation: 25,
-                                        minRotation: 0
-                                    }
-                                },
-                                y: {
-                                    beginAtZero: true,
-                                    grid: { color: 'rgba(0, 0, 0, 0.04)' },
-                                    border: { display: false },
-                                    ticks: {
-                                        precision: 0,
-                                        font: { size: 11, family: 'SF Mono, Menlo, monospace' },
-                                        color: '#8E8E93'
-                                    }
-                                }
-                            }
-                        }
-                    });
-                }
-
-                // 2. Gráfico de Dona: Distribución de Puntos o Tickets por Área (R2.3)
-                const donutCanvas = document.getElementById('areaPointsChart');
-                if (donutCanvas && typeof Chart !== 'undefined') {
-                    const existingDonut = Chart.getChart(donutCanvas);
-                    if (existingDonut) existingDonut.destroy();
-
-                    const puntos = reportData.puntosPorArea || reportData.puntos_por_area || {};
-                    const donutLabels = puntos.labels || [];
-                    const donutValues = puntos.data || puntos.values || [];
-                    const tipoLabel = puntos.tipo || 'Puntos';
-                    const hasData = donutValues.some(v => v > 0);
-
-                    const activeIndices = hasData ? donutValues.map((v, i) => v > 0 ? i : -1).filter(i => i !== -1) : [];
-                    const chartData = hasData && activeIndices.length > 0 ? activeIndices.map(i => donutValues[i]) : [1];
-                    const chartLabels = hasData && activeIndices.length > 0 ? activeIndices.map(i => donutLabels[i]) : ['Sin registros'];
-                    const chartColors = hasData && activeIndices.length > 0
-                        ? activeIndices.map(i => appleColors[i % appleColors.length])
-                        : ['rgba(142, 142, 147, 0.25)'];
-
-                    new Chart(donutCanvas.getContext('2d'), {
-                        type: 'doughnut',
-                        data: {
-                            labels: chartLabels,
-                            datasets: [{
-                                data: chartData,
-                                backgroundColor: chartColors,
-                                borderWidth: 2,
-                                borderColor: '#FFFFFF',
-                                hoverOffset: hasData ? 6 : 0
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            cutout: '68%',
-                            animation: {
-                                duration: 700,
-                                easing: 'easeOutQuart'
-                            },
-                            plugins: {
-                                legend: {
-                                    position: (typeof window !== 'undefined' && window.innerWidth < 640) ? 'bottom' : 'right',
-                                    display: hasData,
-                                    labels: {
-                                        boxWidth: 10,
-                                        boxHeight: 10,
-                                        borderRadius: 3,
-                                        useBorderRadius: true,
-                                        font: { size: 10, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
-                                        color: '#1C1C1E',
-                                        padding: 8
-                                    }
-                                },
-                                tooltip: {
-                                    enabled: hasData,
-                                    backgroundColor: 'rgba(28, 28, 30, 0.92)',
-                                    titleFont: { size: 12, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
-                                    bodyFont: { size: 12, family: 'SF Mono, Menlo, monospace' },
-                                    padding: 10,
-                                    cornerRadius: 8,
-                                    callbacks: {
-                                        label: function(ctx) {
-                                            const val = ctx.parsed ?? ctx.raw ?? 0;
-                                            const total = (ctx.dataset.data || []).reduce((a, b) => Number(a) + Number(b), 0);
-                                            const pct = total > 0 ? Math.round((val / total) * 100) : 0;
-                                            return ` ${ctx.label}: ${val} ${tipoLabel.toLowerCase()} (${pct}%)`;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    });
-                }
-
-                // 3. Gráfico de Líneas: Flujo por Hora (Creados vs Cerrados) - R2.5
-                const lineCanvas = document.getElementById('hourlyFlowChart');
-                if (lineCanvas && typeof Chart !== 'undefined') {
-                    const existingLine = Chart.getChart(lineCanvas);
-                    if (existingLine) existingLine.destroy();
-
+                // 1. Gráfica 4: Flujo 24h (hourlyFlowChart)
+                const flowEl = document.getElementById('hourlyFlowChart');
+                if (flowEl) {
                     const flujo = reportData.flujoPorHora || reportData.flujo_por_hora || {};
                     const defaultHours = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
                     const flujoLabels = (flujo.labels && flujo.labels.length > 0) ? flujo.labels : defaultHours;
                     const rawCreados = flujo.creados || [];
+                    const rawAsignados = flujo.asignados || [];
                     const rawCerrados = flujo.cerrados || [];
-                    const safeCreados = flujoLabels.map((_, i) => (typeof rawCreados[i] !== 'undefined' ? rawCreados[i] : 0));
-                    const safeCerrados = flujoLabels.map((_, i) => (typeof rawCerrados[i] !== 'undefined' ? rawCerrados[i] : 0));
+                    const safeCreados = flujoLabels.map((_, i) => {
+                        const n = Number(rawCreados[i]);
+                        return (!isNaN(n) && isFinite(n) && n >= 0) ? n : 0;
+                    });
+                    const safeAsignados = flujoLabels.map((_, i) => {
+                        const n = Number(rawAsignados[i]);
+                        return (!isNaN(n) && isFinite(n) && n >= 0) ? n : 0;
+                    });
+                    const safeCerrados = flujoLabels.map((_, i) => {
+                        const n = Number(rawCerrados[i]);
+                        return (!isNaN(n) && isFinite(n) && n >= 0) ? n : 0;
+                    });
 
-                    new Chart(lineCanvas.getContext('2d'), {
-                        type: 'line',
-                        data: {
-                            labels: flujoLabels,
-                            datasets: [
-                                {
-                                    label: 'Creados Hoy',
-                                    data: safeCreados,
-                                    borderColor: '#007AFF',
-                                    backgroundColor: 'rgba(0, 122, 255, 0.08)',
-                                    fill: true,
-                                    tension: 0.35,
-                                    borderWidth: 2,
-                                    pointRadius: 3,
-                                    pointHoverRadius: 5,
-                                    pointBackgroundColor: '#007AFF'
-                                },
-                                {
-                                    label: 'Cerrados Hoy',
-                                    data: safeCerrados,
-                                    borderColor: '#34C759',
-                                    backgroundColor: 'rgba(52, 199, 89, 0.08)',
-                                    fill: true,
-                                    tension: 0.35,
-                                    borderWidth: 2,
-                                    pointRadius: 3,
-                                    pointHoverRadius: 5,
-                                    pointBackgroundColor: '#34C759'
-                                }
-                            ]
+                    const flowChart = echarts.init(flowEl);
+                    flowChart.setOption({
+                        tooltip: {
+                            trigger: 'axis',
+                            backgroundColor: 'rgba(28, 28, 30, 0.94)',
+                            borderColor: 'rgba(255, 255, 255, 0.2)',
+                            textStyle: { color: '#FFFFFF', fontSize: 12 },
+                            borderRadius: 8
                         },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            animation: {
-                                duration: 700,
-                                easing: 'easeOutQuart'
-                            },
-                            interaction: {
-                                mode: 'index',
-                                intersect: false
-                            },
-                            plugins: {
-                                legend: { display: false },
-                                tooltip: {
-                                    backgroundColor: 'rgba(28, 28, 30, 0.92)',
-                                    titleFont: { size: 12, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
-                                    bodyFont: { size: 12, family: 'SF Mono, Menlo, monospace' },
-                                    padding: 10,
-                                    cornerRadius: 8
+                        legend: {
+                            data: ['Creados Hoy', 'Asignados Hoy', 'Cerrados Hoy'],
+                            top: 0,
+                            textStyle: { color: '#1C1C1E', fontSize: 11 }
+                        },
+                        grid: {
+                            top: 40,
+                            left: 20,
+                            right: 20,
+                            bottom: 20,
+                            containLabel: true
+                        },
+                        xAxis: {
+                            type: 'category',
+                            data: flujoLabels,
+                            boundaryGap: false,
+                            axisLine: { show: false },
+                            axisTick: { show: false },
+                            axisLabel: { color: '#8E8E93', fontSize: 10 }
+                        },
+                        yAxis: {
+                            type: 'value',
+                            minInterval: 1,
+                            axisLine: { show: false },
+                            axisTick: { show: false },
+                            axisLabel: { color: '#8E8E93', fontSize: 10 },
+                            splitLine: {
+                                lineStyle: { color: 'rgba(0,0,0,0.05)' }
+                            }
+                        },
+                        series: [
+                            {
+                                name: 'Creados Hoy',
+                                type: 'line',
+                                smooth: true,
+                                data: safeCreados,
+                                lineStyle: { color: '#1C1C1E', width: 2.5 },
+                                itemStyle: { color: '#1C1C1E' },
+                                showSymbol: false,
+                                areaStyle: {
+                                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                        { offset: 0, color: 'rgba(28, 28, 30, 0.12)' },
+                                        { offset: 1, color: 'rgba(28, 28, 30, 0.00)' }
+                                    ])
                                 }
                             },
-                            scales: {
-                                x: {
-                                    grid: { color: 'rgba(0, 0, 0, 0.02)' },
-                                    border: { display: false },
-                                    ticks: {
-                                        font: { size: 10, family: 'SF Mono, Menlo, monospace' },
-                                        color: '#8E8E93',
-                                        maxTicksLimit: 12,
-                                        autoSkip: true
-                                    }
+                            {
+                                name: 'Asignados Hoy',
+                                type: 'line',
+                                smooth: true,
+                                data: safeAsignados,
+                                lineStyle: { color: '#0ea5e9', width: 2 },
+                                itemStyle: { color: '#0ea5e9' },
+                                showSymbol: false,
+                                areaStyle: {
+                                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                        { offset: 0, color: 'rgba(14, 165, 233, 0.15)' },
+                                        { offset: 1, color: 'rgba(14, 165, 233, 0.00)' }
+                                    ])
+                                }
+                            },
+                            {
+                                name: 'Cerrados Hoy',
+                                type: 'line',
+                                smooth: true,
+                                data: safeCerrados,
+                                lineStyle: { color: '#34C759', width: 2 },
+                                itemStyle: { color: '#34C759' },
+                                showSymbol: false,
+                                areaStyle: {
+                                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                        { offset: 0, color: 'rgba(52, 199, 89, 0.12)' },
+                                        { offset: 1, color: 'rgba(52, 199, 89, 0.00)' }
+                                    ])
+                                }
+                            }
+                        ]
+                    });
+                    echartsInstances.push(flowChart);
+                }
+
+                // 2. Gráfica 1: Área vs Tickets (areaTicketsChart)
+                const areaEl = document.getElementById('areaTicketsChart');
+                if (areaEl) {
+                    const volumen = reportData.areaTickets || reportData.volumenPorArea || reportData.volumen_por_area || {};
+                    const barLabels = Array.isArray(volumen.labels) ? volumen.labels : [];
+                    const rawTotal = Array.isArray(volumen.creados) ? volumen.creados
+                        : (Array.isArray(volumen.asignados) ? volumen.asignados
+                        : (Array.isArray(volumen.totales) ? volumen.totales
+                        : (Array.isArray(volumen.data) ? volumen.data
+                        : (Array.isArray(volumen.values) ? volumen.values : []))));
+                    const rawClosed = Array.isArray(volumen.resueltos) ? volumen.resueltos
+                        : (Array.isArray(volumen.cerrados) ? volumen.cerrados : []);
+                    const rawRech = Array.isArray(volumen.rechazados) ? volumen.rechazados : barLabels.map(() => 0);
+
+                    const safeTotal = barLabels.map((_, i) => {
+                        const n = Number(rawTotal[i]);
+                        return (!isNaN(n) && isFinite(n) && n >= 0) ? n : 0;
+                    });
+                    const safeClosed = barLabels.map((_, i) => {
+                        const n = Number(rawClosed[i]);
+                        return (!isNaN(n) && isFinite(n) && n >= 0) ? n : 0;
+                    });
+                    const safeRech = barLabels.map((_, i) => {
+                        const n = Number(rawRech[i]);
+                        return (!isNaN(n) && isFinite(n) && n >= 0) ? n : 0;
+                    });
+
+                    const areaChart = echarts.init(areaEl);
+                    areaChart.setOption({
+                        tooltip: {
+                            trigger: 'axis',
+                            axisPointer: { type: 'shadow' },
+                            backgroundColor: 'rgba(28, 28, 30, 0.94)',
+                            borderColor: 'rgba(255, 255, 255, 0.2)',
+                            textStyle: { color: '#FFFFFF', fontSize: 12 },
+                            borderRadius: 8
+                        },
+                        legend: {
+                            data: ['Asignados / Creados', 'Resueltos', 'Rechazados'],
+                            top: 0,
+                            textStyle: { color: '#1C1C1E', fontSize: 11 }
+                        },
+                        grid: {
+                            top: 40,
+                            left: 20,
+                            right: 20,
+                            bottom: 30,
+                            containLabel: true
+                        },
+                        xAxis: {
+                            type: 'category',
+                            data: barLabels,
+                            axisLine: { show: false },
+                            axisTick: { show: false },
+                            axisLabel: {
+                                color: '#1C1C1E',
+                                fontSize: 10,
+                                interval: 0,
+                                rotate: barLabels.length > 4 ? 20 : 0
+                            }
+                        },
+                        yAxis: {
+                            type: 'value',
+                            minInterval: 1,
+                            axisLine: { show: false },
+                            axisTick: { show: false },
+                            axisLabel: { color: '#8E8E93', fontSize: 10 },
+                            splitLine: {
+                                lineStyle: { color: 'rgba(0,0,0,0.05)' }
+                            }
+                        },
+                        series: [
+                            {
+                                name: 'Asignados / Creados',
+                                type: 'bar',
+                                data: safeTotal,
+                                showBackground: true,
+                                backgroundStyle: { borderRadius: 20, color: 'rgba(255,255,255,0.5)' },
+                                itemStyle: { borderRadius: 20, color: '#85A8E0' },
+                                barGap: '20%'
+                            },
+                            {
+                                name: 'Resueltos',
+                                type: 'bar',
+                                data: safeClosed,
+                                showBackground: true,
+                                backgroundStyle: { borderRadius: 20, color: 'rgba(255,255,255,0.5)' },
+                                itemStyle: { borderRadius: 20, color: '#4FE0B5' }
+                            },
+                            {
+                                name: 'Rechazados',
+                                type: 'bar',
+                                data: safeRech,
+                                showBackground: true,
+                                backgroundStyle: { borderRadius: 20, color: 'rgba(255,255,255,0.5)' },
+                                itemStyle: { borderRadius: 20, color: '#FF8A80' }
+                            }
+                        ]
+                    });
+                    echartsInstances.push(areaChart);
+                }
+
+                // 3. Gráfica 5: Mediana de Resolución (medianResolutionChart)
+                const medianEl = document.getElementById('medianResolutionChart');
+                if (medianEl) {
+                    const medData = reportData.medianaTiempoPorArea || reportData.mediana_tiempo_por_area || {};
+                    let medLabels = Array.isArray(medData.labels) ? medData.labels : [];
+                    let medValues = Array.isArray(medData.data) ? medData.data
+                        : (Array.isArray(medData.valoresMinutos) ? medData.valoresMinutos : []);
+                    let medFormateados = Array.isArray(medData.formateado) ? medData.formateado : [];
+
+                    if ((!medLabels || medLabels.length === 0) && medData.detalles && Array.isArray(medData.detalles)) {
+                        medLabels = medData.detalles.map(d => d.area || d.label || 'General');
+                        medValues = medData.detalles.map(d => d.medianaMinutos ?? d.mediana ?? 0);
+                        medFormateados = medData.detalles.map(d => d.formateado || (d.medianaMinutos > 0 ? (d.medianaMinutos >= 60 ? (d.medianaMinutos/60).toFixed(1) + ' h' : d.medianaMinutos + ' min') : 'N/A'));
+                    }
+
+                    const safeMed = medLabels.map((_, i) => {
+                        const n = Number(medValues[i]);
+                        return (!isNaN(n) && isFinite(n) && n >= 0) ? n : 0;
+                    });
+
+                    const medianChart = echarts.init(medianEl);
+                    medianChart.setOption({
+                        tooltip: {
+                            trigger: 'axis',
+                            axisPointer: { type: 'shadow' },
+                            backgroundColor: 'rgba(28, 28, 30, 0.94)',
+                            borderColor: 'rgba(255, 255, 255, 0.2)',
+                            textStyle: { color: '#FFFFFF', fontSize: 12 },
+                            borderRadius: 8,
+                            formatter: function(params) {
+                                if (!params || !params[0]) return '';
+                                const p = params[0];
+                                const idx = p.dataIndex;
+                                const fmt = (medFormateados && medFormateados[idx]) || (p.value > 0 ? `${p.value} min` : 'N/A');
+                                return `${p.name}: <b>${fmt}</b> (${p.value} min)`;
+                            }
+                        },
+                        grid: {
+                            top: 20,
+                            left: 20,
+                            right: 40,
+                            bottom: 20,
+                            containLabel: true
+                        },
+                        xAxis: {
+                            type: 'value',
+                            axisLine: { show: false },
+                            axisTick: { show: false },
+                            axisLabel: {
+                                color: '#8E8E93',
+                                fontSize: 10,
+                                formatter: '{value}m'
+                            },
+                            splitLine: {
+                                lineStyle: { color: 'rgba(0,0,0,0.05)' }
+                            }
+                        },
+                        yAxis: {
+                            type: 'category',
+                            data: medLabels,
+                            inverse: true,
+                            axisLine: { show: false },
+                            axisTick: { show: false },
+                            axisLabel: {
+                                color: '#1C1C1E',
+                                fontSize: 11,
+                                width: 120,
+                                overflow: 'truncate'
+                            }
+                        },
+                        series: [
+                            {
+                                name: 'Duración Mediana',
+                                type: 'bar',
+                                data: safeMed,
+                                showBackground: true,
+                                backgroundStyle: { borderRadius: 20, color: 'rgba(255,255,255,0.5)' },
+                                itemStyle: {
+                                    borderRadius: 20,
+                                    color: new echarts.graphic.LinearGradient(1, 0, 0, 0, [
+                                        { offset: 0, color: '#38bdf8' },
+                                        { offset: 1, color: '#0284c7' }
+                                    ])
                                 },
-                                y: {
-                                    beginAtZero: true,
-                                    grid: { color: 'rgba(0, 0, 0, 0.04)' },
-                                    border: { display: false },
-                                    ticks: {
-                                        precision: 0,
-                                        font: { size: 10, family: 'SF Mono, Menlo, monospace' },
-                                        color: '#8E8E93'
-                                    }
+                                label: {
+                                    show: true,
+                                    position: 'right',
+                                    formatter: function(p) {
+                                        return (medFormateados && medFormateados[p.dataIndex]) || (p.value > 0 ? p.value + 'm' : 'N/A');
+                                    },
+                                    color: '#1C1C1E',
+                                    fontSize: 10,
+                                    fontFamily: 'SF Mono, monospace'
                                 }
+                            }
+                        ]
+                    });
+                    echartsInstances.push(medianChart);
+                }
+
+                // 4. Gráfica 3: Operadores (operatorBarChart)
+                const opEl = document.getElementById('operatorBarChart');
+                if (opEl) {
+                    const barrasOp = reportData.barrasOperadores || reportData.barras_operadores || reportData.operadoresBarras || {};
+                    const opLabels = (barrasOp.labels && barrasOp.labels.length > 0)
+                        ? barrasOp.labels
+                        : (reportData.rankingOperadores || []).map(o => `${o.nombre} (${o.area || o.area_designada || 'General'})`);
+                    const rawAsignadosOp = (barrasOp.asignados && barrasOp.asignados.length > 0)
+                        ? barrasOp.asignados
+                        : (reportData.rankingOperadores || []).map(o => o.asignadosTotales ?? o.asignados ?? 0);
+                    const rawResueltosOp = (barrasOp.resueltos && barrasOp.resueltos.length > 0)
+                        ? barrasOp.resueltos
+                        : (reportData.rankingOperadores || []).map(o => o.cerrados ?? o.resueltos ?? 0);
+
+                    const safeAsignadosOp = opLabels.map((_, i) => {
+                        const n = Number(rawAsignadosOp[i]);
+                        return (!isNaN(n) && isFinite(n) && n >= 0) ? n : 0;
+                    });
+                    const safeResueltosOp = opLabels.map((_, i) => {
+                        const n = Number(rawResueltosOp[i]);
+                        return (!isNaN(n) && isFinite(n) && n >= 0) ? n : 0;
+                    });
+
+                    const opChart = echarts.init(opEl);
+                    opChart.setOption({
+                        tooltip: {
+                            trigger: 'axis',
+                            axisPointer: { type: 'shadow' },
+                            backgroundColor: 'rgba(28, 28, 30, 0.94)',
+                            borderColor: 'rgba(255, 255, 255, 0.2)',
+                            textStyle: { color: '#FFFFFF', fontSize: 12 },
+                            borderRadius: 8
+                        },
+                        legend: {
+                            data: ['Asignados Totales', 'Resueltos'],
+                            top: 0,
+                            textStyle: { color: '#1C1C1E', fontSize: 11 }
+                        },
+                        grid: {
+                            top: 40,
+                            left: 20,
+                            right: 20,
+                            bottom: 40,
+                            containLabel: true
+                        },
+                        xAxis: {
+                            type: 'category',
+                            data: opLabels,
+                            axisLine: { show: false },
+                            axisTick: { show: false },
+                            axisLabel: {
+                                color: '#1C1C1E',
+                                fontSize: 10,
+                                interval: 0,
+                                rotate: opLabels.length > 3 ? 20 : 0
+                            }
+                        },
+                        yAxis: {
+                            type: 'value',
+                            minInterval: 1,
+                            axisLine: { show: false },
+                            axisTick: { show: false },
+                            axisLabel: { color: '#8E8E93', fontSize: 10 },
+                            splitLine: {
+                                lineStyle: { color: 'rgba(0,0,0,0.05)' }
+                            }
+                        },
+                        series: [
+                            {
+                                name: 'Asignados Totales',
+                                type: 'bar',
+                                data: safeAsignadosOp,
+                                showBackground: true,
+                                backgroundStyle: { borderRadius: 20, color: 'rgba(255,255,255,0.5)' },
+                                itemStyle: { borderRadius: 20, color: '#85A8E0' },
+                                barGap: '20%'
+                            },
+                            {
+                                name: 'Resueltos',
+                                type: 'bar',
+                                data: safeResueltosOp,
+                                showBackground: true,
+                                backgroundStyle: { borderRadius: 20, color: 'rgba(255,255,255,0.5)' },
+                                itemStyle: { borderRadius: 20, color: '#4FE0B5' }
+                            }
+                        ]
+                    });
+                    echartsInstances.push(opChart);
+                }
+
+                initVenezuelaMap(reportData);
+
+                // Global resize listener
+                if (typeof window !== 'undefined') {
+                    window.addEventListener('resize', function() {
+                        echartsInstances.forEach(function(chart) {
+                            if (chart && typeof chart.resize === 'function') {
+                                const dom = chart.getDom ? chart.getDom() : null;
+                                if (!dom || dom.offsetParent !== null) {
+                                    chart.resize();
+                                }
+                            }
+                        });
+                    });
+                }
+            }
+
+            function initVenezuelaMap(reportData) {
+                const mapContainer = document.getElementById('venezuela-map-container');
+                const tooltip = document.getElementById('map-state-tooltip');
+                if (!mapContainer) return;
+
+                const distEstados = (reportData && (reportData.distribucionPorEstado || reportData.distribucion_por_estado)) || [];
+                const stateDataMap = {};
+                distEstados.forEach(st => {
+                    stateDataMap[st.id] = st;
+                });
+
+                fetch('/maps/venezuela.svg')
+                    .then(res => {
+                        if (!res.ok) throw new Error('No se pudo cargar el mapa SVG');
+                        return res.text();
+                    })
+                    .then(svgText => {
+                        mapContainer.innerHTML = svgText;
+                        const svg = mapContainer.querySelector('svg');
+                        if (!svg) return;
+
+                        svg.setAttribute('width', '100%');
+                        svg.setAttribute('height', '100%');
+                        svg.style.maxHeight = '390px';
+                        svg.style.filter = 'drop-shadow(0 4px 14px rgba(0, 0, 0, 0.05))';
+
+                        const getColorForCount = (count) => {
+                            if (count === 0) return 'rgba(229, 229, 234, 0.7)';
+                            if (count <= 2) return '#E0F2FE';
+                            if (count <= 5) return '#7DD3FC';
+                            if (count <= 10) return '#0EA5E9';
+                            return '#0284C7';
+                        };
+
+                        const paths = svg.querySelectorAll('path');
+                        paths.forEach(path => {
+                            const stateId = path.getAttribute('id');
+                            const stateName = path.getAttribute('name') || stateId;
+                            const sData = stateDataMap[stateId] || { total: 0, abiertos: 0, cerrados: 0, nombre: stateName };
+
+                            const baseColor = getColorForCount(sData.total);
+                            path.setAttribute('fill', baseColor);
+                            path.setAttribute('stroke', '#FFFFFF');
+                            path.setAttribute('stroke-width', '1');
+                            path.style.transition = 'all 0.25s ease';
+                            path.style.cursor = 'pointer';
+
+                            path.addEventListener('mouseenter', function() {
+                                path.setAttribute('fill', sData.total > 0 ? '#0284C7' : '#C7C7CC');
+                                path.setAttribute('stroke', '#0EA5E9');
+                                path.setAttribute('stroke-width', '2');
+                                path.style.filter = 'drop-shadow(0 2px 8px rgba(14, 165, 233, 0.35))';
+
+                                if (tooltip) {
+                                    const dot = document.getElementById('tooltip-state-dot');
+                                    if (dot) {
+                                        dot.className = 'w-2 h-2 rounded-full ' + (sData.abiertos > 0 ? 'bg-[#FF3B30]' : 'bg-[#34C759]');
+                                    }
+                                    document.getElementById('tooltip-state-name').textContent = sData.nombre || stateName;
+                                    document.getElementById('tooltip-state-total').textContent = sData.total;
+                                    document.getElementById('tooltip-state-open').textContent = sData.abiertos;
+                                    document.getElementById('tooltip-state-closed').textContent = sData.cerrados;
+                                    tooltip.classList.remove('hidden');
+                                }
+                            });
+
+                            path.addEventListener('mousemove', function(e) {
+                                if (tooltip) {
+                                    tooltip.style.left = (e.clientX + 16) + 'px';
+                                    tooltip.style.top = (e.clientY + 16) + 'px';
+                                }
+                            });
+
+                            path.addEventListener('mouseleave', function() {
+                                path.setAttribute('fill', baseColor);
+                                path.setAttribute('stroke', '#FFFFFF');
+                                path.setAttribute('stroke-width', '1');
+                                path.style.filter = 'none';
+                                if (tooltip) tooltip.classList.add('hidden');
+                            });
+                        });
+
+                        // Hover sincronizado entre la lista lateral y los estados del mapa
+                        document.querySelectorAll('.state-list-item').forEach(item => {
+                            const sId = item.getAttribute('data-state-id');
+                            const targetPath = svg.querySelector(`path#${sId}`);
+                            if (!targetPath) return;
+
+                            item.addEventListener('mouseenter', () => {
+                                targetPath.dispatchEvent(new Event('mouseenter'));
+                            });
+                            item.addEventListener('mouseleave', () => {
+                                targetPath.dispatchEvent(new Event('mouseleave'));
+                            });
+                        });
+                    })
+                    .catch(err => {
+                        console.warn('Error al cargar mapa vectorial de Venezuela:', err);
+                        mapContainer.innerHTML = '<span class="text-[11px] text-[#8E8E93]">No fue posible inicializar el mapa vectorial.</span>';
+                    });
+            }
+
+            // Tab Switching Controller for macOS Segmented Controls
+            function setupTabNavigation() {
+                const tabButtons = document.querySelectorAll('.report-tab-btn');
+                const tabPanes = document.querySelectorAll('.tab-pane');
+                if (!tabButtons.length || !tabPanes.length) return;
+
+                function switchTab(targetId) {
+                    if (!targetId) return;
+                    const targetPane = document.getElementById(targetId);
+                    if (!targetPane) return;
+
+                    tabButtons.forEach(btn => {
+                        const isTarget = btn.getAttribute('data-target') === targetId;
+                        btn.setAttribute('aria-selected', isTarget ? 'true' : 'false');
+                        if (isTarget) {
+                            btn.className = 'report-tab-btn flex items-center gap-2 px-4 py-1.5 rounded-[9px] text-[12px] font-semibold bg-white text-[#1C1C1E] shadow-sm transition-all duration-200';
+                        } else {
+                            btn.className = 'report-tab-btn flex items-center gap-2 px-4 py-1.5 rounded-[9px] text-[12px] font-medium text-[#8E8E93] hover:text-[#1C1C1E] hover:bg-white/40 transition-all duration-200';
+                        }
+
+                        // Sincronizar color de acento de icono en pestaña activa / inactiva
+                        const icon = btn.querySelector('svg');
+                        if (icon) {
+                            if (isTarget) {
+                                icon.classList.remove('text-[#8E8E93]');
+                                icon.classList.add('text-sky-500');
+                            } else {
+                                icon.classList.remove('text-sky-500');
+                                icon.classList.add('text-[#8E8E93]');
+                            }
+                        }
+                    });
+
+                    tabPanes.forEach(pane => {
+                        if (pane.id === targetId) {
+                            pane.classList.remove('hidden');
+                            pane.setAttribute('aria-hidden', 'false');
+                            // Forzar cálculo de reflow antes de redimensionar gráficas
+                            void pane.offsetWidth;
+                        } else {
+                            pane.classList.add('hidden');
+                            pane.setAttribute('aria-hidden', 'true');
+                        }
+                    });
+
+                    // Trigger chart resize upon tab visibility change
+                    requestAnimationFrame(() => {
+                        const activePane = document.getElementById(targetId);
+                        if (!activePane || activePane.classList.contains('hidden')) return;
+
+                        echartsInstances.forEach(function(chart) {
+                            if (chart && typeof chart.resize === 'function') {
+                                const dom = chart.getDom ? chart.getDom() : null;
+                                if (!dom || dom.offsetParent !== null) {
+                                    chart.resize();
+                                }
+                            }
+                        });
+
+                        const chartsByTab = {
+                            'tab-overview': ['hourlyFlowChart', 'areaTicketsChart', 'medianResolutionChart'],
+                            'tab-team': ['operatorBarChart'],
+                            'tab-geo': []
+                        };
+                        const tabChartIds = chartsByTab[targetId] || [];
+                        tabChartIds.forEach(id => {
+                            const el = document.getElementById(id);
+                            if (el && typeof echarts !== 'undefined') {
+                                const chart = echarts.getInstanceByDom(el);
+                                if (chart && typeof chart.resize === 'function') {
+                                    chart.resize();
+                                }
+                            }
+                        });
+
+                        if (targetId === 'tab-geo') {
+                            const svg = document.querySelector('#venezuela-map-container svg');
+                            if (svg) {
+                                svg.style.transform = 'translateZ(0)';
                             }
                         }
                     });
                 }
 
-                // Ajuste responsivo de la leyenda del gráfico de dona al cambiar tamaño de ventana
-                if (typeof window !== 'undefined') {
-                    let resizeTimer = null;
-                    window.addEventListener('resize', function() {
-                        if (resizeTimer) clearTimeout(resizeTimer);
-                        resizeTimer = setTimeout(function() {
-                            const donut = Chart.getChart('areaPointsChart');
-                            if (donut && donut.options && donut.options.plugins && donut.options.plugins.legend) {
-                                const newPos = window.innerWidth < 640 ? 'bottom' : 'right';
-                                if (donut.options.plugins.legend.position !== newPos) {
-                                    donut.options.plugins.legend.position = newPos;
-                                    donut.update();
-                                }
-                            }
-                        }, 150);
+                tabButtons.forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const targetId = this.getAttribute('data-target');
+                        if (targetId) switchTab(targetId);
                     });
+                });
+
+                window.switchReportsTab = switchTab;
+
+                // Soporte para deep-linking mediante hash en URL (ej. #tab-team, #tab-geo)
+                if (typeof window !== 'undefined' && window.location && window.location.hash) {
+                    const initialTab = window.location.hash.replace('#', '');
+                    if (document.getElementById(initialTab)) {
+                        switchTab(initialTab);
+                    }
                 }
             }
 
-            function waitForChart(retries) {
-                if (typeof Chart !== 'undefined') {
+            function waitForECharts(retries) {
+                if (typeof echarts !== 'undefined') {
                     initCharts();
                 } else if (retries > 0) {
-                    setTimeout(function() { waitForChart(retries - 1); }, 100);
-                } else {
-                    handleChartUnavailable();
+                    setTimeout(function() { waitForECharts(retries - 1); }, 100);
                 }
             }
 
             if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', function() { waitForChart(40); });
+                document.addEventListener('DOMContentLoaded', function() {
+                    setupTabNavigation();
+                    waitForECharts(40);
+                });
             } else {
-                waitForChart(40);
+                setupTabNavigation();
+                waitForECharts(40);
             }
         })();
     </script>
