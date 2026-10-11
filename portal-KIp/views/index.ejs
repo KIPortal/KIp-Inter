@@ -104,7 +104,7 @@
                     class="ml-2 hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F2F2F7] border border-[#D1D1D6] text-[11px] text-[#48484A] font-medium">
                     <span class="w-2 h-2 rounded-full bg-[#34C759]"></span>
                     <% const _guardias = (typeof operadoresTurno !== 'undefined' && Array.isArray(operadoresTurno)) ? operadoresTurno.filter(function(op){ return op && op.deGuardia; }) : []; %>
-                    <span>Jornada normal 8:00–17:00<% if (_guardias.length) { %> · Guardia: <%= _guardias.map(function(g){ return g.nombre.split(' ')[0]; }).join(', ') %><% } %></span>
+                    <span>Jornada normal 8:00–17:00<% if (_guardias.length) { %> · Guardia: <%= _guardias.map(function(g){ return g.nombre; }).join(', ') %><% } %></span>
                 </div>
             </div>
 
@@ -744,7 +744,7 @@
                                     <label for="filterStatusSelect" class="text-[11px] text-[#8E8E93] font-medium leading-none">Estado:</label>
                                     <select id="filterStatusSelect" onchange="filterByState(this.value)"
                                         class="h-[24px] pl-2 pr-4 text-[12px] font-medium text-[#1C1C1E] bg-[#F5F5F7] hover:bg-[#EBEBF0] rounded-[6px] border border-black/5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] cursor-pointer transition focus:outline-none">
-                                        <option value="ALL">Todos</option>
+                                        <option value="ALL" selected>Todos</option>
                                         <option value="NUEVO">Nuevo</option>
                                         <option value="EN_PROGRESO">En Progreso</option>
                                         <option value="EN_PAUSA">En Pausa</option>
@@ -758,7 +758,7 @@
                                     <label for="filterOperatorSelect" class="text-[11px] text-[#8E8E93] font-medium leading-none">Operador:</label>
                                     <select id="filterOperatorSelect" onchange="filterByOperator(this.value)"
                                         class="h-[24px] pl-2 pr-4 text-[12px] font-medium text-[#1C1C1E] bg-[#F5F5F7] hover:bg-[#EBEBF0] rounded-[6px] border border-black/5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] cursor-pointer transition focus:outline-none max-w-[130px] truncate">
-                                        <option value="ALL">Todos</option>
+                                        <option value="ALL" selected>Todos</option>
                                         <option value="UNASSIGNED">Sin Asignar</option>
                                         <% if (typeof operadoresTurno !== 'undefined' && Array.isArray(operadoresTurno) && operadoresTurno.length > 0) { %>
                                             <% operadoresTurno.forEach(function(op) { if (!op) return; %>
@@ -779,7 +779,7 @@
                             <!-- Botón Traspasar a guardia - R2 -->
                             <!-- TODO backend: conectar endpoint -->
                             <button id="guardShiftBtn" data-action="guard-shift" type="button" onclick="openGuardShiftModal()"
-                                class="figma-button !w-auto !h-[24px] !px-2.5 bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA] text-[#1C1C1E] border border-[#D1D1D6] rounded-[6px] shadow-2xs transition select-none flex items-center gap-1.5 cursor-pointer"
+                                class="h-[24px] px-2.5 bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA] text-[#1C1C1E] border border-[#D1D1D6] rounded-[6px] shadow-2xs transition select-none flex items-center gap-1.5 cursor-pointer"
                                 title="Traspasar tickets a la guardia entrante">
                                 <svg class="w-3.5 h-3.5 text-[#007AFF]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                     <path d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
@@ -793,15 +793,13 @@
                                 <span class="text-[11px]">Seleccionados: <strong id="selectionBadgeCount"
                                         class="text-[#007AFF] font-mono font-semibold">0</strong></span>
                                 <button id="batchAssignBtn" onclick="openBatchAssignModal()"
-                                    class="figma-button !w-auto !h-[24px] !px-2.5 bg-[#007AFF] hover:bg-[#0062CC] text-white shadow-xs transition select-none disabled:opacity-40 disabled:pointer-events-none disabled:cursor-not-allowed"
+                                    class="h-[24px] px-2.5 bg-[#007AFF] hover:bg-[#0062CC] active:bg-[#0051A8] text-white rounded-[6px] shadow-xs transition select-none disabled:opacity-40 disabled:pointer-events-none disabled:cursor-not-allowed flex items-center gap-1.5 cursor-pointer"
                                     disabled>
-                                    <div class="figma-button__label text-white !text-[11px] flex items-center gap-1.5">
-                                        <span id="batchAssignBtnText" class="leading-none">Asignar Ticket</span>
-                                        <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.5"
-                                            viewBox="0 0 24 24">
-                                            <path d="M6 9l6 6 6-6"></path>
-                                        </svg>
-                                    </div>
+                                    <span id="batchAssignBtnText" class="leading-none text-[11px] font-medium">Asignar Ticket</span>
+                                    <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.5"
+                                        viewBox="0 0 24 24">
+                                        <path d="M6 9l6 6 6-6"></path>
+                                    </svg>
                                 </button>
                             </div>
                         </div>
@@ -809,23 +807,23 @@
 
                     <!-- Finder Native List Table -->
                     <div class="flex-1 overflow-y-auto overflow-x-auto min-h-0 bg-white">
-                        <table class="w-full text-left border-collapse table-fixed min-w-[950px]">
+                        <table class="w-full text-left border-collapse table-fixed min-w-[900px]">
                             <thead
                                 class="sticky top-0 bg-[#F9F9FA] text-[11px] font-medium text-[#8E8E93] border-b border-[#E5E5EA] z-10 shadow-xs">
                                 <tr>
-                                    <th class="finder-th py-2 px-3 w-[40px] text-center">
+                                    <th class="finder-th py-2 px-3 w-[36px] text-center">
                                         <div class="flex items-center justify-center"><input id="selectAllCheckbox"
                                                 onchange="TableSelectionManager.toggleAll(this.checked)" type="checkbox"
                                                 class="w-3.5 h-3.5 rounded text-[#007AFF] border-[#D1D1D6] focus:ring-0 focus:outline-none cursor-pointer">
                                         </div>
                                     </th>
-                                    <th class="finder-th py-2 px-3 w-[115px] font-semibold text-[#48484A]">Ticket</th>
-                                    <th class="finder-th py-2 px-2.5 w-[110px] font-semibold text-[#48484A]">Prioridad</th>
-                                    <th class="finder-th py-2 px-2.5 w-[110px] font-semibold text-[#48484A]">Estado</th>
+                                    <th class="finder-th py-2 px-3 w-[100px] font-semibold text-[#48484A]">Ticket</th>
+                                    <th class="finder-th py-2 px-2 w-[90px] font-semibold text-[#48484A]">Prioridad</th>
+                                    <th class="finder-th py-2 px-2 w-[95px] font-semibold text-[#48484A]">Estado</th>
                                     <th class="finder-th py-2 px-3 font-semibold text-[#48484A]">Asunto</th>
-                                    <th class="finder-th py-2 px-2.5 w-[150px] font-semibold text-[#48484A]">OP / Asignado</th>
-                                    <th class="finder-th py-2 px-2.5 w-[110px] text-center font-semibold text-[#48484A]">Tiempo</th>
-                                    <th class="finder-th py-2 px-3 w-[140px] text-right font-semibold text-[#48484A]">Acción</th>
+                                    <th class="finder-th py-2 px-2 w-[130px] font-semibold text-[#48484A]">OP / Asignado</th>
+                                    <th class="finder-th py-2 px-2 w-[85px] text-center font-semibold text-[#48484A]">Tiempo</th>
+                                    <th class="finder-th py-2 px-3 w-[175px] text-right font-semibold text-[#48484A]">Acción</th>
                                 </tr>
                             </thead>
                             <tbody id="ticketTableBody" class="divide-y divide-[#EBEBF0] text-[12px] font-normal">

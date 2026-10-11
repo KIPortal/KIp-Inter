@@ -42,22 +42,22 @@
     </header>
 
     <!-- Resumen Dinámico -->
-    <section aria-label="Resumen de guardia y turnos" class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-4">
-        <div class="rounded-[10px] bg-[#F9F9FB] border border-[#E5E5EA] p-3.5">
+    <section aria-label="Resumen de guardia y turnos" class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-4">
+        <div class="rounded-[8px] bg-white border border-[#E5E5EA] p-3 shadow-2xs">
             <span class="text-[10px] font-semibold uppercase tracking-wider text-[#8E8E93]">Total Operadores</span>
-            <strong id="shiftStatTotal" class="block font-mono text-[22px] font-semibold tabular-nums text-[#1C1C1E] mt-1">0</strong>
+            <strong id="shiftStatTotal" class="block font-mono text-[20px] font-semibold tabular-nums text-[#1C1C1E] mt-0.5">0</strong>
         </div>
-        <div class="rounded-[10px] bg-[#F9F9FB] border border-[#E5E5EA] p-3.5">
+        <div class="rounded-[8px] bg-white border border-[#E5E5EA] p-3 shadow-2xs">
             <span class="text-[10px] font-semibold uppercase tracking-wider text-[#0369A1]">De Guardia Esta Semana</span>
-            <strong id="shiftStatGuardia" class="block font-mono text-[22px] font-semibold tabular-nums text-[#0284C7] mt-1">0</strong>
+            <strong id="shiftStatGuardia" class="block font-mono text-[20px] font-semibold tabular-nums text-[#0284C7] mt-0.5">0</strong>
         </div>
-        <div class="rounded-[10px] bg-[#F9F9FB] border border-[#E5E5EA] p-3.5">
+        <div class="rounded-[8px] bg-white border border-[#E5E5EA] p-3 shadow-2xs">
             <span class="text-[10px] font-semibold uppercase tracking-wider text-[#16834A]">En Turno Actual</span>
-            <strong id="shiftStatEnTurno" class="block font-mono text-[22px] font-semibold tabular-nums text-[#16834A] mt-1">0</strong>
+            <strong id="shiftStatEnTurno" class="block font-mono text-[20px] font-semibold tabular-nums text-[#16834A] mt-0.5">0</strong>
         </div>
-        <div class="rounded-[10px] bg-[#F9F9FB] border border-[#E5E5EA] p-3.5">
+        <div class="rounded-[8px] bg-white border border-[#E5E5EA] p-3 shadow-2xs">
             <span class="text-[10px] font-semibold uppercase tracking-wider text-[#71717A]">Fuera de Turno / Ausentes</span>
-            <strong id="shiftStatFuera" class="block font-mono text-[22px] font-semibold tabular-nums text-[#71717A] mt-1">0</strong>
+            <strong id="shiftStatFuera" class="block font-mono text-[20px] font-semibold tabular-nums text-[#71717A] mt-0.5">0</strong>
         </div>
     </section>
 
@@ -197,27 +197,27 @@
                 const activeDays = new Set(schedule.dias || []);
 
                 return `
-                <div class="rounded-[12px] border border-[#E5E5EA] bg-white p-4 shadow-xs transition hover:border-[#D1D1D6] space-y-3" id="shift-card-${op.id}">
-                    <div class="flex flex-wrap items-center justify-between gap-3">
-                        <div class="flex items-center gap-3">
-                            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#D8E8FF] bg-[#EFF6FF] text-[12px] font-semibold text-[#3974C6]">
+                <div class="rounded-[10px] border border-[#E5E5EA] bg-white p-3 shadow-2xs transition hover:border-[#D1D1D6] space-y-2.5" id="shift-card-${op.id}">
+                    <div class="flex flex-wrap items-center justify-between gap-2.5">
+                        <div class="flex items-center gap-2.5">
+                            <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#D8E8FF] bg-[#EFF6FF] text-[11px] font-semibold text-[#3974C6]">
                                 ${initials}
                             </span>
                             <div>
                                 <div class="flex items-center gap-2">
-                                    <h3 class="text-[13px] font-semibold text-[#1C1C1E]">${escapeHtml(op.nombre)}</h3>
+                                    <h3 class="text-[12px] font-semibold text-[#1C1C1E]">${escapeHtml(op.nombre)}</h3>
                                     <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium border ${badgeCfg.class}">
                                         <span class="w-1.5 h-1.5 rounded-full" style="background-color: ${badgeCfg.dot}"></span>
                                         ${escapeHtml(turnoInfo.etiqueta)}
                                     </span>
                                 </div>
-                                <p class="text-[11px] text-[#8E8E93] mt-0.5">${escapeHtml(areaLabel)} · <span class="text-[#636366] font-mono">${escapeHtml(op.email)}</span></p>
+                                <p class="text-[10px] text-[#8E8E93] mt-0.5">${escapeHtml(areaLabel)} · <span class="text-[#636366] font-mono">${escapeHtml(op.email)}</span></p>
                             </div>
                         </div>
 
                         <!-- Checkbox De Guardia -->
-                        <div class="flex items-center gap-2 bg-[#F9F9FB] border border-[#E5E5EA] px-3 py-1.5 rounded-[8px]">
-                            <input type="checkbox" id="guardia-cb-${op.id}" data-operator-id="${op.id}" class="shift-guardia-cb w-4 h-4 rounded text-[#007AFF] border-[#D1D1D6] focus:ring-0 cursor-pointer" ${op.deGuardia ? 'checked' : ''}>
+                        <div class="flex items-center gap-1.5 bg-[#F9F9FB] border border-[#E5E5EA] px-2.5 py-1 rounded-[6px]">
+                            <input type="checkbox" id="guardia-cb-${op.id}" data-operator-id="${op.id}" class="shift-guardia-cb w-3.5 h-3.5 rounded text-[#007AFF] border-[#D1D1D6] focus:ring-0 cursor-pointer" ${op.deGuardia ? 'checked' : ''}>
                             <label for="guardia-cb-${op.id}" class="text-[11px] font-medium text-[#1C1C1E] cursor-pointer select-none">
                                 De guardia
                             </label>
@@ -225,11 +225,11 @@
                     </div>
 
                     <!-- Editor de Horario Inline -->
-                    <div class="pt-2 border-t border-[#F2F2F7] flex flex-wrap items-center justify-between gap-3 text-[11px]">
-                        <div class="flex items-center gap-1.5 flex-wrap">
-                            <span class="text-[#8E8E93] font-medium mr-1">Días:</span>
+                    <div class="pt-2 border-t border-[#F2F2F7] flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                        <div class="flex items-center gap-1 flex-wrap">
+                            <span class="text-[#8E8E93] font-medium mr-0.5 text-[10px]">Días:</span>
                             ${[0, 1, 2, 3, 4, 5, 6].map(d => `
-                                <label class="inline-flex items-center gap-1 px-2 py-0.5 rounded-[5px] border cursor-pointer select-none transition ${activeDays.has(d) ? 'bg-[#EBF5FF] border-[#B9DBFE] text-[#0062CC] font-semibold' : 'bg-white border-[#E5E5EA] text-[#8E8E93]'}">
+                                <label class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-[4px] border cursor-pointer select-none transition text-[10px] ${activeDays.has(d) ? 'bg-[#EBF5FF] border-[#B9DBFE] text-[#0062CC] font-semibold' : 'bg-white border-[#E5E5EA] text-[#8E8E93]'}">
                                     <input type="checkbox" data-day="${d}" data-op-id="${op.id}" class="hidden shift-day-cb" ${activeDays.has(d) ? 'checked' : ''} onchange="toggleDayBadge(this)">
                                     ${DAY_NAMES[d]}
                                 </label>
@@ -238,12 +238,12 @@
 
                         <div class="flex items-center gap-2">
                             <div class="flex items-center gap-1">
-                                <span class="text-[#8E8E93]">Horario:</span>
-                                <input type="time" id="inicio-${op.id}" value="${schedule.inicio || '08:00'}" class="h-[28px] px-1.5 bg-[#F2F2F7] border border-[#D1D1D6] rounded-[6px] text-[11px] font-mono text-[#1C1C1E] focus:outline-none focus:border-[#007AFF]">
-                                <span class="text-[#8E8E93]">–</span>
-                                <input type="time" id="fin-${op.id}" value="${schedule.fin || '17:00'}" class="h-[28px] px-1.5 bg-[#F2F2F7] border border-[#D1D1D6] rounded-[6px] text-[11px] font-mono text-[#1C1C1E] focus:outline-none focus:border-[#007AFF]">
+                                <span class="text-[#8E8E93] text-[10px]">Horario:</span>
+                                <input type="time" id="inicio-${op.id}" value="${schedule.inicio || '08:00'}" class="h-[24px] px-1 bg-[#F2F2F7] border border-[#D1D1D6] rounded-[5px] text-[10px] font-mono text-[#1C1C1E] focus:outline-none focus:border-[#007AFF]">
+                                <span class="text-[#8E8E93] text-[10px]">–</span>
+                                <input type="time" id="fin-${op.id}" value="${schedule.fin || '17:00'}" class="h-[24px] px-1 bg-[#F2F2F7] border border-[#D1D1D6] rounded-[5px] text-[10px] font-mono text-[#1C1C1E] focus:outline-none focus:border-[#007AFF]">
                             </div>
-                            <button type="button" onclick="saveShiftHorario('${op.id}')" class="h-[28px] px-2.5 bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA] border border-[#D1D1D6] rounded-[6px] text-[11px] font-medium text-[#1C1C1E] transition cursor-pointer shadow-2xs">
+                            <button type="button" onclick="saveShiftHorario('${op.id}')" class="h-[24px] px-2 bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA] border border-[#D1D1D6] rounded-[5px] text-[10px] font-medium text-[#1C1C1E] transition cursor-pointer shadow-2xs">
                                 Guardar horario
                             </button>
                         </div>

@@ -70,17 +70,17 @@
 
         /* macOS 27 NEW (Ocean-Glass) Card Design System */
         .figma-card {
-            background: rgba(255, 255, 255, 0.8);
+            background: #FFFFFF;
             backdrop-filter: blur(24px);
             -webkit-backdrop-filter: blur(24px);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            border-radius: 16px;
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            border: 1px solid #E5E5EA;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+            border-radius: 10px;
+            transition: all 0.2s ease;
         }
 
         .figma-card:hover {
-            box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.06);
+            box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.05);
         }
 
         .macos-focus-ring {
@@ -244,12 +244,12 @@
                 <!-- Page Header -->
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
-                        <h1 class="text-xl sm:text-2xl font-bold text-[#1C1C1E] tracking-tight">Reportes y Rendimiento</h1>
+                        <h1 class="text-[17px] font-semibold text-[#1C1C1E] tracking-tight">Reportes y Rendimiento</h1>
                         <p class="text-[12px] text-[#8E8E93] mt-0.5">Métricas operativas dinámicas, saturación de área y ranking de operadores</p>
                     </div>
                     <div class="flex items-center flex-wrap gap-2.5">
                         <!-- Selector de Periodo - R3 -->
-                        <div class="flex items-center gap-1.5 bg-white/80 backdrop-blur-md border border-[#D1D1D6] rounded-[8px] px-2.5 py-1 shadow-2xs">
+                        <div class="flex items-center gap-1.5 bg-white border border-[#D1D1D6] rounded-[6px] px-2.5 py-1 shadow-2xs">
                             <svg class="w-3.5 h-3.5 text-[#8E8E93]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                                 <line x1="16" y1="2" x2="16" y2="6"></line>
@@ -257,7 +257,7 @@
                                 <line x1="3" y1="10" x2="21" y2="10"></line>
                             </svg>
                             <label for="periodoSelect" class="text-[11px] font-medium text-[#8E8E93] leading-none">Periodo:</label>
-                            <select id="periodoSelect" class="bg-transparent text-[12px] font-semibold text-[#1C1C1E] border-none focus:outline-none focus:ring-0 cursor-pointer pr-1">
+                            <select id="periodoSelect" class="bg-transparent text-[12px] font-medium text-[#1C1C1E] border-none focus:outline-none focus:ring-0 cursor-pointer pr-1">
                                 <option value="jornada" selected>Jornada</option>
                                 <option value="semana">Semana</option>
                                 <option value="mes">Mes</option>
@@ -266,13 +266,13 @@
                         </div>
 
                         <!-- Selector de Fecha Específica (Fecha obligatoria si se selecciona especifica) -->
-                        <div id="fechaInputWrapper" class="hidden items-center gap-1.5 bg-white/80 backdrop-blur-md border border-[#D1D1D6] rounded-[8px] px-2.5 py-1 shadow-2xs">
+                        <div id="fechaInputWrapper" class="hidden items-center gap-1.5 bg-white border border-[#D1D1D6] rounded-[6px] px-2.5 py-1 shadow-2xs">
                             <label for="fechaInput" class="text-[11px] font-medium text-[#8E8E93] leading-none">Fecha:</label>
-                            <input type="date" id="fechaInput" class="bg-transparent text-[12px] font-semibold text-[#1C1C1E] border-none focus:outline-none focus:ring-0 cursor-pointer">
+                            <input type="date" id="fechaInput" class="bg-transparent text-[12px] font-medium text-[#1C1C1E] border-none focus:outline-none focus:ring-0 cursor-pointer">
                         </div>
 
-                        <!-- Botón Descargar Excel (verde/sky con estilo macOS Ocean-Glass) - R3 -->
-                        <button type="button" id="btnDescargarExcel" class="px-3 py-1.5 rounded-[8px] bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-medium text-[12px] flex items-center gap-1.5 shadow-xs hover:shadow transition duration-150 cursor-pointer select-none">
+                        <!-- Botón Descargar Excel (azul estilo macOS como Nuevo Ticket) - R3 -->
+                        <button type="button" id="btnDescargarExcel" class="h-[28px] px-3 rounded-[6px] bg-[rgb(0,122,255)] hover:bg-sky-600 active:bg-sky-700 text-white font-medium text-[12px] flex items-center gap-1.5 shadow-xs transition duration-150 cursor-pointer select-none">
                             <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                                 <polyline points="14 2 14 8 20 8"></polyline>
@@ -560,7 +560,7 @@
                             </div>
                         </div>
                         <div class="mt-4 pt-3 border-t border-[#E5E5EA] flex items-center justify-between text-[11px] text-[#8E8E93]">
-                            <span>Métrica: <strong class="text-[#1C1C1E]">Promedio de Duración (minutos)</strong></span>
+                            <span>Métrica: <strong class="text-[#1C1C1E]">Promedio de Duración (horas)</strong></span>
                             <span class="font-mono text-[10px]"><%= typeof volumenPorArea !== 'undefined' && volumenPorArea && volumenPorArea.labels ? volumenPorArea.labels.length : 7 %> Áreas Monitoreadas</span>
                         </div>
                     </div>
@@ -1012,12 +1012,10 @@
                             borderRadius: 8
                         },
                         legend: {
-                            data: ['Creados Hoy', 'Asignados Hoy', 'Cerrados Hoy'],
-                            top: 0,
-                            textStyle: { color: '#1C1C1E', fontSize: 11 }
+                            show: false
                         },
                         grid: {
-                            top: 40,
+                            top: 20,
                             left: 20,
                             right: 20,
                             bottom: 20,
@@ -1199,9 +1197,9 @@
                         medFormateados = medData.detalles.map(d => d.formateado || (d.medianaMinutos > 0 ? (d.medianaMinutos >= 60 ? (d.medianaMinutos/60).toFixed(1) + ' h' : d.medianaMinutos + ' min') : 'N/A'));
                     }
 
-                    const safeMed = medLabels.map((_, i) => {
+                    const safeMedHours = medLabels.map((_, i) => {
                         const n = Number(medValues[i]);
-                        return (!isNaN(n) && isFinite(n) && n >= 0) ? n : 0;
+                        return (!isNaN(n) && isFinite(n) && n > 0) ? Number((n / 60).toFixed(1)) : 0;
                     });
 
                     const medianChart = echarts.init(medianEl);
@@ -1216,9 +1214,8 @@
                             formatter: function(params) {
                                 if (!params || !params[0]) return '';
                                 const p = params[0];
-                                const idx = p.dataIndex;
-                                const fmt = (medFormateados && medFormateados[idx]) || (p.value > 0 ? `${p.value} min` : 'N/A');
-                                return `${p.name}: <b>${fmt}</b> (${p.value} min)`;
+                                const valText = p.value > 0 ? `${p.value} h` : 'N/A';
+                                return `${p.name}: <b>${valText}</b>`;
                             }
                         },
                         grid: {
@@ -1235,7 +1232,7 @@
                             axisLabel: {
                                 color: '#8E8E93',
                                 fontSize: 10,
-                                formatter: '{value}m'
+                                formatter: '{value}h'
                             },
                             splitLine: {
                                 lineStyle: { color: 'rgba(0,0,0,0.05)' }
@@ -1258,7 +1255,7 @@
                             {
                                 name: 'Duración Promedio',
                                 type: 'bar',
-                                data: safeMed,
+                                data: safeMedHours,
                                 showBackground: true,
                                 backgroundStyle: { borderRadius: 20, color: 'rgba(255,255,255,0.5)' },
                                 itemStyle: {
@@ -1272,9 +1269,11 @@
                                     show: true,
                                     position: 'right',
                                     formatter: function(p) {
-                                        return (medFormateados && medFormateados[p.dataIndex]) || (p.value > 0 ? p.value + 'm' : 'N/A');
+                                        return p.value > 0 ? p.value + 'h' : 'N/A';
                                     },
-                                    color: '#1C1C1E',
+                                    color: function(p) {
+                                        return p.value > 0 ? '#1C1C1E' : '#8E8E93';
+                                    },
                                     fontSize: 10,
                                     fontFamily: 'SF Mono, monospace'
                                 }
@@ -1615,10 +1614,12 @@
                         values = labels.map((_, i) => Number(rawV[i]) || 0);
                     }
 
+                    const valuesHours = values.map(v => v > 0 ? Number((v / 60).toFixed(1)) : 0);
+
                     if (labels.length > 0) {
                         medianChartInstance.setOption({
                             yAxis: { data: labels },
-                            series: [{ data: values }]
+                            series: [{ data: valuesHours }]
                         });
                     }
                 }
