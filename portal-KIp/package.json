@@ -10,7 +10,6 @@
     "test:reports": "node scripts/test-reports.js",
     "test:tickets": "node scripts/test-tickets.js",
     "test:period": "node scripts/test-period-report.js",
-    "test:auth": "node scripts/test-auth.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

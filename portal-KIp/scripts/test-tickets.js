@@ -193,6 +193,15 @@ function setup(ticket) {
         assert.strictEqual(data.flujoHoy.cerrados[15], 0);
         assert.strictEqual(data.ticketsCreadosHoy, 3);
     });
+    await t('Asignar: un ticket RESUELTO o CERRADO no puede reasignarse (409)', async () => {
+        prisma.user.findFirst = async () => ({ id: 'op' });
+        for (const estado of ['RESUELTO', 'CERRADO']) {
+            prisma.ticket.findUnique = async () => ({ id: 't', estado_actual: estado });
+            const res = mockRes();
+            await ctrl.assignTicket({ body: { ticketCode: 'INC-1', operatorId: 'op' } }, res);
+            assert.strictEqual(res.code, 409, estado);
+        }
+    });
 
     console.log(`\n   RESUMEN: ${passed}/${total} pruebas pasaron correctamente\n`);
     if (passed !== total) process.exit(1);
