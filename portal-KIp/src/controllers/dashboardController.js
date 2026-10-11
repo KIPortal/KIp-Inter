@@ -8,6 +8,8 @@ const {
     formatMinutes,
     computeOverload
 } = require('../services/metricsService');
+const { getShiftStatus, getWeekStart } = require('../services/shiftService');
+const { loadShiftData } = require('./turnoController');
 
 const ticketRelations = {
     asignado_a: { select: { id: true, nombre: true, email: true, rol: true, area_designada: true, estado_operativo: true } },
@@ -52,7 +54,20 @@ async function renderDashboard(req, res) {
             },
             orderBy: { nombre: 'asc' }
         });
-        const operadores = operadoresTurno.filter(operador => operador.estado_operativo === 'DISPONIBLE');
+        // Turnos: cada operador recibe su estado de turno (En turno / De guardia / Fuera de turno)
+        const { horarioPorUsuario, guardiaIds } = await loadShiftData(getWeekStart(new Date()));
+        const ahora = new Date();
+        operadoresTurno.forEach(operador => {
+            const h = horarioPorUsuario.get(operador.id);
+            operador.deGuardia = guardiaIds.has(operador.id);
+            operador.turno = getShiftStatus({
+                estadoOperativo: operador.estado_operativo,
+                horario: h ? { dias: h.dias, inicio: h.hora_inicio, fin: h.hora_fin } : null,
+                deGuardia: operador.deGuardia
+            }, ahora);
+        });
+        // Disponible = en turno normal y marcado disponible (el de guardia no cuenta, pero puede recibir tickets)
+        const operadores = operadoresTurno.filter(operador => operador.turno.disponible);
         const totalOperadores = operadoresTurno.length;
         const operadoresConectados = operadoresTurno.filter(operador => operador.estado_operativo !== 'AUSENTE').length;
 

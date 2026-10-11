@@ -68,6 +68,8 @@ model User {
   tickets_creados   Ticket[] @relation("CreadorTicket")
   tickets_asignados Ticket[] @relation("AsignadoTicket")
   auditorias        AuditLog[]
+  horario           HorarioOperador?
+  guardias          GuardiaSemanal[]
   
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -130,4 +132,28 @@ model AuditLog {
   userId    String?
   user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   createdAt DateTime @default(now())
+}
+
+// Horario de turno normal de cada operador (spec §3). Sin registro = lunes a viernes 8:00-17:00.
+model HorarioOperador {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dias        Int[]    // 0 = domingo ... 6 = sábado
+  hora_inicio String   @default("08:00") @db.VarChar(5)
+  hora_fin    String   @default("17:00") @db.VarChar(5)
+  updatedAt   DateTime @updatedAt
+}
+
+// Rotación semanal de guardia: qué operadores están de guardia en cada semana (lunes a domingo, Caracas).
+// semana_inicio es el instante del lunes 00:00 de Caracas.
+model GuardiaSemanal {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  semana_inicio DateTime
+  createdAt     DateTime @default(now())
+
+  @@unique([userId, semana_inicio])
+  @@index([semana_inicio])
 }

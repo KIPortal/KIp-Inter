@@ -6,6 +6,7 @@ const dashboardRoutes = require('./routes/dashboardRoutes');
 const operatorRoutes = require('./routes/operatorRoutes');
 const ticketRoutes = require('./routes/ticketRoutes');
 const reportRoutes = require('./routes/reportRoutes');
+const turnoRoutes = require('./routes/turnoRoutes');
 const emailIngestionService = require('./services/emailIngestionService');
 
 const app = express();
@@ -38,6 +39,7 @@ app.use('/auth', authRoutes);
 app.use('/', dashboardRoutes);
 app.use('/api/operators', operatorRoutes);
 app.use('/api/tickets', ticketRoutes);
+app.use('/api/turnos', turnoRoutes);
 app.use('/reportes', reportRoutes);
 app.use('/reports', reportRoutes);
 
