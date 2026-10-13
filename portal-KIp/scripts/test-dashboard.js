@@ -88,6 +88,16 @@ const tickets = [
         assert.deepStrictEqual(viejos, ['INC-010 · P1 sin asignar', 'INC-005 · sin prioridad, sin movimiento'], 'P3 de 20 min y EN_PAUSA no alertan');
     });
 
+    await t('Cola de espera: sin asignar y nadie disponible en su área → KPI y alerta', () => {
+        // En el escenario nadie está marcado disponible: los 2 sin asignar de WAN quedan en cola
+        assert.strictEqual(panel.kpis.enCola, 2);
+        const cola = panel.alertas.find(a => a.tipo === 'cola');
+        assert.ok(cola && cola.titulo === 'En cola de espera · 2 tickets' && cola.valor === 'WAN');
+        assert.strictEqual(panel.alertas[0].tipo, 'cola', 'va primero');
+        const conBeto = operators.map(o => o.id === 'b' ? { ...o, turno: { ...o.turno, disponible: true } } : o);
+        assert.strictEqual(buildCoordinatorPanel({ tickets, operators: conBeto, now: NOW }).kpis.enCola, 0);
+    });
+
     await t('Antigüedad: sin movimiento usa la última actualización; pausa no cuenta', () => {
         const lista = agingTickets([
             ticket({ codigo_incidencia: 'X1', createdAt: at('08:00'), estado_actual: 'EN_PROGRESO', asignado_a_id: 'a', updatedAt: at('14:20') }),

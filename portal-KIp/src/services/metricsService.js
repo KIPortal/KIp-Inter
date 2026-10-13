@@ -93,9 +93,10 @@ function formatMinutes(minutes) {
  *   ni alerta.
  *
  * @param {Array<{id: string, area_designada?: string, estado_operativo?: string, cargaActual: number}>} operators
+ * @param {{ratio?: number, minimo?: number}} [opciones] umbrales (por defecto 1.5 y 3)
  * @returns {Map<string, {comparable: boolean, promedioArea: number|null, indiceCarga: number|null, sobrecarga: boolean}>}
  */
-function computeOverload(operators) {
+function computeOverload(operators, { ratio = OVERLOAD_RATIO, minimo = OVERLOAD_MIN_ACTIVE } = {}) {
     const byArea = new Map();
     for (const operator of operators || []) {
         const area = operator.area_designada || 'GENERAL';
@@ -121,7 +122,7 @@ function computeOverload(operators) {
                 comparable: true,
                 promedioArea: Math.round(average * 100) / 100,
                 indiceCarga: Math.round(index * 100) / 100,
-                sobrecarga: load >= OVERLOAD_MIN_ACTIVE && index > OVERLOAD_RATIO
+                sobrecarga: load >= minimo && index > ratio
             });
         }
     }
