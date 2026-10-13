@@ -202,25 +202,27 @@ function setup(ticket) {
         assert.strictEqual(tk.estado_actual, 'CERRADO');
         assert(audits.some(a => a.accion === 'TICKET_CERRADO' && a.detalles.includes('Servicio restablecido')));
     });
-    await t('Dashboard: flujoHoy en hora de Caracas, solo hoy, cierre = resueltoEn', async () => {
+    await t('Dashboard: flujo de hoy en hora de Caracas, cierre = resueltoEn', async () => {
         const { getDayBounds } = require('../src/services/metricsService');
         const { start } = getDayBounds();
         const at = h => new Date(start.getTime() + h * 3600000 + 600000); // hh:10 Caracas
-        prisma.ticket.findMany = async ({ where, select }) => {
-            if (where && where.createdAt && select && select.createdAt && !select.fecha_cierre) return [{ createdAt: at(9) }, { createdAt: at(9) }, { createdAt: at(14) }];
-            if (where && where.OR) return [{ createdAt: at(8), resueltoEn: at(11), fecha_cierre: at(15) }];
-            return [];
-        };
+        // El Dashboard nuevo pide los tickets una sola vez y calcula el flujo en dashboardService
+        prisma.ticket.findMany = async () => [
+            { codigo_incidencia: 'A', estado_actual: 'NUEVO', createdAt: at(9) },
+            { codigo_incidencia: 'B', estado_actual: 'NUEVO', createdAt: at(9) },
+            { codigo_incidencia: 'C', estado_actual: 'NUEVO', createdAt: at(14) },
+            { codigo_incidencia: 'D', estado_actual: 'CERRADO', createdAt: at(8), resueltoEn: at(11), fecha_cierre: at(15) }
+        ];
         prisma.ticket.count = async () => 0;
         prisma.user.findMany = async () => [];
         let data;
         await dashboard.renderDashboard({ user: { rol: 'COORDINADOR' }, query: {} }, { render: (_v, d) => { data = d; }, status: () => ({ send() {} }) });
         assert(data, 'debe renderizar');
-        assert.strictEqual(data.flujoHoy.creados[9], 2);
-        assert.strictEqual(data.flujoHoy.creados[14], 1);
-        assert.strictEqual(data.flujoHoy.cerrados[11], 1, 'cierra a la hora de resueltoEn');
-        assert.strictEqual(data.flujoHoy.cerrados[15], 0);
-        assert.strictEqual(data.ticketsCreadosHoy, 3);
+        assert.strictEqual(data.panel.flujo.creados[9], 2);
+        assert.strictEqual(data.panel.flujo.creados[14], 1);
+        assert.strictEqual(data.panel.flujo.cerrados[11], 1, 'cierra a la hora de resueltoEn');
+        assert.strictEqual(data.panel.flujo.cerrados[15], 0);
+        assert.strictEqual(data.panel.kpis.creadosHoy, 4);
     });
     await t('Asignar: un ticket RESUELTO o CERRADO no puede reasignarse (409)', async () => {
         prisma.user.findFirst = async () => ({ id: 'op' });

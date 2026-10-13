@@ -968,7 +968,7 @@ async function loadPeriodReport(query) {
     const parsed = parsePeriodQuery(query);
     if (parsed.error) return parsed;
     const { range, area } = parsed;
-    const tickets = await prisma.ticket.findMany({
+    const [tickets, operators] = await Promise.all([prisma.ticket.findMany({
         where: {
             OR: [
                 { createdAt: { gte: range.start, lt: range.end } },
@@ -984,12 +984,11 @@ async function loadPeriodReport(query) {
             asignado_a: { select: { id: true, nombre: true } }
         },
         orderBy: { createdAt: 'asc' }
-    });
-    const operators = await prisma.user.findMany({
+    }), prisma.user.findMany({
         where: { rol: 'OPERADOR' },
         select: { id: true, nombre: true, area_designada: true, estado_operativo: true },
         orderBy: { nombre: 'asc' }
-    });
+    })]);
     return { report: buildPeriodReport({ tickets, operators, range, area }), range };
 }
 
@@ -1025,9 +1024,11 @@ async function renderReportes(req, res) {
     try {
         const periodo = ['jornada', 'semana', 'mes', 'especifica'].includes(req.query.periodo) ? req.query.periodo : 'jornada';
         const query = { ...req.query, periodo: periodo === 'especifica' ? 'jornada' : periodo };
-        const result = await loadPeriodReport(query);
+        const [result, activos] = await Promise.all([
+            loadPeriodReport(query),
+            prisma.ticket.count({ where: { estado_actual: { in: ACTIVE_STATES } } })
+        ]);
         if (result.error) return res.redirect(302, '/reportes');
-        const [activos] = await Promise.all([prisma.ticket.count({ where: { estado_actual: { in: ACTIVE_STATES } } })]);
         const vista = buildReportView(result.report, {
             periodo: query.periodo,
             fecha: typeof req.query.fecha === 'string' && req.query.fecha ? req.query.fecha : null,
