@@ -1,0 +1,628 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Administración</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0;background:#F1F5F9}
+a{color:#0369A1;text-decoration:none}a:hover{color:#075985}
+.glass{background:rgba(255,255,255,0.85);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);border-radius:24px;box-shadow:0 0 0 0.5px rgba(15,23,42,0.05),0 4px 12px rgba(0,0,0,0.03)}
+.pill{background:rgba(255,255,255,0.72);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%);box-shadow:1.25px 0 0 -0.75px #D0D0D0,-1.25px 0 0 -0.75px #D0D0D0,0 0 0 0.5px #E2E8F0,inset 0 1px 0 rgba(255,255,255,0.95),0 8px 15px rgba(0,0,0,0.03);border-radius:1000px}
+.side{background:rgba(241,245,249,0.9);-webkit-backdrop-filter:blur(40px) saturate(150%);backdrop-filter:blur(40px) saturate(150%);box-shadow:0 0 0 0.5px rgba(15,23,42,0.08),inset 0 1px 0 rgba(255,255,255,0.8),0 10px 30px rgba(15,23,42,0.06);border-radius:18px}
+.sideitem:hover{background:rgba(15,23,42,0.05)}
+.pillbtn:hover{background:rgba(255,255,255,0.95)}
+.primary{background:#0284C7}.primary:hover{background:#0369A1}
+.popup{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 8px 0 12px;border:0;border-radius:8px;background:var(--control);box-shadow:0 0 0 0.5px rgba(0,0,0,0.12),0 1px 2px rgba(0,0,0,0.06);font:inherit;font-size:12px;color:var(--t1);cursor:pointer}
+.ico{width:28px;height:28px;border:0;border-radius:8px;background:transparent;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:var(--t2)}
+.ico:hover{background:rgba(15,23,42,0.06);color:var(--t1)}
+.row:hover td{background:rgba(14,165,233,0.04)}
+.stat{display:flex;flex-direction:column;gap:2px;padding:0 20px;border-left:1px solid var(--sep)}
+.stat:first-child{border-left:0;padding-left:0}
+.kv{font-family:inherit;font-weight:600;color:var(--t1);letter-spacing:-0.02em;font-variant-numeric:tabular-nums}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(14,165,233,0.3)}
+[data-theme=dark] .chip{background:rgba(10,132,255,0.18);box-shadow:inset 0 0 0 1px rgba(64,156,255,0.35);color:#64B5FF}
+[data-theme=dark] .sideitem:hover,[data-theme=dark] .pillbtn:hover,[data-theme=dark] .ico:hover{background:rgba(255,255,255,0.08)}
+[data-theme=dark] .stat{border-color:rgba(255,255,255,0.10)}
+/* Texto: Primary / Secondary / Tertiary */
+[data-theme=dark] [style*="color: #0F172A"],[data-theme=dark] [style*="color: #1E293B"],[data-theme=dark] [style*="color: #1D1D1F"],[data-theme=dark] [style*="color: #1A1A1A"],[data-theme=dark] [style*="color: #1C1C1E"],[data-theme=dark] [style*="color: #334155"]{color:rgba(255,255,255,0.92)!important}
+[data-theme=dark] [style*="color: #64748B"],[data-theme=dark] [style*="color: #475569"]{color:rgba(235,235,245,0.60)!important}
+[data-theme=dark] [style*="color: #94A3B8"],[data-theme=dark] [style*="color: #8E8E93"]{color:rgba(235,235,245,0.32)!important}
+/* Colores de sistema (oscuro) */
+[data-theme=dark] [style*="color: #0369A1"],[data-theme=dark] [style*="color: #0284C7"]{color:#64B5FF!important}
+[data-theme=dark] [style*="color: #15803D"],[data-theme=dark] [style*="color: #047857"]{color:#30D158!important}
+[data-theme=dark] [style*="color: #B45309"],[data-theme=dark] [style*="color: #C2410C"]{color:#FF9F0A!important}
+[data-theme=dark] [style*="color: #B91C1C"]{color:#FF6961!important}
+[data-theme=dark] [style*="color: #6D28D9"]{color:#BF5AF2!important}
+[data-theme=dark] [fill="#0F172A"]{fill:rgba(255,255,255,0.92)}
+[data-theme=dark] svg [stroke="#1A1A1A"]{stroke:rgba(255,255,255,0.85)}
+[data-theme=dark] svg[stroke="#1A1A1A"]{stroke:rgba(255,255,255,0.85)}
+/* Separadores y superficies */
+[data-theme=dark] [style*="solid var(--sep)"],[data-theme=dark] [style*="solid #F1F5F9"],[data-theme=dark] [style*="solid #CBD5E1"]{border-color:rgba(255,255,255,0.08)!important}
+[data-theme=dark] [style*="background: #CBD5E1"],[data-theme=dark] [style*="background: #D9D9D9"]{background:rgba(255,255,255,0.14)!important}
+[data-theme=dark] [style*="background: #F0FDF4"],[data-theme=dark] [style*="background: #ECFDF5"]{background:rgba(48,209,88,0.16)!important;box-shadow:none!important}
+[data-theme=dark] [style*="background: #FFFBEB"]{background:rgba(255,159,10,0.16)!important;box-shadow:none!important}
+[data-theme=dark] [style*="background: #FEF2F2"]{background:rgba(255,69,58,0.18)!important;box-shadow:none!important}
+[data-theme=dark] [style*="background: #F0F9FF"],[data-theme=dark] [style*="background: #E0F2FE"]{background:rgba(10,132,255,0.20)!important;box-shadow:none!important}
+[data-theme=dark] [style*="background: #F8FAFC"],[data-theme=dark] [style*="background: #F1F5F9"],[data-theme=dark] [style*="background: rgba(255,255,255,0.6)"],[data-theme=dark] [style*="background: rgba(255,255,255,0.7)"],[data-theme=dark] [style*="background: rgba(255,255,255,0.45)"]{background:rgba(255,255,255,0.05)!important;box-shadow:inset 0 0 0 0.5px rgba(255,255,255,0.10)!important}
+[data-theme=dark] [style*="background: #FFFFFF"]:not(.knob){background:rgba(255,255,255,0.10)!important;color:rgba(255,255,255,0.92)!important}
+[data-theme=dark] [style*="background: #E6E6E6"]{background:rgba(255,255,255,0.18)!important}
+[data-theme=dark] [style*="background: #0284C7"]{background:#0A84FF!important}
+[data-theme=dark] [style*="linear-gradient(#E2E8F0 1px"]{background-image:linear-gradient(rgba(255,255,255,0.08) 1px,transparent 1px)!important}
+[data-theme=dark] [style*="linear-gradient(90deg, #E2E8F0 1px"]{background-image:linear-gradient(90deg,rgba(255,255,255,0.08) 1px,transparent 1px)!important}
+[data-theme=dark] [role=tab][aria-selected=true]{background:rgba(255,255,255,0.16)!important;color:rgba(255,255,255,0.95)!important;box-shadow:inset 0 0 0 0.5px rgba(255,255,255,0.12)!important}
+[data-theme=dark] [role=tablist]{background:rgba(0,0,0,0.25)!important;border-color:rgba(255,255,255,0.06)!important}
+[data-theme=dark] input{color:rgba(255,255,255,0.92)!important}
+[data-theme=dark] input::placeholder{color:rgba(235,235,245,0.32)}
+[data-theme=dark] .row:hover td,[data-theme=dark] .rowbtn:hover td,[data-theme=dark] .oprow:hover{background:rgba(255,255,255,0.04)!important}
+
+/* ---------- Tokens de tema ---------- */
+[data-theme=light]{--t1:#1D1D1F;--t2:#556070;--t3:#7C7C82;--accent-t:#0369A1;--green-t:#15803D;--orange-t:#B45309;--red-t:#B91C1C;--purple-t:#6D28D9;--sep:#E2E8F0;--sep2:#F1F5F9;--green-bg:#ECFDF5;--orange-bg:#FFFBEB;--red-bg:#FEF2F2;--accent-bg:#E0F2FE;--accent-ring:#BAE6FD;--green-ring:#BBF7D0;--orange-ring:#FDE68A;--red-ring:#FECACA;--fill:#F8FAFC;--control:#FFFFFF;--seg-on:#FFFFFF;--seg-sel:#E6E6E6;--solid:#0284C7;--map-empty:rgba(229,229,234,0.7);--map-line:#FFFFFF;--glyph:#1A1A1A;--well:rgba(255,255,255,0.6)}
+[data-theme=dark]{--t1:rgba(255,255,255,0.92);--t2:rgba(235,235,245,0.76);--t3:rgba(235,235,245,0.54);--accent-t:#64B5FF;--green-t:#30D158;--orange-t:#FF9F0A;--red-t:#FF6961;--purple-t:#BF5AF2;--sep:rgba(255,255,255,0.10);--sep2:rgba(255,255,255,0.06);--green-bg:rgba(48,209,88,0.16);--orange-bg:rgba(255,159,10,0.16);--red-bg:rgba(255,69,58,0.18);--accent-bg:rgba(10,132,255,0.24);--accent-ring:rgba(64,156,255,0.38);--green-ring:rgba(48,209,88,0.32);--orange-ring:rgba(255,159,10,0.32);--red-ring:rgba(255,69,58,0.32);--fill:rgba(255,255,255,0.05);--control:rgba(255,255,255,0.10);--seg-on:rgba(255,255,255,0.18);--seg-sel:rgba(255,255,255,0.18);--solid:#0A84FF;--map-empty:rgba(255,255,255,0.08);--map-line:rgba(13,12,33,0.85);--glyph:rgba(255,255,255,0.85);--well:rgba(255,255,255,0.06)}
+[data-theme]{color:var(--t1);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+[data-theme] h1,[data-theme] h2,[data-theme] h3,[data-theme] h4,[data-theme] h5,[data-theme] h6,[data-theme] th,[data-theme] td{color:inherit}
+[data-theme=dark] .popup,[data-theme=dark] .field{background:var(--control)}
+
+/* ---------- Modo oscuro · macOS 27 Golden Gate ---------- */
+/* Materiales: Ultra Thick (sidebar), Regular (tarjetas), Thin (controles); texto Primary/Secondary/Tertiary */
+[data-theme=dark]{color-scheme:dark}
+[data-theme=dark] .glass,[data-theme=dark] .bento{background:rgba(38,37,58,0.62);-webkit-backdrop-filter:blur(30px) saturate(160%);backdrop-filter:blur(30px) saturate(160%);box-shadow:0 0 0 0.5px rgba(255,255,255,0.10),inset 0 1px 0 rgba(255,255,255,0.06),0 12px 32px rgba(5,4,20,0.40)}
+[data-theme=dark] .glass:hover,[data-theme=dark] .bento:hover{box-shadow:0 0 0 0.5px rgba(255,255,255,0.14),inset 0 1px 0 rgba(255,255,255,0.08),0 16px 40px rgba(5,4,20,0.5)}
+[data-theme=dark] .side{background:rgba(30,29,40,0.86);box-shadow:0 0 0 0.5px rgba(255,255,255,0.10),inset 0 1px 0 rgba(255,255,255,0.05),0 12px 36px rgba(5,4,20,0.45)}
+[data-theme=dark] .notif{background:linear-gradient(180deg,rgba(64,63,74,0.72),rgba(30,30,36,0.72));box-shadow:1.25px 0 0 -0.75px rgba(255,255,255,0.22),-1.25px 0 0 -0.75px rgba(255,255,255,0.22),0 0 0 0.5px rgba(255,255,255,0.14),0 8px 48px rgba(0,0,0,0.45)}
+[data-theme=dark] .pill{background:rgba(60,59,74,0.55);box-shadow:1.25px 0 0 -0.75px rgba(255,255,255,0.18),-1.25px 0 0 -0.75px rgba(255,255,255,0.18),0 0 0 0.5px rgba(255,255,255,0.10),inset 0 1px 0 rgba(255,255,255,0.06),0 8px 15px rgba(0,0,0,0.2)}
+[data-theme=dark] .popup,[data-theme=dark] .field{background:rgba(255,255,255,0.08);box-shadow:0 0 0 0.5px rgba(255,255,255,0.14);color:rgba(255,255,255,0.92)}
+[data-theme=dark] .primary{background:#0A84FF}
+[data-theme=dark] .primary:hover{background:#409CFF}
+[data-theme=dark] .bt,[data-theme=dark] .kv{color:rgba(255,255,255,0.92)}
+[data-theme=dark] .chip{background:rgba(10,132,255,0.18);box-shadow:inset 0 0 0 1px rgba(64,156,255,0.35);color:#64B5FF}
+[data-theme=dark] .sideitem:hover,[data-theme=dark] .pillbtn:hover,[data-theme=dark] .ico:hover{background:rgba(255,255,255,0.08)}
+[data-theme=dark] .stat{border-color:rgba(255,255,255,0.10)}
+[data-theme=dark] [fill="#0F172A"]{fill:rgba(255,255,255,0.92)}
+[data-theme=dark] svg [stroke="#1A1A1A"]{stroke:rgba(255,255,255,0.85)}
+[data-theme=dark] svg[stroke="#1A1A1A"]{stroke:rgba(255,255,255,0.85)}
+[data-theme=dark] [role=tab][aria-selected=true]{background:rgba(255,255,255,0.16)!important;color:rgba(255,255,255,0.95)!important;box-shadow:inset 0 0 0 0.5px rgba(255,255,255,0.12)!important}
+[data-theme=dark] [role=tablist]{background:rgba(0,0,0,0.25)!important;border-color:rgba(255,255,255,0.06)!important}
+[data-theme=dark] input{color:rgba(255,255,255,0.92)!important}
+[data-theme=dark] input::placeholder{color:rgba(235,235,245,0.32)}
+[data-theme=dark] .row:hover td,[data-theme=dark] .rowbtn:hover td,[data-theme=dark] .oprow:hover{background:rgba(255,255,255,0.04)!important}
+[data-theme=dark] [stroke="#1A1A1A"],[data-theme=dark] [stroke="#727272"]{stroke:rgba(255,255,255,0.85)}
+[data-theme=dark] [stroke="#64748B"]{stroke:rgba(235,235,245,0.76)}
+[data-theme=dark] [fill="#0F172A"]{fill:rgba(255,255,255,0.92)}
+.notif{display:flex;align-items:flex-start;gap:10px;padding:12px 14px 12px 12px;border-radius:20px;background:rgba(255,255,255,0.80);-webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);box-shadow:1.25px 0 0 -0.75px #DBDBDB,-1.25px 0 0 -0.75px #DBDBDB,0 0 0 0.5px #DBDBDB,inset 0 1px 0 rgba(255,255,255,0.9),0 8px 32px rgba(0,0,0,0.14)}
+@keyframes toastIn{from{opacity:0;transform:translateX(40px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes sheetIn{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+[data-theme=light]{--dialog:rgba(250,250,252,0.90);--rim:#DBDBDB}
+[data-theme=dark]{--dialog:rgba(44,43,58,0.88);--rim:rgba(255,255,255,0.16)}
+button[disabled]{cursor:default!important}
+.opt:hover{background:var(--accent-bg)}
+.tpl{height:26px;padding:0 10px;border:0;border-radius:999px;background:var(--fill);box-shadow:inset 0 0 0 0.5px var(--sep);font:inherit;font-size:12px;color:var(--t1);cursor:pointer}
+.tpl:hover{background:var(--accent-bg);color:var(--accent-t)}
+.field{width:100%;box-sizing:border-box;border:0;border-radius:10px;background:var(--control);box-shadow:0 0 0 0.5px rgba(0,0,0,0.14),inset 0 1px 2px rgba(0,0,0,0.04);font:inherit;font-size:13px;color:var(--t1);padding:8px 10px;outline:none;resize:vertical}
+.field:focus{box-shadow:0 0 0 3px rgba(14,165,233,0.3)}
+.linkbtn{border:0;background:transparent;padding:0;font:inherit;color:var(--accent-t);cursor:pointer}
+.linkbtn:hover{text-decoration:underline}
+.dangerbtn{background:#DC2626}.dangerbtn:hover{background:#B91C1C}
+[data-theme=dark] .dangerbtn{background:#FF453A}
+.subj{display:block;border:0;background:transparent;padding:0;font:inherit;color:inherit;text-align:left;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.subj:hover{color:var(--accent-t)}
+.ico.danger:hover{background:var(--red-bg);color:var(--red-t)}
+@keyframes drawerIn{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+.switch{position:relative;width:38px;height:22px;border:0;border-radius:999px;padding:0;cursor:pointer;transition:background .2s ease;flex:none}
+.knob{position:absolute;top:2px;width:18px;height:18px;border-radius:50%;background:#FFFFFF;box-shadow:0 1px 3px rgba(0,0,0,0.25);transition:left .2s ease}
+.stepper{display:inline-flex;align-items:center;height:28px;border-radius:8px;background:var(--control);box-shadow:0 0 0 0.5px rgba(0,0,0,0.12),0 1px 2px rgba(0,0,0,0.06);font-weight:600;font-variant-numeric:tabular-nums}
+.stepper>span{min-width:52px;padding:0 4px;text-align:center;font-size:13px}
+.stepper>button{width:28px;height:28px;border:0;background:transparent;font:inherit;font-size:15px;color:var(--t2);cursor:pointer;border-radius:8px}
+.stepper>button:hover{background:var(--fill);color:var(--t1)}
+[data-theme=dark] .stepper{background:rgba(255,255,255,0.08);box-shadow:0 0 0 0.5px rgba(255,255,255,0.14)}
+.tbc{display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;background:var(--orange-bg);box-shadow:inset 0 0 0 0.5px var(--orange-ring);color:var(--orange-t);font-size:11px;font-weight:600;white-space:nowrap}
+/* Sidebar fijo: siempre visible al bajar la página; su contenido se desplaza si no cabe */
+@media (min-width: 900px){nav.side{position:sticky!important;top:10px;align-self:flex-start!important;height:calc(100vh - 20px)!important;min-height:0!important;overflow-y:auto;scrollbar-width:thin}}
+/* Sidebar minimizable y animado */
+nav.side{overflow-x:hidden;transition:flex-basis .38s cubic-bezier(.22,1,.36,1),max-width .38s cubic-bezier(.22,1,.36,1),padding .38s cubic-bezier(.22,1,.36,1);animation:sideIn .55s cubic-bezier(.22,1,.36,1) both}
+nav.side a{white-space:nowrap;overflow:hidden;transition:background .2s ease,box-shadow .2s ease,padding .38s cubic-bezier(.22,1,.36,1),gap .38s cubic-bezier(.22,1,.36,1)}
+nav.side a svg{flex:none;transition:transform .2s ease}
+nav.side a:hover svg{transform:scale(1.1)}
+nav.side a>span{transition:opacity .2s ease}
+nav.side>span{max-height:40px;overflow:hidden;white-space:nowrap;transition:opacity .2s ease,max-height .35s ease,padding .35s ease}
+nav.side .sb-brand,nav.side .sb-txt{max-width:200px;overflow:hidden;white-space:nowrap;transition:opacity .2s ease,max-width .38s cubic-bezier(.22,1,.36,1)}
+nav.side>div:first-child button svg{transition:transform .38s cubic-bezier(.22,1,.36,1)}
+nav.side[data-collapsed=true]{flex:0 0 64px!important;max-width:64px!important;padding-left:8px!important;padding-right:8px!important}
+nav.side[data-collapsed=true]>span{opacity:0;max-height:0;padding-top:0!important;padding-bottom:0!important}
+nav.side[data-collapsed=true] .sb-brand,nav.side[data-collapsed=true] .sb-txt{opacity:0;max-width:0}
+nav.side[data-collapsed=true] a>span{opacity:0}
+nav.side[data-collapsed=true] a{padding-left:16px!important;padding-right:0!important;height:36px!important;gap:40px!important}
+nav.side[data-collapsed=true]>div:first-child{justify-content:center!important;padding:2px 0 12px!important}
+nav.side[data-collapsed=true]>div:first-child button svg{transform:scaleX(-1)}
+nav.side[data-collapsed=true] .sb-top{align-items:center}
+nav.side[data-collapsed=true] .sb-top>div{padding:0!important}
+@keyframes sideIn{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){nav.side,nav.side *{transition:none!important;animation:none!important}}
+/* Notificaciones animadas: entrada con rebote, ícono que aparece, barra de tiempo y salida suave */
+.notif[role=status]{animation:nIn .55s cubic-bezier(.34,1.4,.64,1) both,nOut .35s ease 3.6s forwards}
+.notif[role=status]>span:first-child{animation:nIcon .45s cubic-bezier(.34,1.56,.64,1) .18s both}
+.notif[role=status]::after{content:'';position:absolute;left:18px;right:18px;bottom:5px;height:2px;border-radius:2px;background:currentColor;opacity:.18;transform-origin:left;animation:nBar 3.6s linear both}
+.alert-row{animation:nRow .5s cubic-bezier(.22,1,.36,1) both}
+@keyframes nIn{from{opacity:0;transform:translateX(48px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes nOut{to{opacity:0;transform:translateX(24px) scale(.98);pointer-events:none}}
+@keyframes nIcon{from{opacity:0;transform:scale(.3) rotate(-20deg)}to{opacity:1;transform:none}}
+@keyframes nBar{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+@keyframes nRow{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){.notif[role=status],.notif[role=status]>span:first-child,.notif[role=status]::after,.alert-row{animation:none!important}}
+/* ---------- Paleta oscura equilibrada: tonos menos saturados para que no se vean eléctricos ---------- */
+[data-theme=light]{--area-hd:#64B5FF;--area-hd-t:#0B2E4F}
+[data-theme=dark]{--accent-t:#7FB2E5;--green-t:#5DBB85;--orange-t:#E0A458;--red-t:#E07A74;--purple-t:#B59AE6;--solid:#3A7FCC;--accent-bg:rgba(58,127,204,0.22);--accent-ring:rgba(127,178,229,0.32);--green-bg:rgba(93,187,133,0.14);--green-ring:rgba(93,187,133,0.28);--orange-bg:rgba(224,164,88,0.14);--orange-ring:rgba(224,164,88,0.28);--red-bg:rgba(224,122,116,0.15);--red-ring:rgba(224,122,116,0.30);--area-hd:rgba(58,127,204,0.24);--area-hd-t:rgba(255,255,255,0.92)}
+[data-theme=dark] .primary{background:#3A7FCC}
+[data-theme=dark] .primary:hover{background:#4A8DD8}
+[data-theme=dark] .mitem:hover,[data-theme=dark] .mitem[data-sel=true]{background:#3A7FCC}
+[data-theme=dark] .bar-fill,[data-theme=dark] .mdot,[data-theme=dark] svg.reveal,[data-theme=dark] .ring-draw{filter:saturate(.72) brightness(.92)}
+[data-theme=dark] .notif[role=status]>span:first-child{filter:saturate(.75) brightness(.92)}
+/* Barra minimizada: íconos, avatar y botón en el mismo eje */
+nav.side[data-collapsed=true] a{justify-content:center!important;padding:0!important;gap:0!important;font-size:0!important}
+nav.side a{transition:background .2s ease,box-shadow .2s ease,padding .38s cubic-bezier(.22,1,.36,1),gap .38s cubic-bezier(.22,1,.36,1),font-size .2s ease}
+nav.side[data-collapsed=true] .sb-top>div{gap:0!important;justify-content:center!important}
+/* Barra minimizada: cada opción es una caja fija centrada (con o sin conteo) */
+nav.side[data-collapsed=true] a{width:40px!important;margin-left:auto!important;margin-right:auto!important;box-sizing:border-box;padding:0!important;gap:0!important;justify-content:center!important;font-size:0!important}
+nav.side[data-collapsed=true] a>span{display:none!important}
+nav.side[data-collapsed=true] .sb-top>div:first-child{width:40px;margin:0 auto}
+/* Paleta oscura también en íconos y gráficas */
+[data-theme=dark] svg{filter:saturate(.75) brightness(.95)}
+[data-theme=dark] svg svg,[data-theme=dark] svg .ring-draw{filter:none}
+[data-theme=dark] .alert-row>span:first-child{filter:saturate(.72) brightness(.92)}
+</style>
+</helmet>
+<div data-theme="{{theme}}" style="min-height: 100vh; background: {{bg}}; color: var(--t1); font-family: {{font}}; font-size: 13px; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px; padding: 10px; box-sizing: border-box">
+
+<!-- Sidebar -->
+<nav class="side" data-collapsed="{{sb.c}}" aria-label="Navegación principal" style="flex: 1 1 220px; max-width: 232px; align-self: stretch; padding: 12px 10px 10px; box-sizing: border-box; display: flex; flex-direction: column; gap: 1px; min-height: calc(100vh - 20px)">
+<div style="display: flex; align-items: center; justify-content: space-between; padding: 2px 2px 14px 8px">
+<div class="sb-brand" style="display: flex; align-items: center; gap: 8px">
+<span style="font-size: 16px; font-weight: 800; letter-spacing: -0.5px; color: #0284C7">inter</span>
+<span style="width: 1px; height: 14px; background: var(--sep)"></span>
+<span style="font-size: 13px; font-weight: 600">Operaciones IP</span>
+</div>
+<button class="pill pillbtn" onClick="{{sb.toggle}}" aria-label="{{sb.label}}" title="{{sb.label}}" style="cursor: pointer; width: 30px; height: 30px; border: 0; display: flex; align-items: center; justify-content: center; padding: 0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="3"></rect><path d="M9 4.5v15"></path></svg></button>
+</div>
+<div class="sb-top" style="display: flex; flex-direction: column; gap: 10px; padding: 0 0 14px; margin-bottom: 8px; border-bottom: 1px solid var(--sep)">
+<div style="display: flex; align-items: center; gap: 8px; padding: 2px 6px 0">
+<span style="width: 28px; height: 28px; border-radius: 50%; background: var(--solid); color: #FFFFFF; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center">C</span>
+<div class="sb-txt" style="display: flex; flex-direction: column; line-height: 1.3; min-width: 0"><span style="font-size: 12px; font-weight: 600">coordinador</span><span style="font-size: 12px; color: var(--t2)">coordinador@test.com</span></div>
+</div>
+</div>
+<span style="font-size: 12px; font-weight: 600; color: var(--t2); padding: 0 8px 4px">Coordinación</span>
+<a class="sideitem" title="Dashboard General" href="Main.dc.html" style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; border-radius: 8px; color: var(--t1); font-size: 13px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0078F0" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="2"></rect><rect x="14" y="3" width="7" height="5" rx="2"></rect><rect x="14" y="12" width="7" height="9" rx="2"></rect><rect x="3" y="16" width="7" height="5" rx="2"></rect></svg>Dashboard General</a>
+<a class="sideitem" title="Tickets" href="Tickets.dc.html" style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; border-radius: 8px; color: var(--t1); font-size: 13px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0078F0" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 9V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a3 3 0 0 0 0 6v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a3 3 0 0 0 0-6z"></path></svg><span style="flex: 1">Tickets</span><span style="font-size: 12px; font-weight: 600; color: var(--t2); font-variant-numeric: tabular-nums">48</span></a>
+<a class="sideitem" title="Gestión de Turno" href="Turno.dc.html" style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; border-radius: 8px; color: var(--t1); font-size: 13px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0078F0" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"></path></svg><span style="flex: 1">Gestión de Turno</span><span style="font-size: 12px; font-weight: 600; color: var(--green-t); font-variant-numeric: tabular-nums">13/14</span></a>
+<span style="font-size: 12px; font-weight: 600; color: var(--t2); padding: 14px 8px 4px">Control</span>
+<a class="sideitem" title="Reportes" href="Reportes.dc.html" style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; border-radius: 8px; color: var(--t1); font-size: 13px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0078F0" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"></path></svg>Reportes</a>
+<a class="sideitem" title="Auditoría" href="Auditoria.dc.html" style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; border-radius: 8px; color: var(--t1); font-size: 13px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0078F0" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"></path><path d="M9 12l2 2 4-4"></path></svg>Auditoría</a>
+<a title="Administración" href="Administracion.dc.html" aria-current="page" style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; border-radius: 8px; background: var(--accent-bg); color: var(--accent-t); font-size: 13px; font-weight: 600; box-shadow: inset 0 0 0 0.5px var(--accent-ring)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"></path><circle cx="15" cy="6" r="2"></circle><circle cx="9" cy="12" r="2"></circle><circle cx="17" cy="18" r="2"></circle></svg>Administración</a>
+</nav>
+
+
+<!-- Main -->
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 16px; padding: 2px 8px 32px 6px; box-sizing: border-box">
+
+<header style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-height: 44px">
+<div style="display: flex; flex-direction: column; margin-right: 6px">
+<h1 style="margin: 0; font-size: 20px; line-height: 24px; font-weight: 700; letter-spacing: -0.02em">Administración</h1>
+<span style="font-size: 12px; color: var(--t2)">Áreas, plantillas, reglas de alerta y notificaciones</span>
+</div>
+<span style="flex: 1"></span>
+<sc-if value="{{dirty}}" hint-placeholder-val="{{ false }}">
+<span style="display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--t2)"><span style="width: 7px; height: 7px; border-radius: 50%; background: #F59E0B"></span>Cambios sin guardar</span>
+<button class="pill pillbtn" onClick="{{discard}}" style="height: 36px; padding: 0 16px; border: 0; font: inherit; font-size: 13px; font-weight: 600; color: var(--t1); cursor: pointer">Descartar</button>
+<button class="primary" onClick="{{save}}" style="height: 36px; padding: 0 18px; border: 0; border-radius: 1000px; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 0 0 0.5px rgba(3,105,161,0.4), 0 6px 14px rgba(2,132,199,0.22); cursor: pointer">Guardar cambios</button>
+</sc-if>
+</header>
+
+<div style="display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px">
+
+<!-- Secciones -->
+<nav class="glass" aria-label="Secciones de administración" style="flex: 1 1 240px; max-width: 280px; padding: 10px; box-sizing: border-box; display: flex; flex-direction: column; gap: 2px">
+<sc-for list="{{secs}}" as="s" hint-placeholder-count="4">
+<button onClick="{{s.pick}}" aria-current="{{s.cur}}" style="display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 10px; border: 0; border-radius: 12px; background: {{s.bg}}; box-shadow: {{s.ring}}; font: inherit; color: var(--t1); text-align: left; cursor: pointer">
+<span style="width: 28px; height: 28px; border-radius: 8px; background: {{s.tile}}; display: flex; align-items: center; justify-content: center; flex: none; box-shadow: inset 0 1px 0 rgba(255,255,255,0.3)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{s.glyph}}"></path></svg></span>
+<span style="display: flex; flex-direction: column; flex: 1; min-width: 0"><span style="font-size: 13px; font-weight: 600">{{s.label}}</span><span style="font-size: 12px; color: var(--t2)">{{s.sub}}</span></span>
+</button>
+</sc-for>
+</nav>
+
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+
+<!-- Áreas y equipos -->
+<sc-if value="{{sec.areas}}" hint-placeholder-val="{{ true }}">
+<section class="glass" aria-labelledby="h-ar" style="display: flex; flex-direction: column; overflow: hidden">
+<div style="display: flex; align-items: center; gap: 10px; padding: 18px 24px 14px">
+<h2 id="h-ar" style="margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -0.01em">Áreas y equipos</h2>
+<span style="font-size: 12px; color: var(--t2)">7 áreas · 14 operadores</span>
+<span style="flex: 1"></span>
+<button class="pill pillbtn" style="height: 30px; padding: 0 14px; border: 0; display: flex; align-items: center; gap: 6px; font: inherit; font-size: 12px; font-weight: 600; color: var(--t1); cursor: pointer"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nueva área</button>
+</div>
+<div style="display: flex; flex-wrap: wrap; border-top: 1px solid var(--sep)">
+<div role="listbox" aria-label="Áreas" style="flex: 1 1 260px; max-width: 320px; padding: 8px; box-sizing: border-box; display: flex; flex-direction: column; gap: 2px; border-right: 1px solid var(--sep)">
+<sc-for list="{{areas}}" as="a" hint-placeholder-count="7">
+<button role="option" aria-selected="{{a.sel}}" onClick="{{a.pick}}" style="display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 8px; padding: 9px 12px; border: 0; border-radius: 10px; background: {{a.bg}}; box-shadow: {{a.ring}}; font: inherit; color: var(--t1); text-align: left; cursor: pointer">
+<span style="font-size: 13px; font-weight: 600">{{a.name}}</span>
+<span style="font-size: 12px; color: var(--t2); font-variant-numeric: tabular-nums">{{a.n}}</span>
+<span style="grid-column: 1 / -1; display: flex; gap: 10px; font-size: 12px; color: var(--t2)"><span style="display: inline-flex; align-items: center; gap: 5px"><span style="width: 6px; height: 6px; border-radius: 50%; background: #22C55E"></span>{{a.turno}} en turno</span><sc-if value="{{a.hasGuard}}" hint-placeholder-val="{{ false }}"><span style="display: inline-flex; align-items: center; gap: 5px"><span style="width: 6px; height: 6px; border-radius: 50%; background: #8B5CF6"></span>{{a.guardia}} de guardia</span></sc-if></span>
+</button>
+</sc-for>
+</div>
+<div style="flex: 999 1 420px; min-width: 0; display: flex; flex-direction: column">
+<div style="display: flex; align-items: center; gap: 10px; padding: 16px 24px 12px">
+<div style="display: flex; flex-direction: column"><span style="font-size: 15px; font-weight: 700">{{ar.name}}</span><span style="font-size: 12px; color: var(--t2)">{{ar.meta}}</span></div>
+<span style="flex: 1"></span>
+<button class="primary" style="height: 30px; padding: 0 14px; border: 0; border-radius: 999px; display: flex; align-items: center; gap: 6px; color: #FFFFFF; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Agregar operador</button>
+</div>
+<table style="width: 100%; border-collapse: collapse; font-size: 12px">
+<thead><tr style="text-align: left; color: var(--t2)">
+<th style="padding: 8px 8px 8px 24px; border-top: 1px solid var(--sep); border-bottom: 1px solid var(--sep); font-weight: 600">Operador</th>
+<th style="padding: 8px; border-top: 1px solid var(--sep); border-bottom: 1px solid var(--sep); font-weight: 600; width: 130px">Estado de turno</th>
+<th style="padding: 8px; border-top: 1px solid var(--sep); border-bottom: 1px solid var(--sep); font-weight: 600; width: 70px; text-align: right">Activos</th>
+<th style="padding: 8px 24px 8px 8px; border-top: 1px solid var(--sep); border-bottom: 1px solid var(--sep); font-weight: 600; width: 64px; text-align: right"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Acciones</span></th>
+</tr></thead>
+<tbody>
+<sc-for list="{{ar.ops}}" as="o" hint-placeholder-count="4">
+<tr class="row">
+<td style="padding: 9px 8px 9px 24px; border-bottom: 1px solid var(--sep2)"><span style="display: flex; align-items: center; gap: 10px"><span style="width: 28px; height: 28px; border-radius: 50%; background: var(--accent-bg); color: var(--accent-t); font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex: none">{{o.ini}}</span><span style="display: flex; flex-direction: column"><span style="font-size: 13px; font-weight: 600">{{o.name}}</span><span style="color: var(--t2)">{{o.mail}}</span></span></span></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid var(--sep2)"><span style="display: inline-flex; align-items: center; gap: 6px; font-weight: 500"><span style="width: 7px; height: 7px; border-radius: 50%; background: {{o.dot}}"></span>{{o.st}}</span></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid var(--sep2); text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; color: {{o.c}}">{{o.load}}</td>
+<td style="padding: 5px 24px 5px 8px; border-bottom: 1px solid var(--sep2); text-align: right"><button class="ico" aria-label="Editar {{o.name}}" title="Editar"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"></path></svg></button></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+<span style="padding: 12px 24px 16px; font-size: 12px; color: var(--t3)">El estado de turno y la guardia se cambian en Gestión de Turno</span>
+</div>
+</div>
+</section>
+</sc-if>
+
+<!-- Plantillas -->
+<sc-if value="{{sec.tpl}}" hint-placeholder-val="{{ false }}">
+<sc-for list="{{tpls}}" as="g" hint-placeholder-count="2">
+<section class="glass" style="display: flex; flex-direction: column; overflow: hidden">
+<div style="display: flex; align-items: baseline; gap: 10px; padding: 18px 24px 12px">
+<h2 style="margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -0.01em">{{g.title}}</h2>
+<span style="font-size: 12px; color: var(--t2)">{{g.sub}}</span>
+</div>
+<div style="display: flex; flex-direction: column; border-top: 1px solid var(--sep)">
+<sc-for list="{{g.items}}" as="t" hint-placeholder-count="4">
+<div class="row" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 16px 0 24px; border-bottom: 1px solid var(--sep2)">
+<sc-if value="{{t.view}}" hint-placeholder-val="{{ true }}">
+<span style="flex: 1; font-size: 13px">{{t.text}}</span>
+<button class="ico" onClick="{{t.edit}}" aria-label="Editar plantilla" title="Editar"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"></path></svg></button>
+<button class="ico danger" onClick="{{t.del}}" aria-label="Eliminar plantilla" title="Eliminar"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg></button>
+</sc-if>
+<sc-if value="{{t.editing}}" hint-placeholder-val="{{ false }}">
+<input class="field" value="{{t.val}}" onChange="{{t.setVal}}" aria-label="Texto de la plantilla" style="flex: 1; padding: 6px 10px">
+<button class="pill pillbtn" onClick="{{t.cancel}}" style="height: 28px; padding: 0 12px; border: 0; font: inherit; font-size: 12px; font-weight: 600; color: var(--t1); cursor: pointer">Cancelar</button>
+<button class="primary" onClick="{{t.ok}}" style="height: 28px; padding: 0 12px; border: 0; border-radius: 999px; color: #FFFFFF; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer">Listo</button>
+</sc-if>
+</div>
+</sc-for>
+<div style="display: flex; align-items: center; gap: 8px; padding: 12px 16px 16px 24px">
+<input class="field" value="{{g.draft}}" onChange="{{g.setDraft}}" placeholder="{{g.ph}}" aria-label="{{g.ph}}" style="flex: 1; padding: 6px 10px">
+<button class="pill pillbtn" onClick="{{g.add}}" disabled="{{g.addOff}}" style="height: 30px; padding: 0 14px; border: 0; display: flex; align-items: center; gap: 6px; font: inherit; font-size: 12px; font-weight: 600; color: var(--accent-t); cursor: pointer; opacity: {{g.addOp}}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Agregar</button>
+</div>
+</div>
+</section>
+</sc-for>
+</sc-if>
+
+<!-- Reglas de alerta -->
+<sc-if value="{{sec.rules}}" hint-placeholder-val="{{ false }}">
+<section class="glass" aria-labelledby="h-ov" style="padding: 18px 24px 20px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: center; gap: 10px">
+<div style="display: flex; flex-direction: column; flex: 1"><h2 id="h-ov" style="margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -0.01em">Sobrecarga</h2><span style="font-size: 12px; color: var(--t2)">Se muestra en Alertas del Dashboard y en la ventana de asignación</span></div>
+<button class="switch" role="switch" aria-checked="{{ov.on}}" aria-label="Activar alerta de sobrecarga" onClick="{{ov.toggle}}" style="background: {{ov.swBg}}"><span class="knob" style="left: {{ov.knob}}"></span></button>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px; opacity: {{ov.op}}">
+<span>Activos mayores a</span>
+<span class="stepper"><button onClick="{{ov.multDn}}" aria-label="Menos">−</button><span>{{ov.mult}}×</span><button onClick="{{ov.multUp}}" aria-label="Más">+</button></span>
+<span>el promedio del área, con un mínimo de</span>
+<span class="stepper"><button onClick="{{ov.minDn}}" aria-label="Menos">−</button><span>{{ov.min}}</span><button onClick="{{ov.minUp}}" aria-label="Más">+</button></span>
+<span>activos</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border-radius: 14px; background: var(--well); box-shadow: inset 0 0 0 0.5px var(--sep)">
+<span style="font-size: 12px; font-weight: 600; color: var(--t2)">{{ov.previewTitle}}</span>
+<sc-for list="{{ov.hits}}" as="h" hint-placeholder-count="2">
+<span style="display: flex; align-items: center; gap: 8px; font-size: 13px"><span style="width: 22px; height: 22px; border-radius: 50%; background: var(--red-bg); color: var(--red-t); font-size: 9px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center">{{h.ini}}</span><span style="font-weight: 600">{{h.name}}</span><span style="color: var(--t2)">{{h.meta}}</span></span>
+</sc-for>
+</div>
+</section>
+
+<section class="glass" aria-labelledby="h-ag" style="padding: 18px 24px 20px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: center; gap: 10px">
+<div style="display: flex; flex-direction: column; flex: 1"><span style="display: flex; align-items: center; gap: 8px"><h2 id="h-ag" style="margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -0.01em">Antigüedad</h2></span><span style="font-size: 12px; color: var(--t2)">Aviso cuando un ticket pasa el tiempo de su prioridad sin asignar, sin movimiento o sin clasificar</span></div>
+<button class="switch" role="switch" aria-checked="{{ag.on}}" aria-label="Activar alerta de antigüedad" onClick="{{ag.toggle}}" style="background: {{ag.swBg}}"><span class="knob" style="left: {{ag.knob}}"></span></button>
+</div>
+<div style="display: flex; flex-direction: column; border-top: 1px solid var(--sep); opacity: {{ag.op}}">
+<sc-for list="{{ag.rows}}" as="a" hint-placeholder-count="4">
+<div style="display: flex; align-items: center; gap: 12px; min-height: 48px; border-bottom: 1px solid var(--sep2); font-size: 13px">
+<span style="width: 7px; height: 7px; border-radius: 2px; background: {{a.dot}}; box-shadow: inset 0 0 0 1px {{a.ring}}; flex: none"></span>
+<span style="display: flex; flex-direction: column; flex: 1; min-width: 0"><span style="display: flex; align-items: center; gap: 8px; font-weight: 600">{{a.label}}<sc-if value="{{a.isNew}}" hint-placeholder-val="{{ false }}"><span class="tbc" style="background: var(--accent-bg); box-shadow: inset 0 0 0 0.5px var(--accent-ring); color: var(--accent-t)">Propuesta</span></sc-if></span><span style="font-size: 12px; color: var(--t2)">{{a.desc}}</span></span>
+<span style="color: var(--t2)">más de</span>
+<span class="stepper"><button onClick="{{a.dn}}" aria-label="Menos">−</button><span>{{a.val}}</span><button onClick="{{a.up}}" aria-label="Más">+</button></span>
+</div>
+</sc-for>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border-radius: 14px; background: var(--well); box-shadow: inset 0 0 0 0.5px var(--sep)">
+<span style="font-size: 12px; font-weight: 600; color: var(--t2)">{{ag.previewTitle}}</span>
+<sc-for list="{{ag.hits}}" as="h" hint-placeholder-count="1">
+<span style="display: flex; align-items: center; gap: 8px; font-size: 13px"><span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 12px; font-weight: 600; color: var(--accent-t)">{{h.code}}</span><span style="font-weight: 600; color: {{h.pc}}">{{h.p}}</span><span style="color: var(--t2)">{{h.meta}}</span></span>
+</sc-for>
+</div>
+</section>
+
+<section class="glass" aria-labelledby="h-sg" style="padding: 18px 24px 20px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; flex-direction: column"><h2 id="h-sg" style="margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -0.01em">Asignación sugerida</h2><span style="font-size: 12px; color: var(--t2)">Propone un operador del área del ticket con menor carga activa y sin sobrecarga. El coordinador confirma con un clic; no se asigna solo.</span></div>
+<div style="display: flex; flex-direction: column; border-top: 1px solid var(--sep); font-size: 13px">
+<div style="display: flex; align-items: center; gap: 10px; min-height: 48px; border-bottom: 1px solid var(--sep2)">
+<span style="flex: 1">Sugerir solo a quien está en turno</span>
+<span style="display: inline-flex; align-items: center; gap: 6px; color: var(--green-t); font-weight: 600"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L19 7"></path></svg>Siempre</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-height: 48px; border-bottom: 1px solid var(--sep2); opacity: {{sg.op}}">
+<span style="flex: 1; min-width: 260px">Incluir a quien está de guardia si su guardia empieza en menos de</span>
+<span class="stepper"><button onClick="{{sg.dn}}" aria-label="Menos">−</button><span>{{sg.val}}</span><button onClick="{{sg.up}}" aria-label="Más">+</button></span>
+<button class="switch" role="switch" aria-checked="{{sg.on}}" aria-label="Incluir a quien está por entrar de guardia" onClick="{{sg.toggle}}" style="background: {{sg.swBg}}; opacity: 1"><span class="knob" style="left: {{sg.knob}}"></span></button>
+</div>
+<div style="display: flex; align-items: center; gap: 10px; min-height: 48px; border-bottom: 1px solid var(--sep2)">
+<span style="flex: 1">Si nadie del área está disponible o todos tienen sobrecarga</span>
+<span style="color: var(--t2)">Cola de espera y aviso al coordinador</span>
+</div>
+<div style="display: flex; align-items: center; gap: 10px; min-height: 48px">
+<span style="display: flex; flex-direction: column; flex: 1"><span>Permitir sugerir otra área</span><span style="font-size: 12px; color: var(--t2)">Solo cuando el coordinador lo pide desde el ticket</span></span>
+<button class="switch" role="switch" aria-checked="{{sgo.on}}" aria-label="Permitir sugerir otra área" onClick="{{sgo.toggle}}" style="background: {{sgo.swBg}}"><span class="knob" style="left: {{sgo.knob}}"></span></button>
+</div>
+</div>
+</section>
+</sc-if>
+
+<!-- Notificaciones -->
+<sc-if value="{{sec.notif}}" hint-placeholder-val="{{ false }}">
+<section class="glass" aria-labelledby="h-nt" style="display: flex; flex-direction: column; overflow: hidden">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 18px 24px 14px">
+<div style="display: flex; flex-direction: column; flex: 1"><h2 id="h-nt" style="margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -0.01em">Avisos</h2><span style="font-size: 12px; color: var(--t2)">Avisos dentro del portal: qué eventos avisan y a quién</span></div>
+
+</div>
+<table style="width: 100%; border-collapse: collapse; font-size: 12px">
+<thead><tr style="text-align: left; color: var(--t2)">
+<th style="padding: 8px 8px 8px 24px; border-top: 1px solid var(--sep); border-bottom: 1px solid var(--sep); font-weight: 600">Evento</th>
+<th style="padding: 8px; border-top: 1px solid var(--sep); border-bottom: 1px solid var(--sep); font-weight: 600; width: 120px; text-align: center">Coordinador</th>
+<th style="padding: 8px; border-top: 1px solid var(--sep); border-bottom: 1px solid var(--sep); font-weight: 600; width: 150px; text-align: center">Operadores del área</th>
+<th style="padding: 8px 24px 8px 8px; border-top: 1px solid var(--sep); border-bottom: 1px solid var(--sep); font-weight: 600; width: 120px; text-align: center">De guardia</th>
+</tr></thead>
+<tbody>
+<sc-for list="{{notif}}" as="n" hint-placeholder-count="3">
+<tr class="row">
+<td style="padding: 12px 8px 12px 24px; border-bottom: 1px solid var(--sep2)"><span style="display: flex; flex-direction: column"><span style="font-size: 13px; font-weight: 600">{{n.name}}</span><span style="color: var(--t2)">{{n.desc}}</span></span></td>
+<sc-for list="{{n.cells}}" as="c" hint-placeholder-count="3">
+<td style="padding: 8px; border-bottom: 1px solid var(--sep2); text-align: center">
+<sc-if value="{{c.na}}" hint-placeholder-val="{{ false }}"><span style="color: var(--t3)">—</span></sc-if>
+<sc-if value="{{c.ok}}" hint-placeholder-val="{{ true }}"><button class="switch" role="switch" aria-checked="{{c.on}}" aria-label="{{c.label}}" onClick="{{c.toggle}}" style="background: {{c.swBg}}; vertical-align: middle"><span class="knob" style="left: {{c.knob}}"></span></button></sc-if>
+</td>
+</sc-for>
+</tr>
+</sc-for>
+</tbody>
+</table>
+<span style="padding: 12px 24px 16px; font-size: 12px; color: var(--t3)">Los tickets entran por el buzón compartido (Microsoft Graph) o los crea el coordinador. Las alertas siguen visibles en sus pantallas aunque el aviso esté apagado.</span>
+</section>
+</sc-if>
+
+</div>
+</div>
+
+<!-- Notificación (Liquid Glass banner) -->
+<sc-if value="{{toast.show}}" hint-placeholder-val="{{ false }}">
+<div role="status" aria-live="polite" class="notif" style="position: fixed; top: 18px; right: 22px; z-index: 60; width: 344px; box-sizing: border-box; animation: toastIn .45s cubic-bezier(0.19,1,0.22,1)">
+<span style="width: 34px; height: 34px; border-radius: 50%; background: #34C759; display: flex; align-items: center; justify-content: center; flex: none"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L19 7"></path></svg></span>
+<div style="display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0">
+<span style="font-size: 13px; font-weight: 700">{{toast.title}}</span>
+<span style="font-size: 13px">{{toast.msg}}</span>
+</div>
+<span style="font-size: 11px; color: var(--t3)">Ahora</span>
+</div>
+</sc-if>
+
+</div>
+</div>
+</x-dc>
+
+<script type="text/x-dc" data-dc-script data-props="{&quot;fuente&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;IBM Plex Sans&quot;,&quot;Instrument Sans&quot;,&quot;Sistema (SF Pro)&quot;],&quot;default&quot;:&quot;IBM Plex Sans&quot;},&quot;tema&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Claro&quot;,&quot;Oscuro&quot;,&quot;Sistema&quot;],&quot;default&quot;:&quot;Oscuro&quot;},&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1100}}">
+class Component extends DCLogic {
+  renderVals() {
+    const FONTS = {
+      'IBM Plex Sans': "'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif",
+      'Instrument Sans': "'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif",
+      'Sistema (SF Pro)': "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif"
+    };
+    const font = FONTS[this.props.fuente ?? 'IBM Plex Sans'] || FONTS['IBM Plex Sans'];
+    const mode = this.props.tema ?? 'Claro';
+    let isDark = mode === 'Oscuro';
+    if (mode === 'Sistema') { try { isDark = window.matchMedia('(prefers-color-scheme: dark)').matches; } catch (e) {} }
+    const theme = isDark ? 'dark' : 'light';
+    const bg = isDark ? 'radial-gradient(1200px 700px at 78% -12%, rgba(132,120,255,0.38), transparent 60%), radial-gradient(900px 650px at -5% 105%, rgba(88,80,190,0.45), transparent 62%), linear-gradient(118deg, transparent 38%, rgba(170,160,255,0.10) 46%, transparent 54%), linear-gradient(135deg, #0D0C21 0%, #1C1A40 40%, #2B2860 70%, #121128 100%)' : 'radial-gradient(900px 500px at 85% -10%, rgba(56,189,248,0.22), transparent 60%), radial-gradient(700px 500px at 10% 110%, rgba(99,102,241,0.12), transparent 60%), linear-gradient(135deg, var(--sep2) 0%, #EFF6FF 50%, var(--accent-bg) 100%)';
+    const S = this.state || {};
+    const set = (o) => this.setState(o);
+    const dec = (n) => (Math.round(n * 10) / 10).toString().replace('.', ',');
+    const sw = (on, toggle, label) => ({ on, toggle, label, swBg: on ? '#34C759' : 'rgba(120,120,128,0.24)', knob: on ? '18px' : '2px' });
+
+    // Mismo equipo que Dashboard y Tickets: [operador, iniciales, área, activos, turno, correo]
+    const TEAM = [
+      ['Demo FTTH 1', 'F1', 'Redes FTTH / OLT', 8, 'turno', 'ftth1'], ['Demo FTTH 2', 'F2', 'Redes FTTH / OLT', 5, 'turno', 'ftth2'],
+      ['Demo FTTH 3', 'F3', 'Redes FTTH / OLT', 4, 'turno', 'ftth3'], ['Demo FTTH 4', 'F4', 'Redes FTTH / OLT', 2, 'guardia', 'ftth4'],
+      ['Demo WAN 1', 'W1', 'WAN', 6, 'turno', 'wan1'], ['Demo WAN 2', 'W2', 'WAN', 0, 'fuera', 'wan2'],
+      ['Demo Grandes Clientes 1', 'G1', 'Grandes Clientes', 4, 'turno', 'gc1'], ['Demo Grandes Clientes 2', 'G2', 'Grandes Clientes', 2, 'turno', 'gc2'],
+      ['Demo Inalámbrico 1', 'I1', 'Tráfico inalámbrico', 3, 'turno', 'inal1'], ['Demo Inalámbrico 2', 'I2', 'Tráfico inalámbrico', 2, 'guardia', 'inal2'],
+      ['Demo Operaciones 1', 'O1', 'Operaciones IP', 3, 'turno', 'opip1'], ['Demo Operaciones 2', 'O2', 'Operaciones IP', 1, 'turno', 'opip2'],
+      ['Demo Telefonía 1', 'T1', 'Telefonía', 1, 'guardia', 'tel1'], ['Demo Seguridad 1', 'S1', 'Seguridad', 0, 'turno', 'seg1']
+    ];
+    const AREAS = ['Redes FTTH / OLT', 'WAN', 'Grandes Clientes', 'Tráfico inalámbrico', 'Operaciones IP', 'Telefonía', 'Seguridad'];
+    const areaAvg = {};
+    AREAS.forEach((a) => { const l = TEAM.filter((o) => o[2] === a).map((o) => o[3]); areaAvg[a] = l.reduce((x, y) => x + y, 0) / l.length; });
+    const ST = { turno: ['En turno', '#22C55E'], guardia: ['De guardia', '#8B5CF6'], fuera: ['Fuera de turno', 'var(--t3)'] };
+
+    // Configuración guardada y borrador
+    const SAVED = {
+      ov: { on: true, mult: 1.5, min: 3 },
+      ag: { on: true, P1: 60, P2: 120, P3: 240, SP: 30 },
+      sg: { guard: true, soon: 30, other: true },
+      nt: { p1: [true, false, true], cola: [true, null, null], age: [true, true, null], over: [true, false, null], hand: [null, null, true] },
+      tpl: {
+        hand: ['Sin novedades pendientes', 'Quedan P1 abiertos, revisar primero', 'Esperando respuesta de proveedor', 'Vigilar enlaces con saturación'],
+        close: ['Servicio restablecido', 'Resuelto por el operador', 'Falla del proveedor resuelta', 'Duplicado de otro ticket']
+      }
+    };
+    const saved = S.saved || SAVED;
+    const C = S.cfg || saved;
+    const dirty = JSON.stringify(C) !== JSON.stringify(saved);
+    const upd = (patch) => set({ cfg: { ...C, ...patch } });
+
+    // Secciones
+    const sec = S.sec || 'areas';
+    const SECS = [
+      ['areas', 'Áreas y equipos', '7 áreas · 14 operadores', '#0A84FF', 'M9 8a3 3 0 1 0 0-.01M3 19a6 6 0 0 1 12 0M16 5a3 3 0 0 1 0 6M18 13a5 5 0 0 1 3 6'],
+      ['tpl', 'Plantillas', (C.tpl.hand.length + C.tpl.close.length) + ' textos', '#FF9F0A', 'M5 4h10l4 4v12H5zM9 12h6M9 16h4'],
+      ['rules', 'Reglas de alerta', 'Sobrecarga y antigüedad', '#FF3B30', 'M12 3l10 18H2zM12 10v4M12 17.5v.5'],
+      ['notif', 'Avisos', 'Eventos y destinatarios', '#AF52DE', 'M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 21h4']
+    ];
+    const secs = SECS.map((s) => ({
+      label: s[1], sub: s[2], tile: s[3], glyph: s[4], cur: sec === s[0] ? 'page' : 'false',
+      bg: sec === s[0] ? 'var(--accent-bg)' : 'transparent', ring: sec === s[0] ? 'inset 0 0 0 0.5px var(--accent-ring)' : 'none',
+      pick: () => set({ sec: s[0] })
+    }));
+
+    // Áreas y equipos
+    const selA = S.area || AREAS[0];
+    const areas = AREAS.map((a) => {
+      const ops = TEAM.filter((o) => o[2] === a);
+      const g = ops.filter((o) => o[4] === 'guardia').length;
+      return {
+        name: a, n: ops.length + (ops.length === 1 ? ' operador' : ' operadores'),
+        turno: ops.filter((o) => o[4] === 'turno').length, guardia: g, hasGuard: g > 0,
+        sel: a === selA, bg: a === selA ? 'var(--accent-bg)' : 'transparent', ring: a === selA ? 'inset 0 0 0 0.5px var(--accent-ring)' : 'none',
+        pick: () => set({ area: a })
+      };
+    });
+    const over = (o) => o[3] >= C.ov.min && o[3] > C.ov.mult * areaAvg[o[2]];
+    const aOps = TEAM.filter((o) => o[2] === selA);
+    const ar = {
+      name: selA,
+      meta: aOps.length + (aOps.length === 1 ? ' operador' : ' operadores') + ' · promedio ' + dec(areaAvg[selA]) + ' activos',
+      ops: aOps.map((o) => ({ name: o[0], ini: o[1], mail: o[5] + '@test.com', st: ST[o[4]][0], dot: ST[o[4]][1], load: o[3], c: C.ov.on && over(o) ? 'var(--red-t)' : 'var(--t1)' }))
+    };
+
+    // Plantillas (§5.4)
+    const ed = S.ed || null;
+    const drafts = S.drafts || {};
+    const tplGroup = (key, title, sub, ph) => {
+      const list = C.tpl[key];
+      const draft = drafts[key] || '';
+      return {
+        title, sub, ph, draft,
+        setDraft: (e) => set({ drafts: { ...drafts, [key]: e.target.value } }),
+        addOff: !draft.trim(), addOp: draft.trim() ? 1 : 0.45,
+        add: () => { if (!draft.trim()) return; upd({ tpl: { ...C.tpl, [key]: list.concat([draft.trim()]) } }); set({ drafts: { ...drafts, [key]: '' } }); },
+        items: list.map((text, i) => {
+          const editing = !!(ed && ed.key === key && ed.i === i);
+          return {
+            text, view: !editing, editing, val: editing ? ed.val : text,
+            edit: () => set({ ed: { key, i, val: text } }),
+            setVal: (e) => set({ ed: { key, i, val: e.target.value } }),
+            cancel: () => set({ ed: null }),
+            ok: () => { const v = (ed && ed.val || '').trim(); const l = list.slice(); if (v) l[i] = v; upd({ tpl: { ...C.tpl, [key]: l } }); set({ ed: null }); },
+            del: () => upd({ tpl: { ...C.tpl, [key]: list.filter((_, j) => j !== i) } })
+          };
+        })
+      };
+    };
+    const tpls = [
+      tplGroup('hand', 'Notas de traspaso', 'Se ofrecen al traspasar a guardia; la nota pide mínimo 10 caracteres', 'Nueva nota de traspaso'),
+      tplGroup('close', 'Motivos de cierre', 'Se ofrecen al cerrar un ticket', 'Nuevo motivo de cierre')
+    ];
+
+    // Reglas de alerta (§2 sobrecarga, §5.2 antigüedad)
+    const steps = [15, 30, 45, 60, 90, 120, 180, 240, 300, 360, 480];
+    const hfmt = (m) => m < 60 ? m + ' min' : (m % 60 ? Math.floor(m / 60) + ' h ' + (m % 60) : m / 60 + ' h');
+    const stepT = (cur, d) => { const i = Math.max(0, Math.min(steps.length - 1, steps.indexOf(cur) + d)); return steps[i]; };
+    const hits = TEAM.filter(over);
+    const ov = {
+      ...sw(C.ov.on, () => upd({ ov: { ...C.ov, on: !C.ov.on } })), op: C.ov.on ? 1 : 0.45,
+      mult: dec(C.ov.mult), min: C.ov.min,
+      multDn: () => upd({ ov: { ...C.ov, mult: Math.max(1.1, Math.round((C.ov.mult - 0.1) * 10) / 10) } }),
+      multUp: () => upd({ ov: { ...C.ov, mult: Math.min(3, Math.round((C.ov.mult + 0.1) * 10) / 10) } }),
+      minDn: () => upd({ ov: { ...C.ov, min: Math.max(1, C.ov.min - 1) } }),
+      minUp: () => upd({ ov: { ...C.ov, min: Math.min(10, C.ov.min + 1) } }),
+      previewTitle: !C.ov.on ? 'Alerta apagada' : hits.length ? 'Con esta regla, hoy ' + (hits.length === 1 ? 'aparece 1 operador' : 'aparecen ' + hits.length + ' operadores') : 'Con esta regla, hoy nadie aparece en sobrecarga',
+      hits: C.ov.on ? hits.map((o) => ({ name: o[0], ini: o[1], meta: o[3] + ' activos · promedio ' + dec(areaAvg[o[2]]) + ' en ' + o[2] + ' · índice ' + dec(o[3] / areaAvg[o[2]]) })) : []
+    };
+    // Tickets activos de hoy: [código, prioridad, asignado, edad min, sin movimiento min]
+    const TK = [['INC-004', 'P1', false, 72, 72], ['SIM-050', 'P2', false, 38, 38], ['SIM-048', 'P3', false, 41, 41], ['SIM-046', 'P1', true, 65, 20], ['SIM-044', 'P2', true, 47, 15], ['SIM-039', 'P2', true, 100, 35], ['SIM-035', 'P3', true, 182, 120], ['SIM-037', 'P2', true, 130, 70]];
+    const fmt = (m) => m < 60 ? m + ' min' : Math.floor(m / 60) + ' h ' + String(m % 60).padStart(2, '0');
+    const ageHits = TK.filter((t) => { const th = C.ag[t[1]]; return (!t[2] && t[3] > th) || t[4] > th; });
+    const AGE = [
+      ['P1', 'P1 Crítica', '#EF4444', 'Sin asignar o sin movimiento', false],
+      ['P2', 'P2 Media', '#F59E0B', 'Sin asignar o sin movimiento', true],
+      ['P3', 'P3 Baja', '#94A3B8', 'Sin asignar o sin movimiento', false],
+      ['SP', 'Sin prioridad', 'transparent', 'Llegó y nadie le fijó prioridad', true]
+    ];
+    const ag = {
+      ...sw(C.ag.on, () => upd({ ag: { ...C.ag, on: !C.ag.on } })), op: C.ag.on ? 1 : 0.45,
+      rows: AGE.map((a) => ({
+        label: a[1], dot: a[2], ring: a[2] === 'transparent' ? 'var(--t3)' : 'transparent', desc: a[3], isNew: a[4], val: hfmt(C.ag[a[0]]),
+        dn: () => upd({ ag: { ...C.ag, [a[0]]: stepT(C.ag[a[0]], -1) } }), up: () => upd({ ag: { ...C.ag, [a[0]]: stepT(C.ag[a[0]], 1) } })
+      })),
+      previewTitle: !C.ag.on ? 'Alerta apagada' : ageHits.length ? 'Con estos valores, hoy ' + (ageHits.length === 1 ? 'aparece 1 ticket' : 'aparecen ' + ageHits.length + ' tickets') : 'Con estos valores, hoy ningún ticket supera el límite',
+      hits: C.ag.on ? ageHits.map((t) => ({ code: t[0], p: t[1], pc: t[1] === 'P1' ? 'var(--red-t)' : 'var(--orange-t)', meta: !t[2] ? fmt(t[3]) + ' sin asignar' : fmt(t[4]) + ' sin movimiento' })) : []
+    };
+    const soonSteps = [15, 30, 45, 60, 90, 120];
+    const soonStep = (d) => soonSteps[Math.max(0, Math.min(soonSteps.length - 1, soonSteps.indexOf(C.sg.soon) + d))];
+    const sg = {
+      ...sw(C.sg.guard, () => upd({ sg: { ...C.sg, guard: !C.sg.guard } })), op: C.sg.guard ? 1 : 0.55,
+      val: hfmt(C.sg.soon), dn: () => upd({ sg: { ...C.sg, soon: soonStep(-1) } }), up: () => upd({ sg: { ...C.sg, soon: soonStep(1) } })
+    };
+    const sgo = sw(C.sg.other, () => upd({ sg: { ...C.sg, other: !C.sg.other } }));
+
+    // Avisos dentro del portal
+    const WHO = ['Coordinador', 'Operadores del área', 'De guardia'];
+    const EV = [['p1', 'P1 nuevo', 'Llega un ticket con prioridad P1'], ['cola', 'Ticket en cola de espera', 'Nadie del área está disponible para atenderlo'], ['age', 'Antigüedad superada', 'Un ticket pasa el tiempo de su prioridad'], ['over', 'Sobrecarga', 'Un operador supera la regla de sobrecarga'], ['hand', 'Traspaso a guardia', 'El coordinador traspasa pendientes con su nota']];
+    const notif = EV.map((e) => ({
+      name: e[1], desc: e[2],
+      cells: C.nt[e[0]].map((v, i) => v === null ? { na: true, ok: false } : {
+        na: false, ok: true,
+        ...sw(v, () => { const row = C.nt[e[0]].slice(); row[i] = !v; upd({ nt: { ...C.nt, [e[0]]: row } }); }, e[1] + ': ' + WHO[i])
+      })
+    }));
+
+    const toast = S.toast ? { show: true, ...S.toast } : { show: false };
+    // Barra lateral minimizable (se recuerda entre pantallas)
+    const sbStored = (() => { try { return localStorage.getItem('kip.sidebar') === 'min'; } catch (e) { return false; } })();
+    const sbMin = (this.state && this.state.sbMin !== undefined) ? this.state.sbMin : sbStored;
+    const sb = {
+      c: sbMin ? 'true' : 'false', label: sbMin ? 'Mostrar barra lateral' : 'Minimizar barra lateral',
+      toggle: (e) => { if (e && e.stopPropagation) e.stopPropagation(); const nv = !sbMin; try { localStorage.setItem('kip.sidebar', nv ? 'min' : 'full'); } catch (err) {} this.setState({ sbMin: nv }); }
+    };
+    return { sb,
+      font, theme, bg, secs, dirty, areas, ar, tpls, ov, ag, sg, sgo, notif, toast,
+      sec: { areas: sec === 'areas', tpl: sec === 'tpl', rules: sec === 'rules', notif: sec === 'notif' },
+      discard: () => set({ cfg: null, ed: null }),
+      save: () => {
+        set({ saved: C, cfg: null, ed: null, toast: { title: 'Cambios guardados', msg: 'La configuración se aplicó y quedó en Auditoría' } });
+        if (this._tt) clearTimeout(this._tt);
+        this._tt = setTimeout(() => this.setState({ toast: null }), 4000);
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Auditoría</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0;background:#F1F5F9}
+a{color:#0369A1;text-decoration:none}a:hover{color:#075985}
+.glass{background:rgba(255,255,255,0.85);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);border-radius:24px;box-shadow:0 0 0 0.5px rgba(15,23,42,0.05),0 4px 12px rgba(0,0,0,0.03)}
+.kv{font-family:inherit;font-weight:600;color:var(--t1);letter-spacing:-0.02em;font-variant-numeric:tabular-nums}
+.pill{background:rgba(255,255,255,0.72);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%);box-shadow:1.25px 0 0 -0.75px #D0D0D0,-1.25px 0 0 -0.75px #D0D0D0,0 0 0 0.5px #E2E8F0,inset 0 1px 0 rgba(255,255,255,0.95),0 8px 15px rgba(0,0,0,0.03);border-radius:1000px}
+.side{background:rgba(241,245,249,0.9);-webkit-backdrop-filter:blur(40px) saturate(150%);backdrop-filter:blur(40px) saturate(150%);box-shadow:0 0 0 0.5px rgba(15,23,42,0.08),inset 0 1px 0 rgba(255,255,255,0.8),0 10px 30px rgba(15,23,42,0.06);border-radius:18px}
+.sideitem:hover{background:rgba(15,23,42,0.05)}
+.pillbtn:hover{background:rgba(255,255,255,0.95)}
+.popup{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 8px 0 12px;border:0;border-radius:8px;background:var(--control);box-shadow:0 0 0 0.5px rgba(0,0,0,0.12),0 1px 2px rgba(0,0,0,0.06);font:inherit;font-size:12px;color:var(--t1);cursor:pointer}
+.stat{display:flex;flex-direction:column;gap:2px;padding:0 20px;border-left:1px solid var(--sep)}
+.stat:first-child{border-left:0;padding-left:0}
+.row:hover td{background:rgba(14,165,233,0.04)}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(14,165,233,0.3)}
+[data-theme=dark] .chip{background:rgba(10,132,255,0.18);box-shadow:inset 0 0 0 1px rgba(64,156,255,0.35);color:#64B5FF}
+[data-theme=dark] .sideitem:hover,[data-theme=dark] .pillbtn:hover,[data-theme=dark] .ico:hover{background:rgba(255,255,255,0.08)}
+[data-theme=dark] .stat{border-color:rgba(255,255,255,0.10)}
+/* Texto: Primary / Secondary / Tertiary */
+[data-theme=dark] [style*="color: #0F172A"],[data-theme=dark] [style*="color: #1E293B"],[data-theme=dark] [style*="color: #1D1D1F"],[data-theme=dark] [style*="color: #1A1A1A"],[data-theme=dark] [style*="color: #1C1C1E"],[data-theme=dark] [style*="color: #334155"]{color:rgba(255,255,255,0.92)!important}
+[data-theme=dark] [style*="color: #64748B"],[data-theme=dark] [style*="color: #475569"]{color:rgba(235,235,245,0.60)!important}
+[data-theme=dark] [style*="color: #94A3B8"],[data-theme=dark] [style*="color: #8E8E93"]{color:rgba(235,235,245,0.32)!important}
+/* Colores de sistema (oscuro) */
+[data-theme=dark] [style*="color: #0369A1"],[data-theme=dark] [style*="color: #0284C7"]{color:#64B5FF!important}
+[data-theme=dark] [style*="color: #15803D"],[data-theme=dark] [style*="color: #047857"]{color:#30D158!important}
+[data-theme=dark] [style*="color: #B45309"],[data-theme=dark] [style*="color: #C2410C"]{color:#FF9F0A!important}
+[data-theme=dark] [style*="color: #B91C1C"]{color:#FF6961!important}
+[data-theme=dark] [style*="color: #6D28D9"]{color:#BF5AF2!important}
+[data-theme=dark] [fill="#0F172A"]{fill:rgba(255,255,255,0.92)}
+[data-theme=dark] svg [stroke="#1A1A1A"]{stroke:rgba(255,255,255,0.85)}
+[data-theme=dark] svg[stroke="#1A1A1A"]{stroke:rgba(255,255,255,0.85)}
+/* Separadores y superficies */
+[data-theme=dark] [style*="solid var(--sep)"],[data-theme=dark] [style*="solid #F1F5F9"],[data-theme=dark] [style*="solid #CBD5E1"]{border-color:rgba(255,255,255,0.08)!important}
+[data-theme=dark] [style*="background: #CBD5E1"],[data-theme=dark] [style*="background: #D9D9D9"]{background:rgba(255,255,255,0.14)!important}
+[data-theme=dark] [style*="background: #F0FDF4"],[data-theme=dark] [style*="background: #ECFDF5"]{background:rgba(48,209,88,0.16)!important;box-shadow:none!important}
+[data-theme=dark] [style*="background: #FFFBEB"]{background:rgba(255,159,10,0.16)!important;box-shadow:none!important}
+[data-theme=dark] [style*="background: #FEF2F2"]{background:rgba(255,69,58,0.18)!important;box-shadow:none!important}
+[data-theme=dark] [style*="background: #F0F9FF"],[data-theme=dark] [style*="background: #E0F2FE"]{background:rgba(10,132,255,0.20)!important;box-shadow:none!important}
+[data-theme=dark] [style*="background: #F8FAFC"],[data-theme=dark] [style*="background: #F1F5F9"],[data-theme=dark] [style*="background: rgba(255,255,255,0.6)"],[data-theme=dark] [style*="background: rgba(255,255,255,0.7)"],[data-theme=dark] [style*="background: rgba(255,255,255,0.45)"]{background:rgba(255,255,255,0.05)!important;box-shadow:inset 0 0 0 0.5px rgba(255,255,255,0.10)!important}
+[data-theme=dark] [style*="background: #FFFFFF"]:not(.knob){background:rgba(255,255,255,0.10)!important;color:rgba(255,255,255,0.92)!important}
+[data-theme=dark] [style*="background: #E6E6E6"]{background:rgba(255,255,255,0.18)!important}
+[data-theme=dark] [style*="background: #0284C7"]{background:#0A84FF!important}
+[data-theme=dark] [style*="linear-gradient(#E2E8F0 1px"]{background-image:linear-gradient(rgba(255,255,255,0.08) 1px,transparent 1px)!important}
+[data-theme=dark] [style*="linear-gradient(90deg, #E2E8F0 1px"]{background-image:linear-gradient(90deg,rgba(255,255,255,0.08) 1px,transparent 1px)!important}
+[data-theme=dark] [role=tab][aria-selected=true]{background:rgba(255,255,255,0.16)!important;color:rgba(255,255,255,0.95)!important;box-shadow:inset 0 0 0 0.5px rgba(255,255,255,0.12)!important}
+[data-theme=dark] [role=tablist]{background:rgba(0,0,0,0.25)!important;border-color:rgba(255,255,255,0.06)!important}
+[data-theme=dark] input{color:rgba(255,255,255,0.92)!important}
+[data-theme=dark] input::placeholder{color:rgba(235,235,245,0.32)}
+[data-theme=dark] .row:hover td,[data-theme=dark] .rowbtn:hover td,[data-theme=dark] .oprow:hover{background:rgba(255,255,255,0.04)!important}
+
+/* ---------- Tokens de tema ---------- */
+[data-theme=light]{--t1:#1D1D1F;--t2:#556070;--t3:#7C7C82;--accent-t:#0369A1;--green-t:#15803D;--orange-t:#B45309;--red-t:#B91C1C;--purple-t:#6D28D9;--sep:#E2E8F0;--sep2:#F1F5F9;--green-bg:#ECFDF5;--orange-bg:#FFFBEB;--red-bg:#FEF2F2;--accent-bg:#E0F2FE;--accent-ring:#BAE6FD;--green-ring:#BBF7D0;--orange-ring:#FDE68A;--red-ring:#FECACA;--fill:#F8FAFC;--control:#FFFFFF;--seg-on:#FFFFFF;--seg-sel:#E6E6E6;--solid:#0284C7;--map-empty:rgba(229,229,234,0.7);--map-line:#FFFFFF;--glyph:#1A1A1A;--well:rgba(255,255,255,0.6)}
+[data-theme=dark]{--t1:rgba(255,255,255,0.92);--t2:rgba(235,235,245,0.76);--t3:rgba(235,235,245,0.54);--accent-t:#64B5FF;--green-t:#30D158;--orange-t:#FF9F0A;--red-t:#FF6961;--purple-t:#BF5AF2;--sep:rgba(255,255,255,0.10);--sep2:rgba(255,255,255,0.06);--green-bg:rgba(48,209,88,0.16);--orange-bg:rgba(255,159,10,0.16);--red-bg:rgba(255,69,58,0.18);--accent-bg:rgba(10,132,255,0.24);--accent-ring:rgba(64,156,255,0.38);--green-ring:rgba(48,209,88,0.32);--orange-ring:rgba(255,159,10,0.32);--red-ring:rgba(255,69,58,0.32);--fill:rgba(255,255,255,0.05);--control:rgba(255,255,255,0.10);--seg-on:rgba(255,255,255,0.18);--seg-sel:rgba(255,255,255,0.18);--solid:#0A84FF;--map-empty:rgba(255,255,255,0.08);--map-line:rgba(13,12,33,0.85);--glyph:rgba(255,255,255,0.85);--well:rgba(255,255,255,0.06)}
+[data-theme]{color:var(--t1);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+[data-theme] h1,[data-theme] h2,[data-theme] h3,[data-theme] h4,[data-theme] h5,[data-theme] h6,[data-theme] th,[data-theme] td{color:inherit}
+[data-theme=dark] .popup,[data-theme=dark] .field{background:var(--control)}
+
+/* ---------- Modo oscuro · macOS 27 Golden Gate ---------- */
+/* Materiales: Ultra Thick (sidebar), Regular (tarjetas), Thin (controles); texto Primary/Secondary/Tertiary */
+[data-theme=dark]{color-scheme:dark}
+[data-theme=dark] .glass,[data-theme=dark] .bento{background:rgba(38,37,58,0.62);-webkit-backdrop-filter:blur(30px) saturate(160%);backdrop-filter:blur(30px) saturate(160%);box-shadow:0 0 0 0.5px rgba(255,255,255,0.10),inset 0 1px 0 rgba(255,255,255,0.06),0 12px 32px rgba(5,4,20,0.40)}
+[data-theme=dark] .glass:hover,[data-theme=dark] .bento:hover{box-shadow:0 0 0 0.5px rgba(255,255,255,0.14),inset 0 1px 0 rgba(255,255,255,0.08),0 16px 40px rgba(5,4,20,0.5)}
+[data-theme=dark] .side{background:rgba(30,29,40,0.86);box-shadow:0 0 0 0.5px rgba(255,255,255,0.10),inset 0 1px 0 rgba(255,255,255,0.05),0 12px 36px rgba(5,4,20,0.45)}
+[data-theme=dark] .notif{background:linear-gradient(180deg,rgba(64,63,74,0.72),rgba(30,30,36,0.72));box-shadow:1.25px 0 0 -0.75px rgba(255,255,255,0.22),-1.25px 0 0 -0.75px rgba(255,255,255,0.22),0 0 0 0.5px rgba(255,255,255,0.14),0 8px 48px rgba(0,0,0,0.45)}
+[data-theme=dark] .pill{background:rgba(60,59,74,0.55);box-shadow:1.25px 0 0 -0.75px rgba(255,255,255,0.18),-1.25px 0 0 -0.75px rgba(255,255,255,0.18),0 0 0 0.5px rgba(255,255,255,0.10),inset 0 1px 0 rgba(255,255,255,0.06),0 8px 15px rgba(0,0,0,0.2)}
+[data-theme=dark] .popup,[data-theme=dark] .field{background:rgba(255,255,255,0.08);box-shadow:0 0 0 0.5px rgba(255,255,255,0.14);color:rgba(255,255,255,0.92)}
+[data-theme=dark] .primary{background:#0A84FF}
+[data-theme=dark] .primary:hover{background:#409CFF}
+[data-theme=dark] .bt,[data-theme=dark] .kv{color:rgba(255,255,255,0.92)}
+[data-theme=dark] .chip{background:rgba(10,132,255,0.18);box-shadow:inset 0 0 0 1px rgba(64,156,255,0.35);color:#64B5FF}
+[data-theme=dark] .sideitem:hover,[data-theme=dark] .pillbtn:hover,[data-theme=dark] .ico:hover{background:rgba(255,255,255,0.08)}
+[data-theme=dark] .stat{border-color:rgba(255,255,255,0.10)}
+[data-theme=dark] [fill="#0F172A"]{fill:rgba(255,255,255,0.92)}
+[data-theme=dark] svg [stroke="#1A1A1A"]{stroke:rgba(255,255,255,0.85)}
+[data-theme=dark] svg[stroke="#1A1A1A"]{stroke:rgba(255,255,255,0.85)}
+[data-theme=dark] [role=tab][aria-selected=true]{background:rgba(255,255,255,0.16)!important;color:rgba(255,255,255,0.95)!important;box-shadow:inset 0 0 0 0.5px rgba(255,255,255,0.12)!important}
+[data-theme=dark] [role=tablist]{background:rgba(0,0,0,0.25)!important;border-color:rgba(255,255,255,0.06)!important}
+[data-theme=dark] input{color:rgba(255,255,255,0.92)!important}
+[data-theme=dark] input::placeholder{color:rgba(235,235,245,0.32)}
+[data-theme=dark] .row:hover td,[data-theme=dark] .rowbtn:hover td,[data-theme=dark] .oprow:hover{background:rgba(255,255,255,0.04)!important}
+[data-theme=dark] [stroke="#1A1A1A"],[data-theme=dark] [stroke="#727272"]{stroke:rgba(255,255,255,0.85)}
+[data-theme=dark] [stroke="#64748B"]{stroke:rgba(235,235,245,0.76)}
+[data-theme=dark] [fill="#0F172A"]{fill:rgba(255,255,255,0.92)}
+/* Menú desplegable estilo macOS */
+.combo{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;height:34px;padding:0 7px 0 12px;border:0;border-radius:8px;background:var(--control);box-shadow:0 0 0 0.5px rgba(0,0,0,0.16),0 1px 2px rgba(0,0,0,0.05);font:inherit;font-size:13px;color:var(--t1);text-align:left;cursor:pointer;box-sizing:border-box}
+.combo:hover{background:var(--fill)}
+.combo[aria-expanded=true]{box-shadow:0 0 0 3px rgba(0,122,255,0.25),0 0 0 0.5px rgba(0,122,255,0.6)}
+.combo-c{width:20px;height:20px;flex:none;border-radius:6px;background:var(--sep2);color:var(--t2);display:inline-flex;align-items:center;justify-content:center}
+.mmenu{position:absolute;z-index:70;max-height:280px;overflow:auto;padding:5px;box-sizing:border-box;border-radius:10px;background:rgba(255,255,255,0.94);-webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);box-shadow:0 0 0 0.5px rgba(0,0,0,0.20),0 10px 25px rgba(0,0,0,0.14);display:flex;flex-direction:column;gap:1px;animation:menuIn .12s ease-out;text-align:left}
+[data-theme=dark] .mmenu{background:rgba(44,43,56,0.94);box-shadow:0 0 0 0.5px rgba(255,255,255,0.16),0 14px 34px rgba(0,0,0,0.5)}
+.mitem{display:flex;align-items:center;gap:8px;width:100%;min-height:26px;padding:0 8px 0 10px;border:0;border-radius:6px;background:transparent;font:inherit;font-size:13px;font-weight:500;color:var(--t1);text-align:left;cursor:pointer;white-space:nowrap;flex:none}
+.mitem .ml{overflow:hidden;text-overflow:ellipsis}
+.mitem .mh{margin-left:auto;padding-left:12px;font-size:12px;font-weight:400;color:var(--t3);font-variant-numeric:tabular-nums}
+.mitem .mk{width:12px;flex:none;display:inline-flex;justify-content:flex-end}
+.mitem .mdot{width:7px;height:7px;border-radius:50%;flex:none;box-shadow:inset 0 0 0 0.5px rgba(0,0,0,0.12)}
+.mitem:hover,.mitem[data-sel=true]{background:#007AFF;color:#FFFFFF}
+.mitem:hover .mh,.mitem[data-sel=true] .mh{color:rgba(255,255,255,0.82)}
+.mmenu:hover .mitem[data-sel=true]:not(:hover){background:transparent;color:var(--t1)}
+.mmenu:hover .mitem[data-sel=true]:not(:hover) .mh{color:var(--t3)}
+[data-theme=dark] .mitem:hover,[data-theme=dark] .mitem[data-sel=true]{background:#0A84FF}
+.mitem[disabled]{opacity:.4;cursor:default;background:transparent!important;color:var(--t1)!important}
+@keyframes menuIn{from{opacity:0;transform:translateY(-4px) scale(.99)}to{opacity:1;transform:none}}
+/* Sidebar fijo: siempre visible al bajar la página; su contenido se desplaza si no cabe */
+@media (min-width: 900px){nav.side{position:sticky!important;top:10px;align-self:flex-start!important;height:calc(100vh - 20px)!important;min-height:0!important;overflow-y:auto;scrollbar-width:thin}}
+/* Sidebar minimizable y animado */
+nav.side{overflow-x:hidden;transition:flex-basis .38s cubic-bezier(.22,1,.36,1),max-width .38s cubic-bezier(.22,1,.36,1),padding .38s cubic-bezier(.22,1,.36,1);animation:sideIn .55s cubic-bezier(.22,1,.36,1) both}
+nav.side a{white-space:nowrap;overflow:hidden;transition:background .2s ease,box-shadow .2s ease,padding .38s cubic-bezier(.22,1,.36,1),gap .38s cubic-bezier(.22,1,.36,1)}
+nav.side a svg{flex:none;transition:transform .2s ease}
+nav.side a:hover svg{transform:scale(1.1)}
+nav.side a>span{transition:opacity .2s ease}
+nav.side>span{max-height:40px;overflow:hidden;white-space:nowrap;transition:opacity .2s ease,max-height .35s ease,padding .35s ease}
+nav.side .sb-brand,nav.side .sb-txt{max-width:200px;overflow:hidden;white-space:nowrap;transition:opacity .2s ease,max-width .38s cubic-bezier(.22,1,.36,1)}
+nav.side>div:first-child button svg{transition:transform .38s cubic-bezier(.22,1,.36,1)}
+nav.side[data-collapsed=true]{flex:0 0 64px!important;max-width:64px!important;padding-left:8px!important;padding-right:8px!important}
+nav.side[data-collapsed=true]>span{opacity:0;max-height:0;padding-top:0!important;padding-bottom:0!important}
+nav.side[data-collapsed=true] .sb-brand,nav.side[data-collapsed=true] .sb-txt{opacity:0;max-width:0}
+nav.side[data-collapsed=true] a>span{opacity:0}
+nav.side[data-collapsed=true] a{padding-left:16px!important;padding-right:0!important;height:36px!important;gap:40px!important}
+nav.side[data-collapsed=true]>div:first-child{justify-content:center!important;padding:2px 0 12px!important}
+nav.side[data-collapsed=true]>div:first-child button svg{transform:scaleX(-1)}
+nav.side[data-collapsed=true] .sb-top{align-items:center}
+nav.side[data-collapsed=true] .sb-top>div{padding:0!important}
+@keyframes sideIn{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){nav.side,nav.side *{transition:none!important;animation:none!important}}
+/* ---------- Paleta oscura equilibrada: tonos menos saturados para que no se vean eléctricos ---------- */
+[data-theme=light]{--area-hd:#64B5FF;--area-hd-t:#0B2E4F}
+[data-theme=dark]{--accent-t:#7FB2E5;--green-t:#5DBB85;--orange-t:#E0A458;--red-t:#E07A74;--purple-t:#B59AE6;--solid:#3A7FCC;--accent-bg:rgba(58,127,204,0.22);--accent-ring:rgba(127,178,229,0.32);--green-bg:rgba(93,187,133,0.14);--green-ring:rgba(93,187,133,0.28);--orange-bg:rgba(224,164,88,0.14);--orange-ring:rgba(224,164,88,0.28);--red-bg:rgba(224,122,116,0.15);--red-ring:rgba(224,122,116,0.30);--area-hd:rgba(58,127,204,0.24);--area-hd-t:rgba(255,255,255,0.92)}
+[data-theme=dark] .primary{background:#3A7FCC}
+[data-theme=dark] .primary:hover{background:#4A8DD8}
+[data-theme=dark] .mitem:hover,[data-theme=dark] .mitem[data-sel=true]{background:#3A7FCC}
+[data-theme=dark] .bar-fill,[data-theme=dark] .mdot,[data-theme=dark] svg.reveal,[data-theme=dark] .ring-draw{filter:saturate(.72) brightness(.92)}
+[data-theme=dark] .notif[role=status]>span:first-child{filter:saturate(.75) brightness(.92)}
+/* Barra minimizada: íconos, avatar y botón en el mismo eje */
+nav.side[data-collapsed=true] a{justify-content:center!important;padding:0!important;gap:0!important;font-size:0!important}
+nav.side a{transition:background .2s ease,box-shadow .2s ease,padding .38s cubic-bezier(.22,1,.36,1),gap .38s cubic-bezier(.22,1,.36,1),font-size .2s ease}
+nav.side[data-collapsed=true] .sb-top>div{gap:0!important;justify-content:center!important}
+/* Barra minimizada: cada opción es una caja fija centrada (con o sin conteo) */
+nav.side[data-collapsed=true] a{width:40px!important;margin-left:auto!important;margin-right:auto!important;box-sizing:border-box;padding:0!important;gap:0!important;justify-content:center!important;font-size:0!important}
+nav.side[data-collapsed=true] a>span{display:none!important}
+nav.side[data-collapsed=true] .sb-top>div:first-child{width:40px;margin:0 auto}
+/* Paleta oscura también en íconos y gráficas */
+[data-theme=dark] svg{filter:saturate(.75) brightness(.95)}
+[data-theme=dark] svg svg,[data-theme=dark] svg .ring-draw{filter:none}
+[data-theme=dark] .alert-row>span:first-child{filter:saturate(.72) brightness(.92)}
+</style>
+</helmet>
+<div data-theme="{{theme}}" onClick="{{closeMenu}}" style="min-height: 100vh; background: {{bg}}; color: var(--t1); font-family: {{font}}; font-size: 13px; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px; padding: 10px; box-sizing: border-box">
+
+<!-- Sidebar -->
+<nav class="side" data-collapsed="{{sb.c}}" aria-label="Navegación principal" style="flex: 1 1 220px; max-width: 232px; align-self: stretch; padding: 12px 10px 10px; box-sizing: border-box; display: flex; flex-direction: column; gap: 1px; min-height: calc(100vh - 20px)">
+<div style="display: flex; align-items: center; justify-content: space-between; padding: 2px 2px 14px 8px">
+<div class="sb-brand" style="display: flex; align-items: center; gap: 8px">
+<span style="font-size: 16px; font-weight: 800; letter-spacing: -0.5px; color: #0284C7">inter</span>
+<span style="width: 1px; height: 14px; background: var(--sep)"></span>
+<span style="font-size: 13px; font-weight: 600">Operaciones IP</span>
+</div>
+<button class="pill pillbtn" onClick="{{sb.toggle}}" aria-label="{{sb.label}}" title="{{sb.label}}" style="cursor: pointer; width: 30px; height: 30px; border: 0; display: flex; align-items: center; justify-content: center; padding: 0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="3"></rect><path d="M9 4.5v15"></path></svg></button>
+</div>
+<div class="sb-top" style="display: flex; flex-direction: column; gap: 10px; padding: 0 0 14px; margin-bottom: 8px; border-bottom: 1px solid var(--sep)">
+<div style="display: flex; align-items: center; gap: 8px; padding: 2px 6px 0">
+<span style="width: 28px; height: 28px; border-radius: 50%; background: var(--solid); color: #FFFFFF; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center">C</span>
+<div class="sb-txt" style="display: flex; flex-direction: column; line-height: 1.3; min-width: 0"><span style="font-size: 12px; font-weight: 600">coordinador</span><span style="font-size: 12px; color: var(--t2)">coordinador@test.com</span></div>
+</div>
+</div>
+<span style="font-size: 12px; font-weight: 600; color: var(--t2); padding: 0 8px 4px">Coordinación</span>
+<a class="sideitem" title="Dashboard General" href="Main.dc.html" style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; border-radius: 8px; color: var(--t1); font-size: 13px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0078F0" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="2"></rect><rect x="14" y="3" width="7" height="5" rx="2"></rect><rect x="14" y="12" width="7" height="9" rx="2"></rect><rect x="3" y="16" width="7" height="5" rx="2"></rect></svg>Dashboard General</a>
+<a class="sideitem" title="Tickets" href="Tickets.dc.html" style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; border-radius: 8px; color: var(--t1); font-size: 13px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0078F0" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 9V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a3 3 0 0 0 0 6v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a3 3 0 0 0 0-6z"></path></svg><span style="flex: 1">Tickets</span><span style="font-size: 12px; font-weight: 600; color: var(--t2); font-variant-numeric: tabular-nums">48</span></a>
+<a class="sideitem" title="Gestión de Turno" href="Turno.dc.html" style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; border-radius: 8px; color: var(--t1); font-size: 13px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0078F0" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"></path></svg><span style="flex: 1">Gestión de Turno</span><span style="font-size: 12px; font-weight: 600; color: var(--green-t); font-variant-numeric: tabular-nums">13/14</span></a>
+<span style="font-size: 12px; font-weight: 600; color: var(--t2); padding: 14px 8px 4px">Control</span>
+<a class="sideitem" title="Reportes" href="Reportes.dc.html" style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; border-radius: 8px; color: var(--t1); font-size: 13px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0078F0" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"></path></svg>Reportes</a>
+<a title="Auditoría" href="Auditoria.dc.html" aria-current="page" style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; border-radius: 8px; background: var(--accent-bg); color: var(--accent-t); font-size: 13px; font-weight: 600; box-shadow: inset 0 0 0 0.5px var(--accent-ring)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"></path><path d="M9 12l2 2 4-4"></path></svg>Auditoría</a>
+<a class="sideitem" title="Administración" href="Administracion.dc.html" style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; border-radius: 8px; color: var(--t1); font-size: 13px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0078F0" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"></path><circle cx="15" cy="6" r="2"></circle><circle cx="9" cy="12" r="2"></circle><circle cx="17" cy="18" r="2"></circle></svg>Administración</a>
+</nav>
+
+<!-- Main -->
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 16px; padding: 2px 8px 32px 6px; box-sizing: border-box">
+
+<header style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-height: 44px">
+<div style="display: flex; flex-direction: column; margin-right: 6px">
+<h1 style="margin: 0; font-size: 20px; line-height: 24px; font-weight: 700; letter-spacing: -0.02em">Auditoría</h1>
+<span style="font-size: 12px; color: var(--t2)">Registro de acciones sobre tickets y turnos</span>
+</div>
+<span style="flex: 1"></span>
+<label class="pill" style="display: flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; width: 240px; box-sizing: border-box">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#727272" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+<span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Buscar en el registro</span>
+<input placeholder="Ticket, usuario o detalle" style="border: 0; background: transparent; outline: none; font: inherit; font-size: 13px; flex: 1; min-width: 0; color: var(--t1)">
+</label>
+<button style="display: inline-flex; align-items: center; gap: 10px; height: 36px; padding: 4px 4px 4px 16px; border: 0; border-radius: 999px; background: var(--control); box-shadow: 0 0 0 0.5px rgba(15,23,42,0.06), 0 4px 14px rgba(0,0,0,0.06); font: inherit; font-size: 13px; font-weight: 600; color: var(--t1); cursor: pointer">Exportar<span style="width: 28px; height: 28px; border-radius: 50%; background: var(--solid); color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"></path></svg></span></button>
+</header>
+
+<section class="glass" aria-label="Resumen de actividad" style="padding: 18px 24px; display: flex; flex-wrap: wrap; row-gap: 14px">
+<div class="stat" style="flex: 1 1 140px"><span style="font-size: 12px; font-weight: 600; color: var(--t2)">Eventos hoy</span><span class="kv" style="font-size: 26px; line-height: 32px">128</span></div>
+<div class="stat" style="flex: 1 1 140px"><span style="font-size: 12px; font-weight: 600; color: var(--t2)">Usuarios activos</span><span class="kv" style="font-size: 26px; line-height: 32px">15</span></div>
+<div class="stat" style="flex: 1 1 140px"><span style="font-size: 12px; font-weight: 600; color: var(--t2)">Reasignaciones</span><span class="kv" style="font-size: 26px; line-height: 32px">14</span></div>
+<div class="stat" style="flex: 1 1 140px"><span style="font-size: 12px; font-weight: 600; color: var(--t2)">Eliminaciones</span><span class="kv" style="font-size: 26px; line-height: 32px; color: var(--red-t)">2</span></div>
+</section>
+
+<section class="glass" aria-labelledby="h-log" style="position: relative; z-index: {{secZ}}; display: flex; flex-direction: column; min-width: 0">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 18px 24px 14px">
+<h2 id="h-log" style="margin: 0 10px 0 0; font-size: 15px; font-weight: 600; letter-spacing: -0.01em; flex: 1">Registro</h2>
+<sc-if value="{{dirty}}" hint-placeholder-val="{{ false }}"><button class="linkbtn" onClick="{{clear}}" style="border: 0; background: transparent; padding: 0; font: inherit; font-size: 12px; font-weight: 600; color: var(--accent-t); cursor: pointer; margin-right: 4px">Quitar filtros</button></sc-if>
+<sc-for list="{{filters}}" as="f" hint-placeholder-count="3">
+<span style="position: relative; display: inline-flex">
+<button class="popup" onClick="{{f.toggle}}" aria-haspopup="listbox" aria-expanded="{{f.open}}" style="box-shadow: {{f.ring}}"><span style="color: var(--t2)">{{f.label}}:</span><span style="font-weight: 600; color: {{f.vc}}">{{f.value}}</span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--t2)"><path d="M6 9l6 6 6-6"></path></svg></button>
+<sc-if value="{{f.open}}" hint-placeholder-val="{{ false }}">
+<div role="listbox" class="mmenu" style="top: 34px; right: 0; min-width: 220px">
+<sc-for list="{{f.opts}}" as="o" hint-placeholder-count="4">
+<button type="button" role="option" class="mitem" aria-selected="{{o.sel}}" data-sel="{{o.sel}}" disabled="{{o.dis}}" onClick="{{o.pick}}"><sc-if value="{{o.hasDot}}" hint-placeholder-val="{{ false }}"><span class="mdot" style="background: {{o.dot}}"></span></sc-if><span class="ml">{{o.label}}</span><span class="mh">{{o.hint}}</span><span class="mk"><sc-if value="{{o.sel}}" hint-placeholder-val="{{ false }}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"></path></svg></sc-if></span></button>
+</sc-for>
+</div>
+</sc-if>
+</span>
+</sc-for>
+</div>
+<div style="overflow-x: auto">
+<table style="width: 100%; min-width: 900px; border-collapse: collapse; font-size: 12px">
+<thead>
+<tr style="text-align: left; font-size: 12px; color: var(--t2)">
+<th style="padding: 8px 8px 8px 24px; border-top: 1px solid var(--sep); border-bottom: 1px solid var(--sep); font-weight: 600; width: 70px">Hora</th>
+<th style="padding: 8px; border-top: 1px solid var(--sep); border-bottom: 1px solid var(--sep); font-weight: 600; width: 200px">Usuario</th>
+<th style="padding: 8px; border-top: 1px solid var(--sep); border-bottom: 1px solid var(--sep); font-weight: 600; width: 120px">Acción</th>
+<th style="padding: 8px; border-top: 1px solid var(--sep); border-bottom: 1px solid var(--sep); font-weight: 600; width: 90px">Ticket</th>
+<th style="padding: 8px 24px 8px 8px; border-top: 1px solid var(--sep); border-bottom: 1px solid var(--sep); font-weight: 600">Detalle</th>
+</tr>
+</thead>
+<sc-for list="{{days}}" as="d" hint-placeholder-count="2">
+<tbody>
+<tr><td colspan="5" style="padding: 14px 24px 6px; border-bottom: 1px solid var(--sep); font-size: 12px; font-weight: 700; color: var(--t1)">{{d.label}}<span style="margin-left: 8px; font-weight: 500; color: var(--t2)">{{d.count}}</span></td></tr>
+<sc-for list="{{d.rows}}" as="r" hint-placeholder-count="6">
+<tr class="row">
+<td style="padding: 10px 8px 10px 24px; border-bottom: 1px solid var(--sep2); color: var(--t2); font-variant-numeric: tabular-nums">{{r.time}}</td>
+<td style="padding: 10px 8px; border-bottom: 1px solid var(--sep2)"><span style="display: inline-flex; align-items: center; gap: 8px"><span style="width: 22px; height: 22px; border-radius: 50%; background: {{r.avBg}}; color: {{r.avC}}; font-size: 9px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center">{{r.ini}}</span><span style="font-weight: 500">{{r.user}}</span></span></td>
+<td style="padding: 10px 8px; border-bottom: 1px solid var(--sep2)"><span style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: {{r.c}}"><span style="width: 6px; height: 6px; border-radius: 50%; background: {{r.dot}}"></span>{{r.action}}</span></td>
+<td style="padding: 10px 8px; border-bottom: 1px solid var(--sep2); font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 12px; font-weight: 600">{{r.ticket}}</td>
+<td style="padding: 10px 24px 10px 8px; border-bottom: 1px solid var(--sep2); color: var(--t1)">{{r.detail}}</td>
+</tr>
+</sc-for>
+</tbody>
+</sc-for>
+</table>
+</div>
+<div style="display: flex; align-items: center; padding: 12px 24px 16px; font-size: 12px; color: var(--t2)">
+<span style="flex: 1">{{footer}}</span>
+<button class="pill pillbtn" style="height: 30px; border: 0; padding: 0 14px; font: inherit; font-size: 12px; font-weight: 600; color: var(--t1); cursor: pointer">Cargar más</button>
+</div>
+</section>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;fuente&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;IBM Plex Sans&quot;,&quot;Instrument Sans&quot;,&quot;Sistema (SF Pro)&quot;],&quot;default&quot;:&quot;Sistema (SF Pro)&quot;},&quot;tema&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Claro&quot;,&quot;Oscuro&quot;,&quot;Sistema&quot;],&quot;default&quot;:&quot;Oscuro&quot;},&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1100}}">
+class Component extends DCLogic {
+  renderVals() {
+    const FONTS = {
+      'IBM Plex Sans': "'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif",
+      'Instrument Sans': "'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif",
+      'Sistema (SF Pro)': "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif"
+    };
+    const font = FONTS[this.props.fuente ?? 'IBM Plex Sans'] || FONTS['IBM Plex Sans'];
+    const mode = this.props.tema ?? 'Claro';
+    let isDark = mode === 'Oscuro';
+    if (mode === 'Sistema') { try { isDark = window.matchMedia('(prefers-color-scheme: dark)').matches; } catch (e) {} }
+    const theme = isDark ? 'dark' : 'light';
+    const bg = isDark ? 'radial-gradient(1200px 700px at 78% -12%, rgba(132,120,255,0.38), transparent 60%), radial-gradient(900px 650px at -5% 105%, rgba(88,80,190,0.45), transparent 62%), linear-gradient(118deg, transparent 38%, rgba(170,160,255,0.10) 46%, transparent 54%), linear-gradient(135deg, #0D0C21 0%, #1C1A40 40%, #2B2860 70%, #121128 100%)' : 'radial-gradient(900px 500px at 85% -10%, rgba(56,189,248,0.22), transparent 60%), radial-gradient(700px 500px at 10% 110%, rgba(99,102,241,0.12), transparent 60%), linear-gradient(135deg, var(--sep2) 0%, #EFF6FF 50%, var(--accent-bg) 100%)';
+    const A = {
+      cerro: ['Cerró', 'var(--green-t)', '#22C55E'], resolvio: ['Resolvió', 'var(--green-t)', '#22C55E'], restauro: ['Restauró', 'var(--accent-t)', '#0EA5E9'], horario: ['Horario', 'var(--purple-t)', '#8B5CF6'], asigno: ['Asignó', 'var(--accent-t)', '#0EA5E9'], reasigno: ['Reasignó', 'var(--accent-t)', '#0EA5E9'],
+      creo: ['Creó', 'var(--t1)', 'var(--t3)'], edito: ['Editó', 'var(--t1)', 'var(--t3)'], pauso: ['Pausó', 'var(--orange-t)', '#F59E0B'],
+      elimino: ['Eliminó', 'var(--red-t)', '#EF4444'], guardia: ['Guardia', 'var(--purple-t)', '#8B5CF6'], traspaso: ['Traspasó', 'var(--purple-t)', '#8B5CF6']
+    };
+    const coord = ['#0284C7', '#FFFFFF'], op = ['var(--accent-bg)', 'var(--accent-t)'], sys = ['var(--sep2)', 'var(--t2)'];
+    const ev = (time, user, ini, who, act, ticket, detail) => {
+      const a = A[act];
+      return { time, user, ini, avBg: who[0], avC: who[1], action: a[0], c: a[1], dot: a[2], ticket, detail };
+    };
+    const days = [
+      { label: 'Hoy, martes 13 oct', key: 'Hoy', rows: [
+        ev('12:18', 'coordinador', 'C', coord, 'reasigno', 'SIM-046', 'De Demo FTTH 3 a Demo FTTH 1 · motivo: carga'),
+        ev('12:09', 'coordinador', 'C', coord, 'cerro', 'SIM-040', 'Motivo: Servicio restablecido'),
+        ev('12:05', 'Demo WAN 1', 'W1', op, 'resolvio', 'SIM-043', 'Marcado como resuelto · pendiente de cierre'),
+        ev('11:52', 'Sistema', 'S', sys, 'creo', 'SIM-050', 'Ingreso por correo (Microsoft Graph) · área WAN'),
+        ev('11:42', 'Sistema', 'S', sys, 'creo', 'SIM-048', 'Ingreso por correo (Microsoft Graph) · área WAN'),
+        ev('11:30', 'Demo Grandes Clientes 1', 'G1', op, 'pauso', 'SIM-039', 'En pausa · espera de ventana con el cliente'),
+        ev('11:14', 'coordinador', 'C', coord, 'asigno', 'SIM-047', 'Asignado a Demo Telefonía 1'),
+        ev('10:58', 'coordinador', 'C', coord, 'edito', 'SIM-041', 'Prioridad P3 → P2'),
+        ev('10:40', 'coordinador', 'C', coord, 'elimino', 'SIM-031', 'Motivo: Duplicado de SIM-030 · enviado a la papelera'),
+        ev('09:22', 'coordinador', 'C', coord, 'guardia', '—', 'Guardia de la semana: Demo FTTH 4, Demo Inalámbrico 2, Demo Telefonía 1')
+      ]},
+      { label: 'Ayer, lunes 12 oct', key: 'Ayer', rows: [
+        ev('17:02', 'coordinador', 'C', coord, 'traspaso', '9 tickets', 'Traspaso a guardia con nota · los tickets siguen con su operador'),
+        ev('16:47', 'Demo FTTH 1', 'F1', op, 'resolvio', 'SIM-036', 'Marcado como resuelto · OLT reiniciada'),
+        ev('15:31', 'coordinador', 'C', coord, 'horario', '—', 'Demo WAN 2 · 13:00–22:00, de miércoles a domingo'),
+        ev('14:12', 'coordinador', 'C', coord, 'elimino', 'SIM-029', 'Motivo: Prueba del buzón · enviado a la papelera'),
+        ev('13:40', 'coordinador', 'C', coord, 'restauro', 'SIM-027', 'Restaurado desde la papelera'),
+        ev('13:05', 'coordinador', 'C', coord, 'reasigno', 'SIM-036', 'De Demo Grandes Clientes 2 a Demo Grandes Clientes 1')
+      ]}
+    ];
+    // Filtros con menú desplegable estilo macOS
+    const S = this.state || {};
+    const set = (o) => this.setState(o);
+    const stop = (e) => { if (e && e.stopPropagation) e.stopPropagation(); };
+    const menu = S.menu || '';
+    const F = { user: 'Todos', act: 'Todas', date: 'Últimos 2 días', ...(S.f || {}) };
+    const all = days.flatMap((d) => d.rows.map((r) => ({ ...r, day: d.key })));
+    const users = ['Todos'].concat(Array.from(new Set(all.map((r) => r.user))));
+    const acts = ['Todas'].concat(Array.from(new Set(all.map((r) => r.action))));
+    const ok = (r, skip) => (skip === 'user' || F.user === 'Todos' || r.user === F.user) && (skip === 'act' || F.act === 'Todas' || r.action === F.act) && (skip === 'date' || F.date === 'Últimos 2 días' || r.day === F.date);
+    const DEF = { user: 'Todos', act: 'Todas', date: 'Últimos 2 días' };
+    const mk = (k, label, vals, test) => ({
+      label, value: F[k], open: menu === k,
+      vc: F[k] === DEF[k] ? 'var(--t1)' : 'var(--accent-t)',
+      ring: F[k] === DEF[k] ? '0 0 0 0.5px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.06)' : 'inset 0 0 0 1px var(--accent-ring)',
+      toggle: (e) => { stop(e); set({ menu: menu === k ? '' : k }); },
+      opts: vals.map((val) => {
+        const n = all.filter((r) => ok(r, k) && (val === DEF[k] || test(r, val))).length;
+        return { label: val, hint: String(n), sel: F[k] === val, hasDot: false, dot: 'transparent', dis: false, pick: (e) => { stop(e); set({ f: { ...F, [k]: val }, menu: '' }); } };
+      })
+    });
+    const filters = [
+      mk('user', 'Usuario', users, (r, v) => r.user === v),
+      mk('act', 'Acción', acts, (r, v) => r.action === v),
+      mk('date', 'Fecha', ['Últimos 2 días', 'Hoy', 'Ayer'], (r, v) => r.day === v)
+    ];
+    const shown = days.map((d) => { const rows = d.rows.filter((r) => ok({ ...r, day: d.key })); return { ...d, rows, count: rows.length + (rows.length === 1 ? ' evento' : ' eventos') }; }).filter((d) => d.rows.length);
+    const n = shown.reduce((x, d) => x + d.rows.length, 0);
+    const dirty = F.user !== DEF.user || F.act !== DEF.act || F.date !== DEF.date;
+    // Barra lateral minimizable (se recuerda entre pantallas)
+    const sbStored = (() => { try { return localStorage.getItem('kip.sidebar') === 'min'; } catch (e) { return false; } })();
+    const sbMin = (this.state && this.state.sbMin !== undefined) ? this.state.sbMin : sbStored;
+    const sb = {
+      c: sbMin ? 'true' : 'false', label: sbMin ? 'Mostrar barra lateral' : 'Minimizar barra lateral',
+      toggle: (e) => { if (e && e.stopPropagation) e.stopPropagation(); const nv = !sbMin; try { localStorage.setItem('kip.sidebar', nv ? 'min' : 'full'); } catch (err) {} this.setState({ sbMin: nv }); }
+    };
+    return { sb,
+      font, theme, bg, days: shown, filters, dirty,
+      clear: () => set({ f: {}, menu: '' }),
+      closeMenu: () => { if (this.state && this.state.menu) set({ menu: '' }); },
+      secZ: menu ? 31 : 'auto',
+      footer: dirty ? n + (n === 1 ? ' evento con estos filtros' : ' eventos con estos filtros') : 'Mostrando ' + n + ' de 231 eventos'
+    };
+  }
+}
+</script>
+</body>
+</html>

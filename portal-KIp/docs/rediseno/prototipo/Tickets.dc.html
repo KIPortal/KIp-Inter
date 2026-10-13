@@ -1,0 +1,1365 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Tickets</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0;background:#F1F5F9}
+a{color:#0369A1;text-decoration:none}a:hover{color:#075985}
+.glass{background:rgba(255,255,255,0.85);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);border-radius:24px;box-shadow:0 0 0 0.5px rgba(15,23,42,0.05),0 4px 12px rgba(0,0,0,0.03)}
+.pill{background:rgba(255,255,255,0.72);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%);box-shadow:1.25px 0 0 -0.75px #D0D0D0,-1.25px 0 0 -0.75px #D0D0D0,0 0 0 0.5px #E2E8F0,inset 0 1px 0 rgba(255,255,255,0.95),0 8px 15px rgba(0,0,0,0.03);border-radius:1000px}
+.side{background:rgba(241,245,249,0.9);-webkit-backdrop-filter:blur(40px) saturate(150%);backdrop-filter:blur(40px) saturate(150%);box-shadow:0 0 0 0.5px rgba(15,23,42,0.08),inset 0 1px 0 rgba(255,255,255,0.8),0 10px 30px rgba(15,23,42,0.06);border-radius:18px}
+.sideitem:hover{background:rgba(15,23,42,0.05)}
+.pillbtn:hover{background:rgba(255,255,255,0.95)}
+.primary{background:#0284C7}.primary:hover{background:#0369A1}
+.popup{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 8px 0 12px;border:0;border-radius:8px;background:var(--control);box-shadow:0 0 0 0.5px rgba(0,0,0,0.12),0 1px 2px rgba(0,0,0,0.06);font:inherit;font-size:12px;color:var(--t1);cursor:pointer}
+.ico{width:28px;height:28px;border:0;border-radius:8px;background:transparent;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:var(--t2)}
+.ico:hover{background:rgba(15,23,42,0.06);color:var(--t1)}
+.row:hover td{background:rgba(14,165,233,0.04)}
+.stat{display:flex;flex-direction:column;gap:2px;padding:0 20px;border-left:1px solid var(--sep)}
+.stat:first-child{border-left:0;padding-left:0}
+.kv{font-family:inherit;font-weight:600;color:var(--t1);letter-spacing:-0.02em;font-variant-numeric:tabular-nums}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(14,165,233,0.3)}
+[data-theme=dark] .chip{background:rgba(10,132,255,0.18);box-shadow:inset 0 0 0 1px rgba(64,156,255,0.35);color:#64B5FF}
+[data-theme=dark] .sideitem:hover,[data-theme=dark] .pillbtn:hover,[data-theme=dark] .ico:hover{background:rgba(255,255,255,0.08)}
+[data-theme=dark] .stat{border-color:rgba(255,255,255,0.10)}
+/* Texto: Primary / Secondary / Tertiary */
+[data-theme=dark] [style*="color: #0F172A"],[data-theme=dark] [style*="color: #1E293B"],[data-theme=dark] [style*="color: #1D1D1F"],[data-theme=dark] [style*="color: #1A1A1A"],[data-theme=dark] [style*="color: #1C1C1E"],[data-theme=dark] [style*="color: #334155"]{color:rgba(255,255,255,0.92)!important}
+[data-theme=dark] [style*="color: #64748B"],[data-theme=dark] [style*="color: #475569"]{color:rgba(235,235,245,0.60)!important}
+[data-theme=dark] [style*="color: #94A3B8"],[data-theme=dark] [style*="color: #8E8E93"]{color:rgba(235,235,245,0.32)!important}
+/* Colores de sistema (oscuro) */
+[data-theme=dark] [style*="color: #0369A1"],[data-theme=dark] [style*="color: #0284C7"]{color:#64B5FF!important}
+[data-theme=dark] [style*="color: #15803D"],[data-theme=dark] [style*="color: #047857"]{color:#30D158!important}
+[data-theme=dark] [style*="color: #B45309"],[data-theme=dark] [style*="color: #C2410C"]{color:#FF9F0A!important}
+[data-theme=dark] [style*="color: #B91C1C"]{color:#FF6961!important}
+[data-theme=dark] [style*="color: #6D28D9"]{color:#BF5AF2!important}
+[data-theme=dark] [fill="#0F172A"]{fill:rgba(255,255,255,0.92)}
+[data-theme=dark] svg [stroke="#1A1A1A"]{stroke:rgba(255,255,255,0.85)}
+[data-theme=dark] svg[stroke="#1A1A1A"]{stroke:rgba(255,255,255,0.85)}
+/* Separadores y superficies */
+[data-theme=dark] [style*="solid var(--sep)"],[data-theme=dark] [style*="solid #F1F5F9"],[data-theme=dark] [style*="solid #CBD5E1"]{border-color:rgba(255,255,255,0.08)!important}
+[data-theme=dark] [style*="background: #CBD5E1"],[data-theme=dark] [style*="background: #D9D9D9"]{background:rgba(255,255,255,0.14)!important}
+[data-theme=dark] [style*="background: #F0FDF4"],[data-theme=dark] [style*="background: #ECFDF5"]{background:rgba(48,209,88,0.16)!important;box-shadow:none!important}
+[data-theme=dark] [style*="background: #FFFBEB"]{background:rgba(255,159,10,0.16)!important;box-shadow:none!important}
+[data-theme=dark] [style*="background: #FEF2F2"]{background:rgba(255,69,58,0.18)!important;box-shadow:none!important}
+[data-theme=dark] [style*="background: #F0F9FF"],[data-theme=dark] [style*="background: #E0F2FE"]{background:rgba(10,132,255,0.20)!important;box-shadow:none!important}
+[data-theme=dark] [style*="background: #F8FAFC"],[data-theme=dark] [style*="background: #F1F5F9"],[data-theme=dark] [style*="background: rgba(255,255,255,0.6)"],[data-theme=dark] [style*="background: rgba(255,255,255,0.7)"],[data-theme=dark] [style*="background: rgba(255,255,255,0.45)"]{background:rgba(255,255,255,0.05)!important;box-shadow:inset 0 0 0 0.5px rgba(255,255,255,0.10)!important}
+[data-theme=dark] [style*="background: #FFFFFF"]:not(.knob){background:rgba(255,255,255,0.10)!important;color:rgba(255,255,255,0.92)!important}
+[data-theme=dark] [style*="background: #E6E6E6"]{background:rgba(255,255,255,0.18)!important}
+[data-theme=dark] [style*="background: #0284C7"]{background:#0A84FF!important}
+[data-theme=dark] [style*="linear-gradient(#E2E8F0 1px"]{background-image:linear-gradient(rgba(255,255,255,0.08) 1px,transparent 1px)!important}
+[data-theme=dark] [style*="linear-gradient(90deg, #E2E8F0 1px"]{background-image:linear-gradient(90deg,rgba(255,255,255,0.08) 1px,transparent 1px)!important}
+[data-theme=dark] [role=tab][aria-selected=true]{background:rgba(255,255,255,0.16)!important;color:rgba(255,255,255,0.95)!important;box-shadow:inset 0 0 0 0.5px rgba(255,255,255,0.12)!important}
+[data-theme=dark] [role=tablist]{background:rgba(0,0,0,0.25)!important;border-color:rgba(255,255,255,0.06)!important}
+[data-theme=dark] input{color:rgba(255,255,255,0.92)!important}
+[data-theme=dark] input::placeholder{color:rgba(235,235,245,0.32)}
+[data-theme=dark] .row:hover td,[data-theme=dark] .rowbtn:hover td,[data-theme=dark] .oprow:hover{background:rgba(255,255,255,0.04)!important}
+
+/* ---------- Tokens de tema ---------- */
+[data-theme=light]{--t1:#1D1D1F;--t2:#556070;--t3:#7C7C82;--accent-t:#0369A1;--green-t:#15803D;--orange-t:#B45309;--red-t:#B91C1C;--purple-t:#6D28D9;--sep:#E2E8F0;--sep2:#F1F5F9;--green-bg:#ECFDF5;--orange-bg:#FFFBEB;--red-bg:#FEF2F2;--accent-bg:#E0F2FE;--accent-ring:#BAE6FD;--green-ring:#BBF7D0;--orange-ring:#FDE68A;--red-ring:#FECACA;--fill:#F8FAFC;--control:#FFFFFF;--seg-on:#FFFFFF;--seg-sel:#E6E6E6;--solid:#0284C7;--map-empty:rgba(229,229,234,0.7);--map-line:#FFFFFF;--glyph:#1A1A1A;--well:rgba(255,255,255,0.6)}
+[data-theme=dark]{--t1:rgba(255,255,255,0.92);--t2:rgba(235,235,245,0.76);--t3:rgba(235,235,245,0.54);--accent-t:#64B5FF;--green-t:#30D158;--orange-t:#FF9F0A;--red-t:#FF6961;--purple-t:#BF5AF2;--sep:rgba(255,255,255,0.10);--sep2:rgba(255,255,255,0.06);--green-bg:rgba(48,209,88,0.16);--orange-bg:rgba(255,159,10,0.16);--red-bg:rgba(255,69,58,0.18);--accent-bg:rgba(10,132,255,0.24);--accent-ring:rgba(64,156,255,0.38);--green-ring:rgba(48,209,88,0.32);--orange-ring:rgba(255,159,10,0.32);--red-ring:rgba(255,69,58,0.32);--fill:rgba(255,255,255,0.05);--control:rgba(255,255,255,0.10);--seg-on:rgba(255,255,255,0.18);--seg-sel:rgba(255,255,255,0.18);--solid:#0A84FF;--map-empty:rgba(255,255,255,0.08);--map-line:rgba(13,12,33,0.85);--glyph:rgba(255,255,255,0.85);--well:rgba(255,255,255,0.06)}
+[data-theme]{color:var(--t1);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+[data-theme] h1,[data-theme] h2,[data-theme] h3,[data-theme] h4,[data-theme] h5,[data-theme] h6,[data-theme] th,[data-theme] td{color:inherit}
+[data-theme=dark] .popup,[data-theme=dark] .field{background:var(--control)}
+
+/* ---------- Modo oscuro · macOS 27 Golden Gate ---------- */
+/* Materiales: Ultra Thick (sidebar), Regular (tarjetas), Thin (controles); texto Primary/Secondary/Tertiary */
+[data-theme=dark]{color-scheme:dark}
+[data-theme=dark] .glass,[data-theme=dark] .bento{background:rgba(38,37,58,0.62);-webkit-backdrop-filter:blur(30px) saturate(160%);backdrop-filter:blur(30px) saturate(160%);box-shadow:0 0 0 0.5px rgba(255,255,255,0.10),inset 0 1px 0 rgba(255,255,255,0.06),0 12px 32px rgba(5,4,20,0.40)}
+[data-theme=dark] .glass:hover,[data-theme=dark] .bento:hover{box-shadow:0 0 0 0.5px rgba(255,255,255,0.14),inset 0 1px 0 rgba(255,255,255,0.08),0 16px 40px rgba(5,4,20,0.5)}
+[data-theme=dark] .side{background:rgba(30,29,40,0.86);box-shadow:0 0 0 0.5px rgba(255,255,255,0.10),inset 0 1px 0 rgba(255,255,255,0.05),0 12px 36px rgba(5,4,20,0.45)}
+[data-theme=dark] .notif{background:linear-gradient(180deg,rgba(64,63,74,0.72),rgba(30,30,36,0.72));box-shadow:1.25px 0 0 -0.75px rgba(255,255,255,0.22),-1.25px 0 0 -0.75px rgba(255,255,255,0.22),0 0 0 0.5px rgba(255,255,255,0.14),0 8px 48px rgba(0,0,0,0.45)}
+[data-theme=dark] .pill{background:rgba(60,59,74,0.55);box-shadow:1.25px 0 0 -0.75px rgba(255,255,255,0.18),-1.25px 0 0 -0.75px rgba(255,255,255,0.18),0 0 0 0.5px rgba(255,255,255,0.10),inset 0 1px 0 rgba(255,255,255,0.06),0 8px 15px rgba(0,0,0,0.2)}
+[data-theme=dark] .popup,[data-theme=dark] .field{background:rgba(255,255,255,0.08);box-shadow:0 0 0 0.5px rgba(255,255,255,0.14);color:rgba(255,255,255,0.92)}
+[data-theme=dark] .primary{background:#0A84FF}
+[data-theme=dark] .primary:hover{background:#409CFF}
+[data-theme=dark] .bt,[data-theme=dark] .kv{color:rgba(255,255,255,0.92)}
+[data-theme=dark] .chip{background:rgba(10,132,255,0.18);box-shadow:inset 0 0 0 1px rgba(64,156,255,0.35);color:#64B5FF}
+[data-theme=dark] .sideitem:hover,[data-theme=dark] .pillbtn:hover,[data-theme=dark] .ico:hover{background:rgba(255,255,255,0.08)}
+[data-theme=dark] .stat{border-color:rgba(255,255,255,0.10)}
+[data-theme=dark] [fill="#0F172A"]{fill:rgba(255,255,255,0.92)}
+[data-theme=dark] svg [stroke="#1A1A1A"]{stroke:rgba(255,255,255,0.85)}
+[data-theme=dark] svg[stroke="#1A1A1A"]{stroke:rgba(255,255,255,0.85)}
+[data-theme=dark] [role=tab][aria-selected=true]{background:rgba(255,255,255,0.16)!important;color:rgba(255,255,255,0.95)!important;box-shadow:inset 0 0 0 0.5px rgba(255,255,255,0.12)!important}
+[data-theme=dark] [role=tablist]{background:rgba(0,0,0,0.25)!important;border-color:rgba(255,255,255,0.06)!important}
+[data-theme=dark] input{color:rgba(255,255,255,0.92)!important}
+[data-theme=dark] input::placeholder{color:rgba(235,235,245,0.32)}
+[data-theme=dark] .row:hover td,[data-theme=dark] .rowbtn:hover td,[data-theme=dark] .oprow:hover{background:rgba(255,255,255,0.04)!important}
+[data-theme=dark] [stroke="#1A1A1A"],[data-theme=dark] [stroke="#727272"]{stroke:rgba(255,255,255,0.85)}
+[data-theme=dark] [stroke="#64748B"]{stroke:rgba(235,235,245,0.76)}
+[data-theme=dark] [fill="#0F172A"]{fill:rgba(255,255,255,0.92)}
+.notif{display:flex;align-items:flex-start;gap:10px;padding:12px 14px 12px 12px;border-radius:20px;background:rgba(255,255,255,0.80);-webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);box-shadow:1.25px 0 0 -0.75px #DBDBDB,-1.25px 0 0 -0.75px #DBDBDB,0 0 0 0.5px #DBDBDB,inset 0 1px 0 rgba(255,255,255,0.9),0 8px 32px rgba(0,0,0,0.14)}
+@keyframes toastIn{from{opacity:0;transform:translateX(40px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes sheetIn{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+[data-theme=light]{--dialog:rgba(250,250,252,0.90);--rim:#DBDBDB}
+[data-theme=dark]{--dialog:rgba(44,43,58,0.88);--rim:rgba(255,255,255,0.16)}
+button[disabled]{cursor:default!important}
+.opt:hover{background:var(--accent-bg)}
+.tpl{height:26px;padding:0 10px;border:0;border-radius:999px;background:var(--fill);box-shadow:inset 0 0 0 0.5px var(--sep);font:inherit;font-size:12px;color:var(--t1);cursor:pointer}
+.tpl:hover{background:var(--accent-bg);color:var(--accent-t)}
+.field{width:100%;box-sizing:border-box;border:0;border-radius:10px;background:var(--control);box-shadow:0 0 0 0.5px rgba(0,0,0,0.14),inset 0 1px 2px rgba(0,0,0,0.04);font:inherit;font-size:13px;color:var(--t1);padding:8px 10px;outline:none;resize:vertical}
+.field:focus{box-shadow:0 0 0 3px rgba(14,165,233,0.3)}
+.linkbtn{border:0;background:transparent;padding:0;font:inherit;color:var(--accent-t);cursor:pointer}
+.linkbtn:hover{text-decoration:underline}
+.dangerbtn{background:#DC2626}.dangerbtn:hover{background:#B91C1C}
+[data-theme=dark] .dangerbtn{background:#FF453A}
+.subj{display:block;border:0;background:transparent;padding:0;font:inherit;color:inherit;text-align:left;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.subj:hover{color:var(--accent-t)}
+.ico.danger:hover{background:var(--red-bg);color:var(--red-t)}
+/* Menú desplegable estilo macOS */
+.combo{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;height:34px;padding:0 7px 0 12px;border:0;border-radius:8px;background:var(--control);box-shadow:0 0 0 0.5px rgba(0,0,0,0.16),0 1px 2px rgba(0,0,0,0.05);font:inherit;font-size:13px;color:var(--t1);text-align:left;cursor:pointer;box-sizing:border-box}
+.combo:hover{background:var(--fill)}
+.combo[aria-expanded=true]{box-shadow:0 0 0 3px rgba(0,122,255,0.25),0 0 0 0.5px rgba(0,122,255,0.6)}
+.combo-c{width:20px;height:20px;flex:none;border-radius:6px;background:var(--sep2);color:var(--t2);display:inline-flex;align-items:center;justify-content:center}
+.mmenu{position:absolute;z-index:70;max-height:280px;overflow:auto;padding:5px;box-sizing:border-box;border-radius:10px;background:rgba(255,255,255,0.94);-webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);box-shadow:0 0 0 0.5px rgba(0,0,0,0.20),0 10px 25px rgba(0,0,0,0.14);display:flex;flex-direction:column;gap:1px;animation:menuIn .12s ease-out;text-align:left}
+[data-theme=dark] .mmenu{background:rgba(44,43,56,0.94);box-shadow:0 0 0 0.5px rgba(255,255,255,0.16),0 14px 34px rgba(0,0,0,0.5)}
+.mitem{display:flex;align-items:center;gap:8px;width:100%;min-height:26px;padding:0 8px 0 10px;border:0;border-radius:6px;background:transparent;font:inherit;font-size:13px;font-weight:500;color:var(--t1);text-align:left;cursor:pointer;white-space:nowrap;flex:none}
+.mitem .ml{overflow:hidden;text-overflow:ellipsis}
+.mitem .mh{margin-left:auto;padding-left:12px;font-size:12px;font-weight:400;color:var(--t3);font-variant-numeric:tabular-nums}
+.mitem .mk{width:12px;flex:none;display:inline-flex;justify-content:flex-end}
+.mitem .mdot{width:7px;height:7px;border-radius:50%;flex:none;box-shadow:inset 0 0 0 0.5px rgba(0,0,0,0.12)}
+.mitem:hover,.mitem[data-sel=true]{background:#007AFF;color:#FFFFFF}
+.mitem:hover .mh,.mitem[data-sel=true] .mh{color:rgba(255,255,255,0.82)}
+.mmenu:hover .mitem[data-sel=true]:not(:hover){background:transparent;color:var(--t1)}
+.mmenu:hover .mitem[data-sel=true]:not(:hover) .mh{color:var(--t3)}
+[data-theme=dark] .mitem:hover,[data-theme=dark] .mitem[data-sel=true]{background:#0A84FF}
+.mbadge{flex:none;padding:1px 7px;border-radius:999px;font-size:11px;font-weight:600;line-height:16px}
+.mitem:hover .mbadge,.mitem[data-sel=true] .mbadge{background:rgba(255,255,255,0.24)!important;color:#FFFFFF!important}
+.mmenu:hover .mitem[data-sel=true]:not(:hover) .mbadge{background:var(--fill)!important;color:var(--t1)!important}
+.mitem[disabled]{opacity:.4;cursor:default;background:transparent!important;color:var(--t1)!important}
+@keyframes menuIn{from{opacity:0;transform:translateY(-4px) scale(.99)}to{opacity:1;transform:none}}
+.flabel{font-size:12px;font-weight:700;color:var(--t2)}
+@keyframes drawerIn{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+/* Sidebar fijo: siempre visible al bajar la página; su contenido se desplaza si no cabe */
+@media (min-width: 900px){nav.side{position:sticky!important;top:10px;align-self:flex-start!important;height:calc(100vh - 20px)!important;min-height:0!important;overflow-y:auto;scrollbar-width:thin}}
+/* Sidebar minimizable y animado */
+nav.side{overflow-x:hidden;transition:flex-basis .38s cubic-bezier(.22,1,.36,1),max-width .38s cubic-bezier(.22,1,.36,1),padding .38s cubic-bezier(.22,1,.36,1);animation:sideIn .55s cubic-bezier(.22,1,.36,1) both}
+nav.side a{white-space:nowrap;overflow:hidden;transition:background .2s ease,box-shadow .2s ease,padding .38s cubic-bezier(.22,1,.36,1),gap .38s cubic-bezier(.22,1,.36,1)}
+nav.side a svg{flex:none;transition:transform .2s ease}
+nav.side a:hover svg{transform:scale(1.1)}
+nav.side a>span{transition:opacity .2s ease}
+nav.side>span{max-height:40px;overflow:hidden;white-space:nowrap;transition:opacity .2s ease,max-height .35s ease,padding .35s ease}
+nav.side .sb-brand,nav.side .sb-txt{max-width:200px;overflow:hidden;white-space:nowrap;transition:opacity .2s ease,max-width .38s cubic-bezier(.22,1,.36,1)}
+nav.side>div:first-child button svg{transition:transform .38s cubic-bezier(.22,1,.36,1)}
+nav.side[data-collapsed=true]{flex:0 0 64px!important;max-width:64px!important;padding-left:8px!important;padding-right:8px!important}
+nav.side[data-collapsed=true]>span{opacity:0;max-height:0;padding-top:0!important;padding-bottom:0!important}
+nav.side[data-collapsed=true] .sb-brand,nav.side[data-collapsed=true] .sb-txt{opacity:0;max-width:0}
+nav.side[data-collapsed=true] a>span{opacity:0}
+nav.side[data-collapsed=true] a{padding-left:16px!important;padding-right:0!important;height:36px!important;gap:40px!important}
+nav.side[data-collapsed=true]>div:first-child{justify-content:center!important;padding:2px 0 12px!important}
+nav.side[data-collapsed=true]>div:first-child button svg{transform:scaleX(-1)}
+nav.side[data-collapsed=true] .sb-top{align-items:center}
+nav.side[data-collapsed=true] .sb-top>div{padding:0!important}
+@keyframes sideIn{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){nav.side,nav.side *{transition:none!important;animation:none!important}}
+/* Notificaciones animadas: entrada con rebote, ícono que aparece, barra de tiempo y salida suave */
+.notif[role=status]{animation:nIn .55s cubic-bezier(.34,1.4,.64,1) both,nOut .35s ease 3.6s forwards}
+.notif[role=status]>span:first-child{animation:nIcon .45s cubic-bezier(.34,1.56,.64,1) .18s both}
+.notif[role=status]::after{content:'';position:absolute;left:18px;right:18px;bottom:5px;height:2px;border-radius:2px;background:currentColor;opacity:.18;transform-origin:left;animation:nBar 3.6s linear both}
+.alert-row{animation:nRow .5s cubic-bezier(.22,1,.36,1) both}
+@keyframes nIn{from{opacity:0;transform:translateX(48px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes nOut{to{opacity:0;transform:translateX(24px) scale(.98);pointer-events:none}}
+@keyframes nIcon{from{opacity:0;transform:scale(.3) rotate(-20deg)}to{opacity:1;transform:none}}
+@keyframes nBar{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+@keyframes nRow{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){.notif[role=status],.notif[role=status]>span:first-child,.notif[role=status]::after,.alert-row{animation:none!important}}
+/* ---------- Paleta oscura equilibrada: tonos menos saturados para que no se vean eléctricos ---------- */
+[data-theme=light]{--area-hd:#64B5FF;--area-hd-t:#0B2E4F}
+[data-theme=dark]{--accent-t:#7FB2E5;--green-t:#5DBB85;--orange-t:#E0A458;--red-t:#E07A74;--purple-t:#B59AE6;--solid:#3A7FCC;--accent-bg:rgba(58,127,204,0.22);--accent-ring:rgba(127,178,229,0.32);--green-bg:rgba(93,187,133,0.14);--green-ring:rgba(93,187,133,0.28);--orange-bg:rgba(224,164,88,0.14);--orange-ring:rgba(224,164,88,0.28);--red-bg:rgba(224,122,116,0.15);--red-ring:rgba(224,122,116,0.30);--area-hd:rgba(58,127,204,0.24);--area-hd-t:rgba(255,255,255,0.92)}
+[data-theme=dark] .primary{background:#3A7FCC}
+[data-theme=dark] .primary:hover{background:#4A8DD8}
+[data-theme=dark] .mitem:hover,[data-theme=dark] .mitem[data-sel=true]{background:#3A7FCC}
+[data-theme=dark] .bar-fill,[data-theme=dark] .mdot,[data-theme=dark] svg.reveal,[data-theme=dark] .ring-draw{filter:saturate(.72) brightness(.92)}
+[data-theme=dark] .notif[role=status]>span:first-child{filter:saturate(.75) brightness(.92)}
+/* Barra minimizada: íconos, avatar y botón en el mismo eje */
+nav.side[data-collapsed=true] a{justify-content:center!important;padding:0!important;gap:0!important;font-size:0!important}
+nav.side a{transition:background .2s ease,box-shadow .2s ease,padding .38s cubic-bezier(.22,1,.36,1),gap .38s cubic-bezier(.22,1,.36,1),font-size .2s ease}
+nav.side[data-collapsed=true] .sb-top>div{gap:0!important;justify-content:center!important}
+/* Barra minimizada: cada opción es una caja fija centrada (con o sin conteo) */
+nav.side[data-collapsed=true] a{width:40px!important;margin-left:auto!important;margin-right:auto!important;box-sizing:border-box;padding:0!important;gap:0!important;justify-content:center!important;font-size:0!important}
+nav.side[data-collapsed=true] a>span{display:none!important}
+nav.side[data-collapsed=true] .sb-top>div:first-child{width:40px;margin:0 auto}
+/* Paleta oscura también en íconos y gráficas */
+[data-theme=dark] svg{filter:saturate(.75) brightness(.95)}
+[data-theme=dark] svg svg,[data-theme=dark] svg .ring-draw{filter:none}
+[data-theme=dark] .alert-row>span:first-child{filter:saturate(.72) brightness(.92)}
+</style>
+</helmet>
+<div data-theme="{{theme}}" onClick="{{closeMenu}}" style="min-height: 100vh; background: {{bg}}; color: var(--t1); font-family: {{font}}; font-size: 13px; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px; padding: 10px; box-sizing: border-box">
+
+<!-- Sidebar -->
+<nav class="side" data-collapsed="{{sb.c}}" aria-label="Navegación principal" style="flex: 1 1 220px; max-width: 232px; align-self: stretch; padding: 12px 10px 10px; box-sizing: border-box; display: flex; flex-direction: column; gap: 1px; min-height: calc(100vh - 20px)">
+<div style="display: flex; align-items: center; justify-content: space-between; padding: 2px 2px 14px 8px">
+<div class="sb-brand" style="display: flex; align-items: center; gap: 8px">
+<span style="font-size: 16px; font-weight: 800; letter-spacing: -0.5px; color: #0284C7">inter</span>
+<span style="width: 1px; height: 14px; background: var(--sep)"></span>
+<span style="font-size: 13px; font-weight: 600">Operaciones IP</span>
+</div>
+<button class="pill pillbtn" onClick="{{sb.toggle}}" aria-label="{{sb.label}}" title="{{sb.label}}" style="cursor: pointer; width: 30px; height: 30px; border: 0; display: flex; align-items: center; justify-content: center; padding: 0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="3"></rect><path d="M9 4.5v15"></path></svg></button>
+</div>
+<div class="sb-top" style="display: flex; flex-direction: column; gap: 10px; padding: 0 0 14px; margin-bottom: 8px; border-bottom: 1px solid var(--sep)">
+<div style="display: flex; align-items: center; gap: 8px; padding: 2px 6px 0">
+<span style="width: 28px; height: 28px; border-radius: 50%; background: var(--solid); color: #FFFFFF; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center">C</span>
+<div class="sb-txt" style="display: flex; flex-direction: column; line-height: 1.3; min-width: 0"><span style="font-size: 12px; font-weight: 600">coordinador</span><span style="font-size: 12px; color: var(--t2)">coordinador@test.com</span></div>
+</div>
+</div>
+<span style="font-size: 12px; font-weight: 600; color: var(--t2); padding: 0 8px 4px">Coordinación</span>
+<a class="sideitem" title="Dashboard General" href="Main.dc.html" style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; border-radius: 8px; color: var(--t1); font-size: 13px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0078F0" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="2"></rect><rect x="14" y="3" width="7" height="5" rx="2"></rect><rect x="14" y="12" width="7" height="9" rx="2"></rect><rect x="3" y="16" width="7" height="5" rx="2"></rect></svg>Dashboard General</a>
+<a title="Tickets" href="Tickets.dc.html" aria-current="page" style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; border-radius: 8px; background: var(--accent-bg); color: var(--accent-t); font-size: 13px; font-weight: 600; box-shadow: inset 0 0 0 0.5px var(--accent-ring)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 9V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a3 3 0 0 0 0 6v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a3 3 0 0 0 0-6z"></path></svg><span style="flex: 1">Tickets</span><span style="font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums">48</span></a>
+<a class="sideitem" title="Gestión de Turno" href="Turno.dc.html" style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; border-radius: 8px; color: var(--t1); font-size: 13px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0078F0" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"></path></svg><span style="flex: 1">Gestión de Turno</span><span style="font-size: 12px; font-weight: 600; color: var(--green-t); font-variant-numeric: tabular-nums">13/14</span></a>
+<span style="font-size: 12px; font-weight: 600; color: var(--t2); padding: 14px 8px 4px">Control</span>
+<a class="sideitem" title="Reportes" href="Reportes.dc.html" style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; border-radius: 8px; color: var(--t1); font-size: 13px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0078F0" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"></path></svg>Reportes</a>
+<a class="sideitem" title="Auditoría" href="Auditoria.dc.html" style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; border-radius: 8px; color: var(--t1); font-size: 13px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0078F0" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"></path><path d="M9 12l2 2 4-4"></path></svg>Auditoría</a>
+<a class="sideitem" title="Administración" href="Administracion.dc.html" style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; border-radius: 8px; color: var(--t1); font-size: 13px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0078F0" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"></path><circle cx="15" cy="6" r="2"></circle><circle cx="9" cy="12" r="2"></circle><circle cx="17" cy="18" r="2"></circle></svg>Administración</a>
+</nav>
+
+<!-- Main -->
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 16px; padding: 2px 8px 32px 6px; box-sizing: border-box">
+
+<header style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-height: 44px">
+<div style="display: flex; flex-direction: column; margin-right: 6px">
+<h1 style="margin: 0; font-size: 20px; line-height: 24px; font-weight: 700; letter-spacing: -0.02em">Tickets</h1>
+<span style="font-size: 12px; color: var(--t2)">Jornada 08:00–17:00 · 48 activos</span>
+</div>
+<span style="flex: 1"></span>
+<label class="pill" style="display: flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; width: 240px; box-sizing: border-box">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#727272" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+<span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Buscar ticket</span>
+<input value="{{q.val}}" onChange="{{q.set}}" placeholder="Código, asunto u operador" style="border: 0; background: transparent; outline: none; font: inherit; font-size: 13px; flex: 1; min-width: 0; color: var(--t1)">
+</label>
+<div class="pill" role="group" aria-label="Acciones de cola" style="display: flex; align-items: center; gap: 2px; height: 36px; padding: 4px; box-sizing: border-box">
+<button class="pillbtn" onClick="{{trash.open}}" style="height: 28px; border: 0; border-radius: 100px; background: transparent; display: flex; align-items: center; gap: 6px; padding: 0 12px; font: inherit; font-size: 12px; font-weight: 500; color: var(--t1); cursor: pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg>Papelera<span style="min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; background: var(--fill); box-shadow: inset 0 0 0 0.5px var(--sep); font-size: 11px; font-weight: 600; color: var(--t2); display: inline-flex; align-items: center; justify-content: center; font-variant-numeric: tabular-nums">{{trash.count}}</span></button>
+<span style="width: 1px; height: 18px; background: var(--sep)"></span>
+<button class="pillbtn" onClick="{{hand.openAll}}" style="height: 28px; border: 0; border-radius: 100px; background: transparent; display: flex; align-items: center; gap: 6px; padding: 0 12px; font: inherit; font-size: 12px; font-weight: 500; color: var(--t1); cursor: pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"></path></svg>Traspasar a guardia</button>
+</div>
+<button class="primary" onClick="{{newTicket}}" style="display: flex; align-items: center; gap: 6px; height: 36px; padding: 0 16px; border: 0; border-radius: 1000px; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 0 0 0.5px rgba(3,105,161,0.4), 0 6px 14px rgba(2,132,199,0.22); cursor: pointer"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nuevo ticket</button>
+</header>
+
+<!-- Tarjetas fijas: total de la operación, no cambian con los filtros -->
+<section class="glass" aria-label="Total de la operación" style="padding: 18px 24px; display: flex; flex-wrap: wrap; row-gap: 14px">
+<sc-for list="{{summary}}" as="s" hint-placeholder-count="6">
+<div class="stat" style="flex: 1 1 130px">
+<span style="font-size: 12px; font-weight: 600; color: var(--t2)">{{s.label}}</span>
+<span class="kv" style="font-size: 26px; line-height: 32px; color: {{s.color}}">{{s.value}}</span>
+</div>
+</sc-for>
+</section>
+
+<!-- Traspaso enviado: lista aparte para la guardia -->
+<sc-if value="{{ho.show}}" hint-placeholder-val="{{ false }}">
+<section class="glass" aria-label="Traspaso a guardia" style="padding: 14px 20px; display: flex; align-items: center; gap: 14px">
+<span style="width: 34px; height: 34px; border-radius: 10px; background: #8B5CF6; display: flex; align-items: center; justify-content: center; flex: none; box-shadow: inset 0 1px 0 rgba(255,255,255,0.3)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"></path></svg></span>
+<div style="display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0">
+<span style="font-size: 13px; font-weight: 700">{{ho.title}}</span>
+<span style="font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ho.note}}</span>
+<span style="font-size: 12px; color: var(--t3)">{{ho.meta}}</span>
+</div>
+<button class="pill pillbtn" onClick="{{ho.toggle}}" aria-pressed="{{ho.on}}" style="height: 32px; padding: 0 16px; border: 0; font: inherit; font-size: 13px; font-weight: 600; color: var(--accent-t); cursor: pointer">{{ho.btn}}</button>
+</section>
+</sc-if>
+
+
+
+<!-- Resumen operativo -->
+<section class="glass" aria-labelledby="h-ro" style="position: relative; z-index: {{secZ}}; display: flex; flex-direction: column; min-width: 0">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 18px 24px 14px">
+<h2 id="h-ro" style="margin: 0 10px 0 0; font-size: 15px; font-weight: 600; letter-spacing: -0.01em">Resumen operativo</h2>
+<span style="font-size: 12px; color: var(--t2)">{{v.scope}}</span>
+<span style="flex: 1"></span>
+<sc-if value="{{v.dirty}}" hint-placeholder-val="{{ false }}"><button class="linkbtn" onClick="{{v.clear}}" style="font-size: 12px; font-weight: 600; margin-right: 4px">Quitar filtros</button></sc-if>
+<sc-for list="{{filters}}" as="f" hint-placeholder-count="5">
+<span style="position: relative; display: inline-flex">
+<button class="popup" onClick="{{f.toggle}}" aria-haspopup="listbox" aria-expanded="{{f.open}}" style="box-shadow: {{f.ring}}"><span style="color: var(--t2)">{{f.label}}:</span><span style="font-weight: 600; color: {{f.vc}}">{{f.value}}</span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--t2)"><path d="M6 9l6 6 6-6"></path></svg></button>
+<sc-if value="{{f.open}}" hint-placeholder-val="{{ false }}">
+<div role="listbox" class="mmenu" style="top: 34px; right: 0; min-width: 230px">
+<sc-for list="{{f.opts}}" as="o" hint-placeholder-count="4">
+<button type="button" role="option" class="mitem" aria-selected="{{o.sel}}" data-sel="{{o.sel}}" disabled="{{o.dis}}" onClick="{{o.pick}}"><sc-if value="{{o.hasDot}}" hint-placeholder-val="{{ false }}"><span class="mdot" style="background: {{o.dot}}"></span></sc-if><span class="ml">{{o.label}}</span><sc-if value="{{o.hasBadge}}" hint-placeholder-val="{{ false }}"><span class="mbadge" style="background: {{o.bBg}}; color: {{o.bC}}">{{o.badge}}</span></sc-if><span class="mh">{{o.hint}}</span><span class="mk"><sc-if value="{{o.sel}}" hint-placeholder-val="{{ false }}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"></path></svg></sc-if></span></button>
+</sc-for>
+</div>
+</sc-if>
+</span>
+</sc-for>
+</div>
+<div style="overflow-x: auto; padding: 0 16px 8px">
+<table style="width: 100%; min-width: 1060px; border-collapse: separate; border-spacing: 0; font-size: 12px">
+<thead>
+<tr style="text-align: left; font-size: 12px; color: var(--t2)">
+<th style="width: 28px; padding: 8px 0 8px 17px; border-top: 1px solid var(--sep); border-bottom: 1px solid var(--sep); font-weight: 600"><input type="checkbox" aria-label="Seleccionar todos" checked="{{v.allSel}}" onChange="{{v.toggleAll}}" style="margin: 0; cursor: pointer"></th>
+<th style="padding: 8px; border-top: 1px solid var(--sep); border-bottom: 1px solid var(--sep); font-weight: 600; width: 84px">Ticket</th>
+<th style="padding: 8px; border-top: 1px solid var(--sep); border-bottom: 1px solid var(--sep); font-weight: 600; width: 92px">Prioridad</th>
+<th style="padding: 8px; border-top: 1px solid var(--sep); border-bottom: 1px solid var(--sep); font-weight: 600; width: 150px">Estado</th>
+<th style="padding: 8px; border-top: 1px solid var(--sep); border-bottom: 1px solid var(--sep); font-weight: 600">Asunto</th>
+<th style="padding: 8px; border-top: 1px solid var(--sep); border-bottom: 1px solid var(--sep); font-weight: 600; width: 176px">Operador asignado</th>
+<th style="padding: 8px; border-top: 1px solid var(--sep); border-bottom: 1px solid var(--sep); font-weight: 600; width: 76px; text-align: right">Tiempo</th>
+<th style="padding: 8px 17px 8px 8px; border-top: 1px solid var(--sep); border-bottom: 1px solid var(--sep); font-weight: 600; width: 156px; text-align: right">Acciones</th>
+</tr>
+</thead>
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="5">
+<tbody>
+<tr aria-hidden="true"><td colspan="8" style="height: 12px; padding: 0; border: 0"></td></tr>
+<tr>
+<td colspan="8" style="padding: 10px 16px; background: {{g.tint}}; border: 1px solid {{g.edge}}; border-radius: 14px 14px 0 0">
+<span style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--t1)">{{g.name}}<span style="min-width: 20px; height: 20px; padding: 0 7px; box-sizing: border-box; border-radius: 999px; background: {{g.bar}}; color: #FFFFFF; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; font-variant-numeric: tabular-nums">{{g.count}}</span></span>
+</td>
+</tr>
+<sc-for list="{{g.rows}}" as="t" hint-placeholder-count="3">
+<tr class="row">
+<td style="padding: 9px 0 9px 16px; border-bottom: 1px solid {{t.bb}}; background: {{t.rowBg}}; border-left: 1px solid {{t.edge}}; border-bottom-left-radius: {{t.rad}}"><input type="checkbox" aria-label="Seleccionar {{t.code}}" checked="{{t.checked}}" onChange="{{t.toggle}}" style="margin: 0; cursor: pointer"></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid {{t.bb}}; background: {{t.rowBg}}; font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 12px; font-weight: 600"><button onClick="{{t.open}}" title="Ver detalle" style="padding: 0; border: 0; background: transparent; font: inherit; color: var(--accent-t); cursor: pointer">{{t.code}}</button></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid {{t.bb}}; background: {{t.rowBg}}"><span style="display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: {{t.pText}}"><span style="width: 6px; height: 6px; border-radius: 2px; background: {{t.pDot}}"></span>{{t.p}}</span></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid {{t.bb}}; background: {{t.rowBg}}"><span style="display: inline-flex; align-items: center; gap: 6px; font-weight: 500"><span style="width: 7px; height: 7px; border-radius: 50%; background: {{t.sDot}}"></span>{{t.state}}</span></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid {{t.bb}}; background: {{t.rowBg}}; max-width: 0"><button class="subj" onClick="{{t.open}}" title="{{t.subject}}" style="font-weight: 500">{{t.subject}}<span style="font-weight: 400; color: var(--t3)">  ·  {{t.area}}</span></button></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid {{t.bb}}; background: {{t.rowBg}}">
+<sc-if value="{{t.assigned}}" hint-placeholder-val="{{ true }}"><span style="display: inline-flex; align-items: center; gap: 7px"><span style="width: 22px; height: 22px; border-radius: 50%; background: var(--accent-bg); color: var(--accent-t); font-size: 9px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center">{{t.ini}}</span>{{t.op}}</span></sc-if>
+<sc-if value="{{t.unassigned}}" hint-placeholder-val="{{ false }}"><span style="color: {{t.uaC}}; font-weight: 500">{{t.uaLabel}}</span></sc-if>
+</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid {{t.bb}}; background: {{t.rowBg}}; text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; color: {{t.timeColor}}; white-space: nowrap" title="{{t.alertTip}}"><sc-if value="{{t.alert}}" hint-placeholder-val="{{ false }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align: -1px; margin-right: 4px"><path d="M12 3l10 18H2z"></path><path d="M12 10v4M12 17.5v.5"></path></svg></sc-if>{{t.time}}</td>
+<td style="padding: 5px 16px 5px 8px; border-bottom: 1px solid {{t.bb}}; background: {{t.rowBg}}; border-right: 1px solid {{t.edge}}; border-bottom-right-radius: {{t.rad}}">
+<div style="display: flex; justify-content: flex-end; gap: 2px">
+<sc-if value="{{t.unassigned}}" hint-placeholder-val="{{ false }}"><button class="ico" onClick="{{t.assign}}" aria-label="Asignar {{t.code}}" title="Asignar" style="color: var(--accent-t)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20a6.5 6.5 0 0 1 13 0M19 8v6M16 11h6"></path></svg></button></sc-if>
+<sc-if value="{{t.assigned}}" hint-placeholder-val="{{ true }}"><button class="ico" onClick="{{t.unassign}}" aria-label="Desasignar {{t.code}}" title="Desasignar"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 11h6"></path></svg></button></sc-if>
+<sc-if value="{{t.canClose}}" hint-placeholder-val="{{ true }}"><button class="ico" onClick="{{t.close}}" aria-label="Cerrar {{t.code}}" title="Cerrar" style="color: {{t.closeC}}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8 12l3 3 5-6"></path></svg></button></sc-if>
+<button class="ico" onClick="{{t.edit}}" aria-label="Editar {{t.code}}" title="Editar"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"></path></svg></button>
+<button class="ico" onClick="{{t.history}}" aria-label="Historial {{t.code}}" title="Historial"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></button>
+<button class="ico danger" onClick="{{t.del}}" aria-label="Eliminar {{t.code}}" title="Eliminar"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg></button>
+</div>
+</td>
+</tr>
+</sc-for>
+</tbody>
+</sc-for>
+</table>
+<sc-if value="{{v.empty}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 44px 24px; text-align: center">
+<span style="font-size: 13px; font-weight: 600">No hay tickets con estos filtros</span>
+<button class="linkbtn" onClick="{{v.clear}}" style="font-size: 12px; font-weight: 600">Quitar filtros</button>
+</div>
+</sc-if>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 24px 16px; border-top: 1px solid var(--sep2)">
+<span style="font-size: 12px; color: var(--t2)">{{v.footer}}</span>
+<span style="flex: 1"></span>
+<span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--t2)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--red-t)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2z"></path><path d="M12 10v4M12 17.5v.5"></path></svg>Antigüedad: P1 más de 1 h, resto más de 4 h sin asignar o sin movimiento</span>
+</div>
+</section>
+
+<!-- Barra de selección múltiple -->
+<sc-if value="{{batch.show}}" hint-placeholder-val="{{ false }}">
+<div style="position: sticky; bottom: 16px; z-index: 20; align-self: center; display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 16px; border-radius: 999px; background: var(--dialog); -webkit-backdrop-filter: blur(30px) saturate(180%); backdrop-filter: blur(30px) saturate(180%); box-shadow: 0 0 0 0.5px var(--sep), 0 12px 32px rgba(0,0,0,0.18); font-size: 13px">
+<span style="font-weight: 600">{{batch.label}}</span>
+<span style="width: 1px; height: 18px; background: var(--sep)"></span>
+<button onClick="{{batch.clear}}" style="height: 30px; padding: 0 12px; border: 0; border-radius: 999px; background: transparent; font: inherit; font-size: 13px; color: var(--t2); cursor: pointer">Quitar selección</button>
+<button class="pill pillbtn" onClick="{{batch.handover}}" style="height: 30px; padding: 0 14px; border: 0; font: inherit; font-size: 13px; font-weight: 600; color: var(--t1); cursor: pointer">Traspasar a guardia</button>
+<button class="primary" onClick="{{batch.assign}}" style="height: 30px; padding: 0 14px; border: 0; border-radius: 999px; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer">Asignar a…</button>
+</div>
+</sc-if>
+
+<!-- Panel lateral: detalle del ticket -->
+<sc-if value="{{dp.open}}" hint-placeholder-val="{{ false }}">
+<aside role="dialog" aria-labelledby="dp-title" style="position: fixed; top: 10px; right: 10px; bottom: 10px; width: 448px; max-width: calc(100% - 20px); z-index: 40; display: flex; flex-direction: column; border-radius: 24px; background: var(--dialog); -webkit-backdrop-filter: blur(40px) saturate(180%); backdrop-filter: blur(40px) saturate(180%); box-shadow: 1.25px 0 0 -0.75px var(--rim), -1.25px 0 0 -0.75px var(--rim), 0 0 0 0.5px var(--rim), 0 24px 64px rgba(0,0,0,0.24); animation: drawerIn .32s cubic-bezier(0.19,1,0.22,1); overflow: hidden">
+<div style="padding: 16px 16px 14px 22px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid var(--sep)">
+<div style="display: flex; align-items: center; gap: 8px">
+<span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 12px; font-weight: 600; color: var(--accent-t)">{{dp.code}}</span>
+<span style="font-size: 12px; color: var(--t3)">{{dp.area}}</span>
+<span style="flex: 1"></span>
+<button class="ico" onClick="{{dp.close}}" aria-label="Cerrar panel" title="Cerrar panel"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+</div>
+<h2 id="dp-title" style="margin: 0; padding-right: 8px; font-size: 17px; line-height: 22px; font-weight: 700; letter-spacing: -0.015em">{{dp.subject}}</h2>
+<div style="display: flex; flex-wrap: wrap; gap: 6px">
+<span style="display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 9px; border-radius: 999px; background: var(--fill); box-shadow: inset 0 0 0 0.5px var(--sep); font-size: 12px; font-weight: 600; color: {{dp.pText}}"><span style="width: 6px; height: 6px; border-radius: 2px; background: {{dp.pDot}}"></span>{{dp.p}}</span>
+<span style="display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 9px; border-radius: 999px; background: var(--fill); box-shadow: inset 0 0 0 0.5px var(--sep); font-size: 12px; font-weight: 500"><span style="width: 7px; height: 7px; border-radius: 50%; background: {{dp.sDot}}"></span>{{dp.state}}</span>
+<sc-if value="{{dp.alert}}" hint-placeholder-val="{{ false }}"><span style="display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; background: var(--red-bg); color: var(--red-t); font-size: 12px; font-weight: 600">{{dp.alertTip}}</span></sc-if>
+</div>
+</div>
+
+<sc-if value="{{dp.viewing}}" hint-placeholder-val="{{ true }}">
+<div style="flex: 1; overflow: auto; padding: 16px 22px 20px; display: flex; flex-direction: column; gap: 20px">
+
+<sc-if value="{{dp.sug.show}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 16px; background: var(--accent-bg); box-shadow: inset 0 0 0 0.5px var(--accent-ring)">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px"><span style="font-size: 12px; font-weight: 700; color: var(--accent-t)">Operador sugerido</span><span style="font-size: 11px; color: var(--t2)">{{dp.sug.why}}</span></div>
+<div style="display: flex; align-items: center; gap: 10px">
+<span style="width: 34px; height: 34px; border-radius: 50%; background: var(--solid); color: #FFFFFF; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex: none">{{dp.sug.ini}}</span>
+<div style="display: flex; flex-direction: column; flex: 1; min-width: 0"><span style="font-size: 13px; font-weight: 600">{{dp.sug.name}}</span><span style="font-size: 12px; color: var(--t2)">{{dp.sug.meta}}</span></div>
+<button class="primary" onClick="{{dp.sug.confirm}}" style="height: 30px; padding: 0 16px; border: 0; border-radius: 999px; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer">Asignar</button>
+</div>
+<button class="linkbtn" onClick="{{dp.assign}}" style="align-self: flex-start; font-size: 12px; font-weight: 600">Elegir otro operador</button>
+</div>
+</sc-if>
+<sc-if value="{{dp.sug.none}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 6px; padding: 14px; border-radius: 16px; background: var(--orange-bg); box-shadow: inset 0 0 0 0.5px var(--orange-ring)">
+<span style="font-size: 12px; font-weight: 700; color: var(--red-t)">En cola de espera</span>
+<span style="font-size: 12px; line-height: 17px; color: var(--t1)">{{dp.sug.why}}</span>
+<div style="display: flex; align-items: center; gap: 14px; margin-top: 4px">
+<sc-if value="{{dp.sug.canOther}}" hint-placeholder-val="{{ true }}"><button class="linkbtn" onClick="{{dp.sug.other}}" style="font-size: 12px; font-weight: 600">Sugerir de otra área</button></sc-if>
+<button class="linkbtn" onClick="{{dp.assign}}" style="font-size: 12px; font-weight: 600">Elegir operador</button>
+</div>
+</div>
+</sc-if>
+
+<div style="display: grid; grid-template-columns: 128px 1fr; row-gap: 10px; column-gap: 12px; font-size: 13px">
+<span style="color: var(--t2)">Operador</span>
+<span style="display: flex; align-items: center; gap: 8px; min-width: 0"><span style="font-weight: 500; color: {{dp.opC}}">{{dp.op}}</span><span style="flex: 1"></span><sc-if value="{{dp.assigned}}" hint-placeholder-val="{{ true }}"><button class="linkbtn" onClick="{{dp.assign}}" style="font-size: 12px; font-weight: 600">Reasignar</button></sc-if></span>
+<span style="color: var(--t2)">Llegada</span>
+<span>{{dp.arrival}}</span>
+<span style="color: var(--t2)">Remitente</span>
+<span style="overflow: hidden; text-overflow: ellipsis">{{dp.sender}}</span>
+<span style="color: var(--t2)">Creado por</span>
+<span>{{dp.by}}</span>
+<span style="color: var(--t2)">Desde la llegada</span>
+<span style="font-weight: 600; font-variant-numeric: tabular-nums; color: {{dp.timeC}}">{{dp.time}}</span>
+<span style="color: var(--t2)">Último movimiento</span>
+<span style="font-variant-numeric: tabular-nums">{{dp.idle}}</span>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 12px; font-weight: 700; color: var(--t2)">Descripción</span>
+<p style="margin: 0; font-size: 13px; line-height: 19px">{{dp.desc}}</p>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 12px; font-weight: 700; color: var(--t2)">Adjuntos</span>
+<sc-if value="{{dp.hasFiles}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<sc-for list="{{dp.files}}" as="a" hint-placeholder-count="2">
+<a href="#" style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 12px; background: var(--well); box-shadow: inset 0 0 0 0.5px var(--sep); color: var(--t1)"><span style="width: 28px; height: 28px; border-radius: 8px; background: var(--accent-bg); color: var(--accent-t); display: flex; align-items: center; justify-content: center; flex: none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5"></path></svg></span><span style="flex: 1; min-width: 0; font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{a.name}}</span><span style="font-size: 12px; color: var(--t3)">{{a.size}}</span></a>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{dp.noFiles}}" hint-placeholder-val="{{ false }}"><span style="font-size: 13px; color: var(--t3)">Sin adjuntos</span></sc-if>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 12px; font-weight: 700; color: var(--t2)">Historial de eventos</span>
+<ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column">
+<sc-for list="{{dp.events}}" as="e" hint-placeholder-count="4">
+<li style="display: grid; grid-template-columns: 16px 1fr; column-gap: 10px">
+<span style="display: flex; flex-direction: column; align-items: center"><span style="width: 9px; height: 9px; margin-top: 4px; border-radius: 50%; background: {{e.dot}}; box-shadow: 0 0 0 3px var(--well); flex: none"></span><span style="flex: 1; width: 1.5px; margin: 3px 0 -1px; background: {{e.line}}"></span></span>
+<span style="display: flex; flex-direction: column; padding-bottom: 14px"><span style="font-size: 13px; font-weight: 500">{{e.text}}</span><span style="font-size: 12px; color: var(--t2)">{{e.meta}}</span></span>
+</li>
+</sc-for>
+</ol>
+</div>
+</div>
+<div style="display: flex; align-items: center; gap: 8px; padding: 12px 16px 16px 22px; border-top: 1px solid var(--sep)">
+<button onClick="{{dp.del}}" style="height: 32px; padding: 0 6px; border: 0; background: transparent; font: inherit; font-size: 13px; font-weight: 600; color: var(--red-t); cursor: pointer">Eliminar</button>
+<span style="flex: 1"></span>
+<button class="pill pillbtn" onClick="{{dp.edit}}" style="height: 32px; padding: 0 16px; border: 0; font: inherit; font-size: 13px; font-weight: 600; color: var(--t1); cursor: pointer">Editar</button>
+<sc-if value="{{dp.canClose}}" hint-placeholder-val="{{ true }}"><button class="primary" onClick="{{dp.closeTk}}" style="height: 32px; padding: 0 18px; border: 0; border-radius: 999px; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer">Cerrar ticket</button></sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{dp.editing}}" hint-placeholder-val="{{ false }}">
+<div style="flex: 1; overflow: auto; padding: 16px 22px 20px; display: flex; flex-direction: column; gap: 18px">
+<label style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 12px; font-weight: 700; color: var(--t2)">Asunto</span><input class="field" value="{{ed.subject}}" onChange="{{ed.setSubject}}"></label>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 12px; font-weight: 700; color: var(--t2)">Prioridad</span>
+<div role="radiogroup" aria-label="Prioridad" style="display: flex; padding: 3px; border-radius: 10px; background: rgba(0,0,0,0.06); box-shadow: inset 0 0 0 0.5px var(--sep)">
+<sc-for list="{{ed.prios}}" as="o" hint-placeholder-count="4">
+<button type="button" role="radio" aria-checked="{{o.sel}}" onClick="{{o.pick}}" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; height: 40px; border: 0; border-radius: 8px; background: {{o.bg}}; box-shadow: {{o.sh}}; font: inherit; color: {{o.c}}; cursor: pointer"><span style="display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: {{o.w}}"><span style="width: 6px; height: 6px; border-radius: 2px; background: {{o.dot}}"></span>{{o.label}}</span><span style="font-size: 11px; color: var(--t3); font-variant-numeric: tabular-nums">{{o.pts}}</span></button>
+</sc-for>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 12px; font-weight: 700; color: var(--t2)">Área</span>
+<div style="position: relative">
+<button type="button" class="combo" onClick="{{ed.area.toggle}}" aria-haspopup="listbox" aria-expanded="{{ed.area.open}}"><span style="display: flex; align-items: center; gap: 7px; min-width: 0"><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: {{ed.area.vc}}">{{ed.area.value}}</span></span><span class="combo-c"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></span></button>
+<sc-if value="{{ed.area.open}}" hint-placeholder-val="{{ false }}">
+<div role="listbox" class="mmenu" style="top: 38px; left: 0; right: 0">
+<sc-for list="{{ed.area.opts}}" as="o" hint-placeholder-count="4">
+<button type="button" role="option" class="mitem" aria-selected="{{o.sel}}" data-sel="{{o.sel}}" disabled="{{o.dis}}" onClick="{{o.pick}}"><sc-if value="{{o.hasDot}}" hint-placeholder-val="{{ false }}"><span class="mdot" style="background: {{o.dot}}"></span></sc-if><span class="ml">{{o.label}}</span><sc-if value="{{o.hasBadge}}" hint-placeholder-val="{{ false }}"><span class="mbadge" style="background: {{o.bBg}}; color: {{o.bC}}">{{o.badge}}</span></sc-if><span class="mh">{{o.hint}}</span><span class="mk"><sc-if value="{{o.sel}}" hint-placeholder-val="{{ false }}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"></path></svg></sc-if></span></button>
+</sc-for>
+</div>
+</sc-if>
+</div>
+</div>
+</div>
+<div style="display: flex; align-items: center; gap: 8px; padding: 12px 16px 16px 22px; border-top: 1px solid var(--sep)">
+<span style="font-size: 12px; color: var(--t3)">El cambio queda en Auditoría</span>
+<span style="flex: 1"></span>
+<button class="pill pillbtn" onClick="{{ed.cancel}}" style="height: 32px; padding: 0 16px; border: 0; font: inherit; font-size: 13px; font-weight: 600; color: var(--t1); cursor: pointer">Cancelar</button>
+<button class="primary" onClick="{{ed.save}}" style="height: 32px; padding: 0 18px; border: 0; border-radius: 999px; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer">Guardar cambios</button>
+</div>
+</sc-if>
+</aside>
+</sc-if>
+
+<!-- Ventana: Asignar -->
+<sc-if value="{{modal.open}}" hint-placeholder-val="{{ false }}">
+<div style="position: fixed; inset: 0; z-index: 50; display: flex; align-items: flex-start; justify-content: center; padding: 24px; overflow-y: auto; box-sizing: border-box; background: rgba(10,10,30,0.28); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); animation: fadeIn .18s ease">
+<div role="dialog" aria-modal="true" aria-labelledby="dlg-title" style="width: 540px; max-width: 100%; margin: auto; flex: none; overflow: visible; border-radius: 26px; background: var(--dialog); -webkit-backdrop-filter: blur(40px) saturate(180%); backdrop-filter: blur(40px) saturate(180%); box-shadow: 1.25px 0 0 -0.75px var(--rim), -1.25px 0 0 -0.75px var(--rim), 0 0 0 0.5px var(--rim), 0 24px 64px rgba(0,0,0,0.30); animation: sheetIn .28s cubic-bezier(0.19,1,0.22,1); display: flex; flex-direction: column">
+<div style="padding: 22px 24px 6px; display: flex; flex-direction: column; gap: 2px">
+<h2 id="dlg-title" style="margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -0.015em">{{modal.title}}</h2>
+<span style="font-size: 13px; color: var(--t2)">{{modal.subtitle}}</span>
+</div>
+<div style="padding: 14px 24px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: grid; grid-template-columns: 90px 1fr; align-items: center; gap: 10px; font-size: 13px">
+<span style="color: var(--t2)">Ticket</span>
+<span style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{modal.codes}}" as="c" hint-placeholder-count="1"><span style="padding: 3px 9px; border-radius: 7px; background: var(--control); box-shadow: 0 0 0 0.5px var(--sep), 0 0 0 3px rgba(14,165,233,0.25); font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 12px; font-weight: 600">{{c}}</span></sc-for></span>
+<span style="color: var(--t2)">Asunto</span>
+<span style="font-weight: 500">{{modal.subject}}</span>
+<span style="color: var(--t2)">Área</span>
+<div style="position: relative">
+<button type="button" class="combo" onClick="{{modal.area.toggle}}" aria-haspopup="listbox" aria-expanded="{{modal.area.open}}"><span style="display: flex; align-items: center; gap: 7px; min-width: 0"><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: {{modal.area.vc}}">{{modal.area.value}}</span></span><span class="combo-c"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></span></button>
+<sc-if value="{{modal.area.open}}" hint-placeholder-val="{{ false }}">
+<div role="listbox" class="mmenu" style="top: 38px; left: 0; right: 0">
+<sc-for list="{{modal.area.opts}}" as="o" hint-placeholder-count="4">
+<button type="button" role="option" class="mitem" aria-selected="{{o.sel}}" data-sel="{{o.sel}}" disabled="{{o.dis}}" onClick="{{o.pick}}"><sc-if value="{{o.hasDot}}" hint-placeholder-val="{{ false }}"><span class="mdot" style="background: {{o.dot}}"></span></sc-if><span class="ml">{{o.label}}</span><sc-if value="{{o.hasBadge}}" hint-placeholder-val="{{ false }}"><span class="mbadge" style="background: {{o.bBg}}; color: {{o.bC}}">{{o.badge}}</span></sc-if><span class="mh">{{o.hint}}</span><span class="mk"><sc-if value="{{o.sel}}" hint-placeholder-val="{{ false }}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"></path></svg></sc-if></span></button>
+</sc-for>
+</div>
+</sc-if>
+</div>
+<span style="color: var(--t2)">Prioridad</span>
+<div style="position: relative">
+<button type="button" class="combo" onClick="{{modal.prio.toggle}}" aria-haspopup="listbox" aria-expanded="{{modal.prio.open}}"><span style="display: flex; align-items: center; gap: 7px; min-width: 0"><span style="width: 7px; height: 7px; border-radius: 50%; background: {{modal.prio.dot}}; flex: none"></span><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: {{modal.prio.vc}}">{{modal.prio.value}}</span></span><span class="combo-c"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></span></button>
+<sc-if value="{{modal.prio.open}}" hint-placeholder-val="{{ false }}">
+<div role="listbox" class="mmenu" style="top: 38px; left: 0; right: 0">
+<sc-for list="{{modal.prio.opts}}" as="o" hint-placeholder-count="4">
+<button type="button" role="option" class="mitem" aria-selected="{{o.sel}}" data-sel="{{o.sel}}" disabled="{{o.dis}}" onClick="{{o.pick}}"><sc-if value="{{o.hasDot}}" hint-placeholder-val="{{ false }}"><span class="mdot" style="background: {{o.dot}}"></span></sc-if><span class="ml">{{o.label}}</span><sc-if value="{{o.hasBadge}}" hint-placeholder-val="{{ false }}"><span class="mbadge" style="background: {{o.bBg}}; color: {{o.bC}}">{{o.badge}}</span></sc-if><span class="mh">{{o.hint}}</span><span class="mk"><sc-if value="{{o.sel}}" hint-placeholder-val="{{ false }}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"></path></svg></sc-if></span></button>
+</sc-for>
+</div>
+</sc-if>
+</div>
+</div>
+<div style="display: flex; align-items: baseline; justify-content: space-between; margin-top: 4px">
+<span style="font-size: 13px; font-weight: 600">Operador</span>
+<span style="font-size: 12px; color: var(--t2)">Tickets activos · promedio del área {{modal.avg}}</span>
+</div>
+<sc-if value="{{modal.noneAvail}}" hint-placeholder-val="{{ false }}"><div style="padding: 9px 12px; border-radius: 12px; background: var(--orange-bg); box-shadow: inset 0 0 0 0.5px var(--orange-ring); font-size: 12px">Nadie disponible en el área. Si no lo asignas, queda en cola de espera y se avisa al coordinador.</div></sc-if>
+<div role="radiogroup" aria-label="Operador" style="display: flex; flex-direction: column; gap: 6px">
+<sc-for list="{{modal.ops}}" as="o" hint-placeholder-count="3">
+<button role="radio" aria-checked="{{o.sel}}" onClick="{{o.pick}}" disabled="{{o.disabled}}" style="display: grid; grid-template-columns: 30px 1fr 110px 28px; align-items: center; gap: 10px; padding: 8px 10px; border: 0; border-radius: 12px; background: {{o.bg}}; box-shadow: {{o.ring}}; font: inherit; color: var(--t1); text-align: left; cursor: {{o.cursor}}; opacity: {{o.op}}">
+<span style="width: 30px; height: 30px; border-radius: 50%; background: var(--accent-bg); color: var(--accent-t); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{o.ini}}</span>
+<span style="display: flex; flex-direction: column; min-width: 0"><span style="display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600">{{o.name}}<sc-if value="{{o.best}}" hint-placeholder-val="{{ false }}"><span style="padding: 1px 7px; border-radius: 999px; background: var(--green-bg); color: var(--green-t); font-size: 11px; font-weight: 600">Sugerido</span></sc-if><sc-if value="{{o.over}}" hint-placeholder-val="{{ false }}"><span style="padding: 1px 7px; border-radius: 999px; background: var(--red-bg); color: var(--red-t); font-size: 11px; font-weight: 600">Sobrecarga</span></sc-if></span><span style="display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--t2)"><span style="width: 6px; height: 6px; border-radius: 50%; background: {{o.stDot}}"></span>{{o.state}}</span></span>
+<span style="height: 8px; border-radius: 999px; background: rgba(148,163,184,0.18)"><span style="display: block; width: {{o.w}}; height: 100%; border-radius: 999px; background: {{o.fill}}"></span></span>
+<span style="text-align: right; font-size: 13px; font-weight: 700; color: {{o.c}}; font-variant-numeric: tabular-nums">{{o.load}}</span>
+</button>
+</sc-for>
+</div>
+</div>
+<div style="display: flex; align-items: center; gap: 8px; padding: 14px 24px 20px; border-top: 1px solid var(--sep)">
+<sc-if value="{{modal.canUnassign}}" hint-placeholder-val="{{ false }}"><button onClick="{{modal.unassign}}" style="height: 32px; padding: 0 12px; border: 0; border-radius: 999px; background: transparent; font: inherit; font-size: 13px; font-weight: 600; color: var(--red-t); cursor: pointer">Desasignar</button></sc-if>
+<span style="flex: 1"></span>
+<button class="pill pillbtn" onClick="{{modal.cancel}}" style="height: 32px; padding: 0 16px; border: 0; font: inherit; font-size: 13px; font-weight: 600; color: var(--t1); cursor: pointer">Cancelar</button>
+<button class="primary" onClick="{{modal.save}}" disabled="{{modal.saveDisabled}}" style="height: 32px; padding: 0 18px; border: 0; border-radius: 999px; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; opacity: {{modal.saveOp}}">Asignar</button>
+</div>
+</div>
+</div>
+</sc-if>
+
+<!-- Ventana: Cerrar / Eliminar -->
+<sc-if value="{{dlg.open}}" hint-placeholder-val="{{ false }}">
+<div style="position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(10,10,30,0.28); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); animation: fadeIn .18s ease">
+<div role="dialog" aria-modal="true" aria-labelledby="dlg2-title" style="width: 480px; max-width: 100%; max-height: calc(100vh - 48px); overflow: auto; border-radius: 26px; background: var(--dialog); -webkit-backdrop-filter: blur(40px) saturate(180%); backdrop-filter: blur(40px) saturate(180%); box-shadow: 1.25px 0 0 -0.75px var(--rim), -1.25px 0 0 -0.75px var(--rim), 0 0 0 0.5px var(--rim), 0 24px 64px rgba(0,0,0,0.30); animation: sheetIn .28s cubic-bezier(0.19,1,0.22,1); display: flex; flex-direction: column">
+<div style="padding: 22px 24px 4px; display: flex; flex-direction: column; gap: 2px">
+<h2 id="dlg2-title" style="margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -0.015em">{{dlg.title}}</h2>
+<span style="font-size: 13px; color: var(--t2)">{{dlg.subject}}</span>
+</div>
+<div style="padding: 14px 24px; display: flex; flex-direction: column; gap: 10px">
+<sc-if value="{{dlg.warn}}" hint-placeholder-val="{{ false }}"><div style="padding: 9px 12px; border-radius: 12px; background: var(--orange-bg); box-shadow: inset 0 0 0 0.5px var(--orange-ring); font-size: 12px; color: var(--t1)">{{dlg.warnText}}</div></sc-if>
+<sc-if value="{{dlg.isDel}}" hint-placeholder-val="{{ false }}"><span style="font-size: 13px; line-height: 19px; color: var(--t1)">Pasa a la papelera y se puede restaurar. Queda registrado en Auditoría y el código no se reutiliza.</span></sc-if>
+<span style="font-size: 12px; font-weight: 700; color: var(--t2); margin-top: 4px">{{dlg.label}}</span>
+<sc-if value="{{dlg.hasTpl}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{dlg.tpls}}" as="p" hint-placeholder-count="3"><button class="tpl" onClick="{{p.use}}">{{p.label}}</button></sc-for></div></sc-if>
+<textarea class="field" rows="3" value="{{dlg.txt}}" onChange="{{dlg.setTxt}}" placeholder="{{dlg.ph}}"></textarea>
+<span style="align-self: flex-end; font-size: 12px; font-variant-numeric: tabular-nums; color: {{dlg.countC}}">{{dlg.count}}</span>
+</div>
+<div style="display: flex; align-items: center; gap: 8px; padding: 14px 24px 20px; border-top: 1px solid var(--sep)">
+<span style="flex: 1"></span>
+<button class="pill pillbtn" onClick="{{dlg.cancel}}" style="height: 32px; padding: 0 16px; border: 0; font: inherit; font-size: 13px; font-weight: 600; color: var(--t1); cursor: pointer">Cancelar</button>
+<button class="{{dlg.btnClass}}" onClick="{{dlg.ok}}" disabled="{{dlg.disabled}}" style="height: 32px; padding: 0 18px; border: 0; border-radius: 999px; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; opacity: {{dlg.okOp}}">{{dlg.okLabel}}</button>
+</div>
+</div>
+</div>
+</sc-if>
+
+<!-- Ventana: Papelera -->
+<sc-if value="{{trash.show}}" hint-placeholder-val="{{ false }}">
+<div style="position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(10,10,30,0.28); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); animation: fadeIn .18s ease">
+<div role="dialog" aria-modal="true" aria-labelledby="tr-title" style="width: 640px; max-width: 100%; max-height: calc(100vh - 48px); overflow: auto; border-radius: 26px; background: var(--dialog); -webkit-backdrop-filter: blur(40px) saturate(180%); backdrop-filter: blur(40px) saturate(180%); box-shadow: 1.25px 0 0 -0.75px var(--rim), -1.25px 0 0 -0.75px var(--rim), 0 0 0 0.5px var(--rim), 0 24px 64px rgba(0,0,0,0.30); animation: sheetIn .28s cubic-bezier(0.19,1,0.22,1); display: flex; flex-direction: column">
+<div style="padding: 22px 24px 10px; display: flex; flex-direction: column; gap: 2px">
+<h2 id="tr-title" style="margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -0.015em">Papelera</h2>
+<span style="font-size: 13px; color: var(--t2)">{{trash.sub}}</span>
+</div>
+<div style="padding: 0 24px 6px; display: flex; flex-direction: column">
+<sc-for list="{{trash.items}}" as="x" hint-placeholder-count="3">
+<div style="display: grid; grid-template-columns: 76px 1fr auto; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--sep2)">
+<span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 12px; font-weight: 600; color: var(--t2)">{{x.code}}</span>
+<span style="display: flex; flex-direction: column; gap: 2px; min-width: 0"><span style="font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{x.subject}}</span><span style="font-size: 12px; color: var(--t2)">Motivo: {{x.motivo}}</span><span style="font-size: 12px; color: var(--t3)">{{x.meta}}</span></span>
+<button class="pill pillbtn" onClick="{{x.restore}}" style="height: 30px; padding: 0 14px; border: 0; font: inherit; font-size: 12px; font-weight: 600; color: var(--accent-t); cursor: pointer">Restaurar</button>
+</div>
+</sc-for>
+<sc-if value="{{trash.empty}}" hint-placeholder-val="{{ false }}"><span style="padding: 28px 0; text-align: center; font-size: 13px; color: var(--t3)">La papelera está vacía</span></sc-if>
+</div>
+<div style="display: flex; align-items: center; gap: 8px; padding: 14px 24px 20px; border-top: 1px solid var(--sep)">
+<span style="font-size: 12px; color: var(--t3)">Restaurar devuelve el ticket a su estado anterior</span>
+<span style="flex: 1"></span>
+<button class="pill pillbtn" onClick="{{trash.close}}" style="height: 32px; padding: 0 16px; border: 0; font: inherit; font-size: 13px; font-weight: 600; color: var(--t1); cursor: pointer">Listo</button>
+</div>
+</div>
+</div>
+</sc-if>
+
+<!-- Ventana: Traspasar a guardia -->
+<sc-if value="{{hand.show}}" hint-placeholder-val="{{ false }}">
+<div style="position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(10,10,30,0.28); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); animation: fadeIn .18s ease">
+<div role="dialog" aria-modal="true" aria-labelledby="hd-title" style="width: 620px; max-width: 100%; max-height: calc(100vh - 48px); overflow: auto; border-radius: 26px; background: var(--dialog); -webkit-backdrop-filter: blur(40px) saturate(180%); backdrop-filter: blur(40px) saturate(180%); box-shadow: 1.25px 0 0 -0.75px var(--rim), -1.25px 0 0 -0.75px var(--rim), 0 0 0 0.5px var(--rim), 0 24px 64px rgba(0,0,0,0.30); animation: sheetIn .28s cubic-bezier(0.19,1,0.22,1); display: flex; flex-direction: column">
+<div style="padding: 22px 24px 6px; display: flex; flex-direction: column; gap: 2px">
+<h2 id="hd-title" style="margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -0.015em">Traspasar a guardia</h2>
+<span style="font-size: 13px; color: var(--t2)">{{hand.sub}}</span>
+</div>
+<div style="padding: 12px 24px 14px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-radius: 16px; background: var(--well); box-shadow: inset 0 0 0 0.5px var(--sep)">
+<span style="font-size: 12px; font-weight: 700; color: var(--t2)">Resumen para quien recibe</span>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr))">
+<sc-for list="{{hand.stats}}" as="s" hint-placeholder-count="4">
+<div class="stat" style="padding: 0 14px; justify-content: space-between"><span style="font-size: 12px; color: var(--t2)">{{s.label}}</span><span class="kv" style="font-size: 20px; line-height: 26px; color: {{s.color}}">{{s.value}}</span></div>
+</sc-for>
+</div>
+<div style="display: flex; flex-direction: column; max-height: 168px; overflow: auto; border-top: 1px solid var(--sep)">
+<sc-for list="{{hand.rows}}" as="r" hint-placeholder-count="4">
+<div style="display: grid; grid-template-columns: 70px 36px 1fr 120px 52px; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--sep2); font-size: 12px">
+<span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-weight: 600; color: var(--accent-t)">{{r.code}}</span>
+<span style="font-weight: 600; color: {{r.pText}}">{{r.pShort}}</span>
+<span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{r.subject}}</span>
+<span style="color: {{r.opC}}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{r.opLabel}}</span>
+<span style="text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; color: {{r.timeColor}}">{{r.time}}</span>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: baseline; gap: 8px"><span style="font-size: 12px; font-weight: 700; color: var(--t2)">De guardia esta semana</span><span style="font-size: 12px; color: var(--t3)">17:00–24:00 · reciben la lista y la nota</span></div>
+<div style="display: flex; flex-direction: column; border-radius: 14px; background: var(--well); box-shadow: inset 0 0 0 0.5px var(--sep); overflow: hidden">
+<sc-for list="{{hand.guard}}" as="o" hint-placeholder-count="3">
+<div style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--sep2)"><span style="width: 26px; height: 26px; border-radius: 50%; background: rgba(139,92,246,0.18); color: var(--purple-t); font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex: none">{{o.ini}}</span><span style="font-size: 13px; font-weight: 600; flex: 1">{{o.name}}</span><span style="font-size: 12px; color: var(--t2)">{{o.area}}</span></div>
+</sc-for>
+</div>
+</div>
+<span style="font-size: 12px; line-height: 17px; color: var(--t2)">Los tickets no cambian de operador. La guardia los ve en una lista aparte de pendientes y puede tomarlos o pedir que se reasignen.</span>
+<span style="font-size: 12px; font-weight: 700; color: var(--t2)">Nota de traspaso</span>
+<div style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{hand.tpls}}" as="p" hint-placeholder-count="3"><button class="tpl" onClick="{{p.use}}">{{p.label}}</button></sc-for></div>
+<textarea class="field" rows="3" value="{{hand.txt}}" onChange="{{hand.setTxt}}" placeholder="Qué queda pendiente y qué debe vigilar la guardia"></textarea>
+<span style="align-self: flex-end; margin-top: -6px; font-size: 12px; font-variant-numeric: tabular-nums; color: {{hand.countC}}">{{hand.count}}</span>
+</div>
+<div style="display: flex; align-items: center; gap: 8px; padding: 14px 24px 20px; border-top: 1px solid var(--sep)">
+<span style="flex: 1"></span>
+<button class="pill pillbtn" onClick="{{hand.cancel}}" style="height: 32px; padding: 0 16px; border: 0; font: inherit; font-size: 13px; font-weight: 600; color: var(--t1); cursor: pointer">Cancelar</button>
+<button class="primary" onClick="{{hand.ok}}" disabled="{{hand.disabled}}" style="height: 32px; padding: 0 18px; border: 0; border-radius: 999px; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; opacity: {{hand.okOp}}">Traspasar</button>
+</div>
+</div>
+</div>
+</sc-if>
+
+<!-- Ventana: Nuevo ticket (dos columnas: contenido a la izquierda, clasificación a la derecha) -->
+<sc-if value="{{nt.open}}" hint-placeholder-val="{{ false }}">
+<div style="position: fixed; inset: 0; z-index: 50; display: flex; align-items: flex-start; justify-content: center; padding: 24px; overflow-y: auto; box-sizing: border-box; background: rgba(10,10,30,0.28); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); animation: fadeIn .18s ease">
+<div role="dialog" aria-modal="true" aria-labelledby="nt-title" style="width: 940px; max-width: 100%; margin: auto; flex: none; border-radius: 26px; background: var(--dialog); -webkit-backdrop-filter: blur(40px) saturate(180%); backdrop-filter: blur(40px) saturate(180%); box-shadow: 1.25px 0 0 -0.75px var(--rim), -1.25px 0 0 -0.75px var(--rim), 0 0 0 0.5px var(--rim), 0 24px 64px rgba(0,0,0,0.30); animation: sheetIn .28s cubic-bezier(0.19,1,0.22,1); display: flex; flex-direction: column">
+<div style="display: flex; align-items: center; gap: 12px; padding: 18px 18px 14px 24px; border-bottom: 1px solid var(--sep)">
+<div style="display: flex; flex-direction: column; gap: 2px; flex: 1">
+<h2 id="nt-title" style="margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -0.015em">Nuevo ticket</h2>
+<span style="font-size: 13px; color: var(--t2)">Los mismos datos que trae un correo del buzón compartido</span>
+</div>
+<span style="display: flex; align-items: center; gap: 8px"><span style="font-size: 11px; color: var(--t3)">Código provisional</span><span style="padding: 3px 9px; border-radius: 7px; background: var(--control); box-shadow: 0 0 0 0.5px var(--sep), 0 0 0 3px rgba(14,165,233,0.22); font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 12px; font-weight: 600">{{nt.code}}</span></span>
+<button class="ico" onClick="{{nt.cancel}}" aria-label="Cerrar" title="Cerrar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 24px; padding: 18px 24px 20px">
+<!-- Contenido -->
+<div style="flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+<label style="display: flex; flex-direction: column; gap: 6px"><span class="flabel">Asunto</span><input class="field" value="{{nt.subject}}" onChange="{{nt.setSubject}}" placeholder="Resumen del incidente" style="height: 34px"></label>
+<label style="display: flex; flex-direction: column; gap: 6px; flex: 1"><span class="flabel">Descripción</span><textarea class="field" rows="7" value="{{nt.desc}}" onChange="{{nt.setDesc}}" placeholder="Síntomas, impacto y contexto técnico" style="flex: 1; min-height: 150px"></textarea></label>
+<div style="display: flex; flex-direction: column; gap: 6px"><span class="flabel">Adjuntos</span>
+<div style="display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 12px; border: 1px dashed var(--sep); background: var(--well)">
+<sc-for list="{{nt.files}}" as="a" hint-placeholder-count="0">
+<div style="display: flex; align-items: center; gap: 10px; padding: 6px 6px 6px 8px; border-radius: 10px; background: var(--control); box-shadow: 0 0 0 0.5px var(--sep)"><span style="width: 24px; height: 24px; border-radius: 7px; background: var(--accent-bg); color: var(--accent-t); display: flex; align-items: center; justify-content: center; flex: none"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5"></path></svg></span><span style="flex: 1; min-width: 0; font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{a.name}}</span><span style="font-size: 12px; color: var(--t3)">{{a.size}}</span><button type="button" class="ico" onClick="{{a.remove}}" aria-label="Quitar {{a.name}}" style="width: 24px; height: 24px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></div>
+</sc-for>
+<div style="display: flex; align-items: center; gap: 10px"><button type="button" class="tpl" onClick="{{nt.addFile}}" style="color: var(--accent-t); font-weight: 600">Elegir archivos</button><span style="font-size: 12px; color: var(--t3)">o arrástralos aquí · PDF, imágenes, Word, texto o ZIP</span></div>
+</div>
+</div>
+</div>
+<!-- Clasificación -->
+<div style="flex: 1 1 380px; min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 12px; align-content: start">
+<div style="display: flex; flex-direction: column; gap: 6px"><span class="flabel">Origen</span>
+<div style="position: relative">
+<button type="button" class="combo" onClick="{{nt.origin.toggle}}" aria-haspopup="listbox" aria-expanded="{{nt.origin.open}}"><span style="display: flex; align-items: center; gap: 7px; min-width: 0"><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: {{nt.origin.vc}}">{{nt.origin.value}}</span></span><span class="combo-c"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></span></button>
+<sc-if value="{{nt.origin.open}}" hint-placeholder-val="{{ false }}">
+<div role="listbox" class="mmenu" style="top: 38px; left: 0; right: 0">
+<sc-for list="{{nt.origin.opts}}" as="o" hint-placeholder-count="4">
+<button type="button" role="option" class="mitem" aria-selected="{{o.sel}}" data-sel="{{o.sel}}" disabled="{{o.dis}}" onClick="{{o.pick}}"><sc-if value="{{o.hasDot}}" hint-placeholder-val="{{ false }}"><span class="mdot" style="background: {{o.dot}}"></span></sc-if><span class="ml">{{o.label}}</span><sc-if value="{{o.hasBadge}}" hint-placeholder-val="{{ false }}"><span class="mbadge" style="background: {{o.bBg}}; color: {{o.bC}}">{{o.badge}}</span></sc-if><span class="mh">{{o.hint}}</span><span class="mk"><sc-if value="{{o.sel}}" hint-placeholder-val="{{ false }}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"></path></svg></sc-if></span></button>
+</sc-for>
+</div>
+</sc-if>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px"><span class="flabel">Área</span>
+<div style="position: relative">
+<button type="button" class="combo" onClick="{{nt.area.toggle}}" aria-haspopup="listbox" aria-expanded="{{nt.area.open}}"><span style="display: flex; align-items: center; gap: 7px; min-width: 0"><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: {{nt.area.vc}}">{{nt.area.value}}</span></span><span class="combo-c"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></span></button>
+<sc-if value="{{nt.area.open}}" hint-placeholder-val="{{ false }}">
+<div role="listbox" class="mmenu" style="top: 38px; left: 0; right: 0">
+<sc-for list="{{nt.area.opts}}" as="o" hint-placeholder-count="4">
+<button type="button" role="option" class="mitem" aria-selected="{{o.sel}}" data-sel="{{o.sel}}" disabled="{{o.dis}}" onClick="{{o.pick}}"><sc-if value="{{o.hasDot}}" hint-placeholder-val="{{ false }}"><span class="mdot" style="background: {{o.dot}}"></span></sc-if><span class="ml">{{o.label}}</span><sc-if value="{{o.hasBadge}}" hint-placeholder-val="{{ false }}"><span class="mbadge" style="background: {{o.bBg}}; color: {{o.bC}}">{{o.badge}}</span></sc-if><span class="mh">{{o.hint}}</span><span class="mk"><sc-if value="{{o.sel}}" hint-placeholder-val="{{ false }}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"></path></svg></sc-if></span></button>
+</sc-for>
+</div>
+</sc-if>
+</div>
+</div>
+<div style="grid-column: 1 / -1; display: flex; flex-direction: column; gap: 6px"><span class="flabel">Remitente</span>
+<sc-if value="{{nt.hasSender}}" hint-placeholder-val="{{ true }}"><input class="field" value="{{nt.sender}}" onChange="{{nt.setSender}}" placeholder="Nombre y correo del remitente" style="height: 34px"></sc-if>
+<sc-if value="{{nt.noSender}}" hint-placeholder-val="{{ false }}"><span class="field" style="height: 34px; display: flex; align-items: center; color: var(--t3)">No aplica: lo registra el coordinador</span></sc-if>
+</div>
+<label style="display: flex; flex-direction: column; gap: 6px"><span class="flabel">Fecha de creación</span><input class="field" type="datetime-local" value="{{nt.when}}" onChange="{{nt.setWhen}}" style="height: 34px"></label>
+<div style="display: flex; flex-direction: column; gap: 6px"><span class="flabel">Creado por</span><span class="field" style="height: 34px; display: flex; align-items: center; gap: 8px"><span style="width: 20px; height: 20px; border-radius: 50%; background: var(--solid); color: #FFFFFF; font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center">C</span>coordinador</span></div>
+<div style="grid-column: 1 / -1; display: flex; flex-direction: column; gap: 6px"><span class="flabel">Prioridad y puntaje</span>
+<div role="radiogroup" aria-label="Prioridad" style="display: flex; padding: 3px; border-radius: 10px; background: rgba(0,0,0,0.06); box-shadow: inset 0 0 0 0.5px var(--sep)">
+<sc-for list="{{nt.prios}}" as="o" hint-placeholder-count="4">
+<button type="button" role="radio" aria-checked="{{o.sel}}" onClick="{{o.pick}}" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; height: 40px; border: 0; border-radius: 8px; background: {{o.bg}}; box-shadow: {{o.sh}}; font: inherit; color: {{o.c}}; cursor: pointer"><span style="display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: {{o.w}}; white-space: nowrap"><span style="width: 6px; height: 6px; border-radius: 2px; background: {{o.dot}}"></span>{{o.label}}</span><span style="font-size: 11px; color: var(--t3); font-variant-numeric: tabular-nums">{{o.pts}}</span></button>
+</sc-for>
+</div>
+</div>
+<div style="grid-column: 1 / -1; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: baseline; gap: 8px"><span class="flabel">Asignar a</span><span style="font-size: 12px; color: var(--t3)">Opcional</span><span style="flex: 1"></span><sc-if value="{{nt.hasSug}}" hint-placeholder-val="{{ false }}"><button type="button" class="linkbtn" onClick="{{nt.useSug}}" style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600"><span class="mbadge" style="background: var(--green-bg); color: var(--green-t)">Sugerido</span>{{nt.sugName}}</button></sc-if></div>
+<div style="position: relative">
+<button type="button" class="combo" onClick="{{nt.op.toggle}}" aria-haspopup="listbox" aria-expanded="{{nt.op.open}}"><span style="display: flex; align-items: center; gap: 7px; min-width: 0"><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: {{nt.op.vc}}">{{nt.op.value}}</span></span><span class="combo-c"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></span></button>
+<sc-if value="{{nt.op.open}}" hint-placeholder-val="{{ false }}">
+<div role="listbox" class="mmenu" style="top: 38px; left: 0; right: 0">
+<sc-for list="{{nt.op.opts}}" as="o" hint-placeholder-count="4">
+<button type="button" role="option" class="mitem" aria-selected="{{o.sel}}" data-sel="{{o.sel}}" disabled="{{o.dis}}" onClick="{{o.pick}}"><sc-if value="{{o.hasDot}}" hint-placeholder-val="{{ false }}"><span class="mdot" style="background: {{o.dot}}"></span></sc-if><span class="ml">{{o.label}}</span><sc-if value="{{o.hasBadge}}" hint-placeholder-val="{{ false }}"><span class="mbadge" style="background: {{o.bBg}}; color: {{o.bC}}">{{o.badge}}</span></sc-if><span class="mh">{{o.hint}}</span><span class="mk"><sc-if value="{{o.sel}}" hint-placeholder-val="{{ false }}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"></path></svg></sc-if></span></button>
+</sc-for>
+</div>
+</sc-if>
+</div>
+<span style="font-size: 12px; color: var(--t3)">{{nt.opNote}}</span>
+</div>
+</div>
+</div>
+<div style="display: flex; align-items: center; gap: 8px; padding: 14px 24px 18px; border-top: 1px solid var(--sep)">
+<span style="font-size: 12px; color: var(--t3)">{{nt.missing}}</span>
+<span style="flex: 1"></span>
+<button class="pill pillbtn" onClick="{{nt.cancel}}" style="height: 32px; padding: 0 16px; border: 0; font: inherit; font-size: 13px; font-weight: 600; color: var(--t1); cursor: pointer">Cancelar</button>
+<button class="primary" onClick="{{nt.ok}}" disabled="{{nt.disabled}}" style="height: 32px; padding: 0 18px; border: 0; border-radius: 999px; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; opacity: {{nt.okOp}}">Crear ticket</button>
+</div>
+</div>
+</div>
+</sc-if>
+
+<!-- Notificación (Liquid Glass banner) -->
+<sc-if value="{{toast.show}}" hint-placeholder-val="{{ false }}">
+<div role="status" aria-live="polite" class="notif" style="position: fixed; top: 18px; right: 22px; z-index: 60; width: 344px; box-sizing: border-box; animation: toastIn .45s cubic-bezier(0.19,1,0.22,1)">
+<span style="width: 34px; height: 34px; border-radius: 50%; background: {{toast.iconBg}}; display: flex; align-items: center; justify-content: center; flex: none"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{toast.glyph}}"></path></svg></span>
+<div style="display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0">
+<span style="font-size: 13px; font-weight: 700">{{toast.title}}</span>
+<span style="font-size: 13px">{{toast.msg}}</span>
+</div>
+<div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px">
+<span style="font-size: 11px; color: var(--t3)">Ahora</span>
+<span style="width: 26px; height: 26px; border-radius: 50%; background: var(--accent-bg); color: var(--accent-t); font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{toast.ini}}</span>
+</div>
+</div>
+</sc-if>
+
+</div>
+</div>
+</x-dc>
+
+<script type="text/x-dc" data-dc-script data-props="{&quot;fuente&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;IBM Plex Sans&quot;,&quot;Instrument Sans&quot;,&quot;Sistema (SF Pro)&quot;],&quot;default&quot;:&quot;IBM Plex Sans&quot;},&quot;tema&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Claro&quot;,&quot;Oscuro&quot;,&quot;Sistema&quot;],&quot;default&quot;:&quot;Oscuro&quot;},&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1180}}">
+class Component extends DCLogic {
+  renderVals() {
+    const FONTS = {
+      'IBM Plex Sans': "'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif",
+      'Instrument Sans': "'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif",
+      'Sistema (SF Pro)': "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif"
+    };
+    const font = FONTS[this.props.fuente ?? 'IBM Plex Sans'] || FONTS['IBM Plex Sans'];
+    const mode = this.props.tema ?? 'Claro';
+    let isDark = mode === 'Oscuro';
+    if (mode === 'Sistema') { try { isDark = window.matchMedia('(prefers-color-scheme: dark)').matches; } catch (e) {} }
+    const theme = isDark ? 'dark' : 'light';
+    const bg = isDark ? 'radial-gradient(1200px 700px at 78% -12%, rgba(132,120,255,0.38), transparent 60%), radial-gradient(900px 650px at -5% 105%, rgba(88,80,190,0.45), transparent 62%), linear-gradient(118deg, transparent 38%, rgba(170,160,255,0.10) 46%, transparent 54%), linear-gradient(135deg, #0D0C21 0%, #1C1A40 40%, #2B2860 70%, #121128 100%)' : 'radial-gradient(900px 500px at 85% -10%, rgba(56,189,248,0.22), transparent 60%), radial-gradient(700px 500px at 10% 110%, rgba(99,102,241,0.12), transparent 60%), linear-gradient(135deg, var(--sep2) 0%, #EFF6FF 50%, var(--accent-bg) 100%)';
+    const S = this.state || {};
+    const set = (o) => this.setState(o);
+    const stop = (e) => { if (e && e.stopPropagation) e.stopPropagation(); };
+
+    // Menú desplegable (estilo macOS): un solo menú abierto a la vez
+    const menu = S.menu || '';
+    const closeMenu = () => { if (this.state && this.state.menu) set({ menu: '' }); };
+    const mkPop = (id, value, opts, extra) => ({
+      value, open: menu === id, vc: 'var(--t1)', dot: 'transparent', ...(extra || {}),
+      toggle: (e) => { stop(e); set({ menu: menu === id ? '' : id }); },
+      opts: opts.map((o) => ({ label: o.label, hint: o.hint || '', badge: o.badge || '', hasBadge: !!o.badge, bBg: o.bBg || 'var(--fill)', bC: o.bC || 'var(--t1)', dot: o.dot || 'transparent', hasDot: !!o.dot, sel: !!o.sel, dis: !!o.dis, pick: (e) => { stop(e); if (!o.dis) { o.pick(); set({ menu: '' }); } } }))
+    });
+
+    // Tarjetas fijas: total de la operación (no dependen de los filtros)
+    const summary = [
+      { label: 'Activos', value: '48', color: 'var(--t1)' },
+      { label: 'Sin asignar', value: '7', color: 'var(--orange-t)' },
+      { label: 'Críticos sin asignar', value: '1', color: 'var(--red-t)' },
+      { label: 'En pausa o espera', value: '9', color: 'var(--t1)' },
+      { label: 'Resueltos sin cerrar', value: '5', color: 'var(--t1)' },
+      { label: 'Creados hoy', value: '53', color: 'var(--t1)' }
+    ];
+
+    // Equipo (mismo origen que el Dashboard): [operador, iniciales, área, activos, turno]
+    const TEAM = [
+      ['Demo FTTH 1', 'F1', 'Redes FTTH / OLT', 8, 'turno'], ['Demo FTTH 2', 'F2', 'Redes FTTH / OLT', 5, 'turno'],
+      ['Demo FTTH 3', 'F3', 'Redes FTTH / OLT', 4, 'turno'], ['Demo FTTH 4', 'F4', 'Redes FTTH / OLT', 2, 'guardia'],
+      ['Demo WAN 1', 'W1', 'WAN', 6, 'turno'], ['Demo WAN 2', 'W2', 'WAN', 0, 'fuera'],
+      ['Demo Grandes Clientes 1', 'G1', 'Grandes Clientes', 4, 'turno'], ['Demo Grandes Clientes 2', 'G2', 'Grandes Clientes', 2, 'turno'],
+      ['Demo Inalámbrico 1', 'I1', 'Tráfico inalámbrico', 3, 'turno'], ['Demo Inalámbrico 2', 'I2', 'Tráfico inalámbrico', 2, 'guardia'],
+      ['Demo Operaciones 1', 'O1', 'Operaciones IP', 3, 'turno'], ['Demo Operaciones 2', 'O2', 'Operaciones IP', 1, 'turno'],
+      ['Demo Telefonía 1', 'T1', 'Telefonía', 1, 'guardia'], ['Demo Seguridad 1', 'S1', 'Seguridad', 0, 'turno']
+    ];
+    const AREAS = ['Redes FTTH / OLT', 'WAN', 'Grandes Clientes', 'Tráfico inalámbrico', 'Operaciones IP', 'Telefonía', 'Seguridad'];
+    const areaAvg = {};
+    TEAM.forEach((o) => { areaAvg[o[2]] = (areaAvg[o[2]] || []).concat(o[3]); });
+    Object.keys(areaAvg).forEach((k) => { const a = areaAvg[k]; areaAvg[k] = a.reduce((x, y) => x + y, 0) / a.length; });
+    const ST = { turno: ['En turno', '#22C55E'], guardia: ['De guardia', '#8B5CF6'], fuera: ['Fuera de turno', 'var(--t3)'] };
+    const dec = (n) => (Math.round(n * 10) / 10).toString().replace('.', ',');
+
+    const PR = { P1: ['P1 Crítica', 'var(--red-t)', '#EF4444', 8], P2: ['P2 Media', 'var(--orange-t)', '#F59E0B', 5], P3: ['P3 Baja', 'var(--t2)', '#94A3B8', 1], SP: ['Sin prioridad', 'var(--t3)', 'transparent', 0] };
+    const PKEYS = ['P1', 'P2', 'P3', 'SP'];
+    const STATES = [
+      ['nuevo', 'Nuevo', 'Nuevos', 'var(--t3)'], ['progreso', 'En progreso', 'En progreso', '#0EA5E9'], ['pausa', 'En pausa', 'En pausa', '#F59E0B'],
+      ['espera', 'En espera de terceros', 'En espera de terceros', '#A855F7'], ['resuelto', 'Resuelto', 'Resueltos, pendientes de cierre', '#22C55E'], ['cerrado', 'Cerrado', 'Cerrados hoy', 'var(--t2)']
+    ];
+    const stOf = {}; STATES.forEach((s) => { stOf[s[0]] = s; });
+    const CH = { correo: 'Correo', llamada: 'Llamada', jefatura: 'Jefatura', directa: 'Coordinador' };
+    const NOW = 12 * 60, GUARD_START = 17 * 60, GUARD_SOON = 30;
+    // Antigüedad (Administración): P1 1 h · P2 2 h · P3 4 h · sin prioridad 30 min
+    const TH = { P1: 60, P2: 120, P3: 240, SP: 30 };
+    const hhmm = (m) => { const h = Math.floor(m / 60), mm = m % 60; return String(h).padStart(2, '0') + ':' + String(mm).padStart(2, '0'); };
+    const fmt = (m) => m < 60 ? m + ' min' : Math.floor(m / 60) + ' h ' + String(m % 60).padStart(2, '0');
+    const thTxt = (m) => m < 60 ? m + ' min' : m / 60 + ' h';
+
+    // [código, asunto, área, prioridad, estado, operador, edad min, canal, sin movimiento min, remitente]
+    const BASE = [
+      ['INC-004', 'Problema con Fortinet en la sede de Barquisimeto', 'Seguridad', 'P1', 'nuevo', '', 72, 'correo', 72, 'Sede Barquisimeto · it.bqto@test.com'],
+      ['SIM-050', 'Caída de enlace WAN en Valencia', 'WAN', 'P2', 'nuevo', '', 38, 'llamada', 38, 'Oficina Valencia'],
+      ['SIM-048', 'Latencia alta en circuito MPLS Maracay', 'WAN', 'P3', 'nuevo', '', 41, 'correo', 41, 'noc.maracay@test.com'],
+      ['SIM-047', 'Cola de llamadas desbordada en PBX', 'Telefonía', 'P3', 'nuevo', 'Demo Telefonía 1', 12, 'jefatura', 9, 'Jefatura de Operaciones'],
+      ['SIM-046', 'OLT sin respuesta en Caracas Este', 'Redes FTTH / OLT', 'P1', 'progreso', 'Demo FTTH 1', 65, 'correo', 20, 'monitoreo@test.com'],
+      ['SIM-044', 'Degradación en nodo FTTH', 'Redes FTTH / OLT', 'P2', 'progreso', 'Demo FTTH 2', 47, 'correo', 15, 'monitoreo@test.com'],
+      ['SIM-032', 'Pérdida de paquetes en circuito MPLS', 'WAN', 'P3', 'progreso', 'Demo WAN 1', 22, 'directa', 8, ''],
+      ['SIM-041', 'Revisión de política de ACL', 'Operaciones IP', 'P2', 'progreso', 'Demo Operaciones 1', 19, 'jefatura', 6, 'Jefatura de Operaciones'],
+      ['SIM-039', 'Baja velocidad contratada detectada', 'Grandes Clientes', 'P2', 'pausa', 'Demo Grandes Clientes 1', 100, 'llamada', 35, 'Cliente corporativo'],
+      ['SIM-045', 'Saturación en enlace WAN principal', 'WAN', 'P3', 'pausa', 'Demo WAN 1', 21, 'correo', 10, 'monitoreo@test.com'],
+      ['SIM-035', 'Renovación de certificado SSL con proveedor', 'Operaciones IP', 'P3', 'espera', 'Demo Operaciones 2', 182, 'correo', 120, 'proveedor.ssl@test.com'],
+      ['SIM-037', 'Radioenlace Mérida sin línea de vista', 'Tráfico inalámbrico', 'P2', 'espera', 'Demo Inalámbrico 1', 130, 'correo', 70, 'merida@test.com'],
+      ['SIM-043', 'Saturación en enlace WAN secundario', 'WAN', 'P3', 'resuelto', 'Demo WAN 1', 52, 'correo', 3, 'monitoreo@test.com'],
+      ['SIM-042', 'Eco en conferencias', 'Telefonía', 'P3', 'resuelto', 'Demo Telefonía 1', 95, 'llamada', 5, 'Piso 3'],
+      ['SIM-040', 'OLT sin respuesta', 'Redes FTTH / OLT', 'P2', 'cerrado', 'Demo FTTH 1', 23, 'correo', 0, 'monitoreo@test.com'],
+      ['SIM-036', 'Baja velocidad contratada detectada', 'Grandes Clientes', 'P2', 'cerrado', 'Demo Grandes Clientes 1', 16, 'llamada', 0, 'Cliente corporativo'],
+      ['SIM-034', 'Certificado SSL expirado', 'Seguridad', 'P3', 'cerrado', 'Demo Seguridad 1', 5, 'correo', 0, 'monitoreo@test.com'],
+      ['SIM-033', 'BGP inestable con upstream', 'WAN', 'P3', 'cerrado', 'Demo WAN 1', 16, 'directa', 0, '']
+    ];
+    const DESC = {
+      'INC-004': 'La sede de Barquisimeto no levanta la VPN hacia Caracas desde las 10:40. El Fortigate responde a ping pero no negocia el túnel.',
+      'SIM-050': 'Enlace principal de Valencia caído. El cliente reporta sin servicio en dos oficinas.',
+      'SIM-048': 'Latencia por encima de 180 ms en el circuito MPLS de Maracay en horario pico.',
+      'SIM-047': 'La cola de la PBX central supera las 30 llamadas en espera.',
+      'SIM-046': 'La OLT de Caracas Este no responde a SNMP ni a la consola. 412 clientes afectados.',
+      'SIM-044': 'Potencia óptica degradada en el nodo 7. Revisar empalmes del tramo norte.',
+      'SIM-032': 'Pérdida intermitente del 3 % en el circuito MPLS hacia Puerto Ordaz.',
+      'SIM-041': 'Jefatura pide revisar la ACL del borde para el nuevo rango de gestión.',
+      'SIM-039': 'El cliente mide 60 Mbps sobre un plan de 200 Mbps. En pausa hasta la ventana del cliente.',
+      'SIM-045': 'El enlace WAN principal llega al 95 % en horario pico.',
+      'SIM-035': 'El certificado del portal vence el viernes. Se espera respuesta del proveedor.',
+      'SIM-037': 'Sin línea de vista en el radioenlace de Mérida. El proveedor de torre revisa la alineación.',
+      'SIM-043': 'Saturación en el enlace secundario. Se redistribuyó el tráfico.',
+      'SIM-042': 'Eco en las salas de conferencia del piso 3. Se ajustó la cancelación de eco.'
+    };
+    const FILES = {
+      'INC-004': [['captura-fortigate.png', '212 KB'], ['log-vpn-barquisimeto.txt', '38 KB']],
+      'SIM-046': [['alarmas-olt-caracas-este.csv', '64 KB']],
+      'SIM-037': [['perfil-radioenlace-merida.pdf', '1,2 MB']],
+      'SIM-039': [['prueba-velocidad.png', '148 KB']]
+    };
+    const TRASH0 = [
+      ['SIM-031', 'Alarma duplicada del enlace Valencia', 'WAN', 'P3', 'nuevo', '', 0, 'correo', 0, '', 'Duplicado de SIM-030', 'coordinador · Ayer 16:20'],
+      ['SIM-029', 'Correo de prueba del buzón compartido', 'Operaciones IP', 'SP', 'nuevo', '', 0, 'correo', 0, '', 'Prueba del buzón', 'coordinador · Ayer 09:05'],
+      ['SIM-026', 'Solicitud enviada por error a Operaciones IP', 'Telefonía', 'P3', 'nuevo', '', 0, 'jefatura', 0, '', 'No corresponde al área', 'coordinador · Lun 11:42']
+    ];
+
+    const asg = S.asg || {};
+    const edits = S.edits || {};
+    const closedNow = S.closedNow || {};
+    const trashedNow = S.trashedNow || {};
+    const restored = S.restored || {};
+    const selSet = S.sel || {};
+    const log = S.log || {};
+    const created = S.created || [];
+    const otherArea = S.otherArea || {};
+
+    const flash = (toast) => {
+      if (this._tt) clearTimeout(this._tt);
+      if (this._t0) clearTimeout(this._t0);
+      // Se desmonta y se vuelve a montar para que la animación de entrada se repita
+      set({ toast: null });
+      this._t0 = setTimeout(() => this.setState({ toast }), 30);
+      this._tt = setTimeout(() => this.setState({ toast: null }), 4000);
+    };
+    const addLog = (codes, text) => {
+      const l = { ...log };
+      codes.forEach((c) => { l[c] = (l[c] || []).concat([text]); });
+      return l;
+    };
+
+    // Modelo de ticket con cambios de la sesión
+    const build = (b) => {
+      const [code, subject0, area0, p0, st0, op0, age, ch, idle0, sender] = b;
+      const e = edits[code] || {};
+      const ov = asg[code];
+      const op = ov === undefined ? op0 : (ov || '');
+      const st = closedNow[code] !== undefined ? 'cerrado' : st0;
+      const subject = e.subject || subject0, area = e.area || area0, p = e.p || p0;
+      const live = st !== 'resuelto' && st !== 'cerrado';
+      const th = TH[p];
+      const idle = ov !== undefined || e.subject ? 0 : idle0;
+      const noPrio = p === 'SP' && age > th;
+      const noOp = !op && age > th;
+      const still = idle > th;
+      const alert = live && (noPrio || noOp || still);
+      const tm = TEAM.find((o) => o[0] === op);
+      return {
+        code, subject, area, p, st, op, ini: tm ? tm[1] : '', age, ch, idle, op0, live, alert, sender: sender || '',
+        alertTip: !alert ? '' : noPrio ? 'Sin prioridad más de ' + thTxt(th) : noOp ? 'Sin asignar más de ' + thTxt(th) : 'Sin movimiento más de ' + thTxt(th)
+      };
+    };
+    const ALL = BASE.map(build)
+      .concat(TRASH0.filter((b) => restored[b[0]]).map((b) => build([b[0], b[1], b[2], b[3], b[4], b[5], 3, b[7], 3, b[9]])))
+      .concat(created.map((c) => build([c.code, c.subject, c.area, c.p, 'nuevo', c.op, 0, c.ch, 0, c.sender])))
+      .filter((t) => trashedNow[t.code] === undefined);
+    const byCode = {}; ALL.forEach((t) => { byCode[t.code] = t; });
+    const createdBy = {}; created.forEach((c) => { createdBy[c.code] = c; });
+
+    // Carga activa por operador (incluye asignaciones hechas en esta sesión)
+    const loadOf = (name) => {
+      let n = (TEAM.find((o) => o[0] === name) || [0, 0, 0, 0])[3];
+      ALL.forEach((t) => { if (t.op0 !== t.op && t.live) { if (t.op === name) n += 1; if (t.op0 === name) n -= 1; } });
+      return Math.max(0, n);
+    };
+    const over = (o, load) => load >= 3 && load > 1.5 * areaAvg[o[2]];
+    // §5.1 Asignación sugerida: en turno (de guardia solo si su guardia empieza pronto), menor carga, sin sobrecarga
+    const eligible = (o) => o[4] === 'turno' || (o[4] === 'guardia' && GUARD_START - NOW <= GUARD_SOON);
+    const suggest = (area) => {
+      const pool = TEAM.filter((o) => (!area || o[2] === area) && eligible(o)).map((o) => ({ o, load: loadOf(o[0]) })).filter((x) => !over(x.o, x.load)).sort((a, b) => a.load - b.load);
+      return pool[0] || null;
+    };
+    const why = (area) => TEAM.filter((o) => o[2] === area).map((o) => o[0] + (o[4] === 'fuera' ? ' está fuera de turno' : o[4] === 'guardia' ? ' está de guardia desde las 17:00' : ' tiene sobrecarga')).join(' y ');
+    // Sin nadie disponible en el área: queda en cola de espera y se avisa al coordinador
+    const inQueue = (t) => !t.op && t.live && !suggest(t.area);
+    const doAssign = (codes, o, patch) => {
+      const a = { ...asg };
+      codes.forEach((c) => { a[c] = o[0]; });
+      const st = { asg: a, modal: null, pick: null, sel: {}, log: addLog(codes, ['Asignado a ' + o[0], 'Ahora · coordinador', '#0EA5E9']) };
+      if (patch) st.edits = patch;
+      set(st);
+      flash({ title: 'Nueva asignación', msg: codes.length === 1 ? codes[0] + ' se asignó a ' + o[0] : codes.length + ' tickets se asignaron a ' + o[0], ini: o[1], iconBg: '#34C759', glyph: 'M5 12l5 5L19 7' });
+    };
+    const doUnassign = (codes) => {
+      const a = { ...asg };
+      codes.forEach((c) => { a[c] = ''; });
+      set({ asg: a, modal: null, sel: {}, log: addLog(codes, ['Desasignado', 'Ahora · coordinador', '#F59E0B']) });
+      flash({ title: 'Ticket desasignado', msg: codes.join(', ') + ' volvió a la cola sin asignar', ini: '—', iconBg: '#FF9F0A', glyph: 'M6 12h12' });
+    };
+
+    // Filtros (todos empiezan en "Todos")
+    const F = { area: 'Todas', fecha: 'Todas', prio: 'Todas', estado: 'Todos', op: 'Todos', ...(S.f || {}) };
+    const q = (S.q || '').trim().toLowerCase();
+    const prioName = { 'P1 Crítica': 'P1', 'P2 Media': 'P2', 'P3 Baja': 'P3', 'Sin prioridad': 'SP' };
+    const stName = {}; STATES.forEach((s) => { stName[s[1]] = s[0]; });
+    const handed = S.handed || null;
+    const onlyHanded = !!(handed && S.onlyHanded);
+    const match = (t, skip) => {
+      if (skip !== 'estado') { if (F.estado === 'Todos' ? t.st === 'cerrado' : stName[F.estado] !== t.st) return false; }
+      else if (t.st === 'cerrado') return false;
+      if (skip !== 'area' && F.area !== 'Todas' && t.area !== F.area) return false;
+      if (skip !== 'prio' && F.prio !== 'Todas' && t.p !== prioName[F.prio]) return false;
+      if (skip !== 'op' && F.op !== 'Todos' && (F.op === 'Sin asignar' ? !!t.op : F.op === 'En cola de espera' ? !inQueue(t) : t.op !== F.op)) return false;
+      if (F.fecha === 'Ayer') return false;
+      if (onlyHanded && !handed.codes.includes(t.code)) return false;
+      if (q && !(t.code + ' ' + t.subject + ' ' + t.op).toLowerCase().includes(q)) return false;
+      return true;
+    };
+    const OPTS = {
+      area: ['Todas'].concat(AREAS),
+      fecha: ['Todas', 'Hoy', 'Ayer', 'Últimos 7 días'],
+      prio: ['Todas', 'P1 Crítica', 'P2 Media', 'P3 Baja', 'Sin prioridad'],
+      estado: ['Todos'].concat(STATES.map((s) => s[1])),
+      op: ['Todos', 'Sin asignar', 'En cola de espera'].concat(TEAM.map((o) => o[0]))
+    };
+    const countFor = (key, val) => {
+      if (key === 'fecha') return '';
+      const n = ALL.filter((t) => {
+        if (key === 'estado') return val === 'Todos' ? t.st !== 'cerrado' && match(t, 'estado') : t.st === stName[val] && match({ ...t, st: 'nuevo' }, 'estado');
+        if (!match(t, key)) return false;
+        if (val === OPTS[key][0]) return true;
+        if (key === 'area') return t.area === val;
+        if (key === 'prio') return t.p === prioName[val];
+        if (key === 'op') return val === 'Sin asignar' ? !t.op : val === 'En cola de espera' ? inQueue(t) : t.op === val;
+        return true;
+      }).length;
+      return n ? String(n) : '';
+    };
+    const LABEL = { area: 'Área', fecha: 'Fecha', prio: 'Prioridad', estado: 'Estado', op: 'Operador' };
+    const DOTS = { 'P1 Crítica': '#EF4444', 'P2 Media': '#F59E0B', 'P3 Baja': '#94A3B8' };
+    STATES.forEach((s) => { DOTS[s[1]] = s[3]; });
+    const filters = ['area', 'fecha', 'prio', 'estado', 'op'].map((k) => {
+      const isDef = F[k] === OPTS[k][0];
+      return mkPop('f-' + k, F[k], OPTS[k].map((val) => ({ label: val, sel: F[k] === val, hint: countFor(k, val), dot: (k === 'prio' || k === 'estado') ? DOTS[val] : '', pick: () => set({ f: { ...F, [k]: val } }) })), {
+        label: LABEL[k], vc: isDef ? 'var(--t1)' : 'var(--accent-t)',
+        ring: isDef ? '0 0 0 0.5px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.06)' : 'inset 0 0 0 1px var(--accent-ring)'
+      });
+    });
+    const dirty = ['area', 'fecha', 'prio', 'estado', 'op'].some((k) => F[k] !== OPTS[k][0]) || !!q || onlyHanded;
+    const clear = () => set({ f: {}, q: '', menu: '', onlyHanded: false });
+
+    // Detalle / diálogos
+    const openPanel = (code) => set({ panel: code, editing: false, menu: '' });
+    const openEdit = (t) => set({ panel: t.code, editing: true, ed: { subject: t.subject, area: t.area, p: t.p }, menu: '' });
+    const openDlg = (kind, code) => set({ dlg: { kind, code }, txt: '' });
+
+    const visible = ALL.filter((t) => match(t));
+    const rowOf = (t) => {
+      const sel = !!selSet[t.code];
+      const pr = PR[t.p];
+      const queued = inQueue(t);
+      return {
+        ...t, p: pr[0], pText: pr[1], pDot: pr[2], state: stOf[t.st][1], sDot: stOf[t.st][3],
+        assigned: !!t.op, unassigned: !t.op, uaLabel: queued ? 'En cola de espera' : 'Sin asignar', uaC: queued ? 'var(--red-t)' : 'var(--orange-t)',
+        time: fmt(t.age), timeColor: t.alert ? 'var(--red-t)' : 'var(--t1)',
+        rowBg: S.panel === t.code ? 'rgba(14,165,233,0.10)' : sel ? 'rgba(14,165,233,0.07)' : (t.alert ? 'rgba(239,68,68,0.06)' : 'var(--well)'),
+        checked: sel, canClose: t.st !== 'cerrado', closeC: t.st === 'resuelto' ? 'var(--green-t)' : 'var(--t2)',
+        open: () => openPanel(t.code), history: () => openPanel(t.code), edit: () => openEdit(t),
+        assign: () => set({ modal: { codes: [t.code] }, pick: null }),
+        unassign: () => doUnassign([t.code]),
+        close: () => openDlg('close', t.code), del: () => openDlg('del', t.code),
+        toggle: () => { const s = { ...selSet }; if (s[t.code]) delete s[t.code]; else s[t.code] = true; set({ sel: s }); }
+      };
+    };
+    const order = (a, b) => ((b.p === 'P1') - (a.p === 'P1')) || (b.age - a.age);
+    // Color de cada grupo: barra, fondo del encabezado y borde
+    const GCOL = {
+      nuevo: ['#94A3B8', 'rgba(148,163,184,0.14)', 'rgba(148,163,184,0.30)'],
+      progreso: ['#0EA5E9', 'rgba(14,165,233,0.11)', 'rgba(14,165,233,0.28)'],
+      pausa: ['#F59E0B', 'rgba(245,158,11,0.13)', 'rgba(245,158,11,0.32)'],
+      espera: ['#A855F7', 'rgba(168,85,247,0.11)', 'rgba(168,85,247,0.28)'],
+      resuelto: ['#22C55E', 'rgba(34,197,94,0.11)', 'rgba(34,197,94,0.28)'],
+      cerrado: ['#94A3B8', 'rgba(148,163,184,0.10)', 'rgba(148,163,184,0.26)']
+    };
+    const groups = STATES.map((s) => {
+      const C = GCOL[s[0]];
+      const rows = visible.filter((t) => t.st === s[0]).sort(order).map(rowOf).map((r, i, arr) => { const last = i === arr.length - 1; return { ...r, gBar: C[0], edge: C[2], bb: last ? C[2] : 'var(--sep2)', rad: last ? '14px' : '0' }; });
+      return { name: s[2], dot: s[3], bar: C[0], tint: C[1], edge: C[2], rows, count: rows.length };
+    }).filter((g) => g.rows.length);
+    const nVis = visible.length;
+    const showsClosed = F.estado === 'Cerrado';
+    const allSel = nVis > 0 && visible.every((t) => selSet[t.code]);
+    const v = {
+      scope: onlyHanded ? 'Pendientes del traspaso' : showsClosed ? 'Cerrados' : 'Solo activos',
+      dirty, clear, empty: nVis === 0, allSel,
+      toggleAll: () => { if (allSel) set({ sel: {} }); else { const s = {}; visible.forEach((t) => { s[t.code] = true; }); set({ sel: s }); } },
+      footer: showsClosed ? 'Mostrando ' + nVis + ' de 39 cerrados hoy' : (dirty ? nVis + ' resultados · ' : 'Mostrando ' + nVis + ' de 48 activos · ') + 'Nuevos → Resueltos; en cada grupo P1 primero y luego los más antiguos'
+    };
+
+    // Traspaso enviado: lista aparte para la guardia
+    const ho = handed ? {
+      show: true, on: onlyHanded,
+      title: 'Traspaso a guardia · ' + handed.codes.length + ' pendientes',
+      note: handed.note,
+      meta: 'Enviado ' + handed.at + ' · la guardia los ve en su lista de pendientes; siguen con su operador',
+      btn: onlyHanded ? 'Ver todos' : 'Ver lista',
+      toggle: () => set({ onlyHanded: !onlyHanded })
+    } : { show: false };
+
+    // Panel lateral
+    let dp = { open: false };
+    let edv = { prios: [], area: mkPop('ed-area', '', []) };
+    const pt = S.panel && byCode[S.panel];
+    if (pt) {
+      const r = rowOf(pt);
+      const queued = inQueue(pt);
+      const useOther = !!otherArea[pt.code];
+      const sg = !pt.op && pt.live ? (queued ? (useOther ? suggest(null) : null) : suggest(pt.area)) : null;
+      const arr = NOW - pt.age;
+      const cr = createdBy[pt.code];
+      const ev = [];
+      ev.push([cr ? 'Creado por el coordinador' : { correo: 'Llegó por correo', llamada: 'Registrado desde una llamada', jefatura: 'Solicitud de jefatura', directa: 'Creado por el coordinador' }[pt.ch], hhmm(arr) + ' · ' + (pt.ch === 'correo' && !cr ? 'Buzón compartido (Microsoft Graph)' : 'coordinador'), 'var(--t3)']);
+      if (pt.p !== 'SP' && !cr) ev.push(['Prioridad ' + pt.p + ' fijada', hhmm(arr + 2) + ' · coordinador', PR[pt.p][2]]);
+      if (pt.op0 && !cr) ev.push(['Asignado a ' + pt.op0, hhmm(arr + 5) + ' · coordinador', '#0EA5E9']);
+      if (['progreso', 'pausa', 'espera', 'resuelto', 'cerrado'].includes(pt.st) && !cr) ev.push(['En progreso', hhmm(arr + 9) + ' · ' + pt.op0, '#0EA5E9']);
+      if (pt.st === 'pausa') ev.push(['En pausa', hhmm(NOW - pt.idle) + ' · ' + pt.op0, '#F59E0B']);
+      if (pt.st === 'espera') ev.push(['En espera de terceros', hhmm(NOW - pt.idle) + ' · ' + pt.op0, '#A855F7']);
+      if (pt.st === 'resuelto') ev.push(['Marcado como resuelto', hhmm(NOW - pt.idle) + ' · ' + pt.op0, '#22C55E']);
+      if (BASE.find((b) => b[0] === pt.code && b[4] === 'cerrado')) ev.push(['Cerrado', 'Hoy · coordinador', 'var(--t2)']);
+      if (queued && !pt.alert) ev.push(['En cola de espera · aviso al coordinador', hhmm(arr + 1) + ' · sistema', '#EF4444']);
+      (log[pt.code] || []).forEach((x) => ev.push(x));
+      const events = ev.reverse().map((x, i, arr2) => ({ text: x[0], meta: x[1], dot: x[2], line: i === arr2.length - 1 ? 'transparent' : 'var(--sep)' }));
+      const files = (cr ? cr.files : (FILES[pt.code] || [])).map((f) => ({ name: f[0], size: f[1] }));
+      const tm = TEAM.find((o) => o[0] === pt.op);
+      dp = {
+        open: true, viewing: !S.editing, editing: !!S.editing,
+        code: pt.code, subject: pt.subject, area: pt.area, p: r.p, pText: r.pText, pDot: r.pDot, state: r.state, sDot: r.sDot,
+        alert: pt.alert, alertTip: pt.alertTip,
+        assigned: !!pt.op, op: pt.op ? pt.op + ' · ' + ST[tm[4]][0] : (queued ? 'En cola de espera' : 'Sin asignar'), opC: pt.op ? 'var(--t1)' : (queued ? 'var(--red-t)' : 'var(--orange-t)'),
+        arrival: hhmm(arr) + ' · ' + (pt.ch === 'correo' ? 'Correo (Microsoft Graph)' : CH[pt.ch]),
+        sender: pt.sender || '—', by: pt.ch === 'correo' && !cr ? 'Buzón compartido' : 'coordinador',
+        time: fmt(pt.age), timeC: pt.alert ? 'var(--red-t)' : 'var(--t1)',
+        idle: pt.st === 'cerrado' ? '—' : (pt.idle === 0 ? 'Ahora' : 'Hace ' + fmt(pt.idle)),
+        desc: cr ? (cr.desc || 'Sin descripción') : (DESC[pt.code] || pt.subject + '.'),
+        files, hasFiles: files.length > 0, noFiles: files.length === 0, events,
+        canClose: pt.st !== 'cerrado',
+        sug: sg ? {
+          show: true, none: false, name: sg.o[0], ini: sg.o[1],
+          why: sg.o[2] === pt.area ? 'Misma área · en turno · menor carga · sin sobrecarga' : 'Otra área: ' + sg.o[2] + ' · en turno · menor carga',
+          meta: ST[sg.o[4]][0] + ' · ' + sg.load + ' activos · promedio del área ' + dec(areaAvg[sg.o[2]]),
+          confirm: () => doAssign([pt.code], sg.o)
+        } : {
+          show: false, none: !pt.op && pt.live,
+          why: 'Nadie disponible en ' + pt.area + ': ' + why(pt.area) + '. Queda en cola de espera y se avisó al coordinador.',
+          canOther: !useOther, other: () => set({ otherArea: { ...otherArea, [pt.code]: true } })
+        },
+        close: () => set({ panel: null, editing: false }),
+        assign: () => set({ modal: { codes: [pt.code] }, pick: null }),
+        edit: () => openEdit(pt), del: () => openDlg('del', pt.code), closeTk: () => openDlg('close', pt.code)
+      };
+      const ed = S.ed || {};
+      const seg = (cur, val, pick) => {
+        const on = cur === val;
+        return { label: val === 'SP' ? 'Sin prioridad' : val, pts: PR[val][3] + ' pts', sel: on, pick, dot: PR[val][2], bg: on ? 'var(--seg-on)' : 'transparent', sh: on ? '0 1px 2px rgba(0,0,0,0.10), inset 0 0 0 0.5px var(--sep)' : 'none', w: on ? 600 : 500, c: on ? 'var(--t1)' : 'var(--t2)' };
+      };
+      edv = {
+        subject: ed.subject || '',
+        setSubject: (e) => set({ ed: { ...ed, subject: e.target.value } }),
+        prios: PKEYS.map((k) => seg(ed.p, k, () => set({ ed: { ...ed, p: k } }))),
+        area: mkPop('ed-area', ed.area, AREAS.map((a) => ({ label: a, sel: ed.area === a, pick: () => set({ ed: { ...ed, area: a } }) }))),
+        cancel: () => set({ editing: false }),
+        save: () => {
+          const n = { ...edits, [pt.code]: { subject: (ed.subject || pt.subject).trim() || pt.subject, area: ed.area, p: ed.p } };
+          set({ edits: n, editing: false, log: addLog([pt.code], ['Ticket editado', 'Ahora · coordinador', 'var(--t3)']) });
+          flash({ title: 'Cambios guardados', msg: pt.code + ' se actualizó', ini: 'C', iconBg: '#0A84FF', glyph: 'M5 12l5 5L19 7' });
+        }
+      };
+    }
+
+    // Lista de operadores para asignar (ventana Asignar y Nuevo ticket)
+    const opPool = (area) => TEAM.filter((o) => !area || o[2] === area).map((o) => ({ o, load: loadOf(o[0]) }))
+      .sort((a, b) => (a.o[4] === 'fuera') - (b.o[4] === 'fuera') || (a.o[4] === 'guardia') - (b.o[4] === 'guardia') || a.load - b.load);
+
+    // Ventana Asignar (área y prioridad se ajustan aquí mismo)
+    let modal = { open: false, area: mkPop('m-area', '', []), prio: mkPop('m-prio', '', []) };
+    if (S.modal && S.modal.codes && S.modal.codes.length) {
+      const M = S.modal;
+      const rs = M.codes.map((c) => byCode[c]).filter(Boolean);
+      const areas0 = Array.from(new Set(rs.map((r) => r.area)));
+      const p0s = Array.from(new Set(rs.map((r) => r.p)));
+      const area = M.area || (areas0.length === 1 ? areas0[0] : '');
+      const p = M.p || (p0s.length === 1 ? p0s[0] : '');
+      const sg = area ? suggest(area) : null;
+      const pool = opPool(area);
+      const maxL = Math.max(8, ...pool.map((x) => x.load));
+      const pick = S.pick || null;
+      const single = rs.length === 1 ? rs[0] : null;
+      const setM = (patch) => set({ modal: { ...M, ...patch }, pick: null });
+      modal = {
+        open: true,
+        title: single ? 'Asignar ' + single.code : 'Asignar ' + rs.length + ' tickets',
+        subtitle: single ? (single.op ? 'Asignado a ' + single.op + ' · elige otro operador para reasignar' : (inQueue(single) ? 'En cola de espera · nadie disponible en su área' : 'Sin asignar')) : 'Asignación múltiple',
+        codes: rs.map((r) => r.code),
+        subject: single ? single.subject : rs.map((r) => r.subject).slice(0, 2).join(' · ') + (rs.length > 2 ? ' …' : ''),
+        area: mkPop('m-area', area || 'Sin cambio · varias áreas', (area && areas0.length === 1 ? [] : [{ label: 'Sin cambio · varias áreas', sel: !area, pick: () => setM({ area: '' }) }]).concat(AREAS.map((a) => ({ label: a, sel: area === a, hint: a === areas0[0] && areas0.length === 1 ? 'Actual' : '', pick: () => setM({ area: a }) })))),
+        prio: mkPop('m-prio', p ? PR[p][0] : 'Sin cambio', (p0s.length > 1 ? [{ label: 'Sin cambio', sel: !p, pick: () => setM({ p: '' }) }] : []).concat(PKEYS.map((k) => ({ label: PR[k][0], hint: PR[k][3] + ' pts', dot: PR[k][2] === 'transparent' ? 'var(--sep)' : PR[k][2], sel: p === k, pick: () => setM({ p: k }) }))), { dot: p ? PR[p][2] : 'transparent' }),
+        avg: area ? dec(areaAvg[area]) : '—',
+        ops: pool.map(({ o, load }) => {
+          const off = o[4] === 'fuera';
+          const ov = over(o, load);
+          const sel = pick === o[0];
+          return {
+            name: o[0], ini: o[1], state: (o[4] === 'guardia' ? 'De guardia desde las 17:00' : ST[o[4]][0]) + (area ? '' : ' · ' + o[2]), stDot: ST[o[4]][1], load,
+            w: Math.min(load / maxL * 100, 100) + '%', fill: ov ? 'linear-gradient(90deg, #FCA5A5, #EF4444)' : 'linear-gradient(90deg, #7DD3FC, #0EA5E9)', c: ov ? 'var(--red-t)' : 'var(--t1)',
+            best: !!(sg && sg.o[0] === o[0]), over: ov, sel, disabled: off,
+            bg: sel ? 'var(--accent-bg)' : 'var(--well)', ring: sel ? 'inset 0 0 0 1.5px var(--solid)' : 'inset 0 0 0 0.5px var(--sep)',
+            cursor: off ? 'default' : 'pointer', op: off ? 0.5 : 1,
+            pick: () => { if (!off) set({ pick: o[0] }); }
+          };
+        }),
+        noneAvail: !!area && !sg,
+        canUnassign: rs.some((r) => r.op),
+        unassign: () => doUnassign(rs.filter((r) => r.op).map((r) => r.code)),
+        cancel: () => set({ modal: null, pick: null }),
+        saveDisabled: !pick, saveOp: pick ? 1 : 0.45,
+        save: () => {
+          if (!pick) return;
+          const n = { ...edits };
+          if (area || p) rs.forEach((r) => { n[r.code] = { ...(n[r.code] || {}), ...(area ? { area } : {}), ...(p ? { p } : {}) }; });
+          doAssign(rs.map((r) => r.code), TEAM.find((x) => x[0] === pick), n);
+        }
+      };
+    }
+
+    // Ventana Cerrar / Eliminar (§2: motivo ≥ 3; §5.4 plantillas de cierre)
+    const txt = S.txt || '';
+    let dlg = { open: false, tpls: [] };
+    const dt = S.dlg && byCode[S.dlg.code];
+    if (dt) {
+      const isDel = S.dlg.kind === 'del';
+      const n = txt.trim().length;
+      const ok = isDel ? n >= 3 : true;
+      const CLOSE_TPL = ['Servicio restablecido', 'Resuelto por el operador', 'Falla del proveedor resuelta', 'Duplicado de otro ticket'];
+      dlg = {
+        open: true, isDel, title: (isDel ? 'Eliminar ' : 'Cerrar ') + dt.code, subject: dt.subject,
+        warn: !isDel && dt.st !== 'resuelto', warnText: 'El operador aún no lo marcó como resuelto. Estado actual: ' + stOf[dt.st][1] + '.',
+        label: isDel ? 'Motivo' : 'Motivo de cierre (opcional)', hasTpl: !isDel,
+        tpls: isDel ? [] : CLOSE_TPL.map((p) => ({ label: p, use: () => set({ txt: p }) })),
+        txt, setTxt: (e) => set({ txt: e.target.value }), ph: isDel ? 'Por qué se elimina, por ejemplo: creado por error' : 'Qué se hizo para cerrarlo',
+        count: isDel ? n + ' / mínimo 3' : '', countC: isDel && n < 3 ? 'var(--t3)' : 'var(--green-t)',
+        btnClass: isDel ? 'dangerbtn' : 'primary', okLabel: isDel ? 'Enviar a la papelera' : 'Cerrar ticket',
+        disabled: !ok, okOp: ok ? 1 : 0.45,
+        cancel: () => set({ dlg: null, txt: '' }),
+        ok: () => {
+          if (!ok) return;
+          const base = { dlg: null, txt: '', sel: {} };
+          if (S.panel === dt.code) Object.assign(base, { panel: null, editing: false });
+          if (isDel) {
+            set({ ...base, trashedNow: { ...trashedNow, [dt.code]: txt.trim() } });
+            flash({ title: 'Enviado a la papelera', msg: dt.code + ' · ' + txt.trim(), ini: 'C', iconBg: '#FF3B30', glyph: 'M6 7h12M9 7V5h6v2M8 7l1 12h6l1-12' });
+          } else {
+            set({ ...base, closedNow: { ...closedNow, [dt.code]: txt.trim() }, log: addLog([dt.code], ['Cerrado' + (txt.trim() ? ' · ' + txt.trim() : ''), 'Ahora · coordinador', 'var(--t2)']) });
+            flash({ title: 'Ticket cerrado', msg: dt.code + (txt.trim() ? ' · ' + txt.trim() : ''), ini: 'C', iconBg: '#34C759', glyph: 'M5 12l5 5L19 7' });
+          }
+        }
+      };
+    }
+
+    // Papelera (restaurar)
+    const restoreToast = (c) => flash({ title: 'Ticket restaurado', msg: c + ' volvió a la cola', ini: 'C', iconBg: '#0A84FF', glyph: 'M4 12a8 8 0 1 0 3-6.2M4 4v4h4' });
+    const tItems = TRASH0.filter((b) => !restored[b[0]]).map((b) => ({ code: b[0], subject: b[1], motivo: b[10], meta: b[11], restore: () => { set({ restored: { ...restored, [b[0]]: true } }); restoreToast(b[0]); } }))
+      .concat(Object.keys(trashedNow).map((c) => {
+        const b = BASE.concat(TRASH0).find((x) => x[0] === c) || [c, (createdBy[c] || {}).subject || c];
+        return { code: c, subject: b[1], motivo: trashedNow[c], meta: 'coordinador · Ahora', restore: () => { const tn = { ...trashedNow }; delete tn[c]; set({ trashedNow: tn }); restoreToast(c); } };
+      }));
+    const trash = {
+      count: String(tItems.length), show: !!S.trash, items: tItems, empty: tItems.length === 0,
+      sub: tItems.length + (tItems.length === 1 ? ' ticket eliminado' : ' tickets eliminados'),
+      open: () => set({ trash: true, menu: '' }), close: () => set({ trash: false })
+    };
+
+    // Traspasar a guardia (§5.3): entrega nota y resumen; no cambia el operador de los tickets
+    const htxt = S.htxt || '';
+    const pending = ALL.filter((t) => t.live);
+    const hCodes = S.hand ? (S.hand.codes || pending.map((t) => t.code)) : [];
+    const hRows = hCodes.map((c) => byCode[c]).filter(Boolean).sort((a, b) => order(a, b));
+    const hn = htxt.trim().length;
+    const HAND_TPL = ['Sin novedades pendientes', 'Quedan P1 abiertos, revisar primero', 'Esperando respuesta de proveedor', 'Vigilar enlaces con saturación'];
+    const hand = {
+      show: !!S.hand,
+      sub: hRows.length + (hRows.length === 1 ? ' ticket pendiente' : ' tickets pendientes') + ' para la guardia de esta noche',
+      stats: [
+        { label: 'Pendientes', value: String(hRows.length), color: 'var(--t1)' },
+        { label: 'P1 abiertos', value: String(hRows.filter((t) => t.p === 'P1').length), color: 'var(--red-t)' },
+        { label: 'Sin asignar', value: String(hRows.filter((t) => !t.op).length), color: 'var(--orange-t)' },
+        { label: 'En espera de terceros', value: String(hRows.filter((t) => t.st === 'espera').length), color: 'var(--t1)' }
+      ],
+      rows: hRows.map((t) => ({ code: t.code, pShort: t.p === 'SP' ? '—' : t.p, pText: PR[t.p][1], subject: t.subject, opLabel: t.op || (inQueue(t) ? 'En cola de espera' : 'Sin asignar'), opC: t.op ? 'var(--t2)' : 'var(--orange-t)', time: fmt(t.age), timeColor: t.alert ? 'var(--red-t)' : 'var(--t1)' })),
+      guard: TEAM.filter((o) => o[4] === 'guardia').map((o) => ({ name: o[0], ini: o[1], area: o[2] })),
+      tpls: HAND_TPL.map((p) => ({ label: p, use: () => set({ htxt: htxt.trim() ? htxt.trim() + '. ' + p : p }) })),
+      txt: htxt, setTxt: (e) => set({ htxt: e.target.value }),
+      count: hn + ' / mínimo 10', countC: hn < 10 ? 'var(--t3)' : 'var(--green-t)',
+      disabled: hn < 10, okOp: hn < 10 ? 0.45 : 1,
+      openAll: () => set({ hand: { codes: null }, htxt: '', menu: '' }),
+      cancel: () => set({ hand: null, htxt: '' }),
+      ok: () => {
+        if (hn < 10) return;
+        const codes = hRows.map((t) => t.code);
+        set({ hand: null, htxt: '', sel: {}, handed: { codes, note: htxt.trim(), at: 'hoy 12:00' }, log: addLog(codes, ['En la lista de pendientes de la guardia', 'Ahora · coordinador', '#8B5CF6']) });
+        flash({ title: 'Traspaso enviado', msg: codes.length + ' pendientes y la nota quedan en la lista de la guardia', ini: 'C', iconBg: '#8B5CF6', glyph: 'M4 8h13l-3-3M20 16H7l3 3' });
+      }
+    };
+
+    // Nuevo ticket: los mismos datos que trae un correo
+    const nextNum = 51 + created.length;
+    const NT = S.nt || null;
+    let nt = { open: false, origin: mkPop('n-origin', '', []), area: mkPop('n-area', '', []), op: mkPop('n-op', '', []), prios: [], files: [] };
+    if (NT) {
+      const setN = (patch) => set({ nt: { ...NT, ...patch } });
+      const sg = NT.area ? suggest(NT.area) : null;
+      const ORIG = [['correo', 'Correo'], ['llamada', 'Llamada'], ['jefatura', 'Jefatura'], ['directa', 'Coordinador']];
+      const opOpts = [{ label: 'Sin asignar', hint: NT.area && !sg ? 'Entra en cola de espera' : '', sel: !NT.op, pick: () => setN({ op: '' }) }]
+        .concat(NT.area ? opPool(NT.area).map(({ o, load }) => {
+          const isSug = !!(sg && sg.o[0] === o[0]), ov = over(o, load);
+          const B = isSug ? ['Sugerido', 'var(--green-bg)', 'var(--green-t)'] : o[4] === 'fuera' ? ['Fuera de turno', 'var(--fill)', 'var(--t3)'] : o[4] === 'guardia' ? ['De guardia', 'rgba(139,92,246,0.16)', 'var(--purple-t)'] : ov ? ['Sobrecarga', 'var(--red-bg)', 'var(--red-t)'] : null;
+          return {
+            label: o[0], dot: ST[o[4]][1], dis: o[4] === 'fuera', sel: NT.op === o[0],
+            badge: B ? B[0] : '', bBg: B ? B[1] : '', bC: B ? B[2] : '',
+            hint: o[4] === 'fuera' ? '' : load + ' activos',
+            pick: () => setN({ op: o[0] })
+          };
+        }) : []);
+      const n = (NT.subject || '').trim().length;
+      const ok = n >= 3 && !!NT.area;
+      const SAMPLE = [['captura-alarma.png', '184 KB'], ['traza-ping.txt', '12 KB'], ['correo-original.eml', '46 KB']];
+      nt = {
+        open: true, code: 'INC-' + String(nextNum).padStart(3, '0'),
+        subject: NT.subject || '', setSubject: (e) => setN({ subject: e.target.value }),
+        desc: NT.desc || '', setDesc: (e) => setN({ desc: e.target.value }),
+        sender: NT.sender || '', setSender: (e) => setN({ sender: e.target.value }), hasSender: NT.ch !== 'directa', noSender: NT.ch === 'directa',
+        when: NT.when, setWhen: (e) => setN({ when: e.target.value }),
+        origin: mkPop('n-origin', ORIG.find((x) => x[0] === NT.ch)[1], ORIG.map((x) => ({ label: x[1], sel: NT.ch === x[0], pick: () => setN({ ch: x[0] }) }))),
+        area: mkPop('n-area', NT.area || 'Elegir área', AREAS.map((a) => ({ label: a, sel: NT.area === a, hint: suggest(a) ? '' : 'Nadie disponible', pick: () => setN({ area: a, op: '' }) })), { vc: NT.area ? 'var(--t1)' : 'var(--t3)' }),
+        op: mkPop('n-op', NT.op || 'Sin asignar', opOpts, { vc: NT.op ? 'var(--t1)' : 'var(--t3)' }),
+        opNote: !NT.area ? 'Elige el área para ver operadores' : sg ? '' : 'Nadie disponible en el área: entra en cola de espera y se avisa al coordinador',
+        hasSug: !!(sg && NT.op !== sg.o[0]), sugName: sg ? sg.o[0] : '', useSug: () => sg && setN({ op: sg.o[0] }),
+        prios: PKEYS.map((k) => {
+          const on = NT.p === k;
+          return { label: k === 'SP' ? 'Sin prioridad' : PR[k][0], pts: PR[k][3] + ' pts', dot: PR[k][2] === 'transparent' ? 'var(--sep)' : PR[k][2], sel: on, pick: () => setN({ p: k }), bg: on ? 'var(--seg-on)' : 'transparent', sh: on ? '0 1px 2px rgba(0,0,0,0.10), inset 0 0 0 0.5px var(--sep)' : 'none', w: on ? 600 : 500, c: on ? 'var(--t1)' : 'var(--t2)' };
+        }),
+        files: (NT.files || []).map((f, i) => ({ name: f[0], size: f[1], remove: () => setN({ files: NT.files.filter((_, j) => j !== i) }) })),
+        hasFiles: (NT.files || []).length > 0,
+        addFile: () => { const fs = NT.files || []; if (fs.length < SAMPLE.length) setN({ files: fs.concat([SAMPLE[fs.length]]) }); },
+        disabled: !ok, okOp: ok ? 1 : 0.45,
+        missing: ok ? '' : (n < 3 ? 'Falta el asunto' : 'Falta el área'),
+        cancel: () => set({ nt: null }),
+        ok: () => {
+          if (!ok) return;
+          const code = 'INC-' + String(nextNum).padStart(3, '0');
+          const c = { code, subject: NT.subject.trim(), desc: (NT.desc || '').trim(), area: NT.area, p: NT.p, op: NT.op || '', ch: NT.ch, sender: NT.ch === 'directa' ? '' : (NT.sender || '').trim(), files: NT.files || [] };
+          const l = addLog([code], NT.op ? ['Asignado a ' + NT.op, 'Ahora · coordinador', '#0EA5E9'] : ['Registrado', 'Ahora · coordinador', 'var(--t3)']);
+          set({ nt: null, created: created.concat([c]), log: l, panel: code, editing: false });
+          flash({ title: 'Ticket creado', msg: code + ' · ' + c.subject, ini: 'C', iconBg: '#34C759', glyph: 'M12 5v14M5 12h14' });
+        }
+      };
+    }
+
+    const selCodes = Object.keys(selSet).filter((c) => byCode[c]);
+    const anyDialog = !!(modal.open || dlg.open || trash.show || hand.show || nt.open);
+    const batch = {
+      show: selCodes.length > 0 && !anyDialog,
+      label: selCodes.length + (selCodes.length === 1 ? ' ticket seleccionado' : ' tickets seleccionados'),
+      clear: () => set({ sel: {} }),
+      assign: () => set({ modal: { codes: selCodes }, pick: null }),
+      handover: () => set({ hand: { codes: selCodes.filter((c) => byCode[c].live) }, htxt: '' })
+    };
+    const toast = S.toast ? { show: true, ...S.toast } : { show: false };
+    // Barra lateral minimizable (se recuerda entre pantallas)
+    const sbStored = (() => { try { return localStorage.getItem('kip.sidebar') === 'min'; } catch (e) { return false; } })();
+    const sbMin = (this.state && this.state.sbMin !== undefined) ? this.state.sbMin : sbStored;
+    const sb = {
+      c: sbMin ? 'true' : 'false', label: sbMin ? 'Mostrar barra lateral' : 'Minimizar barra lateral',
+      toggle: (e) => { if (e && e.stopPropagation) e.stopPropagation(); const nv = !sbMin; try { localStorage.setItem('kip.sidebar', nv ? 'min' : 'full'); } catch (err) {} this.setState({ sbMin: nv }); }
+    };
+    return { sb,
+      font, theme, bg, summary, filters, groups, v, modal, dlg, trash, hand, dp, ed: edv, toast, batch, ho, nt,
+      newTicket: () => set({ nt: { subject: '', desc: '', ch: 'correo', area: '', p: 'SP', op: '', sender: '', when: '2026-10-13T12:00', files: [] }, menu: '' }),
+      q: { val: S.q || '', set: (e) => set({ q: e.target.value }) },
+      closeMenu, secZ: menu.indexOf('f-') === 0 ? 31 : 'auto'
+    };
+  }
+}
+</script>
+</body>
+</html>
