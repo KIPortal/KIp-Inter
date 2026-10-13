@@ -28,7 +28,9 @@ const ACCIONES = Object.freeze({
     HORARIO_EDITADO: ['Horario', 'azul'],
     CONFIGURACION_EDITADA: ['Configuración', 'gris'],
     USUARIO_CREADO: ['Creó usuario', 'verde'],
-    USUARIO_EDITADO: ['Editó usuario', 'azul']
+    USUARIO_EDITADO: ['Editó usuario', 'azul'],
+    AREA_CREADA: ['Creó área', 'verde'],
+    AREA_EDITADA: ['Editó área', 'azul']
 });
 
 const FECHAS = Object.freeze([

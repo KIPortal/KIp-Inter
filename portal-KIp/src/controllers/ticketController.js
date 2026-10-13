@@ -3,10 +3,9 @@ const { getWeekStart } = require('../services/shiftService');
 const { buildHandoffView } = require('../services/ticketQueueService');
 
 const PRIORITY_POINTS = { P1: 8, P2: 5, P3: 1 };
-const VALID_AREAS = new Set([
-    'GENERAL', 'REDES_FTTH', 'TRAFICO_INALAMBRICO', 'WAN',
-    'GRANDES_CLIENTES', 'SEGURIDAD', 'TELEFONIA'
-]);
+const { isActiveArea } = require('../services/areaCatalog');
+// Solo se puede elegir un área activa (las desactivadas conservan su historial)
+const VALID_AREAS = { has: isActiveArea };
 const VALID_ORIGINS = new Set(['CORREO', 'LLAMADA', 'JEFATURA', 'COORDINADOR']);
 const VALID_PRIORITIES = new Set(['NONE', 'P1', 'P2', 'P3']);
 
@@ -19,7 +18,7 @@ function assignmentValidationError({ operatorId, areaDesignada, prioridad }) {
 
 async function isOperator(operatorId) {
     return prisma.user.findFirst({
-        where: { id: operatorId, rol: 'OPERADOR' },
+        where: { id: operatorId, rol: 'OPERADOR', activo: true },
         select: { id: true, nombre: true }
     });
 }

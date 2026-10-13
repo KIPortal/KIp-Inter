@@ -15,8 +15,12 @@ async function login(req, res) {
     try {
         const user = await prisma.user.findUnique({
             where: { email: email.trim() },
-            select: { id: true, email: true, nombre: true, rol: true, area_designada: true, clave: true }
+            select: { id: true, email: true, nombre: true, rol: true, area_designada: true, clave: true, activo: true }
         });
+
+        if (user && user.activo === false) {
+            return res.status(403).json({ success: false, message: 'Usuario desactivado. Pide al coordinador que lo reactive.' });
+        }
 
         if (process.env.NODE_ENV !== 'production' && (!user || !user.clave)) {
             const temporaryUser = user ? {

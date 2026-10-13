@@ -9,7 +9,7 @@
  * y nunca se escriben en Auditoría.
  */
 
-const { AREA_NAMES } = require('./periodReportService');
+const { AREA_NAMES, isActiveArea } = require('./areaCatalog');
 
 const ROLES = ['OPERADOR', 'COORDINADOR'];
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -42,13 +42,17 @@ function validateUser(input, { nuevo = false } = {}) {
     }
     if (nuevo || b.area !== undefined) {
         const area = str(b.area) || 'GENERAL';
-        if (!Object.prototype.hasOwnProperty.call(AREA_NAMES, area)) return { error: 'Área no válida' };
+        if (!isActiveArea(area)) return { error: 'Área no válida o desactivada' };
         datos.area_designada = area;
     }
     if (nuevo || (b.clave !== undefined && b.clave !== '')) {
         const clave = typeof b.clave === 'string' ? b.clave : '';
         if (clave.length < MIN_CLAVE || clave.length > 72) return { error: `La clave temporal debe tener al menos ${MIN_CLAVE} caracteres` };
         datos.clave = clave;
+    }
+    if (!nuevo && b.activo !== undefined) {
+        if (typeof b.activo !== 'boolean') return { error: 'Valor de activo no válido' };
+        datos.activo = b.activo;
     }
     if (!nuevo && Object.keys(datos).length === 0) return { error: 'No hay cambios para guardar' };
     return { datos };
@@ -68,6 +72,8 @@ function describeUser(antes, datos) {
         cambios.push(`área: ${AREA_NAMES[antes.area_designada] || antes.area_designada} → ${AREA_NAMES[datos.area_designada]}`);
     }
     if (datos.clave) cambios.push('clave temporal cambiada');
+    if (datos.activo === false && antes.activo !== false) cambios.push('desactivado');
+    if (datos.activo === true && antes.activo === false) cambios.push('reactivado');
     return `${antes.nombre}: ${cambios.join(', ') || 'sin cambios'}`;
 }
 

@@ -6,10 +6,13 @@
 	const conOps = areas.filter(a => a.operadores.length);
 	const coordinadores = typeof locals.coordinadores !== 'undefined' ? locals.coordinadores : [];
 	const miId = locals.miId || null;
+	const desactivados = locals.desactivados || [];
 	const minClave = locals.minClave || 8;
 	const usuarios = areas.flatMap(a => a.operadores.map(o => ({ id: o.id, nombre: o.nombre, email: o.email, rol: 'OPERADOR', area: o.area })))
-		.concat(coordinadores.map(c => ({ id: c.id, nombre: c.nombre, email: c.email, rol: 'COORDINADOR', area: 'GENERAL' })));
-	const datos = { config, eventos, destinatarios, limites, vistaPrevia, usuarios, areas: areas.map(a => ({ codigo: a.codigo, nombre: a.nombre })), miId, minClave };
+		.concat(coordinadores.map(c => ({ id: c.id, nombre: c.nombre, email: c.email, rol: 'COORDINADOR', area: 'GENERAL' })))
+		.map(u => Object.assign(u, { activo: true }))
+		.concat(desactivados.map(u => Object.assign({}, u, { activo: false })));
+	const datos = { config, eventos, destinatarios, limites, vistaPrevia, usuarios, areas: areas.map(a => ({ codigo: a.codigo, nombre: a.nombre, activa: a.activa !== false, operadores: a.operadores.length })), miId, minClave };
 	const ini = n => String(n || '?').split(/\s+/).slice(0, 2).map(p => p[0]).join('').toUpperCase();
 	const lapiz = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>';
 	const SECS = [
@@ -57,16 +60,22 @@
 						<h2 id="h-ar">Áreas y equipos</h2>
 						<span class="hint"><%= areas.length %> áreas · <%= totalOps %> operadores · <%= coordinadores.length %> coordinadores</span>
 						<span class="grow"></span>
-						<button type="button" class="pill pillbtn plain" style="height:30px;font-size:12px" disabled title="Las áreas pasan a una tabla editable en la próxima fase">＋ Nueva área</button>
+						<button type="button" class="pill pillbtn plain" style="height:30px;font-size:12px" data-area-new>＋ Nueva área</button>
 					</div>
 					<div class="areas-split">
 						<div class="area-list" role="listbox" aria-label="Áreas">
 							<% areas.forEach((a, i) => { %>
 								<button type="button" role="option" data-area-pick="<%= a.codigo %>" aria-selected="<%= a.codigo === (conOps[0] || areas[0]).codigo %>">
-									<b><%= a.nombre %></b><span class="n"><%= a.operadores.length %></span>
+									<b><%= a.nombre %><% if (a.activa === false) { %> <span class="tag gray">Desactivada</span><% } %></b><span class="n"><%= a.operadores.length %></span>
 									<span class="meta"><span><i class="st-turno"></i><%= a.turno %> en turno</span><% if (a.guardia) { %><span><i class="st-guardia"></i><%= a.guardia %> de guardia</span><% } %></span>
 								</button>
 							<% }) %>
+							<% if (desactivados.length) { %>
+							<button type="button" role="option" data-area-pick="__off" aria-selected="false">
+								<b>Usuarios desactivados</b><span class="n"><%= desactivados.length %></span>
+								<span class="meta"><span>No entran ni reciben tickets</span></span>
+							</button>
+							<% } %>
 							<button type="button" role="option" data-area-pick="__coord" aria-selected="false">
 								<b>Coordinadores</b><span class="n"><%= coordinadores.length %></span>
 								<span class="meta"><span>Acceso completo al portal</span></span>
@@ -76,7 +85,8 @@
 							<% areas.forEach(a => { %>
 								<div data-area-panel="<%= a.codigo %>"<% if (a.codigo !== (conOps[0] || areas[0]).codigo) { %> hidden<% } %>>
 									<div style="display:flex;align-items:center;gap:10px;padding:16px 24px 12px"><span style="display:flex;flex-direction:column;flex:1"><b style="font-size:15px"><%= a.nombre %></b><span class="t2" style="font-size:12px"><%= a.operadores.length %> <%= a.operadores.length === 1 ? 'operador' : 'operadores' %> · <%= a.turno %> en turno<%= a.guardia ? ' · ' + a.guardia + ' de guardia' : '' %></span></span>
-										<button type="button" class="primary" style="height:30px;padding:0 14px;font-size:12px" data-user-new="<%= a.codigo %>">＋ Agregar operador</button></div>
+										<button type="button" class="pill pillbtn plain" style="height:30px;padding:0 14px;font-size:12px" data-area-edit="<%= a.codigo %>">Editar área</button>
+										<% if (a.activa !== false) { %><button type="button" class="primary" style="height:30px;padding:0 14px;font-size:12px" data-user-new="<%= a.codigo %>">＋ Agregar operador</button><% } %></div>
 									<% if (!a.operadores.length) { %>
 										<p class="empty" style="padding:4px 24px 12px">Esta área no tiene operadores.</p>
 									<% } else { %>
@@ -96,6 +106,21 @@
 									<% } %>
 								</div>
 							<% }) %>
+							<div data-area-panel="__off" hidden>
+								<div style="display:flex;flex-direction:column;padding:16px 24px 12px"><b style="font-size:15px">Usuarios desactivados</b><span class="t2" style="font-size:12px">Edita uno para reactivarlo; su historial se conserva</span></div>
+								<table class="rank-table">
+									<thead><tr><th style="padding-left:24px">Usuario</th><th style="width:140px">Rol</th><th style="width:56px;padding-right:24px"><span class="sr-only">Acciones</span></th></tr></thead>
+									<tbody>
+										<% desactivados.forEach(u => { %>
+											<tr class="row">
+												<td style="padding-left:24px"><span style="display:flex;align-items:center;gap:10px"><span class="avatar sys"><%= ini(u.nombre) %></span><span style="display:flex;flex-direction:column"><b style="font-size:13px"><%= u.nombre %></b><span class="t2"><%= u.email %></span></span></span></td>
+												<td class="t2"><%= u.rol === 'COORDINADOR' ? 'Coordinador' : 'Operador' %></td>
+												<td style="padding-right:24px;text-align:right"><button type="button" class="ico" data-user-edit="<%= u.id %>" title="Editar" aria-label="Editar <%= u.nombre %>"><%- lapiz %></button></td>
+											</tr>
+										<% }) %>
+									</tbody>
+								</table>
+							</div>
 							<div data-area-panel="__coord" hidden>
 								<div style="display:flex;align-items:center;gap:10px;padding:16px 24px 12px"><span style="display:flex;flex-direction:column;flex:1"><b style="font-size:15px">Coordinadores</b><span class="t2" style="font-size:12px">Cierran tickets, asignan y administran el portal</span></span>
 									<button type="button" class="primary" style="height:30px;padding:0 14px;font-size:12px" data-user-new="__coord">＋ Agregar coordinador</button></div>

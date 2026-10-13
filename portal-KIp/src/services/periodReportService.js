@@ -18,20 +18,8 @@ const {
     computeOverload
 } = require('./metricsService');
 
-const AREAS = [
-    'GENERAL', 'REDES_FTTH', 'TRAFICO_INALAMBRICO', 'WAN',
-    'GRANDES_CLIENTES', 'SEGURIDAD', 'TELEFONIA'
-];
-
-const AREA_NAMES = {
-    GENERAL: 'General',
-    REDES_FTTH: 'Redes FTTH',
-    TRAFICO_INALAMBRICO: 'Tráfico Inalámbrico',
-    WAN: 'WAN',
-    GRANDES_CLIENTES: 'Grandes Clientes',
-    SEGURIDAD: 'Seguridad',
-    TELEFONIA: 'Telefonía'
-};
+// Catálogo vivo de áreas (tabla Area); arranca con las 7 originales
+const { AREAS, AREA_NAMES } = require('./areaCatalog');
 
 const STATE_NAMES = {
     NUEVO: 'Nuevo',

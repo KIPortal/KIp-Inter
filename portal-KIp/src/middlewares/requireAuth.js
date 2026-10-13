@@ -16,10 +16,11 @@ async function requireAuth(req, res, next) {
     try {
         const user = await prisma.user.findUnique({
             where: { id: userId },
-            select: { id: true, email: true, nombre: true, rol: true, area_designada: true }
+            select: { id: true, email: true, nombre: true, rol: true, area_designada: true, activo: true }
         });
 
-        if (!user) {
+        // Usuario borrado o desactivado: se cierra su sesión
+        if (!user || user.activo === false) {
             return req.session.destroy(() => unauthenticated(req, res));
         }
 

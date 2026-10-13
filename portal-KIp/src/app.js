@@ -38,6 +38,11 @@ app.use(session({
 	cookie: { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' }
 }));
 
+// Catálogo de áreas desde la tabla Area (caché de 60 s)
+const prisma = require('./config/prisma');
+const { refreshAreas } = require('./services/areaCatalog');
+app.use((req, res, next) => { refreshAreas(prisma).finally(next); });
+
 app.use('/api/auth', authRoutes);
 app.use('/auth', authRoutes);
 app.use('/', dashboardRoutes);
