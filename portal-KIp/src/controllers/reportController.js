@@ -1,4 +1,15 @@
 const prisma = require('../config/prisma');
+const {
+    ACTIVE_STATES,
+    getDayBounds,
+    getHourOfDay,
+    averageResolutionMinutes,
+    formatMinutes,
+    computeOverload,
+    getPeriodBounds
+} = require('../services/metricsService');
+const { buildPeriodReport, AREAS: REPORT_AREAS } = require('../services/periodReportService');
+const { buildWorkbook } = require('../services/excelExportService');
 
 const AREA_DISPLAY_NAMES = {
     'GENERAL': 'General',
@@ -22,12 +33,9 @@ const ALL_AREAS = [
 
 async function getReports(req, res) {
     try {
-        const now = new Date();
-        const startOfDay = new Date();
-        startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(startOfDay);
-        endOfDay.setDate(endOfDay.getDate() + 1);
-        const last24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        // Día calendario de Caracas (no depende de la zona horaria del servidor)
+        const { start: startOfDay, end: endOfDay } = getDayBounds();
+        const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
         // Consultas dinámicas concurrentes con Prisma sin alterar esquema
         const [
@@ -54,14 +62,14 @@ async function getReports(req, res) {
             // 1. Tickets Totales (global)
             prisma.ticket.count(),
 
-            // 2. Tickets de la jornada (creados o resueltos hoy)
+            // 2. Tickets de la jornada (creados o resueltos hoy). No se usa updatedAt:
+            //    cualquier edición de un ticket cerrado lo contaría como cerrado hoy.
             prisma.ticket.count({
                 where: {
                     OR: [
                         { createdAt: { gte: startOfDay, lt: endOfDay } },
                         { fecha_cierre: { gte: startOfDay, lt: endOfDay } },
-                        { resueltoEn: { gte: startOfDay, lt: endOfDay } },
-                        { estado_actual: 'CERRADO', updatedAt: { gte: startOfDay, lt: endOfDay } }
+                        { resueltoEn: { gte: startOfDay, lt: endOfDay } }
                     ]
                 }
             }),
@@ -185,12 +193,13 @@ async function getReports(req, res) {
                 _sum: { puntos_complejidad: true }
             }),
 
-            // 15. Carga actual por operador (tickets en EN_PROGRESO o EN_PAUSA)
+            // 15. Carga actual por operador: todos sus tickets activos (no cerrados),
+            //     incluidos los recién asignados que aún no ha tomado y los en espera
             prisma.ticket.groupBy({
                 by: ['asignado_a_id'],
                 where: {
                     asignado_a_id: { not: null },
-                    estado_actual: { in: ['EN_PROGRESO', 'EN_PAUSA'] }
+                    estado_actual: { in: ACTIVE_STATES }
                 },
                 _count: { id: true }
             }),
@@ -233,7 +242,6 @@ async function getReports(req, res) {
                         { createdAt: { gte: startOfDay, lt: endOfDay } },
                         { fecha_cierre: { gte: startOfDay, lt: endOfDay } },
                         { resueltoEn: { gte: startOfDay, lt: endOfDay } },
-                        { estado_actual: 'CERRADO', updatedAt: { gte: startOfDay, lt: endOfDay } },
                         { fecha_asignacion: { gte: startOfDay, lt: endOfDay } }
                     ]
                 },
@@ -243,7 +251,6 @@ async function getReports(req, res) {
                     fecha_cierre: true,
                     resueltoEn: true,
                     fecha_asignacion: true,
-                    updatedAt: true,
                     estado_actual: true
                 }
             }),
@@ -264,8 +271,7 @@ async function getReports(req, res) {
                 where: {
                     OR: [
                         { resueltoEn: { gte: last24h } },
-                        { fecha_cierre: { gte: last24h } },
-                        { estado_actual: 'CERRADO', updatedAt: { gte: last24h } }
+                        { fecha_cierre: { gte: last24h } }
                     ]
                 },
                 select: {
@@ -274,7 +280,6 @@ async function getReports(req, res) {
                     createdAt: true,
                     fecha_cierre: true,
                     resueltoEn: true,
-                    updatedAt: true,
                     estado_actual: true
                 }
             })
@@ -490,26 +495,15 @@ async function getReports(req, res) {
             }
         });
 
-        // Tiempos de resolución
-        const opTimeMap = new Map();
+        // Tiempo promedio de resolución por operador: suma de tiempos ÷ tickets con
+        // tiempo válido, medido desde que el ticket llegó hasta que se cerró.
+        const opTicketsMap = new Map();
         for (const ticket of closedTickets) {
             if (!ticket.asignado_a_id) continue;
-            let tStat = opTimeMap.get(ticket.asignado_a_id);
-            if (!tStat) {
-                tStat = { totalMinutos: 0, countConTiempo: 0 };
-                opTimeMap.set(ticket.asignado_a_id, tStat);
-            }
-            const fin = ticket.fecha_cierre || ticket.resueltoEn;
-            if (fin && ticket.createdAt) {
-                const finTime = new Date(fin).getTime();
-                const createTime = new Date(ticket.createdAt).getTime();
-                if (!isNaN(finTime) && !isNaN(createTime) && finTime >= createTime) {
-                    const diff = Math.max(1, Math.round((finTime - createTime) / 60000));
-                    tStat.totalMinutos += diff;
-                    tStat.countConTiempo += 1;
-                }
-            }
+            if (!opTicketsMap.has(ticket.asignado_a_id)) opTicketsMap.set(ticket.asignado_a_id, []);
+            opTicketsMap.get(ticket.asignado_a_id).push(ticket);
         }
+        const averageTimeFor = opId => formatMinutes(averageResolutionMinutes(opTicketsMap.get(opId)));
 
         const operatorStatsMap = new Map();
 
@@ -524,12 +518,7 @@ async function getReports(req, res) {
                 ? Math.min(100, Math.round((cerrados / asignadosTotales) * 100))
                 : 0;
 
-            const tStat = opTimeMap.get(op.id);
-            let tiempoPromedio = 'N/A';
-            if (tStat && tStat.countConTiempo > 0 && tStat.totalMinutos > 0) {
-                const avg = Math.round(tStat.totalMinutos / tStat.countConTiempo);
-                tiempoPromedio = avg >= 60 ? `${(avg / 60).toFixed(1)} h` : `${avg} min`;
-            }
+            const tiempoPromedio = averageTimeFor(op.id);
 
             const cargaNivel = cargaActual <= 2 ? 'baja' : (cargaActual <= 4 ? 'media' : 'alta');
 
@@ -593,12 +582,7 @@ async function getReports(req, res) {
                     ? Math.min(100, Math.round((cerrados / asignadosTotales) * 100))
                     : 0;
 
-                const tStat = opTimeMap.get(opId);
-                let tiempoPromedio = 'N/A';
-                if (tStat && tStat.countConTiempo > 0 && tStat.totalMinutos > 0) {
-                    const avg = Math.round(tStat.totalMinutos / tStat.countConTiempo);
-                    tiempoPromedio = avg >= 60 ? `${(avg / 60).toFixed(1)} h` : `${avg} min`;
-                }
+                const tiempoPromedio = averageTimeFor(opId);
 
                 const cargaNivel = cargaActual <= 2 ? 'baja' : (cargaActual <= 4 ? 'media' : 'alta');
 
@@ -626,6 +610,16 @@ async function getReports(req, res) {
                     tiempoPromedio
                 });
             }
+        }
+
+        // Sobrecarga: carga activa de cada operador frente al promedio de su área.
+        // Es una alerta para el coordinador; no cambia el semáforo `cargaNivel`.
+        const overloadByOperator = computeOverload(Array.from(operatorStatsMap.values()));
+        for (const stats of operatorStatsMap.values()) {
+            const overload = overloadByOperator.get(stats.id);
+            stats.promedioAreaCarga = overload.promedioArea;
+            stats.indiceCarga = overload.indiceCarga;
+            stats.sobrecarga = overload.sobrecarga;
         }
 
         const rankingList = Array.from(operatorStatsMap.values());
@@ -668,21 +662,18 @@ async function getReports(req, res) {
         const asignadosPorHora = new Array(24).fill(0);
         const cerradosPorHora = new Array(24).fill(0);
 
+        // La hora se toma en Caracas, no en la zona horaria del servidor
         todayTickets.forEach(t => {
             if (!t) return;
             const creaVal = t.fecha_creacion || t.createdAt;
             if (creaVal) {
                 const d = new Date(creaVal);
-                if (!isNaN(d.getTime()) && d >= startOfDay && d < endOfDay) {
-                    const h = d.getHours();
-                    if (h >= 0 && h < 24) creadosPorHora[h]++;
-                }
+                if (!isNaN(d.getTime()) && d >= startOfDay && d < endOfDay) creadosPorHora[getHourOfDay(d)]++;
             }
             if (t.fecha_asignacion) {
                 const fa = new Date(t.fecha_asignacion);
                 if (!isNaN(fa.getTime()) && fa >= startOfDay && fa < endOfDay) {
-                    const h = fa.getHours();
-                    if (h >= 0 && h < 24) asignadosPorHora[h]++;
+                    asignadosPorHora[getHourOfDay(fa)]++;
                 }
             }
             let closedDate = null;
@@ -698,15 +689,11 @@ async function getReports(req, res) {
                 const re = new Date(t.resueltoEn);
                 if (!isNaN(re.getTime()) && re >= startOfDay && re < endOfDay) closedDate = re;
             }
-            if (!closedDate && t.estado_actual === 'CERRADO' && t.updatedAt) {
-                const ua = new Date(t.updatedAt);
-                if (!isNaN(ua.getTime()) && ua >= startOfDay && ua < endOfDay) closedDate = ua;
-            }
-            if (closedDate) {
-                const h = closedDate.getHours();
-                if (h >= 0 && h < 24) cerradosPorHora[h]++;
-            }
+            if (closedDate) cerradosPorHora[getHourOfDay(closedDate)]++;
         });
+
+        const creadosHoy = creadosPorHora.reduce((sum, n) => sum + n, 0);
+        const cerradosHoy = cerradosPorHora.reduce((sum, n) => sum + n, 0);
 
         const flujoPorHora = {
             labels: horasLabels,
@@ -716,7 +703,7 @@ async function getReports(req, res) {
         };
 
         // ----------------------------------------------------
-        // Gráfica 5: Mediana de tiempo de resolución calculada en memoria mediante JS para cada área (últimas 24h)
+        // Gráfica 5: Promedio de tiempo de resolución por área (últimas 24h). Las claves 'mediana*' se conservan por compatibilidad con la vista
         // ----------------------------------------------------
         const areasForMedian = [...ALL_AREAS];
         areasSet.forEach(a => {
@@ -735,7 +722,7 @@ async function getReports(req, res) {
                 resolutionTimesByArea[area] = [];
                 if (!areasForMedian.includes(area)) areasForMedian.push(area);
             }
-            const fechaRes = ticket.fecha_resolucion || ticket.resueltoEn || ticket.fecha_cierre || (ticket.estado_actual === 'CERRADO' ? ticket.updatedAt : null);
+            const fechaRes = ticket.fecha_resolucion || ticket.resueltoEn || ticket.fecha_cierre;
             const fechaCrea = ticket.fecha_creacion || ticket.createdAt;
             if (fechaRes && fechaCrea) {
                 const resMs = new Date(fechaRes).getTime();
@@ -747,28 +734,17 @@ async function getReports(req, res) {
             }
         });
 
-        function calculateMedian(values) {
-            if (!values || values.length === 0) return 0;
-            const valid = values.filter(v => typeof v === 'number' && !isNaN(v) && isFinite(v));
+        function calculateAverage(values) {
+            const valid = (values || []).filter(v => typeof v === 'number' && isFinite(v));
             if (valid.length === 0) return 0;
-            const sorted = [...valid].sort((a, b) => a - b);
-            const mid = Math.floor(sorted.length / 2);
-            if (sorted.length % 2 === 0) {
-                return Math.round(((sorted[mid - 1] + sorted[mid]) / 2) * 10) / 10;
-            }
-            return sorted[mid];
+            return Math.round((valid.reduce((sum, v) => sum + v, 0) / valid.length) * 10) / 10;
         }
 
         const medianaPorAreaList = areasForMedian.map(area => {
             const times = resolutionTimesByArea[area] || [];
-            const medianaMinutos = calculateMedian(times);
+            const medianaMinutos = calculateAverage(times);
             const medianaHoras = Math.round((medianaMinutos / 60) * 10) / 10;
-            let formateado = 'N/A';
-            if (times.length > 0) {
-                formateado = medianaMinutos >= 60
-                    ? `${(medianaMinutos / 60).toFixed(1)} h`
-                    : `${medianaMinutos} min`;
-            }
+            const formateado = times.length > 0 ? formatMinutes(medianaMinutos) : 'N/A';
             return {
                 area,
                 label: AREA_DISPLAY_NAMES[area] || area,
@@ -878,6 +854,8 @@ async function getReports(req, res) {
             jornada: ticketsJornada,
             ticketsJornada,
             tickets_jornada: ticketsJornada,
+            creadosHoy,
+            cerradosHoy,
             resueltos,
             enProgreso,
             tasa,
@@ -968,4 +946,76 @@ async function getReports(req, res) {
     }
 }
 
-module.exports = { getReports };
+
+// ---------------------------------------------------------------------------
+// Reporte por periodo (jornada, semana, mes, fecha específica) y Excel
+// ---------------------------------------------------------------------------
+
+/** Lee y valida los parámetros ?periodo=&fecha=&area=. Devuelve { error } o { range, area }. */
+function parsePeriodQuery(query = {}) {
+    const periodo = typeof query.periodo === 'string' ? query.periodo.trim() : 'jornada';
+    const fecha = typeof query.fecha === 'string' && query.fecha.trim() ? query.fecha.trim() : null;
+    if (periodo === 'especifica' && !fecha) return { error: 'Falta la fecha para el periodo "especifica" (AAAA-MM-DD)' };
+    const range = getPeriodBounds(periodo, fecha);
+    if (!range) return { error: 'Periodo o fecha no válidos. Usa periodo=jornada|semana|mes|especifica y fecha=AAAA-MM-DD' };
+    const area = typeof query.area === 'string' && query.area.trim() ? query.area.trim() : null;
+    if (area && !REPORT_AREAS.includes(area)) return { error: 'Área no válida' };
+    return { range, area };
+}
+
+async function loadPeriodReport(query) {
+    const parsed = parsePeriodQuery(query);
+    if (parsed.error) return parsed;
+    const { range, area } = parsed;
+    const tickets = await prisma.ticket.findMany({
+        where: {
+            OR: [
+                { createdAt: { gte: range.start, lt: range.end } },
+                { fecha_asignacion: { gte: range.start, lt: range.end } },
+                { resueltoEn: { gte: range.start, lt: range.end } },
+                { fecha_cierre: { gte: range.start, lt: range.end } },
+                { estado_actual: { in: ACTIVE_STATES } }
+            ]
+        },
+        select: {
+            codigo_incidencia: true, asunto: true, area_designada: true, estado_actual: true,
+            puntos_complejidad: true, createdAt: true, fecha_asignacion: true, resueltoEn: true, fecha_cierre: true,
+            asignado_a: { select: { id: true, nombre: true } }
+        },
+        orderBy: { createdAt: 'asc' }
+    });
+    const operators = await prisma.user.findMany({
+        where: { rol: 'OPERADOR' },
+        select: { id: true, nombre: true, area_designada: true, estado_operativo: true },
+        orderBy: { nombre: 'asc' }
+    });
+    return { report: buildPeriodReport({ tickets, operators, range, area }), range };
+}
+
+async function getPeriodData(req, res) {
+    try {
+        const result = await loadPeriodReport(req.query);
+        if (result.error) return res.status(400).json({ success: false, error: result.error });
+        return res.json({ success: true, ...result.report });
+    } catch (error) {
+        console.error('Error al generar el reporte por periodo:', error);
+        return res.status(500).json({ success: false, error: 'No se pudo generar el reporte' });
+    }
+}
+
+async function downloadExcel(req, res) {
+    try {
+        const result = await loadPeriodReport(req.query);
+        if (result.error) return res.status(400).json({ success: false, error: result.error });
+        const buffer = await buildWorkbook(result.report, { generadoPor: req.user?.nombre || req.user?.email || '' });
+        const filename = `reporte-${result.range.periodo}-${result.range.desde}${result.range.desde === result.range.hasta ? '' : `_${result.range.hasta}`}.xlsx`;
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        return res.send(Buffer.from(buffer));
+    } catch (error) {
+        console.error('Error al exportar el reporte a Excel:', error);
+        return res.status(500).json({ success: false, error: 'No se pudo generar el Excel' });
+    }
+}
+
+module.exports = { getReports, getPeriodData, downloadExcel, parsePeriodQuery };

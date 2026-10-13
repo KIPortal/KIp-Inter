@@ -25,12 +25,13 @@ async function isOperator(operatorId) {
 async function getNextTicketCode() {
     // 1. Prisma pide a Postgres solo el último ticket, ordenado de más nuevo a más viejo
     const lastTicket = await prisma.ticket.findFirst({
+        where: prisma.INCLUDE_DELETED, // incluye eliminados: no se reutilizan códigos
         orderBy: { createdAt: 'desc' },
         select: { codigo_incidencia: true }
     });
 
-    // 2. Si la base de datos está vacía, iniciamos en INC-004 (según tu lógica original)
-    if (!lastTicket || !lastTicket.codigo_incidencia) return 'INC-004';
+    // 2. Si la base de datos está vacía, iniciamos en INC-001
+    if (!lastTicket || !lastTicket.codigo_incidencia) return 'INC-001';
 
     // 3. Extraemos el número del último ticket y sumamos 1
     const match = /^INC-(\d+)$/i.exec(lastTicket.codigo_incidencia.trim());
@@ -107,8 +108,8 @@ async function assignTicket(req, res) {
             select: { id: true, estado_actual: true }
         });
         if (!existingTicket) return res.status(404).json({ success: false, error: 'Ticket no encontrado' });
-        if (existingTicket.estado_actual === 'CERRADO') {
-            return res.status(409).json({ success: false, error: 'Un ticket cerrado no puede reasignarse' });
+        if (['RESUELTO', 'CERRADO'].includes(existingTicket.estado_actual)) {
+            return res.status(409).json({ success: false, error: 'Un ticket resuelto o cerrado no puede reasignarse' });
         }
 
         const dataToUpdate = {
@@ -120,7 +121,7 @@ async function assignTicket(req, res) {
         if (prioridad) dataToUpdate.puntos_complejidad = PRIORITY_POINTS[prioridad];
 
         const result = await prisma.ticket.updateMany({
-            where: { codigo_incidencia: ticketCode, estado_actual: { not: 'CERRADO' } },
+            where: { codigo_incidencia: ticketCode, estado_actual: { notIn: ['RESUELTO', 'CERRADO'] } },
             data: dataToUpdate
         });
         if (result.count !== 1) {
@@ -129,7 +130,7 @@ async function assignTicket(req, res) {
                 select: { id: true }
             });
             if (!currentTicket) return res.status(404).json({ success: false, error: 'Ticket no encontrado' });
-            return res.status(409).json({ success: false, error: 'Un ticket cerrado no puede reasignarse' });
+            return res.status(409).json({ success: false, error: 'Un ticket resuelto o cerrado no puede reasignarse' });
         }
         const ticket = await prisma.ticket.findUnique({
             where: { codigo_incidencia: ticketCode },
@@ -304,7 +305,7 @@ async function updateOperatorTicket(req, res, action) {
     const transitions = {
         pause: { from: ['EN_PROGRESO'], to: 'EN_PAUSA', error: 'Solo se puede pausar un ticket en progreso' },
         resume: { from: ['EN_PAUSA', 'EN_ESPERA_TERCEROS'], to: 'EN_PROGRESO', error: 'El ticket no está pausado ni en espera externa' },
-        resolve: { from: ['EN_PROGRESO', 'EN_PAUSA', 'EN_ESPERA_TERCEROS'], to: 'CERRADO', error: 'El ticket no se puede resolver desde su estado actual' }
+        resolve: { from: ['EN_PROGRESO', 'EN_PAUSA', 'EN_ESPERA_TERCEROS'], to: 'RESUELTO', error: 'El ticket no se puede resolver desde su estado actual' }
     };
     const transition = transitions[action];
 
@@ -324,7 +325,7 @@ async function updateOperatorTicket(req, res, action) {
         const now = new Date();
         const data = { estado_actual: transition.to };
         if (action === 'resolve') {
-            data.fecha_cierre = now;
+            // El operador termina (RESUELTO); el cierre lo confirma el coordinador
             data.resueltoEn = now;
         }
         const result = await prisma.ticket.updateMany({
@@ -372,6 +373,7 @@ function updateOperatorStatus(req, res) {
         EN_ESPERA: 'pause',
         pausar: 'pause',
         EN_PROGRESO: 'resume',
+        RESUELTO: 'resolve',
         CERRADO: 'resolve'
     };
     const action = actionsByStatus[req.body?.status];
@@ -380,7 +382,288 @@ function updateOperatorStatus(req, res) {
 }
 
 
+// ---------------------------------------------------------------------------
+// Acciones del coordinador: cerrar, editar, eliminar (borrado lógico) y restaurar
+// ---------------------------------------------------------------------------
+
+async function logAudit(req, accion, ticketId, detalles) {
+    try {
+        await prisma.auditLog.create({
+            data: { accion, ticketId, userId: req.user?.id || null, detalles: detalles || null }
+        });
+    } catch (error) {
+        // La auditoría no debe impedir la acción principal
+        console.error('No se pudo registrar auditoría:', error.message);
+    }
+}
+
+function getTicketCode(req) {
+    return typeof req.params.ticketCode === 'string' ? req.params.ticketCode.trim() : '';
+}
+
+async function closeTicket(req, res) {
+    const ticketCode = getTicketCode(req);
+    if (!ticketCode) return res.status(400).json({ success: false, error: 'Falta código de incidencia' });
+    try {
+        const ticket = await prisma.ticket.findUnique({
+            where: { codigo_incidencia: ticketCode },
+            select: { id: true, estado_actual: true, resueltoEn: true, eliminado_en: true }
+        });
+        if (!ticket || ticket.eliminado_en) return res.status(404).json({ success: false, error: 'Ticket no encontrado' });
+        if (ticket.estado_actual === 'CERRADO') {
+            return res.status(409).json({ success: false, error: 'El ticket ya está cerrado' });
+        }
+        const now = new Date();
+        const data = { estado_actual: 'CERRADO', fecha_cierre: now };
+        if (!ticket.resueltoEn) data.resueltoEn = now; // cierre directo sin resolución previa
+        await prisma.ticket.update({ where: { id: ticket.id }, data });
+        await logAudit(req, 'TICKET_CERRADO', ticket.id, `Estado previo: ${ticket.estado_actual}`);
+        return await sendTicket(req, res, ticket.id);
+    } catch (error) {
+        console.error('Error al cerrar ticket:', error);
+        return res.status(500).json({ success: false, error: 'No se pudo cerrar el ticket' });
+    }
+}
+
+
+async function editTicket(req, res) {
+    const ticketCode = getTicketCode(req);
+    if (!ticketCode) return res.status(400).json({ success: false, error: 'Falta código de incidencia' });
+    const body = req.body || {};
+    const data = {};
+
+    if (body.asunto !== undefined) {
+        if (typeof body.asunto !== 'string' || !body.asunto.trim()) {
+            return res.status(400).json({ success: false, error: 'El asunto no puede estar vacío' });
+        }
+        data.asunto = body.asunto.trim().slice(0, 300);
+    }
+    if (body.descripcion !== undefined) {
+        data.descripcion = body.descripcion === null ? null : String(body.descripcion);
+    }
+    if (body.area_designada !== undefined) {
+        if (!VALID_AREAS.has(body.area_designada)) {
+            return res.status(400).json({ success: false, error: 'Área designada no válida' });
+        }
+        data.area_designada = body.area_designada;
+    }
+    if (body.prioridad !== undefined) {
+        if (body.prioridad === 'NONE') data.puntos_complejidad = 0;
+        else if (Object.hasOwn(PRIORITY_POINTS, body.prioridad)) data.puntos_complejidad = PRIORITY_POINTS[body.prioridad];
+        else return res.status(400).json({ success: false, error: 'Prioridad no válida' });
+    }
+    if (Object.keys(data).length === 0) {
+        return res.status(400).json({ success: false, error: 'No hay campos para actualizar' });
+    }
+
+    try {
+        const ticket = await prisma.ticket.findUnique({
+            where: { codigo_incidencia: ticketCode },
+            include: { asignado_a: { select: { id: true, nombre: true, area_designada: true } } }
+        });
+        if (!ticket || ticket.eliminado_en) return res.status(404).json({ success: false, error: 'Ticket no encontrado' });
+
+        // Cambiar el área de un ticket ya asignado a otra área requiere confirmación explícita
+        const areaChanged = data.area_designada && data.area_designada !== ticket.area_designada;
+        if (areaChanged && ticket.asignado_a && ticket.asignado_a.area_designada !== data.area_designada
+            && data.area_designada !== 'GENERAL' && body.confirmarCambioArea !== true) {
+            return res.status(409).json({
+                success: false,
+                requiereConfirmacion: true,
+                error: `El ticket está asignado a ${ticket.asignado_a.nombre} (${ticket.asignado_a.area_designada}). Confirma el cambio de área.`
+            });
+        }
+
+        const cambios = Object.keys(data).map(campo => {
+            const antes = ticket[campo];
+            return `${campo}: ${antes === null || antes === undefined ? '-' : String(antes).slice(0, 80)} → ${data[campo] === null ? '-' : String(data[campo]).slice(0, 80)}`;
+        });
+        await prisma.ticket.update({ where: { id: ticket.id }, data });
+        await logAudit(req, 'TICKET_EDITADO', ticket.id, cambios.join(' | '));
+        return await sendTicket(req, res, ticket.id);
+    } catch (error) {
+        console.error('Error al editar ticket:', error);
+        return res.status(500).json({ success: false, error: 'No se pudo editar el ticket' });
+    }
+}
+
+async function deleteTicket(req, res) {
+    const ticketCode = getTicketCode(req);
+    if (!ticketCode) return res.status(400).json({ success: false, error: 'Falta código de incidencia' });
+    const motivo = typeof req.body?.motivo === 'string' ? req.body.motivo.trim() : '';
+    if (motivo.length < 3) {
+        return res.status(400).json({ success: false, error: 'El motivo de eliminación es obligatorio' });
+    }
+    try {
+        const ticket = await prisma.ticket.findUnique({
+            where: { codigo_incidencia: ticketCode },
+            select: { id: true, estado_actual: true, eliminado_en: true }
+        });
+        if (!ticket) return res.status(404).json({ success: false, error: 'Ticket no encontrado' });
+        if (ticket.eliminado_en) return res.status(409).json({ success: false, error: 'El ticket ya está en la papelera' });
+        // Un ticket resuelto o cerrado exige confirmación adicional
+        if (['RESUELTO', 'CERRADO'].includes(ticket.estado_actual) && req.body?.confirmar !== true) {
+            return res.status(409).json({
+                success: false,
+                requiereConfirmacion: true,
+                error: 'El ticket ya fue resuelto o cerrado. Confirma para enviarlo a la papelera.'
+            });
+        }
+        await prisma.ticket.update({
+            where: { id: ticket.id },
+            data: { eliminado_en: new Date(), motivo_eliminacion: motivo.slice(0, 300), asignado_a_id: null }
+        });
+        await logAudit(req, 'TICKET_ELIMINADO', ticket.id, `Motivo: ${motivo}. Estado previo: ${ticket.estado_actual}`);
+        return res.json({ success: true });
+    } catch (error) {
+        console.error('Error al eliminar ticket:', error);
+        return res.status(500).json({ success: false, error: 'No se pudo eliminar el ticket' });
+    }
+}
+
+async function restoreTicket(req, res) {
+    const ticketCode = getTicketCode(req);
+    if (!ticketCode) return res.status(400).json({ success: false, error: 'Falta código de incidencia' });
+    try {
+        const ticket = await prisma.ticket.findUnique({
+            where: { codigo_incidencia: ticketCode },
+            select: { id: true, eliminado_en: true }
+        });
+        if (!ticket) return res.status(404).json({ success: false, error: 'Ticket no encontrado' });
+        if (!ticket.eliminado_en) return res.status(409).json({ success: false, error: 'El ticket no está en la papelera' });
+        await prisma.ticket.update({ where: { id: ticket.id }, data: { eliminado_en: null, motivo_eliminacion: null } });
+        await logAudit(req, 'TICKET_RESTAURADO', ticket.id, null);
+        return await sendTicket(req, res, ticket.id);
+    } catch (error) {
+        console.error('Error al restaurar ticket:', error);
+        return res.status(500).json({ success: false, error: 'No se pudo restaurar el ticket' });
+    }
+}
+
+// Traspaso de casos al operador de guardia (spec §10.1): una o varias incidencias,
+// con nota de contexto obligatoria. No reinicia el tiempo (se mide desde createdAt).
+async function handoffTickets(req, res) {
+    try {
+        const { ticketCodes, operatorId } = req.body || {};
+        const nota = typeof req.body?.nota === 'string' ? req.body.nota.trim() : '';
+        if (!Array.isArray(ticketCodes) || ticketCodes.length === 0) {
+            return res.status(400).json({ success: false, error: 'No se enviaron tickets' });
+        }
+        if (ticketCodes.some(code => typeof code !== 'string' || !code.trim())) {
+            return res.status(400).json({ success: false, error: 'La selección contiene códigos de ticket no válidos' });
+        }
+        if (typeof operatorId !== 'string' || !operatorId.trim()) {
+            return res.status(400).json({ success: false, error: 'Falta seleccionar al operador de guardia' });
+        }
+        if (nota.length < 10) {
+            return res.status(400).json({
+                success: false,
+                error: 'La nota de traspaso es obligatoria: indica qué se intentó, qué se hizo y qué sigue'
+            });
+        }
+        const uniqueCodes = [...new Set(ticketCodes.map(code => code.trim()))];
+        const guardia = await prisma.user.findFirst({
+            where: { id: operatorId, rol: 'OPERADOR' },
+            select: { id: true, nombre: true }
+        });
+        if (!guardia) return res.status(404).json({ success: false, error: 'Operador no encontrado' });
+
+        const tickets = await prisma.ticket.findMany({
+            where: { codigo_incidencia: { in: uniqueCodes } },
+            select: { id: true, codigo_incidencia: true, estado_actual: true, fecha_asignacion: true, asignado_a: { select: { nombre: true } } }
+        });
+        if (tickets.length !== uniqueCodes.length) {
+            return res.status(404).json({ success: false, error: 'Uno o más tickets no existen' });
+        }
+        const noTraspasables = tickets.filter(t => ['RESUELTO', 'CERRADO'].includes(t.estado_actual));
+        if (noTraspasables.length > 0) {
+            return res.status(409).json({
+                success: false,
+                error: `Ya están resueltos o cerrados: ${noTraspasables.map(t => t.codigo_incidencia).join(', ')}`
+            });
+        }
+
+        const now = new Date();
+        for (const ticket of tickets) {
+            await prisma.ticket.update({
+                where: { id: ticket.id },
+                data: {
+                    asignado_a_id: guardia.id,
+                    // Conserva la fecha de asignación original si ya existía
+                    fecha_asignacion: ticket.fecha_asignacion || now
+                }
+            });
+            await logAudit(
+                req,
+                'TICKET_TRASPASADO_GUARDIA',
+                ticket.id,
+                `De: ${ticket.asignado_a?.nombre || 'sin asignar'} → ${guardia.nombre}. Nota: ${nota}`
+            );
+        }
+        return res.json({ success: true, count: tickets.length, guardia: guardia.nombre });
+    } catch (error) {
+        console.error('Error en traspaso a guardia:', error);
+        return res.status(500).json({ success: false, error: 'No se pudo completar el traspaso' });
+    }
+}
+
+// Historial de un ticket (ediciones, traspasos, cierre...) con la nota visible en el detalle
+async function getTicketHistory(req, res) {
+    const ticketCode = getTicketCode(req);
+    try {
+        const ticket = await prisma.ticket.findUnique({
+            where: { codigo_incidencia: ticketCode },
+            select: { id: true }
+        });
+        if (!ticket) return res.status(404).json({ success: false, error: 'Ticket no encontrado' });
+        const logs = await prisma.auditLog.findMany({
+            where: { ticketId: ticket.id },
+            orderBy: { createdAt: 'desc' },
+            take: 50,
+            include: { user: { select: { nombre: true } } }
+        });
+        return res.json({
+            success: true,
+            historial: logs.map(l => ({
+                accion: l.accion,
+                detalles: l.detalles,
+                usuario: l.user?.nombre || 'Sistema',
+                fecha: l.createdAt
+            }))
+        });
+    } catch (error) {
+        console.error('Error al leer historial:', error);
+        return res.status(500).json({ success: false, error: 'No se pudo leer el historial' });
+    }
+}
+
+// Papelera: tickets eliminados (el filtro explícito evita el filtro automático)
+async function listTrash(req, res) {
+    try {
+        const tickets = await prisma.ticket.findMany({
+            where: { eliminado_en: { not: null } },
+            orderBy: { eliminado_en: 'desc' },
+            take: 200,
+            select: {
+                codigo_incidencia: true, asunto: true, area_designada: true, estado_actual: true,
+                createdAt: true, eliminado_en: true, motivo_eliminacion: true
+            }
+        });
+        return res.json({ success: true, tickets });
+    } catch (error) {
+        console.error('Error al listar papelera:', error);
+        return res.status(500).json({ success: false, error: 'No se pudo leer la papelera' });
+    }
+}
+
 module.exports = {
+    handoffTickets,
+    getTicketHistory,
+    listTrash,
+    closeTicket,
+    editTicket,
+    deleteTicket,
+    restoreTicket,
     createTicket,
     assignTicket,
     unassignTicket,

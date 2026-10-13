@@ -6,6 +6,15 @@
   "scripts": {
     "build:assets": "node scripts/build-figma-assets.js",
     "start": "npm run build:assets && node server.js",
+    "test:metrics": "node scripts/test-metrics.js",
+    "test:reports": "node scripts/test-reports.js",
+    "test:tickets": "node scripts/test-tickets.js",
+    "test:period": "node scripts/test-period-report.js",
+    "test:shifts": "node scripts/test-shifts.js",
+    "datos:cero": "node scripts/reiniciar-datos.js --confirmar",
+    "simular": "node scripts/simular-jornada.js",
+    "simular:limpiar": "node scripts/limpiar-simulacion.js --confirmar",
+    "test:simulation": "node scripts/test-simulation.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -18,6 +27,7 @@
     "@microsoft/microsoft-graph-client": "^3.0.7",
     "@prisma/client": "^5.22.0",
     "ejs": "^6.0.1",
+    "exceljs": "^4.4.0",
     "express": "^5.2.1",
     "express-session": "^1.19.0",
     "node-cron": "^4.6.0",

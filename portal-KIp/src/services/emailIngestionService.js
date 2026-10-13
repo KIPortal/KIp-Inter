@@ -59,7 +59,7 @@ async function procesarCorreosEntrantes() {
 
             if (!codigoIncidencia) {
                 // Generar uno nuevo consultando el último en BD
-                const ultimos = await prisma.ticket.findMany({ select: { codigo_incidencia: true } });
+                const ultimos = await prisma.ticket.findMany({ where: prisma.INCLUDE_DELETED, select: { codigo_incidencia: true } });
                 const nums = ultimos.map(t => parseInt(t.codigo_incidencia.split('-')[1]) || 0);
                 const nextNum = nums.length ? Math.max(...nums) + 1 : 1;
                 codigoIncidencia = `INC-${String(nextNum).padStart(3, '0')}`;
