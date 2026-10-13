@@ -8,6 +8,7 @@ router.use(requireAuth);
 
 router.get('/dashboard', (req, res) => res.redirect(302, '/'));
 router.get('/', dashboardController.renderDashboard);
+router.get('/tickets', dashboardController.renderTickets);
 router.get('/gestion-turno', dashboardController.redirectToShiftSection);
 
 module.exports = router;
