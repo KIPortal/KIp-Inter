@@ -97,6 +97,27 @@ const tickets = [
         assert.ok(data.areasCatalogo.length >= 7);
     });
 
+    await t('Metas: ámbar bajo el % meta y sobre el promedio meta; editables y acotadas', () => {
+        const { mergeRules } = require('../src/services/rulesService');
+        const { describeChanges, mergeConfig } = require('../src/services/configService');
+        const wan = v.areas.find(a => a.codigo === 'WAN');
+        assert.deepStrictEqual([wan.pct, wan.pctBajoMeta, wan.promedioHoras, wan.promSobreMeta], [67, true, 3, false], 'metas por defecto 93 % y 4 h');
+        const estricta = buildReportView(report, { periodo: 'jornada', now: NOW, metas: { resueltoPct: 60, promedioHoras: 2.5 } });
+        const wan2 = estricta.areas.find(a => a.codigo === 'WAN');
+        assert.deepStrictEqual([wan2.pctBajoMeta, wan2.promSobreMeta], [false, true]);
+        assert.deepStrictEqual(mergeRules({ metas: { resueltoPct: 120, promedioHoras: 'x' } }).metas, { resueltoPct: 100, promedioHoras: 4 });
+        const antes = mergeConfig({});
+        const despues = mergeConfig({ reglas: { metas: { resueltoPct: 90, promedioHoras: 3.5 } } });
+        assert.deepStrictEqual(describeChanges(antes, despues), ['Meta de resueltos: 90 %', 'Meta de promedio: 3,5 h']);
+    });
+
+    await t('Carga ahora: barra relativa por operador y color según la regla de sobrecarga', () => {
+        const wan = v.areas.find(a => a.codigo === 'WAN');
+        const tel = v.areas.find(a => a.codigo === 'TELEFONIA');
+        assert.deepStrictEqual([wan.activos, wan.cargaAncho, wan.cargaTono], [1, 100, 'blue']);
+        assert.deepStrictEqual([tel.operadores, tel.cargaAncho, tel.cargaTono], [0, 0, 'gray'], 'sin operadores: sin barra y en gris');
+    });
+
     console.log(`\n   RESUMEN: ${passed}/${total} pruebas pasaron correctamente\n`);
     if (passed !== total) process.exit(1);
 })();

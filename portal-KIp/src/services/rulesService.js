@@ -16,7 +16,9 @@ const DEFAULT_RULES = Object.freeze({
         incluirGuardia: true,    // incluir a quien está por entrar de guardia…
         guardiaAntesMin: 30,     // …si su guardia empieza en menos de esto
         permitirOtraArea: true   // si nadie está disponible, se puede pedir sugerencia de otra área
-    })
+    }),
+    // Metas de Reportes: ámbar si el % resuelto queda por debajo o el promedio por encima
+    metas: Object.freeze({ resueltoPct: 93, promedioHoras: 4 })
 });
 
 // Límites de los pasos que ofrece Administración
@@ -24,7 +26,9 @@ const LIMITS = Object.freeze({
     multiplicador: [1.1, 3],
     minimo: [1, 10],
     antiguedad: [5, 24 * 60],
-    guardiaAntesMin: [5, 240]
+    guardiaAntesMin: [5, 240],
+    resueltoPct: [50, 100],
+    promedioHoras: [0.5, 72]
 });
 
 const POINTS_TO_KEY = { 8: 'P1', 5: 'P2', 1: 'P3' };
@@ -44,6 +48,7 @@ function mergeRules(saved) {
     const sc = s.sobrecarga || {};
     const an = s.antiguedad || {};
     const su = s.sugerencia || {};
+    const me = s.metas || {};
     return {
         sobrecarga: {
             activa: bool(sc.activa, d.sobrecarga.activa),
@@ -61,6 +66,10 @@ function mergeRules(saved) {
             incluirGuardia: bool(su.incluirGuardia, d.sugerencia.incluirGuardia),
             guardiaAntesMin: num(su.guardiaAntesMin, d.sugerencia.guardiaAntesMin, LIMITS.guardiaAntesMin),
             permitirOtraArea: bool(su.permitirOtraArea, d.sugerencia.permitirOtraArea)
+        },
+        metas: {
+            resueltoPct: num(me.resueltoPct, d.metas.resueltoPct, LIMITS.resueltoPct),
+            promedioHoras: num(me.promedioHoras, d.metas.promedioHoras, LIMITS.promedioHoras, 1)
         }
     };
 }

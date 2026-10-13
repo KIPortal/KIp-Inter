@@ -4,10 +4,11 @@ const prisma = require('../config/prisma');
 const { validateSchedule, getShiftStatus, getWeekStart, DEFAULT_SCHEDULE } = require('../services/shiftService');
 const { parseCaracasDate, ACTIVE_STATES } = require('../services/metricsService');
 const { buildShiftBoard } = require('../services/shiftBoardService');
+const { auditUserId } = require('../services/auditViewService');
 
 async function audit(req, accion, detalles) {
     try {
-        await prisma.auditLog.create({ data: { accion, userId: req.user?.id || null, detalles } });
+        await prisma.auditLog.create({ data: { accion, userId: auditUserId(req), detalles } });
     } catch (e) {
         console.error('No se pudo registrar auditoría:', e.message);
     }

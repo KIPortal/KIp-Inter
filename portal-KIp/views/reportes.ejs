@@ -72,11 +72,11 @@
 				</div>
 				<div class="bento">
 					<svg class="green" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>
-					<div><span class="kv count" style="--n: <%= k.resueltos %>" aria-label="<%= k.resueltos %>"></span><p class="bt">Resueltos<% if (k.pctResueltos !== null) { %> · <span class="t-green"><%= k.pctResueltos %>%</span><% } %></p></div>
+					<div><span class="kv count" style="--n: <%= k.resueltos %>" aria-label="<%= k.resueltos %>"></span><p class="bt">Resueltos<% if (k.pctResueltos !== null) { %> · <span class="<%= k.pctBajoMeta ? 't-orange' : 't-green' %>"><%= k.pctResueltos %>%</span><% } %></p></div>
 				</div>
 				<div class="bento">
 					<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
-					<div><span class="kv"><%= h(k.promedioHoras) %></span><p class="bt">Resolución promedio<% if (k.promedioHorarioHoras !== null) { %> · <span class="t-accent"><%= h(k.promedioHorarioHoras) %> en horario</span><% } %></p></div>
+					<div><span class="kv<%= k.promSobreMeta ? ' t-orange' : '' %>"><%= h(k.promedioHoras) %></span><p class="bt">Resolución promedio<% if (k.promedioHorarioHoras !== null) { %> · <span class="t-accent"><%= h(k.promedioHorarioHoras) %> en horario</span><% } %></p></div>
 				</div>
 				<div class="bento">
 					<svg class="red" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V14M10 20V9M16 20V4M22 20H2"/></svg>
@@ -88,22 +88,21 @@
 				<div class="card-head"><h2 id="h-areas" style="flex:1">Casos por área</h2><span class="hint">Pulsa un área para ver a sus operadores</span></div>
 				<div class="scroll-x">
 					<table class="rank-table rep-table" style="min-width:760px">
-						<thead><tr><th style="width:170px">Área</th><th>Casos</th><th class="r" style="width:80px">Resueltos</th><th class="r" style="width:64px" title="Resueltos ÷ recibidos en el periodo (máx. 100 %)">%</th><th class="r" style="width:76px">Prom.</th><th class="r" style="width:70px">Activos</th><th style="width:130px">Carga</th><th class="r" style="width:90px">Operadores</th></tr></thead>
+						<thead><tr><th style="width:170px">Área</th><th>Casos</th><th class="r" style="width:80px">Resueltos</th><th class="r" style="width:64px" title="Resueltos ÷ recibidos en el periodo (máx. 100 %) · meta <%= v.metas.resueltoPct %> %">%</th><th class="r" style="width:76px" title="Meta <%= coma(v.metas.promedioHoras) %> h">Prom.</th><th style="width:200px;padding-left:16px" title="Tickets activos ahora; el color sigue la regla de sobrecarga">Carga ahora</th><th class="r" style="width:90px">Operadores</th></tr></thead>
 						<tbody>
 							<% v.areas.forEach((a, i) => { %>
 								<tr class="rowbtn" data-area-open="<%= a.codigo %>" tabindex="0">
 									<td style="font-weight:600"><%= a.nombre %></td>
 									<td><div style="display:flex;align-items:center;gap:10px"><span style="width:34px;font-weight:600"><%= a.casos %></span><div class="track" style="flex:1"><span class="bar-fill bg-blue" style="width:<%= a.ancho %>%;animation-delay:<%= i * 60 %>ms"></span></div></div></td>
 									<td class="r"><%= a.resueltos %></td>
-									<td class="r" style="font-weight:600"><%= p(a.pct) %></td>
-									<td class="r"><%= h(a.promedioHoras) %></td>
-									<td class="r"><%= a.activos %></td>
-									<td><span class="act"><i style="background:<%= a.estadoCarga === 'Sobrecarga' ? 'var(--c-red)' : a.estadoCarga === 'Normal' ? 'var(--c-green)' : 'var(--t3)' %>"></i><%= a.estadoCarga %></span></td>
+									<td class="r <%= a.pct === null ? '' : a.pctBajoMeta ? 't-orange' : 't-green' %>" style="font-weight:600"><%= p(a.pct) %></td>
+									<td class="r<%= a.promSobreMeta ? ' t-orange' : '' %>"><%= h(a.promedioHoras) %></td>
+									<td style="padding-left:16px" title="<%= a.estadoCarga %>"><div style="display:flex;align-items:center;gap:10px"><div class="track" style="flex:1"><span class="bar-fill bg-<%= a.cargaTono %>" style="width:<%= a.cargaAncho %>%;animation-delay:<%= i * 60 %>ms"></span></div><b class="<%= a.cargaTono === 'red' ? 't-red' : a.cargaTono === 'gray' ? 't3' : '' %>" style="width:84px;font-variant-numeric:tabular-nums"><%= a.activos %> <span class="t2" style="font-weight:500"><%= a.activos === 1 ? 'activo' : 'activos' %></span></b></div></td>
 									<td class="r t2"><%= a.operadores %></td>
 								</tr>
 							<% }) %>
 						</tbody>
-						<tfoot><tr style="font-weight:700"><td>Total</td><td><%= k.casos %></td><td class="r"><%= k.resueltos %></td><td class="r"><%= p(k.pctResueltos) %></td><td class="r"><%= h(k.promedioHoras) %></td><td class="r"><%= k.activos %></td><td></td><td class="r"><%= v.operadores.length %></td></tr></tfoot>
+						<tfoot><tr style="font-weight:700"><td>Total</td><td><%= k.casos %></td><td class="r"><%= k.resueltos %></td><td class="r<%= k.pctBajoMeta ? ' t-orange' : '' %>"><%= p(k.pctResueltos) %></td><td class="r<%= k.promSobreMeta ? ' t-orange' : '' %>"><%= h(k.promedioHoras) %></td><td style="padding-left:16px"><%= k.activos %> activos<% if (k.areasSobrecarga) { %> · <span class="t-red"><%= k.areasSobrecarga %> con sobrecarga</span><% } %></td><td class="r"><%= v.operadores.length %></td></tr></tfoot>
 					</table>
 				</div>
 			</section>
@@ -168,8 +167,8 @@
 								<td><span style="display:flex;align-items:center;gap:10px"><span class="avatar"><%= o.iniciales %></span><span style="display:flex;flex-direction:column"><b><%= o.nombre %></b><span class="t2"><%= o.areaNombre %></span></span></span></td>
 								<td class="r" style="font-weight:600"><%= o.casos %></td>
 								<td class="r"><%= o.resueltos %></td>
-								<td class="r t2"><%= p(o.pct) %></td>
-								<td class="r<%= o.promedioHoras > 4 ? ' t-orange' : '' %>"><%= h(o.promedioHoras) %></td>
+								<td class="r <%= o.pct === null ? 't2' : o.pctBajoMeta ? 't-orange' : 't-green' %>"><%= p(o.pct) %></td>
+								<td class="r<%= o.promSobreMeta ? ' t-orange' : '' %>"><%= h(o.promedioHoras) %></td>
 								<td class="r t2"><%= o.p1 %> / <%= o.p2 %> / <%= o.p3 %></td>
 								<td class="r"><span class="ix<%= o.sobrecarga ? ' over' : '' %>"><%= indice(o) %></span></td>
 								<td class="r" style="padding-right:24px;font-weight:700"><%= o.puntos %></td>

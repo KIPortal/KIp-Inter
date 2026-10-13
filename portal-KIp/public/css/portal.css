@@ -8,6 +8,8 @@
 /* ---------- 1. Tokens ---------- */
 :root,
 [data-theme=light] {
+	/* Sin esto, con Windows en oscuro las casillas y menús nativos salen oscuros en el tema claro */
+	color-scheme: light;
 	--font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
 	--font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
 	--ease: cubic-bezier(.22, 1, .36, 1);
@@ -495,6 +497,7 @@ nav.side[data-collapsed=true] a.sideitem > span { display: none; }
 .bg-amber { background: var(--c-amber); }
 .bg-red { background: var(--c-red); }
 .bg-violet { background: var(--c-violet); }
+.bg-gray { background: var(--t3); }
 .empty { padding: 14px 0 4px; font-size: 12px; color: var(--t2); }
 .scroll-x { overflow-x: auto; }
 
