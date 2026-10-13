@@ -23,6 +23,7 @@ const ORIGINAL = cat.allAreas();
         cat.DEFAULT_AREAS.forEach(([codigo]) => assert.ok(sql.includes(`('${codigo}'`), codigo));
         assert.ok(/ADD COLUMN "activo" BOOLEAN NOT NULL DEFAULT true/.test(sql));
         assert.ok(/DROP TYPE "AreaDesignada"/.test(sql));
+        assert.ok(/IF NOT EXISTS[\s\S]*udt_name = 'AreaDesignada'[\s\S]*DROP TYPE/.test(sql), 'solo borra el enum si nadie lo usa');
     });
 
     await t('Catálogo: arranca con las 7 áreas y los servicios ven el mismo objeto vivo', () => {
