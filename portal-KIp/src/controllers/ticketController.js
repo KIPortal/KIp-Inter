@@ -1,4 +1,6 @@
 const prisma = require('../config/prisma');
+const { getWeekStart } = require('../services/shiftService');
+const { buildHandoffView } = require('../services/ticketQueueService');
 
 const PRIORITY_POINTS = { P1: 8, P2: 5, P3: 1 };
 const VALID_AREAS = new Set([
@@ -404,6 +406,10 @@ function getTicketCode(req) {
 async function closeTicket(req, res) {
     const ticketCode = getTicketCode(req);
     if (!ticketCode) return res.status(400).json({ success: false, error: 'Falta código de incidencia' });
+    const motivo = typeof req.body?.motivo === 'string' ? req.body.motivo.trim() : '';
+    if (motivo.length > 300) {
+        return res.status(400).json({ success: false, error: 'El motivo de cierre no puede superar 300 caracteres' });
+    }
     try {
         const ticket = await prisma.ticket.findUnique({
             where: { codigo_incidencia: ticketCode },
@@ -417,7 +423,7 @@ async function closeTicket(req, res) {
         const data = { estado_actual: 'CERRADO', fecha_cierre: now };
         if (!ticket.resueltoEn) data.resueltoEn = now; // cierre directo sin resolución previa
         await prisma.ticket.update({ where: { id: ticket.id }, data });
-        await logAudit(req, 'TICKET_CERRADO', ticket.id, `Estado previo: ${ticket.estado_actual}`);
+        await logAudit(req, 'TICKET_CERRADO', ticket.id, `Estado previo: ${ticket.estado_actual}${motivo ? `. Motivo: ${motivo}` : ''}`);
         return await sendTicket(req, res, ticket.id);
     } catch (error) {
         console.error('Error al cerrar ticket:', error);
@@ -544,16 +550,13 @@ async function restoreTicket(req, res) {
 // con nota de contexto obligatoria. No reinicia el tiempo (se mide desde createdAt).
 async function handoffTickets(req, res) {
     try {
-        const { ticketCodes, operatorId } = req.body || {};
+        const { ticketCodes } = req.body || {};
         const nota = typeof req.body?.nota === 'string' ? req.body.nota.trim() : '';
         if (!Array.isArray(ticketCodes) || ticketCodes.length === 0) {
             return res.status(400).json({ success: false, error: 'No se enviaron tickets' });
         }
         if (ticketCodes.some(code => typeof code !== 'string' || !code.trim())) {
             return res.status(400).json({ success: false, error: 'La selección contiene códigos de ticket no válidos' });
-        }
-        if (typeof operatorId !== 'string' || !operatorId.trim()) {
-            return res.status(400).json({ success: false, error: 'Falta seleccionar al operador de guardia' });
         }
         if (nota.length < 10) {
             return res.status(400).json({
@@ -562,15 +565,9 @@ async function handoffTickets(req, res) {
             });
         }
         const uniqueCodes = [...new Set(ticketCodes.map(code => code.trim()))];
-        const guardia = await prisma.user.findFirst({
-            where: { id: operatorId, rol: 'OPERADOR' },
-            select: { id: true, nombre: true }
-        });
-        if (!guardia) return res.status(404).json({ success: false, error: 'Operador no encontrado' });
-
         const tickets = await prisma.ticket.findMany({
             where: { codigo_incidencia: { in: uniqueCodes } },
-            select: { id: true, codigo_incidencia: true, estado_actual: true, fecha_asignacion: true, asignado_a: { select: { nombre: true } } }
+            select: { id: true, codigo_incidencia: true, estado_actual: true, asignado_a: { select: { nombre: true } } }
         });
         if (tickets.length !== uniqueCodes.length) {
             return res.status(404).json({ success: false, error: 'Uno o más tickets no existen' });
@@ -583,27 +580,79 @@ async function handoffTickets(req, res) {
             });
         }
 
-        const now = new Date();
-        for (const ticket of tickets) {
-            await prisma.ticket.update({
-                where: { id: ticket.id },
-                data: {
-                    asignado_a_id: guardia.id,
-                    // Conserva la fecha de asignación original si ya existía
-                    fecha_asignacion: ticket.fecha_asignacion || now
+        // No cambia el operador: la guardia recibe la lista y la nota aparte
+        const traspaso = await prisma.traspaso.create({
+            data: {
+                nota,
+                semana_inicio: getWeekStart(new Date()),
+                ...(req.user?.id && !req.user.id.startsWith('temporary:') ? { creado_por_id: req.user.id } : {}),
+                tickets: {
+                    create: tickets.map(t => ({
+                        ticketId: t.id,
+                        estado_al_pasar: t.estado_actual,
+                        operador_al_pasar: t.asignado_a?.nombre || null
+                    }))
                 }
-            });
+            },
+            select: { id: true }
+        });
+        for (const ticket of tickets) {
             await logAudit(
                 req,
                 'TICKET_TRASPASADO_GUARDIA',
                 ticket.id,
-                `De: ${ticket.asignado_a?.nombre || 'sin asignar'} → ${guardia.nombre}. Nota: ${nota}`
+                `En la lista de la guardia (operador: ${ticket.asignado_a?.nombre || 'sin asignar'}). Nota: ${nota}`
             );
         }
-        return res.json({ success: true, count: tickets.length, guardia: guardia.nombre });
+        return res.json({ success: true, count: tickets.length, traspasoId: traspaso.id });
     } catch (error) {
         console.error('Error en traspaso a guardia:', error);
         return res.status(500).json({ success: false, error: 'No se pudo completar el traspaso' });
+    }
+}
+
+const handoffInclude = {
+    creado_por: { select: { nombre: true } },
+    tickets: { include: { ticket: { select: { codigo_incidencia: true, estado_actual: true, eliminado_en: true } } } }
+};
+
+/**
+ * Traspaso vigente (el más reciente sin marcar como atendido). Devuelve null si
+ * no hay o si la tabla aún no existe (migración pendiente).
+ */
+async function loadActiveHandoff(now = new Date()) {
+    try {
+        const traspaso = await prisma.traspaso.findFirst({
+            where: { cerrado_en: null, createdAt: { gte: new Date(now.getTime() - 24 * 3600 * 1000) } },
+            orderBy: { createdAt: 'desc' },
+            include: handoffInclude
+        });
+        const view = buildHandoffView(traspaso, now);
+        return view && view.vigente ? view : null;
+    } catch (error) {
+        console.error('Traspasos no disponibles (¿migración pendiente?):', error.message);
+        return null;
+    }
+}
+
+async function getActiveHandoff(req, res) {
+    return res.json({ success: true, traspaso: await loadActiveHandoff() });
+}
+
+// El coordinador da el traspaso por atendido: deja de mostrarse
+async function closeHandoff(req, res) {
+    const id = typeof req.params.id === 'string' ? req.params.id.trim() : '';
+    if (!id) return res.status(400).json({ success: false, error: 'Falta el traspaso' });
+    try {
+        const traspaso = await prisma.traspaso.findUnique({ where: { id }, select: { id: true, cerrado_en: true } });
+        if (!traspaso) return res.status(404).json({ success: false, error: 'Traspaso no encontrado' });
+        if (traspaso.cerrado_en) return res.status(409).json({ success: false, error: 'El traspaso ya fue atendido' });
+        await prisma.traspaso.update({ where: { id }, data: { cerrado_en: new Date() } });
+        await logAudit(req, 'TRASPASO_ATENDIDO', null, `Traspaso ${id} marcado como atendido`);
+        return res.json({ success: true });
+    } catch (error) {
+        console.error('Error al cerrar traspaso:', error);
+        return res.status(500).json({ success: false, error: 'No se pudo marcar el traspaso' });
     }
 }
 
@@ -658,6 +707,9 @@ async function listTrash(req, res) {
 
 module.exports = {
     handoffTickets,
+    getActiveHandoff,
+    closeHandoff,
+    loadActiveHandoff,
     getTicketHistory,
     listTrash,
     closeTicket,

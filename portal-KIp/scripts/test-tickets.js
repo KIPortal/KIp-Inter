@@ -141,37 +141,66 @@ function setup(ticket) {
         assert.deepStrictEqual(seen.args, {});
     });
 
-    await t('Traspaso: exige nota, operador y tickets no resueltos/cerrados', async () => {
+    await t('Traspaso: exige nota y tickets no resueltos/cerrados', async () => {
         setup({});
-        prisma.user.findFirst = async () => ({ id: 'g1', nombre: 'Guardia' });
-        prisma.ticket.findMany = async () => [{ id: 'a', codigo_incidencia: 'INC-001', estado_actual: 'EN_PROGRESO', fecha_asignacion: null, asignado_a: null }];
+        prisma.ticket.findMany = async () => [{ id: 'a', codigo_incidencia: 'INC-001', estado_actual: 'EN_PROGRESO', asignado_a: null }];
         const sinNota = mockRes();
-        await ctrl.handoffTickets(req({}, { ticketCodes: ['INC-001'], operatorId: 'g1', nota: 'corto' }), sinNota);
+        await ctrl.handoffTickets(req({}, { ticketCodes: ['INC-001'], nota: 'corto' }), sinNota);
         assert.strictEqual(sinNota.code, 400);
         prisma.ticket.findMany = async () => [{ id: 'a', codigo_incidencia: 'INC-001', estado_actual: 'RESUELTO', asignado_a: null }];
         const resuelto = mockRes();
-        await ctrl.handoffTickets(req({}, { ticketCodes: ['INC-001'], operatorId: 'g1', nota: 'Se reinició el enlace; falta confirmar con el cliente' }), resuelto);
+        await ctrl.handoffTickets(req({}, { ticketCodes: ['INC-001'], nota: 'Se reinició el enlace; falta confirmar con el cliente' }), resuelto);
         assert.strictEqual(resuelto.code, 409);
     });
-    await t('Traspaso: asigna al guardia, conserva fecha_asignacion y audita con la nota', async () => {
+    await t('Traspaso: no reasigna, guarda el lote con la foto de cada ticket y audita con la nota', async () => {
         setup({});
-        const original = new Date('2026-10-10T14:00:00Z');
         const updates = [];
-        prisma.user.findFirst = async () => ({ id: 'g1', nombre: 'Guardia' });
+        let lote = null;
         prisma.ticket.findMany = async () => [
-            { id: 'a', codigo_incidencia: 'INC-001', estado_actual: 'EN_PROGRESO', fecha_asignacion: original, asignado_a: { nombre: 'Ana' } },
-            { id: 'b', codigo_incidencia: 'INC-002', estado_actual: 'NUEVO', fecha_asignacion: null, asignado_a: null }
+            { id: 'a', codigo_incidencia: 'INC-001', estado_actual: 'EN_PROGRESO', asignado_a: { nombre: 'Ana' } },
+            { id: 'b', codigo_incidencia: 'INC-002', estado_actual: 'NUEVO', asignado_a: null }
         ];
         prisma.ticket.update = async ({ where, data }) => { updates.push({ id: where.id, data }); };
+        prisma.traspaso = { create: async ({ data }) => { lote = data; return { id: 'tr1' }; } };
         const res = mockRes();
         const nota = 'Se reinició el enlace; falta confirmar con el cliente';
-        await ctrl.handoffTickets(req({}, { ticketCodes: ['INC-001', 'INC-002'], operatorId: 'g1', nota }), res);
+        await ctrl.handoffTickets(req({}, { ticketCodes: ['INC-001', 'INC-002'], nota }), res);
         assert.strictEqual(res.body.count, 2);
-        assert.strictEqual(updates[0].data.asignado_a_id, 'g1');
-        assert.strictEqual(updates[0].data.fecha_asignacion, original);
-        assert(updates[1].data.fecha_asignacion instanceof Date);
+        assert.strictEqual(res.body.traspasoId, 'tr1');
+        assert.strictEqual(updates.length, 0, 'no cambia el operador de los tickets');
+        assert.strictEqual(lote.nota, nota);
+        assert.ok(lote.semana_inicio instanceof Date);
+        assert.deepStrictEqual(lote.tickets.create, [
+            { ticketId: 'a', estado_al_pasar: 'EN_PROGRESO', operador_al_pasar: 'Ana' },
+            { ticketId: 'b', estado_al_pasar: 'NUEVO', operador_al_pasar: null }
+        ]);
         assert.strictEqual(audits.length, 2);
         assert(audits[0].detalles.includes(nota) && audits[0].detalles.includes('Ana'));
+    });
+    await t('Traspaso: marcar atendido una sola vez', async () => {
+        setup({});
+        const tr = { id: 'tr1', cerrado_en: null };
+        prisma.traspaso = {
+            findUnique: async () => ({ ...tr }),
+            update: async ({ data }) => { Object.assign(tr, data); }
+        };
+        const res = mockRes();
+        await ctrl.closeHandoff({ params: { id: 'tr1' }, user: { id: 'u1' } }, res);
+        assert.strictEqual(res.code, 200);
+        assert.ok(tr.cerrado_en instanceof Date);
+        const otra = mockRes();
+        await ctrl.closeHandoff({ params: { id: 'tr1' }, user: { id: 'u1' } }, otra);
+        assert.strictEqual(otra.code, 409);
+    });
+    await t('Cerrar: guarda el motivo opcional en Auditoría y limita su largo', async () => {
+        const tk = { id: 't', estado_actual: 'RESUELTO', resueltoEn: new Date(), eliminado_en: null };
+        setup(tk);
+        const largo = mockRes();
+        await ctrl.closeTicket(req({ ticketCode: 'INC-001' }, { motivo: 'x'.repeat(301) }), largo);
+        assert.strictEqual(largo.code, 400);
+        await ctrl.closeTicket(req({ ticketCode: 'INC-001' }, { motivo: 'Servicio restablecido' }), mockRes());
+        assert.strictEqual(tk.estado_actual, 'CERRADO');
+        assert(audits.some(a => a.accion === 'TICKET_CERRADO' && a.detalles.includes('Servicio restablecido')));
     });
     await t('Dashboard: flujoHoy en hora de Caracas, solo hoy, cierre = resueltoEn', async () => {
         const { getDayBounds } = require('../src/services/metricsService');
