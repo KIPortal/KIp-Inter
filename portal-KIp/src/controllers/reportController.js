@@ -10,6 +10,7 @@ const {
 } = require('../services/metricsService');
 const { buildPeriodReport, AREAS: REPORT_AREAS, AREA_NAMES } = require('../services/periodReportService');
 const { buildReportView } = require('../services/reportViewService');
+const { isActiveArea } = require('../services/areaCatalog');
 const { buildWorkbook } = require('../services/excelExportService');
 
 const AREA_DISPLAY_NAMES = {
@@ -1034,7 +1035,7 @@ async function renderReportes(req, res) {
             fecha: typeof req.query.fecha === 'string' && req.query.fecha ? req.query.fecha : null,
             area: typeof req.query.area === 'string' && req.query.area ? req.query.area : null
         });
-        return res.render('reportes', { titulo: 'Reportes', currentUser: req.user, vista, areasCatalogo: REPORT_AREAS.map(c => ({ codigo: c, nombre: AREA_NAMES[c] })), activos });
+        return res.render('reportes', { titulo: 'Reportes', currentUser: req.user, vista, areasCatalogo: REPORT_AREAS.map(c => ({ codigo: c, nombre: AREA_NAMES[c] + (isActiveArea(c) ? '' : ' (desactivada)') })), activos });
     } catch (error) {
         console.error('Error al cargar Reportes:', error);
         return res.status(500).send('Error en el servidor');

@@ -14,6 +14,7 @@ const {
     computeOverload
 } = require('./metricsService');
 const { AREA_NAMES } = require('./periodReportService');
+const { activeAreas } = require('./areaCatalog');
 const { agingTickets, formatAge } = require('./dashboardService');
 const { DEFAULT_RULES, overloadOptions } = require('./rulesService');
 const { normalizeOperator, buildSuggestions, eligibility } = require('./assignmentService');
@@ -152,7 +153,7 @@ function buildQueue({ tickets = [], operators = [], now = new Date(), rules = DE
         };
     }).sort((a, b) => a.nombre.localeCompare(b.nombre));
 
-    const areas = Object.keys(AREA_NAMES).map(codigo => ({ codigo, nombre: AREA_NAMES[codigo] }));
+    const areas = activeAreas();
     // Sugerencia por área (§4) y cola de espera: sin asignar y nadie disponible en su área
     const sug = buildSuggestions({
         operadores: operadores.map(o => normalizeOperator(o)),

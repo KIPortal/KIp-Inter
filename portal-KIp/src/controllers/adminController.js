@@ -12,6 +12,7 @@ const { loadConfig, mergeConfig, describeChanges, previewRules, EVENTOS, DESTINA
 const { LIMITS } = require('../services/rulesService');
 const { loadOperatorsWithShift } = require('./dashboardController');
 const { validateUser, describeUser, MIN_CLAVE } = require('../services/userAdminService');
+const { allAreas, refreshAreas, validateAreaName } = require('../services/areaCatalog');
 
 const grupo = codigo => (codigo === 'EN_TURNO' ? 'turno' : (codigo === 'DE_GUARDIA' || codigo === 'EN_CASA_GUARDIA') ? 'guardia' : 'fuera');
 
@@ -25,11 +26,13 @@ async function activeTickets() {
 async function renderAdmin(req, res) {
     try {
         const ahora = new Date();
-        const [config, operadores, tickets, coordinadores] = await Promise.all([
+        await refreshAreas(prisma, { force: true });
+        const [config, operadores, tickets, coordinadores, desactivados] = await Promise.all([
             loadConfig(prisma), loadOperatorsWithShift(ahora), activeTickets(),
-            prisma.user.findMany({ where: { rol: 'COORDINADOR' }, select: { id: true, nombre: true, email: true }, orderBy: { nombre: 'asc' } })
+            prisma.user.findMany({ where: { rol: 'COORDINADOR', activo: true }, select: { id: true, nombre: true, email: true }, orderBy: { nombre: 'asc' } }),
+            prisma.user.findMany({ where: { activo: false }, select: { id: true, nombre: true, email: true, rol: true, area_designada: true }, orderBy: { nombre: 'asc' } })
         ]);
-        const areas = Object.keys(AREA_NAMES).map(codigo => {
+        const areas = allAreas().map(({ codigo, activa }) => {
             const ops = operadores.filter(o => (o.area_designada || 'GENERAL') === codigo).map(o => ({
                 id: o.id,
                 area: o.area_designada || 'GENERAL',
@@ -40,6 +43,7 @@ async function renderAdmin(req, res) {
             }));
             return {
                 codigo,
+                activa,
                 nombre: AREA_NAMES[codigo],
                 operadores: ops,
                 turno: ops.filter(o => o.estado.grupo === 'turno').length,
@@ -52,6 +56,7 @@ async function renderAdmin(req, res) {
             config,
             areas,
             coordinadores,
+            desactivados: (desactivados || []).map(u => ({ id: u.id, nombre: u.nombre, email: u.email, rol: u.rol, area: u.area_designada })),
             miId: req.user?.id || null,
             minClave: MIN_CLAVE,
             eventos: EVENTOS,
@@ -143,10 +148,17 @@ async function updateUser(req, res) {
     const { error, datos } = validateUser(req.body);
     if (error) return res.status(400).json({ success: false, error });
     try {
-        const antes = await prisma.user.findUnique({ where: { id }, select: { id: true, nombre: true, email: true, rol: true, area_designada: true } });
+        const antes = await prisma.user.findUnique({ where: { id }, select: { id: true, nombre: true, email: true, rol: true, area_designada: true, activo: true } });
         if (!antes) return res.status(404).json({ success: false, error: 'Usuario no encontrado' });
         if (datos.rol && datos.rol !== antes.rol && id === req.user?.id) {
             return res.status(409).json({ success: false, error: 'No puedes cambiar tu propio rol' });
+        }
+        if (datos.activo === false && id === req.user?.id) {
+            return res.status(409).json({ success: false, error: 'No puedes desactivar tu propio usuario' });
+        }
+        if (datos.activo === false && antes.activo !== false) {
+            const activos = await prisma.ticket.count({ where: { asignado_a_id: id, estado_actual: { in: ACTIVE_STATES } } });
+            if (activos > 0) return res.status(409).json({ success: false, error: `Tiene ${activos} tickets activos asignados: reasígnalos antes de desactivarlo` });
         }
         if (datos.email && datos.email !== antes.email) {
             const otro = await prisma.user.findUnique({ where: { email: datos.email }, select: { id: true } });
@@ -165,4 +177,62 @@ async function updateUser(req, res) {
     }
 }
 
-module.exports = { renderAdmin, saveConfig, preview, createUser, updateUser };
+// Áreas: crear, renombrar y activar/desactivar (no se borran: conservan su historial)
+async function createArea(req, res) {
+    const v = validateAreaName(req.body?.nombre);
+    if (v.error) return res.status(400).json({ success: false, error: v.error });
+    try {
+        if (await prisma.area.findUnique({ where: { codigo: v.codigo } })) {
+            return res.status(409).json({ success: false, error: 'Ya existe un área con ese nombre' });
+        }
+        const ultima = await prisma.area.findFirst({ orderBy: { orden: 'desc' }, select: { orden: true } });
+        const area = await prisma.area.create({ data: { codigo: v.codigo, nombre: v.nombre, orden: (ultima?.orden ?? -1) + 1 } });
+        await refreshAreas(prisma, { force: true });
+        await auditUser(req, 'AREA_CREADA', `${area.nombre} (${area.codigo})`);
+        return res.status(201).json({ success: true, area });
+    } catch (e) {
+        console.error('Error al crear área:', e);
+        return res.status(500).json({ success: false, error: 'No se pudo crear el área' });
+    }
+}
+
+async function updateArea(req, res) {
+    const codigo = String(req.params.codigo || '').trim();
+    const data = {};
+    if (req.body?.nombre !== undefined) {
+        const v = validateAreaName(req.body.nombre);
+        if (v.error) return res.status(400).json({ success: false, error: v.error });
+        data.nombre = v.nombre;
+    }
+    if (req.body?.activa !== undefined) {
+        if (typeof req.body.activa !== 'boolean') return res.status(400).json({ success: false, error: 'Valor de activa no válido' });
+        data.activa = req.body.activa;
+    }
+    if (!Object.keys(data).length) return res.status(400).json({ success: false, error: 'No hay cambios para guardar' });
+    try {
+        const antes = await prisma.area.findUnique({ where: { codigo } });
+        if (!antes) return res.status(404).json({ success: false, error: 'Área no encontrada' });
+        if (data.activa === false && antes.activa) {
+            if (codigo === 'GENERAL') return res.status(409).json({ success: false, error: 'El área General no se puede desactivar: recibe los correos sin clasificar' });
+            const [ops, tickets] = await Promise.all([
+                prisma.user.count({ where: { area_designada: codigo, activo: true } }),
+                prisma.ticket.count({ where: { area_designada: codigo, estado_actual: { in: ACTIVE_STATES } } })
+            ]);
+            if (ops || tickets) {
+                return res.status(409).json({ success: false, error: `Antes de desactivarla, mueve sus ${ops} usuarios activos y ${tickets} tickets activos a otra área` });
+            }
+        }
+        const area = await prisma.area.update({ where: { codigo }, data });
+        await refreshAreas(prisma, { force: true });
+        const cambios = [];
+        if (data.nombre && data.nombre !== antes.nombre) cambios.push(`nombre: ${antes.nombre} → ${data.nombre}`);
+        if (data.activa !== undefined && data.activa !== antes.activa) cambios.push(data.activa ? 'reactivada' : 'desactivada');
+        await auditUser(req, 'AREA_EDITADA', `${antes.nombre}: ${cambios.join(', ') || 'sin cambios'}`);
+        return res.json({ success: true, area });
+    } catch (e) {
+        console.error('Error al editar área:', e);
+        return res.status(500).json({ success: false, error: 'No se pudo guardar el área' });
+    }
+}
+
+module.exports = { renderAdmin, saveConfig, preview, createUser, updateUser, createArea, updateArea };

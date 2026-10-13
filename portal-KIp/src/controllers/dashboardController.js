@@ -51,7 +51,7 @@ async function renderDashboard(req, res) {
  */
 async function loadOperatorsWithShift(ahora = new Date()) {
     const [operadores, { horarioPorUsuario, guardiaIds }] = await Promise.all([prisma.user.findMany({
-        where: { rol: 'OPERADOR' },
+        where: { rol: 'OPERADOR', activo: true },
         select: {
             id: true,
             email: true,

@@ -229,7 +229,8 @@
 			nombre: u ? u.nombre : '', email: u ? u.email : '',
 			rol: u ? u.rol : (areaInicial === '__coord' ? 'COORDINADOR' : 'OPERADOR'),
 			area: u ? u.area : (areaInicial && areaInicial !== '__coord' ? areaInicial : 'GENERAL'),
-			clave: u ? '' : genClave()
+			clave: u ? '' : genClave(),
+			activo: u ? u.activo !== false : true
 		};
 		const ov = h('div', { class: 'overlay', onclick: e => { if (e.target === ov) ov.remove(); } });
 		const box = h('div', { class: 'dialog', role: 'dialog', 'aria-modal': 'true', style: 'width:520px' });
@@ -240,7 +241,7 @@
 		const claveIn = input('clave', { type: 'text', autocomplete: 'off', placeholder: u ? 'Déjala vacía para no cambiarla' : '', 'aria-label': 'Clave temporal', style: 'flex:1' });
 		const rolSeg = h('div', { class: 'seg', role: 'radiogroup', 'aria-label': 'Rol' });
 		const areaSel = h('select', { class: 'field', 'aria-label': 'Área', onchange: e => { M.area = e.target.value; } },
-			D.areas.map(a => h('option', { value: a.codigo, selected: a.codigo === M.area, text: a.nombre })));
+			D.areas.filter(a => a.activa || a.codigo === M.area).map(a => h('option', { value: a.codigo, selected: a.codigo === M.area, text: a.nombre + (a.activa ? '' : ' (desactivada)') })));
 		const areaRow = h('label', { class: 'dsec' }, h('b', { text: 'Área' }), areaSel);
 		const paintRol = () => {
 			rolSeg.replaceChildren(...ROLES.map(([v, l]) => h('button', {
@@ -258,6 +259,7 @@
 				h('label', { class: 'dsec' }, h('b', { text: 'Correo' }), input('email', { type: 'email', maxlength: 120, placeholder: 'nombre@inter.com' })),
 				h('div', { class: 'dsec' }, h('b', { text: 'Rol' }), rolSeg, esYo ? h('span', { class: 't3', style: 'font-size:12px', text: 'No puedes cambiar tu propio rol' }) : null),
 				areaRow,
+				u && !esYo ? h('div', { class: 'rule-row', style: 'min-height:40px;border:0' }, h('span', { class: 'lbl', style: 'flex:1' }, h('b', { text: 'Usuario activo' }), h('span', { text: 'Desactivado no entra al portal ni recibe tickets; su historial se conserva' })), sw(M.activo, e => { M.activo = !M.activo; e.currentTarget.setAttribute('aria-checked', String(M.activo)); }, 'Usuario activo')) : null,
 				h('div', { class: 'dsec' }, h('b', { text: u ? 'Nueva clave temporal (opcional)' : 'Clave temporal' }),
 					h('div', { style: 'display:flex;gap:8px' }, claveIn,
 						h('button', { type: 'button', class: 'pill pillbtn plain', style: 'height:34px;font-size:12px', text: 'Generar', onclick: () => { M.clave = genClave(); claveIn.value = M.clave; } }))),
@@ -268,7 +270,7 @@
 		ok.addEventListener('click', async () => {
 			const body = { nombre: M.nombre, email: M.email, rol: M.rol, area: M.rol === 'COORDINADOR' ? 'GENERAL' : M.area };
 			if (M.clave) body.clave = M.clave;
-			if (u) Object.keys(body).forEach(k => { if (k !== 'clave' && body[k] === u[k]) delete body[k]; });
+			if (u) { body.activo = M.activo; Object.keys(body).forEach(k => { if (k !== 'clave' && body[k] === (k === 'activo' ? u.activo !== false : u[k])) delete body[k]; }); }
 			if (u && !Object.keys(body).length) { ov.remove(); return; }
 			ok.disabled = true;
 			try {
@@ -290,6 +292,52 @@
 		});
 		document.body.append(ov);
 		setTimeout(() => box.querySelector('input').focus(), 30);
+	}
+
+	// ---------- Áreas: crear, renombrar y activar/desactivar ----------
+	function openArea(codigo) {
+		const a = codigo ? D.areas.find(x => x.codigo === codigo) : null;
+		const M = { nombre: a ? a.nombre : '', activa: a ? a.activa : true };
+		const ov = h('div', { class: 'overlay', onclick: e => { if (e.target === ov) ov.remove(); } });
+		const box = h('div', { class: 'dialog', role: 'dialog', 'aria-modal': 'true', style: 'width:460px' });
+		ov.append(box);
+		const err = h('div', { class: 'warnbox', hidden: true });
+		const ok = h('button', { type: 'button', class: 'primary', text: a ? 'Guardar' : 'Crear área' });
+		const nombre = h('input', { class: 'field', value: M.nombre, maxlength: 60, placeholder: 'Ej. Centro de Datos', oninput: e => { M.nombre = e.target.value; } });
+		box.append(
+			h('div', { class: 'dlg-head' }, h('h2', { text: a ? 'Editar área' : 'Nueva área' }), h('span', { text: a ? 'Código ' + a.codigo + ' · ' + a.operadores + ' operadores' : 'Aparecerá en tickets, turnos, reportes y en la ventana de asignar' })),
+			h('div', { class: 'dlg-body', style: 'gap:14px' },
+				h('label', { class: 'dsec' }, h('b', { text: 'Nombre' }), nombre),
+				a && a.codigo !== 'GENERAL' ? h('div', { class: 'rule-row', style: 'min-height:40px;border:0' },
+					h('span', { class: 'lbl', style: 'flex:1' }, h('b', { text: 'Área activa' }), h('span', { text: 'Desactivada no aparece para elegir; su historial se conserva. Debe quedar sin operadores ni tickets activos.' })),
+					sw(M.activa, e => { M.activa = !M.activa; e.currentTarget.setAttribute('aria-checked', String(M.activa)); }, 'Área activa')) : null,
+				err),
+			h('div', { class: 'dlg-foot' }, h('span', { class: 'note', text: 'El cambio queda en Auditoría' }), h('span', { class: 'grow' }),
+				h('button', { type: 'button', class: 'pill pillbtn plain', text: 'Cancelar', onclick: () => ov.remove() }), ok));
+		ok.addEventListener('click', async () => {
+			const body = {};
+			if (!a || M.nombre.trim() !== a.nombre) body.nombre = M.nombre;
+			if (a && M.activa !== a.activa) body.activa = M.activa;
+			if (a && !Object.keys(body).length) { ov.remove(); return; }
+			ok.disabled = true;
+			try {
+				const res = await fetch(a ? '/api/admin/areas/' + encodeURIComponent(a.codigo) : '/api/admin/areas', {
+					method: a ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+				});
+				let j = {};
+				try { j = await res.json(); } catch (e) { /* sin cuerpo */ }
+				if (!res.ok || !j.success) throw new Error(j.error || 'Error ' + res.status);
+				try { sessionStorage.setItem('kip.toast', JSON.stringify({ title: a ? 'Área actualizada' : 'Área creada', msg: (j.area && j.area.nombre) || '' })); } catch (e) { /* nada */ }
+				leaving = true;
+				window.location.reload();
+			} catch (e) {
+				ok.disabled = false;
+				err.textContent = e.message;
+				err.hidden = false;
+			}
+		});
+		document.body.append(ov);
+		setTimeout(() => nombre.focus(), 30);
 	}
 
 	// ---------- Secciones ----------
@@ -325,6 +373,9 @@
 		$('[data-discard]').addEventListener('click', () => { leaving = true; window.location.reload(); });
 		$$('[data-user-new]').forEach(b => b.addEventListener('click', () => openUser(null, b.dataset.userNew)));
 		$$('[data-user-edit]').forEach(b => b.addEventListener('click', () => openUser(b.dataset.userEdit)));
+		$$('[data-area-edit]').forEach(b => b.addEventListener('click', () => openArea(b.dataset.areaEdit)));
+		const nueva = $('[data-area-new]');
+		if (nueva) nueva.addEventListener('click', () => openArea(null));
 		document.addEventListener('keydown', e => { if (e.key === 'Escape') { const o = document.querySelector('.overlay'); if (o) o.remove(); } });
 		$('[data-save]').addEventListener('click', save);
 		window.addEventListener('beforeunload', e => { if (!leaving && paintDirty()) { e.preventDefault(); e.returnValue = ''; } });

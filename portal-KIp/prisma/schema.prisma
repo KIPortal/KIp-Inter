@@ -41,15 +41,7 @@ enum EstadoTicket {
   CERRADO
 }
 
-enum AreaDesignada {
-  GENERAL
-  REDES_FTTH
-  TRAFICO_INALAMBRICO
-  WAN
-  GRANDES_CLIENTES
-  SEGURIDAD
-  TELEFONIA
-}
+// Las áreas viven en la tabla Area (antes eran el enum AreaDesignada)
 
 // ==========================================
 // MODELOS (Tablas en la Base de Datos)
@@ -61,7 +53,9 @@ model User {
   clave            String
   nombre           String
   rol              Rol             @default(OPERADOR)
-  area_designada   AreaDesignada   @default(GENERAL)
+  area_designada   String          @default("GENERAL") @db.VarChar(40)
+  area             Area            @relation(fields: [area_designada], references: [codigo])
+  activo           Boolean         @default(true) // desactivado: no entra ni recibe tickets; se conserva su historial
   estado_operativo EstadoOperativo @default(DISPONIBLE)
   tickets_resueltos Int            @default(0)
   
@@ -86,7 +80,8 @@ model Ticket {
   estado_actual      EstadoTicket  @default(NUEVO)
   puntos_complejidad Int           @default(0) // Se asigna al cerrar el ticket
   origen_ingesta     OrigenIngesta @default(CORREO)
-  area_designada     AreaDesignada @default(GENERAL)
+  area_designada     String        @default("GENERAL") @db.VarChar(40)
+  area               Area          @relation(fields: [area_designada], references: [codigo])
   
   // Relación: Quién reportó o creó el ticket (Opcional, si viene de correo automático puede ser nulo)
   creado_por_id      String?
@@ -193,4 +188,15 @@ model Configuracion {
   clave     String   @id @db.VarChar(40) // 'reglas' | 'avisos' | 'plantillas'
   valor     Json
   updatedAt DateTime @updatedAt
+}
+
+// Áreas del departamento (Administración las crea, renombra y desactiva; no se borran)
+model Area {
+  codigo    String   @id @db.VarChar(40) // 'WAN', 'REDES_FTTH'… no cambia una vez creada
+  nombre    String   @db.VarChar(60)
+  activa    Boolean  @default(true)
+  orden     Int      @default(0)
+  createdAt DateTime @default(now())
+  usuarios  User[]
+  tickets   Ticket[]
 }
