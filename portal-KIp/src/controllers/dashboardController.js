@@ -14,6 +14,7 @@ const { buildCoordinatorPanel } = require('../services/dashboardService');
 const { buildQueue } = require('../services/ticketQueueService');
 const { loadActiveHandoff } = require('./ticketController');
 const { AREA_NAMES } = require('../services/periodReportService');
+const { loadConfig } = require('../services/configService');
 
 const ticketRelations = {
     asignado_a: { select: { id: true, nombre: true, email: true, rol: true, area_designada: true, estado_operativo: true } },
@@ -66,7 +67,7 @@ async function renderTickets(req, res) {
     if (req.user.rol === 'OPERADOR') return res.redirect(302, '/');
     try {
         const ahora = new Date();
-        const [tickets, operadores, enPapelera, traspaso, codigos] = await Promise.all([
+        const [tickets, operadores, enPapelera, traspaso, config, codigos] = await Promise.all([
             prisma.ticket.findMany({
                 include: {
                     ...ticketRelations,
@@ -78,12 +79,13 @@ async function renderTickets(req, res) {
             loadOperatorsWithShift(ahora),
             prisma.ticket.count({ where: { eliminado_en: { not: null } } }),
             loadActiveHandoff(ahora),
+            loadConfig(prisma),
             prisma.ticket.findMany({
                 where: prisma.INCLUDE_DELETED, // incluye eliminados: no se reutilizan códigos
                 select: { codigo_incidencia: true }
             })
         ]);
-        const cola = buildQueue({ tickets, operators: operadores, now: ahora });
+        const cola = buildQueue({ tickets, operators: operadores, now: ahora, rules: config.reglas });
         const numeros = codigos
             .map(t => /^INC-(\d+)$/i.exec(String(t.codigo_incidencia || '').trim()))
             .filter(Boolean)
@@ -100,7 +102,8 @@ async function renderTickets(req, res) {
             guardias,
             enPapelera,
             siguienteCodigo: `INC-${String((numeros.length ? Math.max(...numeros) : 0) + 1).padStart(3, '0')}`,
-            enTurno: operadores.filter(o => o.turno?.enTurno).length
+            enTurno: operadores.filter(o => o.turno?.enTurno).length,
+            plantillas: config.plantillas
         });
     } catch (error) {
         console.error('Error al cargar tickets:', error);
@@ -212,7 +215,8 @@ async function renderCoordinator(req, res, view) {
             tickets,
             operators: operadoresTurno,
             now: ahora,
-            periodo: req.query.periodo
+            periodo: req.query.periodo,
+            rules: (await loadConfig(prisma)).reglas
         });
 
         return res.render(view, {

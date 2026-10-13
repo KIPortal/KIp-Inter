@@ -25,8 +25,9 @@
 	const PR_DOT = { P1: 'var(--c-red)', P2: 'var(--c-amber)', P3: 'var(--c-slate)', SP: 'var(--sep)' };
 	const ST_DOT = { NUEVO: 'var(--t3)', EN_PROGRESO: 'var(--c-blue)', EN_PAUSA: 'var(--c-amber)', EN_ESPERA_TERCEROS: 'var(--c-purple)', RESUELTO: 'var(--c-green)', CERRADO: 'var(--t2)' };
 	const ORIGINS = [['CORREO', 'Correo'], ['LLAMADA', 'Llamada'], ['JEFATURA', 'Jefatura'], ['COORDINADOR', 'Coordinador']];
-	const CLOSE_TPL = ['Servicio restablecido', 'Resuelto por el operador', 'Falla del proveedor resuelta', 'Duplicado de otro ticket'];
-	const HAND_TPL = ['Sin novedades pendientes', 'Quedan P1 abiertos, revisar primero', 'Esperando respuesta de proveedor', 'Vigilar enlaces con saturación'];
+	// Plantillas de Administración (con estas como respaldo)
+	const CLOSE_TPL = (D.plantillas && D.plantillas.cierre) || ['Servicio restablecido', 'Resuelto por el operador', 'Falla del proveedor resuelta', 'Duplicado de otro ticket'];
+	const HAND_TPL = (D.plantillas && D.plantillas.traspaso) || ['Sin novedades pendientes', 'Quedan P1 abiertos, revisar primero', 'Esperando respuesta de proveedor', 'Vigilar enlaces con saturación'];
 	const AREA_NAME = {};
 	D.areas.forEach(a => { AREA_NAME[a.codigo] = a.nombre; });
 	const OPS = {};

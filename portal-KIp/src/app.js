@@ -8,6 +8,7 @@ const ticketRoutes = require('./routes/ticketRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const turnoRoutes = require('./routes/turnoRoutes');
 const auditRoutes = require('./routes/auditRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 const requireAuth = require('./middlewares/requireAuth');
 const authorizeRole = require('./middlewares/authorizeRole');
 const emailIngestionService = require('./services/emailIngestionService');
@@ -46,5 +47,7 @@ app.use('/api/turnos', turnoRoutes);
 app.use('/reportes', reportRoutes);
 app.use('/reports', reportRoutes);
 app.use('/auditoria', requireAuth, authorizeRole('COORDINADOR'), auditRoutes);
+app.use('/admin', requireAuth, authorizeRole('COORDINADOR'), adminRoutes.page);
+app.use('/api/admin', requireAuth, authorizeRole('COORDINADOR'), adminRoutes.api);
 
 module.exports = app;

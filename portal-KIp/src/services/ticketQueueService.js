@@ -15,7 +15,7 @@ const {
 } = require('./metricsService');
 const { AREA_NAMES } = require('./periodReportService');
 const { agingTickets, formatAge } = require('./dashboardService');
-const { DEFAULT_RULES } = require('./rulesService');
+const { DEFAULT_RULES, overloadOptions } = require('./rulesService');
 const { normalizeOperator, buildSuggestions, eligibility } = require('./assignmentService');
 
 const MINUTE_MS = 60 * 1000;
@@ -132,7 +132,7 @@ function buildQueue({ tickets = [], operators = [], now = new Date(), rules = DE
     const carga = new Map(operators.map(o => [o.id, (o.tickets_asignados || []).length]));
     const overload = computeOverload(operators.map(o => ({
         id: o.id, area_designada: o.area_designada, estado_operativo: o.estado_operativo, cargaActual: carga.get(o.id)
-    })), { ratio: rules.sobrecarga.multiplicador, minimo: rules.sobrecarga.minimo });
+    })), overloadOptions(rules));
     const operadores = operators.map(o => {
         const ov = overload.get(o.id) || {};
         const norm = normalizeOperator(o, carga.get(o.id) || 0, ov.sobrecarga);

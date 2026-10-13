@@ -16,7 +16,8 @@
 		guardias,
 		enPapelera,
 		siguienteCodigo,
-		usuario: { nombre: currentUser.nombre || 'Coordinador' }
+		usuario: { nombre: currentUser.nombre || 'Coordinador' },
+		plantillas: typeof plantillas !== 'undefined' && plantillas ? plantillas : null
 	};
 	const tarjetas = [
 		['Activos', r.activos, ''],
