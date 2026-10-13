@@ -47,9 +47,4 @@ app.use('/reportes', reportRoutes);
 app.use('/reports', reportRoutes);
 app.use('/auditoria', requireAuth, authorizeRole('COORDINADOR'), auditRoutes);
 
-// Vista de prueba del rediseño (Fase 1): barra lateral, tema y componentes base.
-app.get('/vista-previa', requireAuth, authorizeRole('COORDINADOR'), (req, res) => {
-	res.render('vista-previa', { currentUser: req.user });
-});
-
 module.exports = app;

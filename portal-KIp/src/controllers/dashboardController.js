@@ -10,6 +10,7 @@ const {
 } = require('../services/metricsService');
 const { getShiftStatus, getWeekStart } = require('../services/shiftService');
 const { loadShiftData } = require('./turnoController');
+const { buildCoordinatorPanel } = require('../services/dashboardService');
 
 const ticketRelations = {
     asignado_a: { select: { id: true, nombre: true, email: true, rol: true, area_designada: true, estado_operativo: true } },
@@ -17,8 +18,18 @@ const ticketRelations = {
 };
 
 async function renderDashboard(req, res) {
+    if (req.user.rol === 'OPERADOR') return renderOperatorDashboard(req, res);
+    return renderCoordinator(req, res, 'dashboard');
+}
+
+// Cola de tickets: mientras llega la Fase 3 usa la vista anterior (index.ejs)
+async function renderTickets(req, res) {
+    if (req.user.rol === 'OPERADOR') return res.redirect(302, '/');
+    return renderCoordinator(req, res, 'index');
+}
+
+async function renderCoordinator(req, res, view) {
     try {
-        if (req.user.rol === 'OPERADOR') return await renderOperatorDashboard(req, res);
 
         let orderByConfig = { createdAt: 'desc' };
         const sortBy = req.query.sortBy || req.query.sort;
@@ -138,8 +149,17 @@ async function renderDashboard(req, res) {
             .filter(Number.isInteger);
         const nextTicketCode = `INC-${String((numericCodes.length ? Math.max(...numericCodes) : 0) + 1).padStart(3, '0')}`;
 
-        return res.render('dashboard', {
-            titulo: 'NOC Portal - Dashboard Operativo',
+        // Dashboard General (rediseño): la vista solo dibuja lo que calcula el servicio
+        const panel = buildCoordinatorPanel({
+            tickets,
+            operators: operadoresTurno,
+            now: ahora,
+            periodo: req.query.periodo
+        });
+
+        return res.render(view, {
+            titulo: view === 'dashboard' ? 'Dashboard General' : 'NOC Portal - Dashboard Operativo',
+            panel,
             currentUser: req.user,
             ticketsActivos,
             ticketsRealizados,
@@ -212,7 +232,7 @@ async function renderOperatorDashboard(req, res) {
 }
 
 function redirectToShiftSection(req, res) {
-    return res.redirect(302, '/#gestion-turno');
+    return res.redirect(302, '/tickets#gestion-turno');
 }
 
-module.exports = { renderDashboard, redirectToShiftSection };
+module.exports = { renderDashboard, renderTickets, redirectToShiftSection };

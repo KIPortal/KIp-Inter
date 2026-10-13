@@ -1,5 +1,5 @@
 <%#
-  Barra lateral del coordinador (IMPLEMENTACION.md §2.1).
+  Barra lateral del coordinador (IMPLEMENTACION.md §2.1, prototipo Main.dc.html).
   Uso: include('partials/sidebar', { currentUser, activo: 'dashboard', conteos: { tickets, enTurno, totalOperadores } })
   activo: dashboard | tickets | turno | reportes | auditoria | admin
   conteos es opcional; si falta un dato, no se muestra.
@@ -9,27 +9,26 @@
 	const actual = (typeof activo !== 'undefined') ? activo : '';
 	const c = (typeof conteos !== 'undefined' && conteos) ? conteos : {};
 	const nombre = usuario.nombre || 'Usuario';
-	const iniciales = nombre.split(/\s+/).filter(Boolean).slice(0, 2).map(p => p[0].toUpperCase()).join('');
-	const rolTexto = usuario.rol === 'COORDINADOR' ? 'Coordinador' : (usuario.rol === 'OPERADOR' ? 'Operador' : (usuario.rol || ''));
+	const inicial = nombre.trim().charAt(0).toUpperCase() || '?';
 	const esCoordinador = usuario.rol === 'COORDINADOR';
 	const tieneTurno = Number.isFinite(c.enTurno) && Number.isFinite(c.totalOperadores);
 
 	const iconos = {
-		dashboard: '<path d="M3 13h8V3H3zM13 21h8V11h-8zM3 21h8v-6H3zM13 3v6h8V3z"/>',
-		tickets: '<path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 6v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-6z"/><path d="M13 5v14" stroke-dasharray="2 2"/>',
-		turno: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+		dashboard: '<rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/>',
+		tickets: '<path d="M3 9V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a3 3 0 0 0 0 6v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a3 3 0 0 0 0-6z"/>',
+		turno: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/>',
 		reportes: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
-		auditoria: '<path d="M9 3h6l1 2h3v16H5V5h3z"/><path d="M9 11h6M9 15h4"/>',
-		admin: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
+		auditoria: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
+		admin: '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>',
 		tema: '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
 		salir: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>'
 	};
-	const svg = (clave) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${iconos[clave]}</svg>`;
+	const svg = (clave) => `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${iconos[clave]}</svg>`;
 
 	const coordinacion = [
-		{ clave: 'dashboard', texto: 'Dashboard', href: '/' },
-		{ clave: 'tickets', texto: 'Tickets', href: '/#tickets', dato: Number.isFinite(c.tickets) ? String(c.tickets) : '' },
-		{ clave: 'turno', texto: 'Gestión de Turno', href: '/gestion-turno', dato: tieneTurno ? `${c.enTurno}/${c.totalOperadores}` : '' }
+		{ clave: 'dashboard', texto: 'Dashboard General', href: '/' },
+		{ clave: 'tickets', texto: 'Tickets', href: '/tickets#tickets', dato: Number.isFinite(c.tickets) ? String(c.tickets) : '' },
+		{ clave: 'turno', texto: 'Gestión de Turno', href: '/gestion-turno', dato: tieneTurno ? `${c.enTurno}/${c.totalOperadores}` : '', datoClase: 'ok' }
 	];
 	const control = [
 		{ clave: 'reportes', texto: 'Reportes', href: '/reportes' },
@@ -39,12 +38,13 @@
 %>
 <nav class="side" id="kip-sidebar" aria-label="Navegación principal" data-collapsed="false">
 	<div class="sb-head">
-		<a class="sb-logo" href="/" title="Operaciones IP">
-			<span class="sb-mark">IP</span>
-			<span class="sb-brand">Operaciones IP</span>
+		<a class="sb-brand" href="/" title="Operaciones IP">
+			<span class="sb-logo">inter</span>
+			<span class="sb-div" aria-hidden="true"></span>
+			<span class="sb-name">Operaciones IP</span>
 		</a>
-		<button type="button" class="ico sb-toggle" data-sidebar-toggle aria-controls="kip-sidebar" aria-expanded="true" title="Minimizar barra lateral">
-			<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16M15 10l-2 2 2 2"/></svg>
+		<button type="button" class="pill pillbtn sb-toggle" data-sidebar-toggle aria-controls="kip-sidebar" aria-expanded="true" title="Minimizar barra lateral" aria-label="Minimizar barra lateral">
+			<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="3"/><path d="M9 4.5v15"/></svg>
 		</button>
 	</div>
 	<%# Aplica el estado guardado antes de pintar para que no parpadee. %>
@@ -59,11 +59,11 @@
 	</script>
 
 	<div class="sb-top">
-		<div class="sb-user" title="<%= nombre %><%= rolTexto ? ' · ' + rolTexto : '' %>">
-			<span class="sb-avatar" aria-hidden="true"><%= iniciales || '?' %></span>
+		<div class="sb-user" title="<%= nombre %><%= usuario.email ? ' · ' + usuario.email : '' %>">
+			<span class="sb-avatar" aria-hidden="true"><%= inicial %></span>
 			<span class="sb-txt">
-				<span class="sb-name"><%= nombre %></span>
-				<span class="sb-role"><%= rolTexto %></span>
+				<span class="sb-uname"><%= nombre %></span>
+				<% if (usuario.email) { %><span class="sb-mail"><%= usuario.email %></span><% } %>
 			</span>
 		</div>
 	</div>
@@ -72,8 +72,8 @@
 	<% coordinacion.forEach(item => { %>
 		<a class="sideitem" href="<%= item.href %>" title="<%= item.texto %>"<% if (actual === item.clave) { %> aria-current="page"<% } %>>
 			<%- svg(item.clave) %>
-			<span><%= item.texto %></span>
-			<% if (item.dato) { %><span class="sb-count"><%= item.dato %></span><% } %>
+			<span class="sb-label"><%= item.texto %></span>
+			<% if (item.dato) { %><span class="sb-count<%= item.datoClase ? ' ' + item.datoClase : '' %>"><%= item.dato %></span><% } %>
 		</a>
 	<% }) %>
 
@@ -82,7 +82,7 @@
 		<% control.forEach(item => { %>
 			<a class="sideitem" href="<%= item.href %>" title="<%= item.texto %>"<% if (actual === item.clave) { %> aria-current="page"<% } %>>
 				<%- svg(item.clave) %>
-				<span><%= item.texto %></span>
+				<span class="sb-label"><%= item.texto %></span>
 			</a>
 		<% }) %>
 	<% } %>
@@ -90,11 +90,11 @@
 	<div class="sb-foot">
 		<a class="sideitem" href="#" role="button" data-theme-toggle title="Cambiar tema claro/oscuro">
 			<%- svg('tema') %>
-			<span>Tema</span>
+			<span class="sb-label">Tema</span>
 		</a>
 		<a class="sideitem" href="/auth/logout" title="Cerrar sesión">
 			<%- svg('salir') %>
-			<span>Cerrar sesión</span>
+			<span class="sb-label">Cerrar sesión</span>
 		</a>
 	</div>
 </nav>

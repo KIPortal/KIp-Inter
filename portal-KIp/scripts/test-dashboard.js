@@ -1,0 +1,141 @@
+// Pruebas del Dashboard General (dashboardService) y de su vista. Sin base de datos.
+const assert = require('assert');
+const path = require('path');
+const ejs = require('ejs');
+const { buildCoordinatorPanel, agingTickets, jornadaStatus, formatAge } = require('../src/services/dashboardService');
+
+let total = 0, passed = 0;
+async function t(name, fn) { total++; try { await fn(); passed++; console.log(`  ✅ [PASS] ${name}`); } catch (e) { console.error(`  ❌ [FAIL] ${name}\n     ${e.message}`); } }
+
+// Martes 13/10/2026 14:30 en Caracas (UTC-4)
+const NOW = new Date('2026-10-13T18:30:00Z');
+const at = (hhmm, dia = '2026-10-13') => new Date(`${dia}T${hhmm}:00-04:00`);
+
+const turno = (codigo, etiqueta) => ({ codigo, etiqueta });
+const operators = [
+    { id: 'a', nombre: 'Ana Pérez', area_designada: 'WAN', estado_operativo: 'DISPONIBLE', turno: turno('EN_TURNO', 'En turno'), tickets_asignados: [1, 2, 3, 4, 5, 6] },
+    { id: 'b', nombre: 'Beto Ruiz', area_designada: 'WAN', estado_operativo: 'DISPONIBLE', turno: turno('EN_TURNO', 'En turno'), tickets_asignados: [1] },
+    { id: 'c', nombre: 'Carla Díaz', area_designada: 'WAN', estado_operativo: 'DISPONIBLE', turno: turno('DE_GUARDIA', 'De guardia'), tickets_asignados: [1] },
+    { id: 'd', nombre: 'Dani Soto', area_designada: 'TELEFONIA', estado_operativo: 'AUSENTE', turno: turno('AUSENTE', 'Ausente'), tickets_asignados: [] }
+];
+const ticket = (o) => Object.assign({ estado_actual: 'NUEVO', area_designada: 'WAN', puntos_complejidad: 0, asignado_a_id: null }, o);
+const tickets = [
+    // Activos de hoy
+    ticket({ codigo_incidencia: 'INC-010', createdAt: at('09:00'), puntos_complejidad: 8 }),                      // P1 sin asignar 5 h 30 → crítico y atrasado
+    ticket({ codigo_incidencia: 'INC-011', createdAt: at('14:10'), puntos_complejidad: 1 }),                      // P3 sin asignar 20 min → a tiempo
+    ticket({ codigo_incidencia: 'INC-012', createdAt: at('10:00'), estado_actual: 'EN_PROGRESO', asignado_a_id: 'a', fecha_asignacion: at('10:05'), updatedAt: at('14:00') }),
+    ticket({ codigo_incidencia: 'INC-013', createdAt: at('11:00'), estado_actual: 'EN_PAUSA', asignado_a_id: 'b', fecha_asignacion: at('11:30'), updatedAt: at('11:30') }),
+    // Pendiente de ayer (arrastrado)
+    ticket({ codigo_incidencia: 'INC-005', createdAt: at('16:00', '2026-10-12'), estado_actual: 'EN_PROGRESO', asignado_a_id: 'c', area_designada: 'WAN', updatedAt: at('13:00') }),
+    // Resueltos hoy
+    ticket({ codigo_incidencia: 'INC-007', createdAt: at('08:00'), estado_actual: 'RESUELTO', asignado_a_id: 'a', puntos_complejidad: 8, resueltoEn: at('10:00') }),
+    ticket({ codigo_incidencia: 'INC-008', createdAt: at('09:00'), estado_actual: 'CERRADO', asignado_a_id: 'b', puntos_complejidad: 5, resueltoEn: at('13:00'), fecha_cierre: at('13:30') }),
+    ticket({ codigo_incidencia: 'INC-009', createdAt: at('12:00'), estado_actual: 'CERRADO', asignado_a_id: 'd', area_designada: 'TELEFONIA', puntos_complejidad: 1, fecha_cierre: at('13:00') }),
+    // Cerrado ayer: no cuenta en "hoy" pero sí en la semana
+    ticket({ codigo_incidencia: 'INC-003', createdAt: at('08:00', '2026-10-12'), estado_actual: 'CERRADO', asignado_a_id: 'a', puntos_complejidad: 5, resueltoEn: at('12:00', '2026-10-12') })
+];
+
+(async () => {
+    console.log('\n=== PRUEBAS: DASHBOARD GENERAL ===\n');
+    const panel = buildCoordinatorPanel({ tickets, operators, now: NOW });
+
+    await t('KPIs: activos, sin asignar, creados, resueltos y pendientes de cierre', () => {
+        const k = panel.kpis;
+        assert.strictEqual(k.activos, 5);
+        assert.strictEqual(k.sinAsignar, 2);
+        assert.strictEqual(k.creadosHoy, 7);
+        assert.strictEqual(k.resueltosHoy, 3, 'resuelto o cerrado hoy según resueltoEn / fecha_cierre');
+        assert.strictEqual(k.pendientesCierre, 1);
+        assert.strictEqual(k.criticosSinAsignar, 1);
+        assert.deepStrictEqual(k.criticoMasAntiguo, { codigo: 'INC-010', edad: '5 h 30' });
+    });
+
+    await t('Carga por área: % de la carga del día que sigue abierta (incluye arrastrados)', () => {
+        const wan = panel.areas.find(a => a.codigo === 'WAN');
+        assert.strictEqual(wan.abiertos, 5);
+        assert.strictEqual(wan.total, 7 - 1 + 1, '6 recibidos hoy en WAN + 1 de ayer');
+        assert.strictEqual(wan.porcentaje, Math.round(5 / 7 * 100));
+        assert.strictEqual(wan.operadores.length, 3);
+        assert.ok(panel.areas.some(a => a.codigo === 'TELEFONIA'), 'área con operador aparece aunque no tenga abiertos');
+        assert.strictEqual(panel.areas[0].codigo, 'WAN', 'ordenadas por % aún abiertos');
+    });
+
+    await t('Resolución por área: promedio desde la llegada, solo del periodo', () => {
+        // WAN hoy: INC-007 2 h, INC-008 4 h → 3 h. Telefonía: INC-009 1 h. General: 7/3 ≈ 2,3 h
+        const wan = panel.resolucion.areas.find(a => a.codigo === 'WAN');
+        assert.strictEqual(wan.horas, 3);
+        assert.strictEqual(panel.resolucion.areas.find(a => a.codigo === 'TELEFONIA').horas, 1);
+        assert.strictEqual(panel.resolucion.promedioHoras, 2.3);
+    });
+
+    await t('Operadores: puntos y P1/P2/P3 de lo resuelto; semana suma lo de ayer', () => {
+        const ana = panel.areas.find(a => a.codigo === 'WAN').operadores.find(o => o.id === 'a');
+        assert.strictEqual(ana.carga, 6);
+        assert.strictEqual(ana.puntos, 8);
+        assert.strictEqual(ana.p1, 1);
+        const semana = buildCoordinatorPanel({ tickets, operators, now: NOW, periodo: 'semana' });
+        const anaSemana = semana.areas.find(a => a.codigo === 'WAN').operadores.find(o => o.id === 'a');
+        assert.strictEqual(anaSemana.puntos, 13);
+        assert.strictEqual(semana.periodo, 'semana');
+        assert.strictEqual(buildCoordinatorPanel({ tickets, operators, now: NOW, periodo: 'xx' }).periodo, 'jornada');
+    });
+
+    await t('Alertas: sobrecarga (1.5× y mínimo 3) y antigüedad por prioridad', () => {
+        const sobre = panel.alertas.filter(a => a.tipo === 'sobrecarga');
+        assert.strictEqual(sobre.length, 1);
+        assert.ok(sobre[0].titulo.startsWith('Ana Pérez'));
+        const viejos = panel.alertas.filter(a => a.tipo === 'antiguedad').map(a => a.titulo);
+        assert.deepStrictEqual(viejos, ['INC-010 · P1 sin asignar', 'INC-005 · sin prioridad, sin movimiento'], 'P3 de 20 min y EN_PAUSA no alertan');
+    });
+
+    await t('Antigüedad: sin movimiento usa la última actualización; pausa no cuenta', () => {
+        const lista = agingTickets([
+            ticket({ codigo_incidencia: 'X1', createdAt: at('08:00'), estado_actual: 'EN_PROGRESO', asignado_a_id: 'a', updatedAt: at('14:20') }),
+            ticket({ codigo_incidencia: 'X2', createdAt: at('08:00'), estado_actual: 'EN_PROGRESO', asignado_a_id: 'a', updatedAt: at('13:50') }),
+            ticket({ codigo_incidencia: 'X3', createdAt: at('08:00'), estado_actual: 'EN_ESPERA_TERCEROS' })
+        ], NOW);
+        assert.deepStrictEqual(lista.map(x => x.codigo), ['X2'], 'sin prioridad: 30 min');
+    });
+
+    await t('Turno: grupos (en turno, de guardia, fuera) y avance de la jornada', () => {
+        const [enTurno, guardia, fuera] = panel.turno.grupos;
+        assert.deepStrictEqual([enTurno.personas.length, guardia.personas.length, fuera.personas.length], [2, 1, 1]);
+        assert.deepStrictEqual(jornadaStatus(NOW), { porcentaje: 72, detalle: 'Faltan 2 h 30', horario: '08:00 – 17:00', finDeSemana: false });
+        assert.strictEqual(jornadaStatus(new Date('2026-10-17T15:00:00Z')).finDeSemana, true);
+        assert.strictEqual(formatAge(45), '45 min');
+    });
+
+    await t('Flujo de hoy: creados, cerrados y asignados por hora de Caracas', () => {
+        const f = panel.flujo;
+        assert.strictEqual(f.horaActual, 14);
+        assert.strictEqual(f.creados[9], 2);
+        assert.strictEqual(f.cerrados[13], 2, 'INC-008 por resueltoEn 13:00 e INC-009 por fecha_cierre');
+        assert.strictEqual(f.asignados[10], 1);
+        assert.strictEqual(f.asignados[11], 1);
+    });
+
+    await t('Ranking: ordenado por puntos, con índice de carga', () => {
+        assert.deepStrictEqual(panel.ranking.map(o => o.id), ['a', 'b', 'd']);
+        assert.strictEqual(panel.ranking[0].sobrecarga, true);
+    });
+
+    await t('Sin datos: no falla y la vista muestra los estados vacíos', async () => {
+        const vacio = buildCoordinatorPanel({ now: NOW });
+        assert.strictEqual(vacio.kpis.activos, 0);
+        const html = await ejs.renderFile(path.join(__dirname, '..', 'views', 'dashboard.ejs'), { panel: vacio, currentUser: { nombre: 'Coord', rol: 'COORDINADOR' } });
+        assert.ok(html.includes('Todo en orden'));
+        assert.ok(html.includes('Todavía no hay tickets'));
+    });
+
+    await t('Vista: dibuja áreas, alertas, ranking y no usa las palabras prohibidas', async () => {
+        const html = await ejs.renderFile(path.join(__dirname, '..', 'views', 'dashboard.ejs'), { panel, currentUser: { nombre: 'Coord', email: 'c@x.com', rol: 'COORDINADOR' } });
+        assert.ok(html.includes('data-area="WAN"'));
+        assert.ok(html.includes('INC-010 · P1 sin asignar'));
+        assert.ok(html.includes('id="panel-flujo"'));
+        assert.ok(!/\bSLA\b|\bDERS\b/.test(html));
+        assert.ok(html.includes('aria-current="page"'));
+    });
+
+    console.log(`\n   RESUMEN: ${passed}/${total} pruebas pasaron correctamente\n`);
+    if (passed !== total) process.exit(1);
+})();
