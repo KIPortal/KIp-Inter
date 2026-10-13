@@ -171,8 +171,16 @@
 		if (openMenu && !openMenu.menu.contains(e.target) && !openMenu.btn.contains(e.target)) closeMenu();
 	});
 	document.addEventListener('keydown', e => {
+		// Menú abierto: ↑↓ recorren las opciones (Enter las elige: son botones)
+		if (openMenu && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+			const items = Array.from(openMenu.menu.querySelectorAll('.mitem:not([disabled])'));
+			const i = items.indexOf(document.activeElement);
+			const next = items[(i + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length];
+			if (next) { e.preventDefault(); next.focus(); }
+			return;
+		}
 		if (e.key !== 'Escape') return;
-		if (openMenu) { closeMenu(); return; }
+		if (openMenu) { const b = openMenu.btn; closeMenu(); b.focus(); return; }
 		const top = layer.lastElementChild;
 		if (top) top.remove();
 		else if (panelCode) closePanel();
@@ -196,6 +204,8 @@
 		wrap.append(menu);
 		btn.setAttribute('aria-expanded', 'true');
 		openMenu = { btn, menu };
+		const sel = menu.querySelector('.mitem[data-sel=true]') || menu.querySelector('.mitem:not([disabled])');
+		if (sel) sel.focus();
 	}
 
 	// Campo desplegable (.combo) que abre el mismo menú
@@ -788,7 +798,7 @@
 					senderSlot,
 					h('div', { class: 'fld' }, h('span', { class: 'flabel', text: 'Fecha de creación' }), h('span', { class: 'field ro', text: 'Al crear (ahora)' })),
 					h('div', { class: 'fld' }, h('span', { class: 'flabel', text: 'Creado por' }),
-						h('span', { class: 'field ro', style: 'color:var(--t1)' }, h('span', { class: 'avatar', style: 'width:20px;height:20px;font-size:10px;background:var(--solid);color:#FFFFFF', text: (D.usuario.nombre[0] || 'C').toUpperCase() }), D.usuario.nombre)),
+						h('span', { class: 'field ro', style: 'color:var(--t1)' }, h('span', { class: 'avatar on-solid', style: 'width:20px;height:20px;font-size:10px;background:var(--solid)', text: (D.usuario.nombre[0] || 'C').toUpperCase() }), D.usuario.nombre)),
 					h('div', { class: 'fld span2' }, h('span', { class: 'flabel', text: 'Prioridad y puntaje' }), prioSeg(() => N.p, k => { N.p = k; })),
 					opSlot)),
 			h('div', { class: 'dlg-foot', style: 'padding-bottom:18px' }, missing, h('span', { class: 'grow' }), cancelBtn(ov), ok));
