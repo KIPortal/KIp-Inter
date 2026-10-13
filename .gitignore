@@ -25,3 +25,7 @@ Thumbs.db
 
 # Cache local
 stitch_cache/
+
+# Uploads de prueba (no versionar)
+public/uploads/*
+!public/uploads/.gitkeep
