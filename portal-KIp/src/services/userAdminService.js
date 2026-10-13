@@ -1,0 +1,74 @@
+'use strict';
+
+/**
+ * Alta y edición de usuarios desde Administración. Validación pura
+ * (ver scripts/test-admin-usuarios.js).
+ *
+ * Nota: mientras no se fusione feat/seguridad-login, la clave se guarda tal cual
+ * (igual que scripts/crear-admin.js). Por eso solo se aceptan claves temporales
+ * y nunca se escriben en Auditoría.
+ */
+
+const { AREA_NAMES } = require('./periodReportService');
+
+const ROLES = ['OPERADOR', 'COORDINADOR'];
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MIN_CLAVE = 8;
+
+/**
+ * @param {object} input  { nombre, email, rol, area, clave }
+ * @param {object} opts   { nuevo: boolean } — al crear, la clave es obligatoria
+ * @returns {{ error: string } | { datos: object }}
+ */
+function validateUser(input, { nuevo = false } = {}) {
+    const b = input && typeof input === 'object' ? input : {};
+    const datos = {};
+    const str = v => (typeof v === 'string' ? v.trim() : '');
+
+    if (nuevo || b.nombre !== undefined) {
+        const nombre = str(b.nombre).replace(/\s+/g, ' ');
+        if (nombre.length < 3 || nombre.length > 80) return { error: 'El nombre debe tener entre 3 y 80 caracteres' };
+        datos.nombre = nombre;
+    }
+    if (nuevo || b.email !== undefined) {
+        const email = str(b.email).toLowerCase();
+        if (!EMAIL_RE.test(email) || email.length > 120) return { error: 'El correo no es válido' };
+        datos.email = email;
+    }
+    if (nuevo || b.rol !== undefined) {
+        const rol = str(b.rol) || 'OPERADOR';
+        if (!ROLES.includes(rol)) return { error: 'Rol no válido' };
+        datos.rol = rol;
+    }
+    if (nuevo || b.area !== undefined) {
+        const area = str(b.area) || 'GENERAL';
+        if (!Object.prototype.hasOwnProperty.call(AREA_NAMES, area)) return { error: 'Área no válida' };
+        datos.area_designada = area;
+    }
+    if (nuevo || (b.clave !== undefined && b.clave !== '')) {
+        const clave = typeof b.clave === 'string' ? b.clave : '';
+        if (clave.length < MIN_CLAVE || clave.length > 72) return { error: `La clave temporal debe tener al menos ${MIN_CLAVE} caracteres` };
+        datos.clave = clave;
+    }
+    if (!nuevo && Object.keys(datos).length === 0) return { error: 'No hay cambios para guardar' };
+    return { datos };
+}
+
+/** Texto para Auditoría (sin la clave). */
+function describeUser(antes, datos) {
+    const ROL = { OPERADOR: 'operador', COORDINADOR: 'coordinador' };
+    if (!antes) {
+        return `${datos.nombre} (${datos.email}) · ${ROL[datos.rol]} · ${AREA_NAMES[datos.area_designada] || datos.area_designada}`;
+    }
+    const cambios = [];
+    if (datos.nombre && datos.nombre !== antes.nombre) cambios.push(`nombre: ${antes.nombre} → ${datos.nombre}`);
+    if (datos.email && datos.email !== antes.email) cambios.push(`correo: ${antes.email} → ${datos.email}`);
+    if (datos.rol && datos.rol !== antes.rol) cambios.push(`rol: ${ROL[antes.rol]} → ${ROL[datos.rol]}`);
+    if (datos.area_designada && datos.area_designada !== antes.area_designada) {
+        cambios.push(`área: ${AREA_NAMES[antes.area_designada] || antes.area_designada} → ${AREA_NAMES[datos.area_designada]}`);
+    }
+    if (datos.clave) cambios.push('clave temporal cambiada');
+    return `${antes.nombre}: ${cambios.join(', ') || 'sin cambios'}`;
+}
+
+module.exports = { validateUser, describeUser, ROLES, MIN_CLAVE };

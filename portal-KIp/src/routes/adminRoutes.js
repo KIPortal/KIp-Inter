@@ -8,5 +8,7 @@ page.get('/', adminController.renderAdmin);
 const api = express.Router();
 api.put('/config', adminController.saveConfig);
 api.post('/preview', adminController.preview);
+api.post('/usuarios', adminController.createUser);
+api.patch('/usuarios/:id', adminController.updateUser);
 
 module.exports = { page, api };

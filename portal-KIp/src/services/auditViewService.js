@@ -26,7 +26,9 @@ const ACCIONES = Object.freeze({
     TRASPASO_ATENDIDO: ['Traspaso atendido', 'violeta'],
     GUARDIA_DEFINIDA: ['Guardia', 'violeta'],
     HORARIO_EDITADO: ['Horario', 'azul'],
-    CONFIGURACION_EDITADA: ['Configuración', 'gris']
+    CONFIGURACION_EDITADA: ['Configuración', 'gris'],
+    USUARIO_CREADO: ['Creó usuario', 'verde'],
+    USUARIO_EDITADO: ['Editó usuario', 'azul']
 });
 
 const FECHAS = Object.freeze([
