@@ -139,7 +139,7 @@
 	function renderReglas() {
 		const r = C.reglas;
 		const L = D.limites;
-		const ov = r.sobrecarga, ag = r.antiguedad, sg = r.sugerencia;
+		const ov = r.sobrecarga, ag = r.antiguedad, sg = r.sugerencia, me = r.metas;
 		const hitsOv = ov.activa ? preview.sobrecarga : [];
 		const hitsAg = ag.activa ? preview.antiguedad : [];
 		const box = $('[data-panel="reglas"]');
@@ -195,7 +195,23 @@
 					h('div', { class: 'rule-row' }, h('span', { style: 'flex:1', text: 'Si nadie del área está disponible o todos tienen sobrecarga' }), h('span', { class: 't2', text: 'Cola de espera y aviso al coordinador' })),
 					h('div', { class: 'rule-row' },
 						h('span', { class: 'lbl', style: 'flex:1' }, h('span', { style: 'color:var(--t1);font-size:13px', text: 'Permitir sugerir otra área' }), h('span', { text: 'Solo cuando el coordinador lo pide desde el ticket' })),
-						sw(sg.permitirOtraArea, () => changeRules(x => { x.sugerencia.permitirOtraArea = !x.sugerencia.permitirOtraArea; }), 'Permitir sugerir otra área')))));
+						sw(sg.permitirOtraArea, () => changeRules(x => { x.sugerencia.permitirOtraArea = !x.sugerencia.permitirOtraArea; }), 'Permitir sugerir otra área')))),
+			h('section', { class: 'glass card', 'aria-labelledby': 'h-me', style: 'gap:12px' },
+				h('div', { style: 'display:flex;flex-direction:column' }, h('h2', { id: 'h-me', class: 'card-title', text: 'Metas de Reportes' }),
+					h('span', { class: 'hint t2', style: 'font-size:12px', text: 'En Reportes se marca en ámbar lo que no cumple la meta' })),
+				h('div', { class: 'rule-rows' },
+					h('div', { class: 'rule-row' },
+						h('span', { class: 'lbl', style: 'flex:1' }, h('span', { style: 'color:var(--t1);font-size:13px', text: 'Casos resueltos' }), h('span', { text: 'Resueltos ÷ recibidos en el periodo' })),
+						h('span', { class: 't2', text: 'al menos' }),
+						stepper(me.resueltoPct + ' %', 'Meta de resueltos',
+							() => changeRules(x => { x.metas.resueltoPct = Math.max(L.resueltoPct[0], x.metas.resueltoPct - 1); }),
+							() => changeRules(x => { x.metas.resueltoPct = Math.min(L.resueltoPct[1], x.metas.resueltoPct + 1); }))),
+					h('div', { class: 'rule-row' },
+						h('span', { class: 'lbl', style: 'flex:1' }, h('span', { style: 'color:var(--t1);font-size:13px', text: 'Tiempo promedio de resolución' }), h('span', { text: 'Desde la llegada del ticket' })),
+						h('span', { class: 't2', text: 'hasta' }),
+						stepper(dec(me.promedioHoras) + ' h', 'Meta de promedio',
+							() => changeRules(x => { x.metas.promedioHoras = Math.max(L.promedioHoras[0], Math.round((x.metas.promedioHoras - 0.5) * 10) / 10); }),
+							() => changeRules(x => { x.metas.promedioHoras = Math.min(L.promedioHoras[1], Math.round((x.metas.promedioHoras + 0.5) * 10) / 10); }))))));
 	}
 
 	// ---------- Avisos ----------

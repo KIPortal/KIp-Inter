@@ -7,6 +7,7 @@ const { buildPeriodReport, AREAS: REPORT_AREAS, AREA_NAMES } = require('../servi
 const { buildReportView } = require('../services/reportViewService');
 const { isActiveArea } = require('../services/areaCatalog');
 const { buildWorkbook } = require('../services/excelExportService');
+const { loadConfig } = require('../services/configService');
 
 function parsePeriodQuery(query = {}) {
     const periodo = typeof query.periodo === 'string' ? query.periodo.trim() : 'jornada';
@@ -79,15 +80,17 @@ async function renderReportes(req, res) {
     try {
         const periodo = ['jornada', 'semana', 'mes', 'especifica'].includes(req.query.periodo) ? req.query.periodo : 'jornada';
         const query = { ...req.query, periodo: periodo === 'especifica' ? 'jornada' : periodo };
-        const [result, activos] = await Promise.all([
+        const [result, activos, config] = await Promise.all([
             loadPeriodReport(query),
-            prisma.ticket.count({ where: { estado_actual: { in: ACTIVE_STATES } } })
+            prisma.ticket.count({ where: { estado_actual: { in: ACTIVE_STATES } } }),
+            loadConfig(prisma)
         ]);
         if (result.error) return res.redirect(302, '/reportes');
         const vista = buildReportView(result.report, {
             periodo: query.periodo,
             fecha: typeof req.query.fecha === 'string' && req.query.fecha ? req.query.fecha : null,
-            area: typeof req.query.area === 'string' && req.query.area ? req.query.area : null
+            area: typeof req.query.area === 'string' && req.query.area ? req.query.area : null,
+            metas: config.reglas.metas
         });
         return res.render('reportes', { titulo: 'Reportes', currentUser: req.user, vista, areasCatalogo: REPORT_AREAS.map(c => ({ codigo: c, nombre: AREA_NAMES[c] + (isActiveArea(c) ? '' : ' (desactivada)') })), activos });
     } catch (error) {

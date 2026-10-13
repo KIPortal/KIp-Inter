@@ -8,6 +8,7 @@
 
 const { formatCaracasDate, parseCaracasDate } = require('./metricsService');
 const { AREA_NAMES } = require('./periodReportService');
+const { DEFAULT_RULES } = require('./rulesService');
 
 const DAY_MS = 24 * 3600 * 1000;
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -53,9 +54,12 @@ const horas = min => (min === null || min === undefined ? null : Math.round((min
  * @param {object} report  salida de buildPeriodReport
  * @param {object} q       { periodo, fecha, area }
  */
-function buildReportView(report, { periodo, fecha = null, area = null, now = new Date() } = {}) {
+function buildReportView(report, { periodo, fecha = null, area = null, now = new Date(), metas = DEFAULT_RULES.metas } = {}) {
     const r = report.resumen;
     const nav = navigation(periodo, r.desde, now);
+    // Ámbar si no cumple la meta (Administración → Metas de Reportes)
+    const bajoMeta = p => p !== null && p < metas.resueltoPct;
+    const sobreMeta = h => h !== null && h > metas.promedioHoras;
     const areas = report.porArea.map(a => ({
         codigo: a.area,
         nombre: a.nombre,
@@ -87,7 +91,21 @@ function buildReportView(report, { periodo, fecha = null, area = null, now = new
         estadoCarga: o.estadoCarga
     }));
     const maxCasos = Math.max(1, ...areas.map(a => a.casos));
-    areas.forEach(a => { a.ancho = Math.round((a.casos / maxCasos) * 100); });
+    // Carga ahora: activos por operador, en escala relativa a la área más cargada.
+    // El color sigue la regla de sobrecarga (no hay una capacidad fija por operador).
+    areas.forEach(a => { a.porOperador = a.operadores > 0 ? a.activos / a.operadores : null; });
+    const maxPorOperador = Math.max(0, ...areas.map(a => a.porOperador || 0));
+    areas.forEach(a => {
+        a.ancho = Math.round((a.casos / maxCasos) * 100);
+        a.pctBajoMeta = bajoMeta(a.pct);
+        a.promSobreMeta = sobreMeta(a.promedioHoras);
+        a.cargaAncho = maxPorOperador > 0 && a.porOperador ? Math.round((a.porOperador / maxPorOperador) * 100) : 0;
+        a.cargaTono = a.estadoCarga === 'Sobrecarga' ? 'red' : a.estadoCarga === 'Normal' ? 'blue' : 'gray';
+    });
+    operadores.forEach(o => {
+        o.pctBajoMeta = bajoMeta(o.pct);
+        o.promSobreMeta = sobreMeta(o.promedioHoras);
+    });
 
     const topResueltos = operadores.filter(o => o.resueltos > 0)
         .sort((a, b) => (b.resueltos - a.resueltos) || (b.puntos - a.puntos)).slice(0, 5);
@@ -110,8 +128,11 @@ function buildReportView(report, { periodo, fecha = null, area = null, now = new
             promedioHorarioHoras: horas(r.tiempoHorarioMin),
             puntos: r.puntos,
             activos: r.activos,
-            areasSobrecarga: areas.filter(a => a.sobrecargados > 0).length
+            areasSobrecarga: areas.filter(a => a.sobrecargados > 0).length,
+            pctBajoMeta: bajoMeta(pct(r.resueltos, r.creados)),
+            promSobreMeta: sobreMeta(horas(r.tiempoTotalMin))
         },
+        metas,
         areas,
         operadores,
         topResueltos,

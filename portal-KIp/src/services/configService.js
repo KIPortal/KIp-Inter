@@ -92,6 +92,8 @@ function describeChanges(antes, despues) {
     if (ra.sugerencia.incluirGuardia !== rd.sugerencia.incluirGuardia) cambios.push(`Guardia por entrar en la sugerencia: ${rd.sugerencia.incluirGuardia ? 'sí' : 'no'}`);
     if (ra.sugerencia.guardiaAntesMin !== rd.sugerencia.guardiaAntesMin) cambios.push(`Guardia por entrar: menos de ${fmtMin(rd.sugerencia.guardiaAntesMin)}`);
     if (ra.sugerencia.permitirOtraArea !== rd.sugerencia.permitirOtraArea) cambios.push(`Sugerir otra área: ${rd.sugerencia.permitirOtraArea ? 'sí' : 'no'}`);
+    if (ra.metas.resueltoPct !== rd.metas.resueltoPct) cambios.push(`Meta de resueltos: ${rd.metas.resueltoPct} %`);
+    if (ra.metas.promedioHoras !== rd.metas.promedioHoras) cambios.push(`Meta de promedio: ${String(rd.metas.promedioHoras).replace('.', ',')} h`);
     EVENTOS.forEach(ev => {
         despues.avisos[ev.clave].forEach((v, i) => {
             if (v !== null && v !== antes.avisos[ev.clave][i]) cambios.push(`Aviso «${ev.nombre}» a ${DESTINATARIOS[i].toLowerCase()}: ${v ? 'sí' : 'no'}`);
