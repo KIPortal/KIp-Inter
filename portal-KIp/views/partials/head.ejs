@@ -1,0 +1,21 @@
+<%# Uso dentro de <head>: include('partials/head', { titulo: 'Dashboard' }) %>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title><%= (typeof titulo !== 'undefined' && titulo) ? titulo + ' · Operaciones IP' : 'Operaciones IP' %></title>
+<meta name="color-scheme" content="light dark">
+<%# Tema antes de pintar: preferencia guardada (kip.theme = light|dark) o la del sistema. %>
+<script>
+	(function () {
+		var tema = null;
+		try { tema = localStorage.getItem('kip.theme'); } catch (e) {}
+		if (tema !== 'light' && tema !== 'dark') {
+			tema = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+		}
+		document.documentElement.setAttribute('data-theme', tema);
+	})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="/css/portal.css" rel="stylesheet">
+<script src="/js/sidebar.js" defer></script>

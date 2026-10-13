@@ -7,6 +7,9 @@ const operatorRoutes = require('./routes/operatorRoutes');
 const ticketRoutes = require('./routes/ticketRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const turnoRoutes = require('./routes/turnoRoutes');
+const auditRoutes = require('./routes/auditRoutes');
+const requireAuth = require('./middlewares/requireAuth');
+const authorizeRole = require('./middlewares/authorizeRole');
 const emailIngestionService = require('./services/emailIngestionService');
 
 const app = express();
@@ -42,5 +45,11 @@ app.use('/api/tickets', ticketRoutes);
 app.use('/api/turnos', turnoRoutes);
 app.use('/reportes', reportRoutes);
 app.use('/reports', reportRoutes);
+app.use('/auditoria', requireAuth, authorizeRole('COORDINADOR'), auditRoutes);
+
+// Vista de prueba del rediseño (Fase 1): barra lateral, tema y componentes base.
+app.get('/vista-previa', requireAuth, authorizeRole('COORDINADOR'), (req, res) => {
+	res.render('vista-previa', { currentUser: req.user });
+});
 
 module.exports = app;
