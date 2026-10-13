@@ -23,7 +23,26 @@ const ticketRelations = {
 
 async function renderDashboard(req, res) {
     if (req.user.rol === 'OPERADOR') return renderOperatorDashboard(req, res);
-    return renderCoordinator(req, res, 'dashboard');
+    try {
+        // Solo lo que usa el Dashboard nuevo, en paralelo (cada consulta va a Supabase)
+        const ahora = new Date();
+        const [tickets, operadores, config] = await Promise.all([
+            prisma.ticket.findMany({
+                select: {
+                    codigo_incidencia: true, estado_actual: true, area_designada: true, puntos_complejidad: true,
+                    asignado_a_id: true, createdAt: true, updatedAt: true, fecha_asignacion: true,
+                    resueltoEn: true, fecha_cierre: true
+                }
+            }),
+            loadOperatorsWithShift(ahora),
+            loadConfig(prisma)
+        ]);
+        const panel = buildCoordinatorPanel({ tickets, operators: operadores, now: ahora, periodo: req.query.periodo, rules: config.reglas });
+        return res.render('dashboard', { titulo: 'Dashboard General', currentUser: req.user, panel });
+    } catch (error) {
+        console.error('Error al cargar dashboard:', error);
+        return res.status(500).send('Error en el servidor');
+    }
 }
 
 /**
@@ -31,7 +50,7 @@ async function renderDashboard(req, res) {
  * (En turno / De guardia / Fuera de turno) en el instante `ahora`.
  */
 async function loadOperatorsWithShift(ahora = new Date()) {
-    const operadores = await prisma.user.findMany({
+    const [operadores, { horarioPorUsuario, guardiaIds }] = await Promise.all([prisma.user.findMany({
         where: { rol: 'OPERADOR' },
         select: {
             id: true,
@@ -48,8 +67,7 @@ async function loadOperatorsWithShift(ahora = new Date()) {
             }
         },
         orderBy: { nombre: 'asc' }
-    });
-    const { horarioPorUsuario, guardiaIds } = await loadShiftData(getWeekStart(ahora));
+    }), loadShiftData(getWeekStart(ahora))]);
     operadores.forEach(operador => {
         const h = horarioPorUsuario.get(operador.id);
         operador.deGuardia = guardiaIds.has(operador.id);
