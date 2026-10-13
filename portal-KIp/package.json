@@ -7,7 +7,6 @@
     "build:assets": "node scripts/build-figma-assets.js",
     "start": "npm run build:assets && node server.js",
     "test:metrics": "node scripts/test-metrics.js",
-    "test:reports": "node scripts/test-reports.js",
     "test:tickets": "node scripts/test-tickets.js",
     "test:period": "node scripts/test-period-report.js",
     "test:shifts": "node scripts/test-shifts.js",
@@ -24,6 +23,7 @@
     "test:report-view": "node scripts/test-report-view.js",
     "test:usuarios": "node scripts/test-admin-usuarios.js",
     "test:areas": "node scripts/test-areas.js",
+    "test:ui": "node scripts/test-ui.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

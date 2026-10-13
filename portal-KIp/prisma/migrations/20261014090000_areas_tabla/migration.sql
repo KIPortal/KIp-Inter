@@ -37,4 +37,14 @@ ALTER TABLE "User" ADD COLUMN "activo" BOOLEAN NOT NULL DEFAULT true;
 ALTER TABLE "User" ADD CONSTRAINT "User_area_designada_fkey" FOREIGN KEY ("area_designada") REFERENCES "Area"("codigo") ON DELETE RESTRICT ON UPDATE CASCADE;
 ALTER TABLE "Ticket" ADD CONSTRAINT "Ticket_area_designada_fkey" FOREIGN KEY ("area_designada") REFERENCES "Area"("codigo") ON DELETE RESTRICT ON UPDATE CASCADE;
 
-DROP TYPE "AreaDesignada";
+-- Se borra el enum solo si ya ninguna columna lo usa (en algunas bases existe la
+-- tabla "BitacoraMessage", fuera del schema de Prisma, que todavía lo usa).
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public' AND udt_name = 'AreaDesignada'
+    ) THEN
+        DROP TYPE "AreaDesignada";
+    END IF;
+END $$;
