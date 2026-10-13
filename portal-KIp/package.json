@@ -6,6 +6,7 @@
   "scripts": {
     "build:assets": "node scripts/build-figma-assets.js",
     "start": "npm run build:assets && node server.js",
+    "dev": "npm run build:assets && nodemon server.js",
     "test:metrics": "node scripts/test-metrics.js",
     "test:tickets": "node scripts/test-tickets.js",
     "test:period": "node scripts/test-period-report.js",
@@ -43,6 +44,7 @@
     "prisma": "^5.22.0"
   },
   "devDependencies": {
+    "nodemon": "^3.1.14",
     "tailwindcss": "^3.4.17"
   }
 }
