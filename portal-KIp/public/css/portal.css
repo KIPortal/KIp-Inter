@@ -835,3 +835,47 @@ input.field { height: 34px; }
 .toast .tx b { font-weight: 700; }
 .seg .mdot { width: 6px; height: 6px; border-radius: 2px; box-shadow: none; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- 10. Gestión de Turno ---------- */
+.dirty { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--t2); }
+.dirty[hidden] { display: none; }
+.dirty i { width: 7px; height: 7px; border-radius: 50%; background: var(--c-amber); }
+.sdot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.weeknav { display: flex; align-items: center; gap: 2px; height: 32px; padding: 3px; }
+.weeknav .pillbtn { width: 26px; height: 26px; padding: 0; border-radius: 100px; justify-content: center; color: var(--glyph); }
+.weeknav > span { min-width: 150px; padding: 0 6px; text-align: center; font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.weekstrip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+@media (max-width: 760px) { .weekstrip { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.wday { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 14px; background: var(--well); box-shadow: inset 0 0 0 0.5px var(--sep); }
+.wday.today { background: var(--accent-bg); box-shadow: inset 0 0 0 1px var(--accent-ring); }
+.wday > span:first-child { display: flex; align-items: baseline; gap: 6px; }
+.wday b { font-size: 12px; font-weight: 600; color: var(--t2); }
+.wday strong { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.wday.today strong { color: var(--accent-t); }
+.wday .hrs { font-size: 12px; font-variant-numeric: tabular-nums; }
+.wday small { font-size: 11px; color: var(--t3); }
+.guardpeople { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.guardpeople .lbl { font-size: 12px; font-weight: 600; color: var(--t2); margin-right: 4px; }
+.gchip { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px 0 3px; border-radius: 999px; background: var(--fill); box-shadow: inset 0 0 0 0.5px var(--sep); font-size: 12px; font-weight: 500; }
+.gchip i { width: 22px; height: 22px; border-radius: 50%; background: var(--purple-bg); color: var(--purple-t); font-size: 9px; font-weight: 700; font-style: normal; display: inline-flex; align-items: center; justify-content: center; }
+.turno-grid { display: grid; grid-template-columns: minmax(220px, 1fr) 130px 262px 236px 130px; column-gap: 16px; align-items: center; }
+.turno-head { padding: 8px 32px; margin: 0 -16px 10px; font-size: 12px; font-weight: 600; color: var(--t2); border-top: 1px solid var(--sep); border-bottom: 1px solid var(--sep); }
+.area-hd { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-bottom: 1px solid var(--sep); background: var(--area-hd); color: var(--area-hd-t); }
+.area-hd i { width: 4px; height: 16px; border-radius: 2px; background: var(--solid); }
+.area-hd b { font-size: 13px; }
+.area-hd span { font-size: 12px; opacity: .75; }
+.areabox[hidden], .oprow[hidden] { display: none; }
+.oprow.turno-grid { padding: 8px 16px; border-bottom: 1px solid var(--sep2); font-size: 12px; }
+.oprow.changed { background: var(--orange-bg); }
+.opstate { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+.opstate i { width: 7px; height: 7px; border-radius: 50%; }
+.opstate.st-turno { color: var(--green-t); background: none; } .opstate.st-turno i { background: var(--c-green); }
+.opstate.st-guardia { color: var(--purple-t); background: none; } .opstate.st-guardia i { background: var(--c-violet); }
+.opstate.st-fuera { color: var(--t2); background: none; } .opstate.st-fuera i { background: var(--t3); }
+.day { background: transparent; color: var(--t3); box-shadow: inset 0 0 0 0.5px var(--sep); }
+.day[aria-pressed=true] { background: var(--accent-bg); color: var(--accent-t); box-shadow: inset 0 0 0 0.5px var(--accent-ring); }
+.guardbox { display: flex; align-items: center; justify-content: flex-end; gap: 8px; cursor: pointer; }
+.guardbox span { font-size: 12px; font-weight: 500; color: var(--t3); }
+.guardbox span.on { color: var(--purple-t); }
+.guardbox input { width: 16px; height: 16px; margin: 0; accent-color: #8B5CF6; cursor: pointer; }
+

@@ -108,7 +108,7 @@ async function renderTickets(req, res) {
     }
 }
 
-// Vista anterior (index.ejs): conserva Gestión de Turno hasta la Fase 5
+// Vista anterior (index.ejs): respaldo temporal hasta la revisión final (Fase 8)
 async function renderLegacy(req, res) {
     if (req.user.rol === 'OPERADOR') return res.redirect(302, '/');
     return renderCoordinator(req, res, 'index');
@@ -289,8 +289,4 @@ async function renderOperatorDashboard(req, res) {
     });
 }
 
-function redirectToShiftSection(req, res) {
-    return res.redirect(302, '/vista-anterior#gestion-turno');
-}
-
-module.exports = { renderDashboard, renderTickets, renderLegacy, redirectToShiftSection, loadOperatorsWithShift };
+module.exports = { renderDashboard, renderTickets, renderLegacy, loadOperatorsWithShift };

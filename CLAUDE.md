@@ -22,11 +22,11 @@ Portal de tickets y estadísticas del depto. **Operaciones IP** (Inter Telecomun
 - `portal-KIp/docs/pendientes.md` — pendientes (incluye la seguridad del login aplazada).
 
 ## Arquitectura
-- Lógica pura en `src/services/` (metricsService, periodReportService, excelExportService, shiftService, simulationService, dashboardService, ticketQueueService, assignmentService, rulesService); controladores en `src/controllers/`; las vistas solo dibujan lo que entrega el controlador.
+- Lógica pura en `src/services/` (metricsService, periodReportService, excelExportService, shiftService, simulationService, dashboardService, ticketQueueService, assignmentService, rulesService, shiftBoardService); controladores en `src/controllers/`; las vistas solo dibujan lo que entrega el controlador.
 - Los ids de usuario son **UUID (texto)**, nunca números.
 
 ## Pruebas (sin framework, sin base de datos real)
-Scripts `scripts/test-*.js` con `assert`; en `package.json`: `test:metrics`, `test:reports`, `test:tickets`, `test:period`, `test:shifts`, `test:simulation`, `test:dashboard`, `test:queue`, `test:assignment`. La UI tiene `scripts/test-phase-a-ui.js`. Corre todas antes de dar algo por terminado. Estas pruebas simulan Prisma: no prueban la base real.
+Scripts `scripts/test-*.js` con `assert`; en `package.json`: `test:metrics`, `test:reports`, `test:tickets`, `test:period`, `test:shifts`, `test:simulation`, `test:dashboard`, `test:queue`, `test:assignment`, `test:turno`. La UI tiene `scripts/test-phase-a-ui.js`. Corre todas antes de dar algo por terminado. Estas pruebas simulan Prisma: no prueban la base real.
 
 ## Base de datos
 - Las migraciones están escritas a mano en `prisma/migrations/`; el usuario las aplica con `npx prisma migrate deploy` y luego `npx prisma generate`.

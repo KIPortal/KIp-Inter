@@ -1,5 +1,6 @@
 const express = require('express');
 const dashboardController = require('../controllers/dashboardController');
+const turnoController = require('../controllers/turnoController');
 const requireAuth = require('../middlewares/requireAuth');
 
 const router = express.Router();
@@ -10,6 +11,6 @@ router.get('/dashboard', (req, res) => res.redirect(302, '/'));
 router.get('/', dashboardController.renderDashboard);
 router.get('/tickets', dashboardController.renderTickets);
 router.get('/vista-anterior', dashboardController.renderLegacy);
-router.get('/gestion-turno', dashboardController.redirectToShiftSection);
+router.get('/gestion-turno', turnoController.renderTurno);
 
 module.exports = router;
