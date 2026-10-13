@@ -140,4 +140,7 @@ function toCsv(view) {
     return '﻿' + lineas.join('\r\n');
 }
 
-module.exports = { ACCIONES, FECHAS, actionInfo, parseAuditQuery, dateRange, dayLabel, buildAuditView, toCsv };
+// Id para AuditLog.userId: el usuario temporal del acceso de desarrollo no existe en User (la FK lo rechaza)
+const auditUserId = req => (req.user?.id && !String(req.user.id).startsWith('temporary:') ? req.user.id : null);
+
+module.exports = { ACCIONES, FECHAS, actionInfo, parseAuditQuery, dateRange, dayLabel, buildAuditView, toCsv, auditUserId };

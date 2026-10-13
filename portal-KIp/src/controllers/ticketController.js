@@ -2,6 +2,7 @@ const prisma = require('../config/prisma');
 const { getWeekStart } = require('../services/shiftService');
 const { buildHandoffView } = require('../services/ticketQueueService');
 const { getNextTicketCode } = require('../services/ticketCodeService');
+const { auditUserId } = require('../services/auditViewService');
 
 const PRIORITY_POINTS = { P1: 8, P2: 5, P3: 1 };
 const { isActiveArea } = require('../services/areaCatalog');
@@ -240,7 +241,7 @@ async function batchAssignTickets(req, res) {
         // Una sola inserción para todo el lote, sin hacer esperar la respuesta
         const detalles = `A ${operador.nombre || 'el operador'} (asignación múltiple de ${count.count})`;
         prisma.auditLog.createMany({
-            data: count.ids.map(ticketId => ({ accion: 'TICKET_ASIGNADO', ticketId, userId: req.user?.id || null, detalles }))
+            data: count.ids.map(ticketId => ({ accion: 'TICKET_ASIGNADO', ticketId, userId: auditUserId(req), detalles }))
         }).catch(error => console.error('No se pudo registrar auditoría:', error.message));
         return res.json({ success: true, count: count.count, fechaAsignacion: fechaAsignacion.toISOString() });
     } catch (error) {
@@ -392,7 +393,7 @@ function updateOperatorStatus(req, res) {
 async function logAudit(req, accion, ticketId, detalles) {
     try {
         await prisma.auditLog.create({
-            data: { accion, ticketId, userId: req.user?.id || null, detalles: detalles || null }
+            data: { accion, ticketId, userId: auditUserId(req), detalles: detalles || null }
         });
     } catch (error) {
         // La auditoría no debe impedir la acción principal

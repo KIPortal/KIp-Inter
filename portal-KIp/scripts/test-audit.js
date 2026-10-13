@@ -106,6 +106,22 @@ const log = (accion, hhmm, dia, extra = {}) => Object.assign({ accion, createdAt
         assert.strictEqual(audits[2].accion, 'TICKET_DESASIGNADO');
     });
 
+    await t('Usuario temporal (acceso de desarrollo): la auditoría se guarda sin userId', async () => {
+        const { auditUserId } = require('../src/services/auditViewService');
+        assert.strictEqual(auditUserId({ user: { id: 'temporary:jefe@inter.com' } }), null);
+        assert.strictEqual(auditUserId({ user: { id: 'uuid-1' } }), 'uuid-1');
+        assert.strictEqual(auditUserId({}), null);
+        const ctrl = require('../src/controllers/ticketController');
+        const audits = [];
+        prisma.auditLog = { create: async ({ data }) => { audits.push(data); } };
+        prisma.user.findFirst = async () => ({ id: 'op2', nombre: 'Beto Ruiz' });
+        prisma.ticket.findUnique = async () => ({ id: 't1', estado_actual: 'NUEVO', asignado_a_id: null, asignado_a: null });
+        prisma.ticket.update = async () => ({ id: 't1' });
+        const r = {}; r.status = () => r; r.json = () => r;
+        await ctrl.assignTicket({ body: { ticketCode: 'INC-1', operatorId: 'op2' }, user: { id: 'temporary:jefe@inter.com' } }, r);
+        assert.strictEqual(audits[0].userId, null);
+    });
+
     console.log(`\n   RESUMEN: ${passed}/${total} pruebas pasaron correctamente\n`);
     if (passed !== total) process.exit(1);
 })();
