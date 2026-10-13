@@ -20,6 +20,8 @@
     "test:assignment": "node scripts/test-assignment.js",
     "test:turno": "node scripts/test-turno.js",
     "test:admin": "node scripts/test-admin.js",
+    "test:audit": "node scripts/test-audit.js",
+    "test:report-view": "node scripts/test-report-view.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

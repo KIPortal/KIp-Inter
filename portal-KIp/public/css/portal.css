@@ -922,3 +922,45 @@ input.field { height: 34px; }
 .preview .pv-ini { width: 22px; height: 22px; border-radius: 50%; font-size: 9px; font-weight: 700; font-style: normal; display: inline-flex; align-items: center; justify-content: center; }
 .preview .pv-ini.red { background: var(--red-bg); color: var(--red-t); }
 
+/* ---------- 12. Reportes y Auditoría ---------- */
+.mmenu[hidden] { display: none; }
+a.mitem, a.mitem:hover { text-decoration: none; }
+a.mitem:hover { color: #FFFFFF; }
+.mitem:focus-visible { outline: none; background: var(--mitem-sel); color: #FFFFFF; }
+.export-btn { display: inline-flex; align-items: center; gap: 10px; height: 36px; padding: 4px 4px 4px 16px; border-radius: 999px; background: var(--control); box-shadow: 0 0 0 0.5px rgba(15, 23, 42, 0.06), 0 4px 14px rgba(0, 0, 0, 0.06); font-size: 13px; font-weight: 600; color: var(--t1); }
+.export-btn:hover { color: var(--t1); }
+.export-btn > span { width: 28px; height: 28px; border-radius: 50%; background: var(--solid); color: #FFFFFF; display: flex; align-items: center; justify-content: center; }
+.datepick { display: flex; align-items: center; height: 36px; padding: 0 4px; }
+.datepick input.field.sm { background: transparent; box-shadow: none; height: 28px; }
+.weeknav .pillbtn.off { opacity: .3; pointer-events: none; }
+.rep-table td, .rep-table th { padding: 10px 8px; }
+.rep-table tfoot td { border-top: 1px solid var(--sep); border-bottom: 0; }
+.rowbtn:focus-visible td { background: var(--row-hover); }
+.act { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+.act i { width: 6px; height: 6px; border-radius: 50%; flex: none; }
+.duo { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 16px; }
+.toprow { display: grid; grid-template-columns: 22px 1fr 120px 44px; align-items: center; gap: 10px; min-height: 40px; border-bottom: 1px solid var(--sep2); }
+.toprow .pos { font-size: 12px; font-weight: 700; color: var(--t2); }
+.toprow .nm { display: flex; flex-direction: column; min-width: 0; }
+.toprow .nm b { font-size: 12px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.toprow .nm span { font-size: 12px; color: var(--t2); }
+.toprow strong { font-size: 13px; text-align: right; font-variant-numeric: tabular-nums; }
+.lecturas { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.areacards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.areacards[hidden], [data-section][hidden] { display: none !important; }
+.acard.glass { padding: 20px 22px; display: flex; flex-direction: column; gap: 14px; }
+.ac-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; width: 100%; }
+.ac-head b { font-size: 15px; font-weight: 600; }
+.ac-head span { font-size: 12px; }
+.ac-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; }
+.ac-stats > span { display: flex; flex-direction: column; }
+.ac-stats > span + span { padding-left: 12px; border-left: 1px solid var(--sep); }
+.ac-stats .kv { font-size: 24px; line-height: 30px; }
+.ac-stats small { font-size: 12px; color: var(--t2); }
+.ac-foot { display: flex; justify-content: space-between; width: 100%; font-size: 12px; color: var(--t2); }
+.audit-table td { padding: 10px 8px; }
+.audit-table .dayhead td { padding: 14px 24px 6px; border-bottom: 1px solid var(--sep); font-size: 12px; font-weight: 700; color: var(--t1); background: transparent; }
+.audit-table .dayhead span { margin-left: 8px; font-weight: 500; color: var(--t2); }
+.avatar.sys { background: var(--fill); color: var(--t2); box-shadow: inset 0 0 0 0.5px var(--sep); }
+form.search { margin: 0; }
+
