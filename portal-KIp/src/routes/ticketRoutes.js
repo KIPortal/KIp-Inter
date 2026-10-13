@@ -12,6 +12,8 @@ router.post('/assign', authorizeRole('COORDINADOR'), ticketController.assignTick
 router.post('/unassign', authorizeRole('COORDINADOR'), ticketController.unassignTicket);
 router.post('/batch-assign', authorizeRole('COORDINADOR'), ticketController.batchAssignTickets);
 router.post('/handoff', authorizeRole('COORDINADOR'), ticketController.handoffTickets);
+router.get('/handoff/actual', authorizeRole('COORDINADOR'), ticketController.getActiveHandoff);
+router.post('/handoff/:id/atendido', authorizeRole('COORDINADOR'), ticketController.closeHandoff);
 router.get('/trash', authorizeRole('COORDINADOR'), ticketController.listTrash);
 router.get('/:ticketCode/history', authorizeRole('COORDINADOR'), ticketController.getTicketHistory);
 router.post('/:ticketCode/close', authorizeRole('COORDINADOR'), ticketController.closeTicket);

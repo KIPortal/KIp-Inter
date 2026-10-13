@@ -11,6 +11,9 @@ const {
 const { getShiftStatus, getWeekStart } = require('../services/shiftService');
 const { loadShiftData } = require('./turnoController');
 const { buildCoordinatorPanel } = require('../services/dashboardService');
+const { buildQueue } = require('../services/ticketQueueService');
+const { loadActiveHandoff } = require('./ticketController');
+const { AREA_NAMES } = require('../services/periodReportService');
 
 const ticketRelations = {
     asignado_a: { select: { id: true, nombre: true, email: true, rol: true, area_designada: true, estado_operativo: true } },
@@ -22,8 +25,91 @@ async function renderDashboard(req, res) {
     return renderCoordinator(req, res, 'dashboard');
 }
 
-// Cola de tickets: mientras llega la Fase 3 usa la vista anterior (index.ejs)
+/**
+ * Operadores con su carga activa y su estado de turno
+ * (En turno / De guardia / Fuera de turno) en el instante `ahora`.
+ */
+async function loadOperatorsWithShift(ahora = new Date()) {
+    const operadores = await prisma.user.findMany({
+        where: { rol: 'OPERADOR' },
+        select: {
+            id: true,
+            email: true,
+            nombre: true,
+            rol: true,
+            area_designada: true,
+            estado_operativo: true,
+            tickets_asignados: {
+                // Carga activa completa: incluye recién asignados (NUEVO) y en pausa
+                where: { estado_actual: { in: ACTIVE_STATES } },
+                select: { codigo_incidencia: true, estado_actual: true },
+                orderBy: { createdAt: 'desc' }
+            }
+        },
+        orderBy: { nombre: 'asc' }
+    });
+    const { horarioPorUsuario, guardiaIds } = await loadShiftData(getWeekStart(ahora));
+    operadores.forEach(operador => {
+        const h = horarioPorUsuario.get(operador.id);
+        operador.deGuardia = guardiaIds.has(operador.id);
+        operador.turno = getShiftStatus({
+            estadoOperativo: operador.estado_operativo,
+            horario: h ? { dias: h.dias, inicio: h.hora_inicio, fin: h.hora_fin } : null,
+            deGuardia: operador.deGuardia
+        }, ahora);
+    });
+    return operadores;
+}
+
+// Cola de tickets del coordinador (rediseño, IMPLEMENTACION.md §3.2)
 async function renderTickets(req, res) {
+    if (req.user.rol === 'OPERADOR') return res.redirect(302, '/');
+    try {
+        const ahora = new Date();
+        const [tickets, operadores, enPapelera, traspaso, codigos] = await Promise.all([
+            prisma.ticket.findMany({
+                include: {
+                    ...ticketRelations,
+                    asignado_a: { select: { id: true, nombre: true } },
+                    adjuntos: { select: { nombre_original: true, ruta: true, peso: true } }
+                },
+                orderBy: { createdAt: 'desc' }
+            }),
+            loadOperatorsWithShift(ahora),
+            prisma.ticket.count({ where: { eliminado_en: { not: null } } }),
+            loadActiveHandoff(ahora),
+            prisma.ticket.findMany({
+                where: prisma.INCLUDE_DELETED, // incluye eliminados: no se reutilizan códigos
+                select: { codigo_incidencia: true }
+            })
+        ]);
+        const cola = buildQueue({ tickets, operators: operadores, now: ahora });
+        const numeros = codigos
+            .map(t => /^INC-(\d+)$/i.exec(String(t.codigo_incidencia || '').trim()))
+            .filter(Boolean)
+            .map(m => Number(m[1]))
+            .filter(Number.isInteger);
+        const guardias = operadores.filter(o => o.deGuardia)
+            .map(o => ({ id: o.id, nombre: o.nombre, area: AREA_NAMES[o.area_designada] || o.area_designada }));
+
+        return res.render('tickets', {
+            titulo: 'Tickets',
+            currentUser: req.user,
+            cola,
+            traspaso,
+            guardias,
+            enPapelera,
+            siguienteCodigo: `INC-${String((numeros.length ? Math.max(...numeros) : 0) + 1).padStart(3, '0')}`,
+            enTurno: operadores.filter(o => o.turno?.enTurno).length
+        });
+    } catch (error) {
+        console.error('Error al cargar tickets:', error);
+        return res.status(500).send('Error en el servidor');
+    }
+}
+
+// Vista anterior (index.ejs): conserva Gestión de Turno hasta la Fase 5
+async function renderLegacy(req, res) {
     if (req.user.rol === 'OPERADOR') return res.redirect(302, '/');
     return renderCoordinator(req, res, 'index');
 }
@@ -47,36 +133,8 @@ async function renderCoordinator(req, res, view) {
             orderBy: orderByConfig
         });
 
-        const operadoresTurno = await prisma.user.findMany({
-            where: { rol: 'OPERADOR' },
-            select: {
-                id: true,
-                email: true,
-                nombre: true,
-                rol: true,
-                area_designada: true,
-                estado_operativo: true,
-                tickets_asignados: {
-                    // Carga activa completa: incluye recién asignados (NUEVO) y en pausa
-                    where: { estado_actual: { in: ACTIVE_STATES } },
-                    select: { codigo_incidencia: true, estado_actual: true },
-                    orderBy: { createdAt: 'desc' }
-                }
-            },
-            orderBy: { nombre: 'asc' }
-        });
-        // Turnos: cada operador recibe su estado de turno (En turno / De guardia / Fuera de turno)
-        const { horarioPorUsuario, guardiaIds } = await loadShiftData(getWeekStart(new Date()));
         const ahora = new Date();
-        operadoresTurno.forEach(operador => {
-            const h = horarioPorUsuario.get(operador.id);
-            operador.deGuardia = guardiaIds.has(operador.id);
-            operador.turno = getShiftStatus({
-                estadoOperativo: operador.estado_operativo,
-                horario: h ? { dias: h.dias, inicio: h.hora_inicio, fin: h.hora_fin } : null,
-                deGuardia: operador.deGuardia
-            }, ahora);
-        });
+        const operadoresTurno = await loadOperatorsWithShift(ahora);
         // Disponible = en turno normal y marcado disponible (el de guardia no cuenta, pero puede recibir tickets)
         const operadores = operadoresTurno.filter(operador => operador.turno.disponible);
         const totalOperadores = operadoresTurno.length;
@@ -232,7 +290,7 @@ async function renderOperatorDashboard(req, res) {
 }
 
 function redirectToShiftSection(req, res) {
-    return res.redirect(302, '/tickets#gestion-turno');
+    return res.redirect(302, '/vista-anterior#gestion-turno');
 }
 
-module.exports = { renderDashboard, renderTickets, redirectToShiftSection };
+module.exports = { renderDashboard, renderTickets, renderLegacy, redirectToShiftSection, loadOperatorsWithShift };

@@ -1,0 +1,131 @@
+<%
+	// Cola de tickets del coordinador (prototipo docs/rediseno/prototipo/Tickets.dc.html).
+	// El servidor dibuja la estructura y las tarjetas fijas; public/js/tickets.js
+	// dibuja la tabla, los filtros, el panel lateral y las ventanas con estos datos.
+	const r = cola.resumen;
+	const datos = {
+		tickets: cola.tickets,
+		operadores: cola.operadores,
+		areas: cola.areas,
+		sugeridos: cola.sugeridos,
+		resumen: r,
+		traspaso,
+		guardias,
+		enPapelera,
+		siguienteCodigo,
+		usuario: { nombre: currentUser.nombre || 'Coordinador' }
+	};
+	const tarjetas = [
+		['Activos', r.activos, ''],
+		['Sin asignar', r.sinAsignar, 't-orange'],
+		['Críticos sin asignar', r.criticosSinAsignar, 't-red'],
+		['En pausa o espera', r.pausaEspera, ''],
+		['Resueltos sin cerrar', r.resueltosSinCerrar, ''],
+		['Creados hoy', r.creadosHoy, '']
+	];
+%>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+	<%- include('partials/head', { titulo: 'Tickets' }) %>
+</head>
+<body>
+<div class="app">
+	<%- include('partials/sidebar', { currentUser, activo: 'tickets', conteos: { tickets: r.activos, enTurno, totalOperadores: cola.operadores.length } }) %>
+
+	<main class="app-main">
+		<header class="toolbar">
+			<div style="display:flex;flex-direction:column;margin-right:6px">
+				<h1>Tickets</h1>
+				<span class="sub">Jornada 08:00–17:00 · <%= r.activos %> <%= r.activos === 1 ? 'activo' : 'activos' %></span>
+			</div>
+			<span class="grow"></span>
+			<label class="pill search">
+				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+				<span class="sr-only">Buscar ticket</span>
+				<input type="search" data-search placeholder="Código, asunto u operador" autocomplete="off">
+			</label>
+			<div class="pill pillgroup wide" role="group" aria-label="Acciones de cola">
+				<button type="button" class="pillbtn" data-open-trash>
+					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>
+					Papelera<span class="count-chip"><%= enPapelera %></span>
+				</button>
+				<span class="vsep"></span>
+				<button type="button" class="pillbtn" data-open-handoff>
+					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg>
+					Traspasar a guardia
+				</button>
+			</div>
+			<button type="button" class="primary lg" data-new-ticket>
+				<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+				Nuevo ticket
+			</button>
+		</header>
+
+		<!-- Tarjetas fijas: total de la operación, no cambian con los filtros -->
+		<section class="glass summary" aria-label="Total de la operación">
+			<% tarjetas.forEach(([etiqueta, valor, clase]) => { %>
+				<div class="stat"><span><%= etiqueta %></span><span class="kv <%= clase %>"><%= valor %></span></div>
+			<% }) %>
+		</section>
+
+		<!-- Traspaso enviado: lista aparte para la guardia -->
+		<div data-handoff-card></div>
+
+		<!-- Resumen operativo -->
+		<section class="glass" aria-labelledby="h-ro" style="position:relative;display:flex;flex-direction:column;min-width:0" data-queue>
+			<div class="queue-head">
+				<h2 id="h-ro">Resumen operativo</h2>
+				<span class="scope" data-scope>Solo activos</span>
+				<span class="grow" style="flex:1"></span>
+				<button type="button" class="linkbtn" data-clear-filters hidden style="font-size:12px;font-weight:600;margin-right:4px">Quitar filtros</button>
+				<div data-filters style="display:flex;flex-wrap:wrap;gap:8px"></div>
+			</div>
+			<div class="scroll-x" style="padding:0 16px 8px">
+				<table class="qtable">
+					<thead>
+						<tr>
+							<th><input type="checkbox" data-select-all aria-label="Seleccionar todos" style="margin:0;cursor:pointer"></th>
+							<th style="width:84px">Ticket</th>
+							<th style="width:92px">Prioridad</th>
+							<th style="width:150px">Estado</th>
+							<th>Asunto</th>
+							<th style="width:176px">Operador asignado</th>
+							<th style="width:76px;text-align:right">Tiempo</th>
+							<th style="width:156px">Acciones</th>
+						</tr>
+					</thead>
+					<tbody data-rows></tbody>
+				</table>
+				<div class="queue-empty" data-empty hidden>
+					<span style="font-size:13px;font-weight:600">No hay tickets con estos filtros</span>
+					<button type="button" class="linkbtn" data-clear-filters style="font-size:12px;font-weight:600">Quitar filtros</button>
+				</div>
+			</div>
+			<div class="queue-foot">
+				<span data-footer></span>
+				<span class="grow"></span>
+				<span style="display:inline-flex;align-items:center;gap:6px">
+					<svg width="12" height="12" viewBox="0 0 24 24" fill="none" style="stroke: var(--red-t)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2z"/><path d="M12 10v4M12 17.5v.5"/></svg>
+					Antigüedad: P1 más de 1 h, P2 más de 2 h, P3 más de 4 h y sin prioridad más de 30 min, sin asignar o sin movimiento
+				</span>
+			</div>
+		</section>
+
+		<!-- Barra de selección múltiple -->
+		<div class="batch" data-batch hidden>
+			<span style="font-weight:600" data-batch-label></span>
+			<span class="vsep"></span>
+			<button type="button" class="ghost" data-batch-clear>Quitar selección</button>
+			<button type="button" class="pill pillbtn" data-batch-handoff>Traspasar a guardia</button>
+			<button type="button" class="primary" data-batch-assign>Asignar a…</button>
+		</div>
+	</main>
+</div>
+
+<div data-layer></div>
+
+<script id="tickets-data" type="application/json"><%- JSON.stringify(datos).replace(/</g, '\\u003c') %></script>
+<script src="/js/tickets.js" defer></script>
+</body>
+</html>

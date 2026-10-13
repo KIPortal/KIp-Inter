@@ -70,6 +70,7 @@ model User {
   auditorias        AuditLog[]
   horario           HorarioOperador?
   guardias          GuardiaSemanal[]
+  traspasos_creados Traspaso[]     @relation("TraspasosCreados")
   
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -108,6 +109,7 @@ model Ticket {
 
   adjuntos           Adjunto[]
   auditorias         AuditLog[]
+  traspasos          TraspasoTicket[]
 }
 
 model Adjunto {
@@ -156,4 +158,31 @@ model GuardiaSemanal {
 
   @@unique([userId, semana_inicio])
   @@index([semana_inicio])
+}
+
+// Traspaso a guardia: lote de pendientes con nota para quien está de guardia.
+// No cambia el operador de los tickets; la guardia los ve en una lista aparte.
+model Traspaso {
+  id            String    @id @default(uuid())
+  nota          String    @db.Text
+  semana_inicio DateTime  // semana de guardia (lunes 00:00 Caracas) que lo recibe
+  creado_por_id String?
+  creado_por    User?     @relation("TraspasosCreados", fields: [creado_por_id], references: [id], onDelete: SetNull)
+  createdAt     DateTime  @default(now())
+  cerrado_en    DateTime? // el coordinador lo marcó como atendido
+  tickets       TraspasoTicket[]
+
+  @@index([createdAt])
+}
+
+model TraspasoTicket {
+  traspasoId        String
+  traspaso          Traspaso     @relation(fields: [traspasoId], references: [id], onDelete: Cascade)
+  ticketId          String
+  ticket            Ticket       @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  estado_al_pasar   EstadoTicket // foto del momento del traspaso
+  operador_al_pasar String?      @db.VarChar(120)
+
+  @@id([traspasoId, ticketId])
+  @@index([ticketId])
 }
