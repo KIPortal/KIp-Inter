@@ -27,7 +27,7 @@ Portal de tickets y estadísticas del depto. **Operaciones IP** (Inter Telecomun
 - Las áreas son la tabla `Area` (ya no un enum): usa el catálogo vivo de `src/services/areaCatalog.js` (`AREA_NAMES`, `activeAreas()`, `isActiveArea()`), nunca listas fijas. Las áreas y los usuarios se desactivan, no se borran (`Area.activa`, `User.activo`).
 
 ## Pruebas (sin framework, sin base de datos real)
-Scripts `scripts/test-*.js` con `assert`; en `package.json`: `test:metrics`, `test:reports`, `test:tickets`, `test:period`, `test:shifts`, `test:simulation`, `test:dashboard`, `test:queue`, `test:assignment`, `test:turno`, `test:admin`, `test:audit`, `test:report-view`, `test:usuarios`, `test:areas`. La UI tiene `scripts/test-phase-a-ui.js`. Corre todas antes de dar algo por terminado. Estas pruebas simulan Prisma: no prueban la base real.
+Scripts `scripts/test-*.js` con `assert`; en `package.json`: `test:metrics`, `test:tickets`, `test:period`, `test:shifts`, `test:simulation`, `test:dashboard`, `test:queue`, `test:assignment`, `test:turno`, `test:admin`, `test:audit`, `test:report-view`, `test:usuarios`, `test:areas` y `test:ui` (revisión transversal de las 6 pantallas). Corre todas antes de dar algo por terminado. Estas pruebas simulan Prisma: no prueban la base real.
 
 ## Base de datos
 - Las migraciones están escritas a mano en `prisma/migrations/`; el usuario las aplica con `npx prisma migrate deploy` y luego `npx prisma generate`.
@@ -39,7 +39,8 @@ Scripts `scripts/test-*.js` con `assert`; en `package.json`: `test:metrics`, `te
 - Reparto: el backend/schema lo hace Claude; las vistas las hacía Antigravity (Gemini) y ahora se rediseñan con Claude Design y se implementan con Claude.
 
 ## Pendientes conocidos
-- Rediseño del Dashboard General y de la sección Tickets (se hará con Claude Design).
+- Rediseño de la vista del operador (`operator-dashboard.ejs`) y del login: siguen con el estilo anterior (`figma-assets.css`, Tailwind CDN).
+- Entrega de avisos dentro del portal: la matriz se configura en Administración, falta mostrarlos.
 - Telefonía: dónde guardar el teléfono de guardia.
 - "Tiempo en horario" usa una ventana fija lun–vie 8–17 (aún no usa horarios por operador).
 - Seguridad del login (ver `docs/pendientes.md`).

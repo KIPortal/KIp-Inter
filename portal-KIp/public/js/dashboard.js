@@ -147,9 +147,9 @@
 			row.appendChild(document.createTextNode(label));
 			return html('strong', '', row);
 		};
-		const tC = fila('#38BDF8', 'Creados');
-		const tR = fila('#4ADE80', 'Cerrados');
-		const tA = fila('#A78BFA', 'Asignados');
+		const tC = fila('var(--tip-blue)', 'Creados');
+		const tR = fila('var(--tip-green)', 'Cerrados');
+		const tA = fila('var(--tip-violet)', 'Asignados');
 
 		const xAxis = document.querySelector('[data-flow-x]');
 		const labels = [];

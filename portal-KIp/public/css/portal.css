@@ -12,16 +12,16 @@
 	--font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
 	--ease: cubic-bezier(.22, 1, .36, 1);
 
-	--t1: #1D1D1F; --t2: #556070; --t3: #7C7C82;
+	--t1: #1D1D1F; --t2: #556070; --t3: #6E6E73; /* t3 ajustado a AA: 5,0:1 sobre tarjeta */
 	--accent-t: #0369A1; --green-t: #15803D; --orange-t: #B45309; --red-t: #B91C1C; --purple-t: #6D28D9;
 	--accent-bg: #E0F2FE; --green-bg: #ECFDF5; --orange-bg: #FFFBEB; --red-bg: #FEF2F2; --purple-bg: #F5F3FF;
 	--accent-ring: #BAE6FD; --green-ring: #BBF7D0; --orange-ring: #FDE68A; --red-ring: #FECACA; --purple-ring: #DDD6FE;
 	--sep: #E2E8F0; --sep2: #F1F5F9;
 	--fill: #F8FAFC; --control: #FFFFFF; --well: rgba(255, 255, 255, 0.6);
 	--seg-on: #FFFFFF; --seg-sel: #E6E6E6;
-	--solid: #0284C7; --solid-hover: #0369A1;
+	--solid: #0270AE; --solid-hover: #025E92; /* texto blanco 5,3:1 (AA) */
 	--danger: #DC2626; --danger-hover: #B91C1C;
-	--mitem-sel: #007AFF;
+	--mitem-sel: #0270AE;
 	--track: rgba(148, 163, 184, 0.18); --grid: rgba(15, 23, 42, 0.07);
 	--dialog: rgba(250, 250, 252, 0.90); --rim: #DBDBDB;
 	--area-hd: #64B5FF; --area-hd-t: #0B2E4F;
@@ -41,6 +41,8 @@
 	--icon: #0078F0;
 	--seg-track: rgba(0, 0, 0, 0.08);
 	--tip-bg: rgba(28, 28, 30, 0.92);
+	--tip-blue: #38BDF8; --tip-green: #4ADE80; --tip-violet: #A78BFA;
+	--tile-blue: #0A84FF; --tile-orange: #FF9F0A; --tile-red: #FF3B30; --tile-purple: #AF52DE;
 
 	/* Materiales */
 	--glass-bg: rgba(255, 255, 255, 0.85);
@@ -69,9 +71,9 @@
 	--sep: rgba(255, 255, 255, 0.10); --sep2: rgba(255, 255, 255, 0.06);
 	--fill: rgba(255, 255, 255, 0.05); --control: rgba(255, 255, 255, 0.08); --well: rgba(255, 255, 255, 0.06);
 	--seg-on: rgba(255, 255, 255, 0.18); --seg-sel: rgba(255, 255, 255, 0.18);
-	--solid: #3A7FCC; --solid-hover: #4A8DD8;
+	--solid: #2F6FB8; --solid-hover: #2B6AB0; /* texto blanco ≥ 5,1:1 (AA) */
 	--danger: #D9574F; --danger-hover: #E07A74;
-	--mitem-sel: #3A7FCC;
+	--mitem-sel: #2F6FB8;
 	--track: rgba(255, 255, 255, 0.09); --grid: rgba(255, 255, 255, 0.08);
 	--dialog: rgba(44, 43, 58, 0.88); --rim: rgba(255, 255, 255, 0.16);
 	--area-hd: rgba(58, 127, 204, 0.24); --area-hd-t: rgba(255, 255, 255, 0.92);
@@ -964,4 +966,7 @@ a.mitem:hover { color: #FFFFFF; }
 .audit-table .dayhead span { margin-left: 8px; font-weight: 500; color: var(--t2); }
 .avatar.sys { background: var(--fill); color: var(--t2); box-shadow: inset 0 0 0 0.5px var(--sep); }
 form.search { margin: 0; }
+
+/* ---------- 13. Revisión final ---------- */
+.on-solid { color: #FFFFFF; } /* texto o ícono sobre --solid o los mosaicos de color */
 
