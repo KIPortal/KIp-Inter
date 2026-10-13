@@ -2,7 +2,8 @@
 
 const prisma = require('../config/prisma');
 const { validateSchedule, getShiftStatus, getWeekStart, DEFAULT_SCHEDULE } = require('../services/shiftService');
-const { parseCaracasDate } = require('../services/metricsService');
+const { parseCaracasDate, ACTIVE_STATES } = require('../services/metricsService');
+const { buildShiftBoard } = require('../services/shiftBoardService');
 
 async function audit(req, accion, detalles) {
     try {
@@ -11,6 +12,10 @@ async function audit(req, accion, detalles) {
         console.error('No se pudo registrar auditoría:', e.message);
     }
 }
+
+const DIAS = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
+const { formatCaracasDate } = require('../services/metricsService');
+const formatWeek = weekStart => formatCaracasDate(weekStart);
 
 function resolveWeek(semana) {
     if (!semana) return getWeekStart(new Date());
@@ -71,14 +76,15 @@ async function setGuardia(req, res) {
             return res.status(400).json({ error: 'operatorIds debe ser una lista de ids' });
         }
         const unique = [...new Set(ids)];
-        const validos = await prisma.user.findMany({ where: { id: { in: unique }, rol: 'OPERADOR' }, select: { id: true } });
+        const validos = await prisma.user.findMany({ where: { id: { in: unique }, rol: 'OPERADOR' }, select: { id: true, nombre: true } });
         if (validos.length !== unique.length) return res.status(400).json({ error: 'Solo los operadores pueden estar de guardia' });
 
         await prisma.$transaction([
             prisma.guardiaSemanal.deleteMany({ where: { semana_inicio: weekStart } }),
             prisma.guardiaSemanal.createMany({ data: unique.map(userId => ({ userId, semana_inicio: weekStart })) })
         ]);
-        await audit(req, 'GUARDIA_DEFINIDA', `Semana ${weekStart.toISOString().slice(0, 10)}: operadores [${unique.join(', ')}]`);
+        const nombres = validos.map(v => v.nombre || v.id).join(', ') || 'nadie';
+        await audit(req, 'GUARDIA_DEFINIDA', `Semana del ${formatWeek(weekStart)}: ${nombres}`);
         return res.json({ ok: true, semana: weekStart.toISOString(), operatorIds: unique });
     } catch (error) {
         console.error('Error al definir guardia:', error);
@@ -90,13 +96,13 @@ async function setHorario(req, res) {
     try {
         const operatorId = String(req.params.operatorId || '').trim();
         if (!operatorId) return res.status(400).json({ error: 'Operador inválido' });
-        const operador = await prisma.user.findFirst({ where: { id: operatorId, rol: 'OPERADOR' }, select: { id: true } });
+        const operador = await prisma.user.findFirst({ where: { id: operatorId, rol: 'OPERADOR' }, select: { id: true, nombre: true } });
         if (!operador) return res.status(404).json({ error: 'Operador no encontrado' });
         const { error, horario } = validateSchedule(req.body);
         if (error) return res.status(400).json({ error });
         const data = { dias: horario.dias, hora_inicio: horario.inicio, hora_fin: horario.fin };
         await prisma.horarioOperador.upsert({ where: { userId: operatorId }, create: { userId: operatorId, ...data }, update: data });
-        await audit(req, 'HORARIO_EDITADO', `Operador ${operatorId}: días ${horario.dias.join(',')} ${horario.inicio}-${horario.fin}`);
+        await audit(req, 'HORARIO_EDITADO', `${operador.nombre || operatorId}: ${horario.dias.map(d => DIAS[d]).join(' ')} · ${horario.inicio}–${horario.fin}`);
         return res.json({ ok: true, horario });
     } catch (error) {
         console.error('Error al guardar horario:', error);
@@ -104,4 +110,36 @@ async function setHorario(req, res) {
     }
 }
 
-module.exports = { getTurnos, setGuardia, setHorario, loadShiftData };
+// Gestión de Turno (rediseño, IMPLEMENTACION.md §3.3)
+async function renderTurno(req, res) {
+    if (req.user.rol === 'OPERADOR') return res.redirect(302, '/');
+    try {
+        const weekStart = resolveWeek(req.query.semana) || getWeekStart(new Date());
+        const ahora = new Date();
+        const semanaActual = getWeekStart(ahora);
+        const [operadores, elegida, actual, activos] = await Promise.all([
+            prisma.user.findMany({
+                where: { rol: 'OPERADOR' },
+                select: { id: true, nombre: true, email: true, area_designada: true, estado_operativo: true },
+                orderBy: { nombre: 'asc' }
+            }),
+            loadShiftData(weekStart),
+            loadShiftData(semanaActual),
+            prisma.ticket.count({ where: { estado_actual: { in: ACTIVE_STATES } } })
+        ]);
+        const tablero = buildShiftBoard({
+            operators: operadores,
+            horarios: actual.horarioPorUsuario,
+            guardiaSemana: elegida.guardiaIds,
+            guardiaActual: actual.guardiaIds,
+            weekStart,
+            now: ahora
+        });
+        return res.render('turno', { titulo: 'Gestión de Turno', currentUser: req.user, tablero, activos });
+    } catch (error) {
+        console.error('Error al cargar Gestión de Turno:', error);
+        return res.status(500).send('Error en el servidor');
+    }
+}
+
+module.exports = { getTurnos, setGuardia, setHorario, loadShiftData, renderTurno };

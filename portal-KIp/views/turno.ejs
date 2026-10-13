@@ -1,0 +1,127 @@
+<%
+	// Gestión de Turno (prototipo docs/rediseno/prototipo/Turno.dc.html).
+	// Solo dibuja lo que entrega shiftBoardService.buildShiftBoard; public/js/turno.js
+	// lleva los cambios sin guardar, el filtro por estado y el guardado.
+	const tb = tablero;
+	const sem = tb.semana;
+	const eq = tb.equipo;
+	const DIAS_UI = [[1, 'L', 'Lunes'], [2, 'M', 'Martes'], [3, 'X', 'Miércoles'], [4, 'J', 'Jueves'], [5, 'V', 'Viernes'], [6, 'S', 'Sábado'], [0, 'D', 'Domingo']];
+	const guardias = tb.operadores.filter(o => o.guardia);
+	const corto = sem.esActual ? 'esta semana' : 'la semana ' + sem.etiqueta;
+	const datos = { semana: sem.inicio, operadores: tb.operadores.map(o => ({ id: o.id, nombre: o.nombre, horario: o.horario, guardia: o.guardia })) };
+%>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+	<%- include('partials/head', { titulo: 'Gestión de Turno' }) %>
+</head>
+<body>
+<div class="app">
+	<%- include('partials/sidebar', { currentUser, activo: 'turno', conteos: { tickets: activos, enTurno: eq.turno + eq.guardia, totalOperadores: eq.total } }) %>
+
+	<main class="app-main">
+		<header class="toolbar">
+			<div style="display:flex;flex-direction:column;margin-right:6px">
+				<h1>Gestión de Turno</h1>
+				<span class="sub">Turno 08:00–17:00 · guardia 17:00–24:00 entre semana y 08:00–24:00 fin de semana</span>
+			</div>
+			<span class="grow"></span>
+			<span class="dirty" data-dirty hidden><i></i><span data-dirty-label></span></span>
+			<button type="button" class="pill pillbtn plain" data-discard hidden style="height:36px">Descartar</button>
+			<button type="button" class="primary lg" data-save hidden>
+				<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L19 7"/></svg>
+				Guardar cambios
+			</button>
+		</header>
+
+		<!-- Estado del equipo ahora -->
+		<section class="glass summary" aria-label="Estado del equipo ahora">
+			<% [['Operadores', eq.total, 'var(--t3)'], ['En turno', eq.turno, 'var(--c-green)'], ['De guardia', eq.guardia, 'var(--c-violet)'], ['Fuera de turno', eq.fuera, 'var(--sep)']].forEach(([l, v, c]) => { %>
+				<div class="stat" style="flex:1 1 140px"><span style="display:inline-flex;align-items:center;gap:6px"><i class="sdot" style="background:<%= c %>"></i><%= l %></span><span class="kv"><%= v %></span></div>
+			<% }) %>
+		</section>
+
+		<!-- Guardia semanal -->
+		<section class="glass card" aria-labelledby="h-gw" style="padding:18px 24px 20px">
+			<div class="card-head">
+				<div style="display:flex;flex-direction:column;flex:1;min-width:220px">
+					<h2 id="h-gw">Guardia semanal</h2>
+					<span class="hint">Quien está de guardia aparece “De guardia”, no “Disponible”, y puede recibir tickets</span>
+				</div>
+				<% if (!sem.esActual) { %><a class="pill pillbtn plain" data-week-link href="/gestion-turno" style="height:32px;font-size:12px">Esta semana</a><% } %>
+				<div class="pill weeknav">
+					<a class="pillbtn" data-week-link href="/gestion-turno?semana=<%= sem.anterior %>" aria-label="Semana anterior" title="Semana anterior"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></a>
+					<span><%= sem.etiqueta %></span>
+					<a class="pillbtn" data-week-link href="/gestion-turno?semana=<%= sem.siguiente %>" aria-label="Semana siguiente" title="Semana siguiente"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+				</div>
+			</div>
+			<div class="weekstrip">
+				<% sem.dias.forEach(d => { %>
+					<div class="wday<%= d.hoy ? ' today' : '' %>">
+						<span><b><%= d.nombre %></b><strong><%= d.numero %></strong></span>
+						<span class="hrs"><%= d.horas %></span>
+						<small><%= d.tipo %></small>
+					</div>
+				<% }) %>
+			</div>
+			<div class="guardpeople" data-guard-people>
+				<span class="lbl"><%= guardias.length ? 'De guardia ' + corto + ':' : 'Sin guardia definida para ' + corto %></span>
+				<% guardias.forEach(o => { %>
+					<span class="gchip"><i><%= o.iniciales %></i><%= o.nombre %><span class="t3"><%= o.areaNombre %></span></span>
+				<% }) %>
+				<% if (!guardias.length) { %><span class="t-orange" style="font-size:12px;font-weight:500">Marca la casilla de guardia de al menos un operador</span><% } %>
+			</div>
+		</section>
+
+		<!-- Operadores: estado actual, horario individual y casilla de guardia -->
+		<section class="glass" aria-labelledby="h-ops" style="display:flex;flex-direction:column;min-width:0;overflow:hidden">
+			<div class="card-head" style="padding:18px 24px 12px">
+				<div style="display:flex;flex-direction:column;flex:1;min-width:220px">
+					<h2 id="h-ops">Operadores</h2>
+					<span class="hint">Horario individual y guardia de <%= corto %></span>
+				</div>
+				<div role="tablist" class="sm" aria-label="Mostrar">
+					<% [['todos', 'Todos', eq.total], ['turno', 'En turno', eq.turno], ['guardia', 'De guardia', eq.guardia], ['fuera', 'Fuera de turno', eq.fuera]].forEach(([k, l, n], i) => { %>
+						<button type="button" role="tab" data-view="<%= k %>" aria-selected="<%= i === 0 %>"><%= l %><span class="t3" style="margin-left:5px;font-variant-numeric:tabular-nums"><%= n %></span></button>
+					<% }) %>
+				</div>
+			</div>
+			<% if (!tb.operadores.length) { %>
+				<p class="empty" style="padding:24px">Todavía no hay operadores registrados.</p>
+			<% } else { %>
+			<div class="scroll-x">
+				<div style="min-width:1040px;padding:0 16px 4px">
+					<div class="turno-grid turno-head"><span>Operador</span><span>Estado actual</span><span>Horario</span><span>Días</span><span style="text-align:right;white-space:nowrap">Guardia · <%= sem.esActual ? 'esta semana' : sem.etiqueta %></span></div>
+					<% tb.areas.forEach(a => { const filas = tb.operadores.filter(o => o.area === a.codigo); %>
+						<div class="areabox" data-area-box>
+							<div class="area-hd"><i></i><b><%= a.nombre %></b><span data-area-meta><%= filas.length %> <%= filas.length === 1 ? 'operador' : 'operadores' %></span></div>
+							<% filas.forEach(o => { %>
+								<div class="oprow turno-grid" data-op="<%= o.id %>" data-state="<%= o.estado.grupo %>">
+									<div class="op-who"><span class="avatar" style="width:30px;height:30px"><%= o.iniciales %></span><div class="nm"><b><%= o.nombre %></b><span><%= o.email %></span></div></div>
+									<span class="opstate st-<%= o.estado.grupo %>"><i></i><%= o.estado.etiqueta %></span>
+									<span style="display:flex;align-items:center;gap:6px">
+										<input class="field sm" type="time" data-from value="<%= o.horario.inicio %>" aria-label="Entrada de <%= o.nombre %>" style="width:116px;flex:none">
+										<span class="t3">–</span>
+										<input class="field sm" type="time" data-to value="<%= o.horario.fin %>" aria-label="Salida de <%= o.nombre %>" style="width:116px;flex:none">
+									</span>
+									<span style="display:flex;gap:4px">
+										<% DIAS_UI.forEach(([n, l, full]) => { %><button type="button" class="day" data-day="<%= n %>" aria-pressed="<%= o.horario.dias.includes(n) %>" aria-label="<%= full %>" title="<%= full %>"><%= l %></button><% }) %>
+									</span>
+									<label class="guardbox"><span data-guard-label><%= o.guardia ? 'De guardia' : 'No' %></span><input type="checkbox" data-guard<%= o.guardia ? ' checked' : '' %> aria-label="De guardia <%= o.nombre %>"></label>
+								</div>
+							<% }) %>
+						</div>
+					<% }) %>
+				</div>
+			</div>
+			<div class="empty" data-empty-view hidden style="padding:36px 24px;text-align:center">Nadie en este estado ahora</div>
+			<% } %>
+			<div style="padding:12px 24px 16px;font-size:12px" class="t2">Los cambios de horario y de guardia quedan registrados en Auditoría</div>
+		</section>
+	</main>
+</div>
+
+<script id="turno-data" type="application/json"><%- JSON.stringify(datos).replace(/</g, '\\u003c') %></script>
+<script src="/js/turno.js" defer></script>
+</body>
+</html>
