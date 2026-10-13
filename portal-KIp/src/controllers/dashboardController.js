@@ -140,6 +140,7 @@ async function renderDashboard(req, res) {
 
         return res.render('dashboard', {
             titulo: 'NOC Portal - Dashboard Operativo',
+            currentUser: req.user,
             ticketsActivos,
             ticketsRealizados,
             ticketsCreadosHoy,

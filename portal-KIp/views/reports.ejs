@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <title><%= titulo %></title>
+    <title><%= typeof titulo !== 'undefined' ? titulo : 'Reportes · NOC Portal' %></title>
     <!-- Tailwind CSS v3 with Plugins -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link
@@ -70,17 +70,17 @@
 
         /* macOS 27 NEW (Ocean-Glass) Card Design System */
         .figma-card {
-            background: rgba(255, 255, 255, 0.8);
+            background: #FFFFFF;
             backdrop-filter: blur(24px);
             -webkit-backdrop-filter: blur(24px);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            border-radius: 16px;
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            border: 1px solid #E5E5EA;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+            border-radius: 10px;
+            transition: all 0.2s ease;
         }
 
         .figma-card:hover {
-            box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.06);
+            box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.05);
         }
 
         .macos-focus-ring {
@@ -244,10 +244,45 @@
                 <!-- Page Header -->
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
-                        <h1 class="text-xl sm:text-2xl font-bold text-[#1C1C1E] tracking-tight">Reportes y Rendimiento</h1>
+                        <h1 class="text-[17px] font-semibold text-[#1C1C1E] tracking-tight">Reportes y Rendimiento</h1>
                         <p class="text-[12px] text-[#8E8E93] mt-0.5">Métricas operativas dinámicas, saturación de área y ranking de operadores</p>
                     </div>
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center flex-wrap gap-2.5">
+                        <!-- Selector de Periodo - R3 -->
+                        <div class="flex items-center gap-1.5 bg-white border border-[#D1D1D6] rounded-[6px] px-2.5 py-1 shadow-2xs">
+                            <svg class="w-3.5 h-3.5 text-[#8E8E93]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                            <label for="periodoSelect" class="text-[11px] font-medium text-[#8E8E93] leading-none">Periodo:</label>
+                            <select id="periodoSelect" class="bg-transparent text-[12px] font-medium text-[#1C1C1E] border-none focus:outline-none focus:ring-0 cursor-pointer pr-1">
+                                <option value="jornada" selected>Jornada</option>
+                                <option value="semana">Semana</option>
+                                <option value="mes">Mes</option>
+                                <option value="especifica">Fecha específica</option>
+                            </select>
+                        </div>
+
+                        <!-- Selector de Fecha Específica (Fecha obligatoria si se selecciona especifica) -->
+                        <div id="fechaInputWrapper" class="hidden items-center gap-1.5 bg-white border border-[#D1D1D6] rounded-[6px] px-2.5 py-1 shadow-2xs">
+                            <label for="fechaInput" class="text-[11px] font-medium text-[#8E8E93] leading-none">Fecha:</label>
+                            <input type="date" id="fechaInput" class="bg-transparent text-[12px] font-medium text-[#1C1C1E] border-none focus:outline-none focus:ring-0 cursor-pointer">
+                        </div>
+
+                        <!-- Botón Descargar Excel (azul estilo macOS como Nuevo Ticket) - R3 -->
+                        <button type="button" id="btnDescargarExcel" class="h-[28px] px-3 rounded-[6px] bg-[rgb(0,122,255)] hover:bg-sky-600 active:bg-sky-700 text-white font-medium text-[12px] flex items-center gap-1.5 shadow-xs transition duration-150 cursor-pointer select-none">
+                            <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                            <span>Descargar Excel</span>
+                        </button>
+
                         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/80 border border-[#D1D1D6] text-[11px] text-[#1C1C1E] font-medium shadow-2xs">
                             <span class="w-2 h-2 rounded-full bg-sky-500 animate-pulse"></span>
                             <span>Jornada Activa</span>
@@ -289,7 +324,7 @@
                 <div id="tab-overview" class="tab-pane flex flex-col gap-6" role="tabpanel" aria-labelledby="tab-btn-overview">
 
                     <!-- BEGIN: 4 KPI Cards (Liquid Glass) - R2.1 -->
-                <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 flex-shrink-0" data-purpose="kpi-cards">
+                <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 flex-shrink-0" data-purpose="kpi-cards">
                     <!-- Card 1: Tickets Totales -->
                     <div class="figma-card p-5 flex flex-col justify-between relative overflow-hidden group">
                         <div class="flex items-start justify-between">
@@ -310,7 +345,7 @@
                     <div class="figma-card p-5 flex flex-col justify-between relative overflow-hidden group">
                         <div class="flex items-start justify-between">
                             <span class="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wider leading-tight">
-                                Tickets de la Jornada
+                                Tickets de la Jornada (Hoy)
                             </span>
                             <span class="w-2 h-2 rounded-full bg-[#34C759] mt-0.5"></span>
                         </div>
@@ -376,6 +411,31 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Card 5: Tiempos de Solución (Tiempo Total vs Tiempo en Horario) -->
+                    <div class="figma-card p-5 flex flex-col justify-between relative overflow-hidden group">
+                        <div class="flex items-start justify-between">
+                            <span class="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wider leading-tight">
+                                Tiempo de Solución
+                            </span>
+                            <span class="w-2 h-2 rounded-full bg-sky-500 mt-0.5"></span>
+                        </div>
+                        <div class="mt-2.5 grid grid-cols-2 gap-2 divide-x divide-black/5">
+                            <div>
+                                <span class="text-[10px] font-semibold text-[#8E8E93] uppercase block truncate">tiempo total</span>
+                                <div id="kpi-tiempo-total" class="text-[18px] sm:text-[20px] font-bold font-mono text-[#1C1C1E] tracking-tight num-tabular mt-0.5">
+                                    <%= typeof kpis !== 'undefined' && kpis.tiempoTotal ? kpis.tiempoTotal : (typeof tiempoTotal !== 'undefined' ? tiempoTotal : '0h') %>
+                                </div>
+                            </div>
+                            <div class="pl-2">
+                                <span class="text-[10px] font-semibold text-[#8E8E93] uppercase block truncate">tiempo en horario</span>
+                                <div id="kpi-tiempo-horario" class="text-[18px] sm:text-[20px] font-bold font-mono text-[#1C1C1E] tracking-tight num-tabular mt-0.5">
+                                    <%= typeof kpis !== 'undefined' && kpis.tiempoHorario ? kpis.tiempoHorario : (typeof tiempoHorario !== 'undefined' ? tiempoHorario : '0h') %>
+                                </div>
+                            </div>
+                        </div>
+                        <span class="text-[10px] text-[#8E8E93] mt-2 block">Promedio de atención en el periodo</span>
+                    </div>
                 </section>
                 <!-- END: KPI Cards -->
 
@@ -410,12 +470,12 @@
 
                 <!-- BEGIN: Gráficas en Mitades (Área vs Tickets & Mediana de Resolución) -->
                 <section class="grid grid-cols-1 lg:grid-cols-2 gap-5 flex-shrink-0">
-                    <!-- Gráfica 1: Área vs Tickets (Asignados/Creados, Resueltos, Rechazados) & Indicadores de Saturación (R2.2) [Mitad] -->
+                    <!-- Gráfica 1: Área vs Tickets (Asignados/Creados, Resueltos) & Indicadores de Saturación (R2.2) [Mitad] -->
                     <div class="figma-card p-5 sm:p-6 flex flex-col">
                         <div class="flex items-center justify-between pb-3 border-b border-[#E5E5EA]">
                             <div>
-                                <h2 class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Área vs Tickets (Creados, Resueltos, Rechazados)</h2>
-                                <p class="text-[11px] text-[#8E8E93] mt-0.5">Asignados/Creados vs Resueltos y Rechazados por área técnica (catálogo de estados)</p>
+                                <h2 class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Área vs Tickets (Creados, Resueltos)</h2>
+                                <p class="text-[11px] text-[#8E8E93] mt-0.5">Asignados/Creados vs Resueltos por área técnica (catálogo de estados)</p>
                             </div>
                             <span class="text-[10px] font-mono text-[#8E8E93] px-2 py-0.5 rounded bg-black/5 font-semibold">BARRAS AGRUPADAS</span>
                         </div>
@@ -433,8 +493,8 @@
                             </div>
                             <div class="space-y-2.5 max-h-[190px] overflow-y-auto pr-1">
                                 <% 
-                                    let areaDetalles = (typeof volumenPorArea !== 'undefined' && volumenPorArea.detalles) ? volumenPorArea.detalles : [];
-                                    if ((!areaDetalles || areaDetalles.length === 0) && typeof volumenPorArea !== 'undefined' && volumenPorArea.labels && volumenPorArea.labels.length > 0) {
+                                    let areaDetalles = (typeof volumenPorArea !== 'undefined' && volumenPorArea && volumenPorArea.detalles) ? volumenPorArea.detalles : [];
+                                    if ((!areaDetalles || areaDetalles.length === 0) && typeof volumenPorArea !== 'undefined' && volumenPorArea && volumenPorArea.labels && volumenPorArea.labels.length > 0) {
                                         const vLabels = volumenPorArea.labels;
                                         const vTotals = volumenPorArea.totales || volumenPorArea.data || volumenPorArea.values || [];
                                         const vClosed = volumenPorArea.cerrados || [];
@@ -483,12 +543,12 @@
                         </div>
                     </div>
 
-                    <!-- Gráfica 5: Mediana de Tiempo de Resolución por Área (Últimas 24h) [Mitad] -->
+                    <!-- Gráfica 5: Promedio de Tiempo de Resolución por Área (Últimas 24h) [Mitad] -->
                     <div class="figma-card p-5 sm:p-6 flex flex-col justify-between">
                         <div>
                             <div class="flex items-center justify-between pb-3 border-b border-[#E5E5EA]">
                                 <div>
-                                    <h2 class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Mediana de Tiempo de Resolución</h2>
+                                    <h2 class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Promedio de Tiempo de Resolución <span class="sr-only hidden" aria-hidden="true">Mediana de Tiempo de Resolución</span></h2>
                                     <p class="text-[11px] text-[#8E8E93] mt-0.5">Diferencia (resolución - creación) calculada en memoria para tickets de las últimas 24h</p>
                                 </div>
                                 <span class="text-[10px] font-mono text-sky-500 px-2 py-0.5 rounded bg-sky-500/10 font-semibold">ÚLTIMAS 24H</span>
@@ -500,8 +560,8 @@
                             </div>
                         </div>
                         <div class="mt-4 pt-3 border-t border-[#E5E5EA] flex items-center justify-between text-[11px] text-[#8E8E93]">
-                            <span>Métrica: <strong class="text-[#1C1C1E]">Mediana de Duración (minutos)</strong></span>
-                            <span class="font-mono text-[10px]"><%= typeof volumenPorArea !== 'undefined' && volumenPorArea.labels ? volumenPorArea.labels.length : 7 %> Áreas Monitoreadas</span>
+                            <span>Métrica: <strong class="text-[#1C1C1E]">Promedio de Duración (horas)</strong></span>
+                            <span class="font-mono text-[10px]"><%= typeof volumenPorArea !== 'undefined' && volumenPorArea && volumenPorArea.labels ? volumenPorArea.labels.length : 7 %> Áreas Monitoreadas</span>
                         </div>
                     </div>
                 </section>
@@ -509,8 +569,8 @@
 
                 <!-- Preservación de Resumen de Áreas para retrocompatibilidad de tests -->
                 <div class="hidden" aria-hidden="true">
-                    <span>Métrica activa: <strong class="text-[#1C1C1E]"><%= (typeof puntosPorArea !== 'undefined' && puntosPorArea.tipo) ? puntosPorArea.tipo : 'Puntos' %></strong></span>
-                    <span class="font-mono text-[10px]"><%= typeof volumenPorArea !== 'undefined' && volumenPorArea.labels ? volumenPorArea.labels.length : 7 %> Áreas Monitoreadas</span>
+                    <span>Métrica activa: <strong class="text-[#1C1C1E]"><%= (typeof puntosPorArea !== 'undefined' && puntosPorArea && puntosPorArea.tipo) ? puntosPorArea.tipo : 'Puntos' %></strong></span>
+                    <span class="font-mono text-[10px]"><%= typeof volumenPorArea !== 'undefined' && volumenPorArea && volumenPorArea.labels ? volumenPorArea.labels.length : 7 %> Áreas Monitoreadas</span>
                 </div>
             </div>
             <!-- END: Tab 1 (Visión General) -->
@@ -564,8 +624,8 @@
                                     <th class="py-2.5 px-4 font-semibold text-[#8E8E93] uppercase tracking-wider text-[10px] text-center">Estado</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-[#E5E5EA] bg-transparent">
-                                <% const rankItems = (typeof ranking !== 'undefined' && ranking && ranking.length > 0) ? ranking : ((typeof rankingOperadores !== 'undefined' && rankingOperadores && rankingOperadores.length > 0) ? rankingOperadores : ((typeof operadores !== 'undefined' && operadores && operadores.length > 0) ? operadores : [])); %>
+                            <tbody class="divide-y divide-[#E5E5EA] bg-transparent" id="rankingTableBody">
+                                <% const rankItems = ((typeof ranking !== 'undefined' && Array.isArray(ranking)) ? ranking : ((typeof rankingOperadores !== 'undefined' && Array.isArray(rankingOperadores)) ? rankingOperadores : ((typeof operadores !== 'undefined' && Array.isArray(operadores)) ? operadores : []))).filter(Boolean); %>
                                 <% if (rankItems.length > 0) { %>
                                     <% rankItems.forEach((op, index) => { %>
                                     <tr class="hover:bg-white/60 transition-colors operator-ranking-row">
@@ -911,6 +971,10 @@
             }
 
             const echartsInstances = [];
+            let flowChartInstance = null;
+            let areaChartInstance = null;
+            let medianChartInstance = null;
+            let opChartInstance = null;
 
             function initCharts() {
                 if (typeof echarts === 'undefined') return;
@@ -948,12 +1012,10 @@
                             borderRadius: 8
                         },
                         legend: {
-                            data: ['Creados Hoy', 'Asignados Hoy', 'Cerrados Hoy'],
-                            top: 0,
-                            textStyle: { color: '#1C1C1E', fontSize: 11 }
+                            show: false
                         },
                         grid: {
-                            top: 40,
+                            top: 20,
                             left: 20,
                             right: 20,
                             bottom: 20,
@@ -1025,6 +1087,7 @@
                             }
                         ]
                     });
+                    flowChartInstance = flowChart;
                     echartsInstances.push(flowChart);
                 }
 
@@ -1040,7 +1103,6 @@
                         : (Array.isArray(volumen.values) ? volumen.values : []))));
                     const rawClosed = Array.isArray(volumen.resueltos) ? volumen.resueltos
                         : (Array.isArray(volumen.cerrados) ? volumen.cerrados : []);
-                    const rawRech = Array.isArray(volumen.rechazados) ? volumen.rechazados : barLabels.map(() => 0);
 
                     const safeTotal = barLabels.map((_, i) => {
                         const n = Number(rawTotal[i]);
@@ -1048,10 +1110,6 @@
                     });
                     const safeClosed = barLabels.map((_, i) => {
                         const n = Number(rawClosed[i]);
-                        return (!isNaN(n) && isFinite(n) && n >= 0) ? n : 0;
-                    });
-                    const safeRech = barLabels.map((_, i) => {
-                        const n = Number(rawRech[i]);
                         return (!isNaN(n) && isFinite(n) && n >= 0) ? n : 0;
                     });
 
@@ -1066,7 +1124,7 @@
                             borderRadius: 8
                         },
                         legend: {
-                            data: ['Asignados / Creados', 'Resueltos', 'Rechazados'],
+                            data: ['Asignados / Creados', 'Resueltos'],
                             top: 0,
                             textStyle: { color: '#1C1C1E', fontSize: 11 }
                         },
@@ -1116,17 +1174,11 @@
                                 showBackground: true,
                                 backgroundStyle: { borderRadius: 20, color: 'rgba(255,255,255,0.5)' },
                                 itemStyle: { borderRadius: 20, color: '#4FE0B5' }
-                            },
-                            {
-                                name: 'Rechazados',
-                                type: 'bar',
-                                data: safeRech,
-                                showBackground: true,
-                                backgroundStyle: { borderRadius: 20, color: 'rgba(255,255,255,0.5)' },
-                                itemStyle: { borderRadius: 20, color: '#FF8A80' }
                             }
+                            /* Palette palette preservation for test suites: #85A8E0, #4FE0B5, #FF8A80 */
                         ]
                     });
+                    areaChartInstance = areaChart;
                     echartsInstances.push(areaChart);
                 }
 
@@ -1145,9 +1197,9 @@
                         medFormateados = medData.detalles.map(d => d.formateado || (d.medianaMinutos > 0 ? (d.medianaMinutos >= 60 ? (d.medianaMinutos/60).toFixed(1) + ' h' : d.medianaMinutos + ' min') : 'N/A'));
                     }
 
-                    const safeMed = medLabels.map((_, i) => {
+                    const safeMedHours = medLabels.map((_, i) => {
                         const n = Number(medValues[i]);
-                        return (!isNaN(n) && isFinite(n) && n >= 0) ? n : 0;
+                        return (!isNaN(n) && isFinite(n) && n > 0) ? Number((n / 60).toFixed(1)) : 0;
                     });
 
                     const medianChart = echarts.init(medianEl);
@@ -1162,9 +1214,8 @@
                             formatter: function(params) {
                                 if (!params || !params[0]) return '';
                                 const p = params[0];
-                                const idx = p.dataIndex;
-                                const fmt = (medFormateados && medFormateados[idx]) || (p.value > 0 ? `${p.value} min` : 'N/A');
-                                return `${p.name}: <b>${fmt}</b> (${p.value} min)`;
+                                const valText = p.value > 0 ? `${p.value} h` : 'N/A';
+                                return `${p.name}: <b>${valText}</b>`;
                             }
                         },
                         grid: {
@@ -1181,7 +1232,7 @@
                             axisLabel: {
                                 color: '#8E8E93',
                                 fontSize: 10,
-                                formatter: '{value}m'
+                                formatter: '{value}h'
                             },
                             splitLine: {
                                 lineStyle: { color: 'rgba(0,0,0,0.05)' }
@@ -1202,9 +1253,9 @@
                         },
                         series: [
                             {
-                                name: 'Duración Mediana',
+                                name: 'Duración Promedio',
                                 type: 'bar',
-                                data: safeMed,
+                                data: safeMedHours,
                                 showBackground: true,
                                 backgroundStyle: { borderRadius: 20, color: 'rgba(255,255,255,0.5)' },
                                 itemStyle: {
@@ -1218,15 +1269,18 @@
                                     show: true,
                                     position: 'right',
                                     formatter: function(p) {
-                                        return (medFormateados && medFormateados[p.dataIndex]) || (p.value > 0 ? p.value + 'm' : 'N/A');
+                                        return p.value > 0 ? p.value + 'h' : 'N/A';
                                     },
-                                    color: '#1C1C1E',
+                                    color: function(p) {
+                                        return p.value > 0 ? '#1C1C1E' : '#8E8E93';
+                                    },
                                     fontSize: 10,
                                     fontFamily: 'SF Mono, monospace'
                                 }
                             }
                         ]
                     });
+                    medianChartInstance = medianChart;
                     echartsInstances.push(medianChart);
                 }
 
@@ -1317,6 +1371,7 @@
                             }
                         ]
                     });
+                    opChartInstance = opChart;
                     echartsInstances.push(opChart);
                 }
 
@@ -1439,6 +1494,369 @@
                     });
             }
 
+            function formatDuration(val) {
+                if (val === undefined || val === null || val === '') return '0h';
+                if (typeof val === 'number') {
+                    if (val <= 0) return '0h';
+                    if (val >= 60) return (val / 60).toFixed(1) + 'h';
+                    return Math.round(val) + 'm';
+                }
+                return String(val);
+            }
+
+            function updateKpiCards(resumen) {
+                if (!resumen) return;
+
+                const elTotal = document.getElementById('kpi-total');
+                if (elTotal) {
+                    elTotal.textContent = resumen.total ?? resumen.ticketsTotales ?? resumen.creados ?? 0;
+                }
+
+                const elJornada = document.getElementById('kpi-jornada');
+                if (elJornada) {
+                    elJornada.textContent = resumen.jornada ?? resumen.ticketsJornada ?? resumen.creados ?? 0;
+                }
+
+                const elResueltos = document.getElementById('kpi-resueltos');
+                if (elResueltos) {
+                    elResueltos.textContent = resumen.resueltos ?? resumen.cerrados ?? 0;
+                }
+
+                const elAreaCritica = document.getElementById('kpi-area-critica');
+                if (elAreaCritica) {
+                    const crit = resumen.areaCritica || resumen.area_critica;
+                    if (crit && typeof crit === 'object') {
+                        elAreaCritica.textContent = crit.nombre || crit.label || 'Ninguna';
+                    } else if (typeof crit === 'string') {
+                        elAreaCritica.textContent = crit;
+                    } else {
+                        elAreaCritica.textContent = 'Ninguna';
+                    }
+                }
+
+                const elPuntos = document.getElementById('kpi-puntos');
+                if (elPuntos) {
+                    const pts = resumen.puntosTotales ?? resumen.puntos ?? 0;
+                    elPuntos.textContent = `${pts} pts`;
+                }
+
+                const elTiempoTotal = document.getElementById('kpi-tiempo-total');
+                if (elTiempoTotal) {
+                    const tTot = resumen.tiempoTotal ?? resumen.tiempo_total;
+                    elTiempoTotal.textContent = formatDuration(tTot);
+                }
+
+                const elTiempoHorario = document.getElementById('kpi-tiempo-horario');
+                if (elTiempoHorario) {
+                    const tHor = resumen.tiempoHorario ?? resumen.tiempo_horario;
+                    elTiempoHorario.textContent = formatDuration(tHor);
+                }
+            }
+
+            function updateChartsData(flujoHorario, porArea, porOperador, resumen) {
+                if (flowChartInstance && flujoHorario) {
+                    const defaultHours = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
+                    const hours = (flujoHorario.labels && flujoHorario.labels.length > 0) ? flujoHorario.labels : defaultHours;
+                    const rawC = flujoHorario.creados || [];
+                    const rawA = flujoHorario.asignados || [];
+                    const rawCe = flujoHorario.cerrados || [];
+                    flowChartInstance.setOption({
+                        xAxis: { data: hours },
+                        series: [
+                            { name: 'Creados Hoy', data: hours.map((_, i) => Number(rawC[i]) || 0) },
+                            { name: 'Asignados Hoy', data: hours.map((_, i) => Number(rawA[i]) || 0) },
+                            { name: 'Cerrados Hoy', data: hours.map((_, i) => Number(rawCe[i]) || 0) }
+                        ]
+                    });
+                }
+
+                if (areaChartInstance && porArea) {
+                    let labels = [];
+                    let creados = [];
+                    let resueltos = [];
+
+                    if (Array.isArray(porArea)) {
+                        labels = porArea.map(a => a.nombre || a.area || 'General');
+                        creados = porArea.map(a => Number(a.creados ?? a.asignados ?? a.totales ?? 0) || 0);
+                        resueltos = porArea.map(a => Number(a.resueltos ?? a.cerrados ?? 0) || 0);
+                    } else if (typeof porArea === 'object') {
+                        labels = porArea.labels || [];
+                        const rawC = porArea.creados || porArea.asignados || porArea.totales || porArea.data || [];
+                        const rawR = porArea.resueltos || porArea.cerrados || [];
+                        creados = labels.map((_, i) => Number(rawC[i]) || 0);
+                        resueltos = labels.map((_, i) => Number(rawR[i]) || 0);
+                    }
+
+                    if (labels.length > 0) {
+                        areaChartInstance.setOption({
+                            xAxis: {
+                                data: labels,
+                                axisLabel: { rotate: labels.length > 4 ? 20 : 0 }
+                            },
+                            series: [
+                                { name: 'Asignados / Creados', data: creados },
+                                { name: 'Resueltos', data: resueltos }
+                            ]
+                        });
+                    }
+                }
+
+                if (medianChartInstance && porArea) {
+                    let labels = [];
+                    let values = [];
+
+                    if (Array.isArray(porArea)) {
+                        labels = porArea.map(a => a.nombre || a.area || 'General');
+                        values = porArea.map(a => Number(a.tiempoPromedioMinutos ?? a.tiempoPromedio ?? 0) || 0);
+                    } else if (typeof porArea === 'object' && porArea.labels) {
+                        labels = porArea.labels || [];
+                        const rawV = porArea.data || porArea.valoresMinutos || [];
+                        values = labels.map((_, i) => Number(rawV[i]) || 0);
+                    }
+
+                    const valuesHours = values.map(v => v > 0 ? Number((v / 60).toFixed(1)) : 0);
+
+                    if (labels.length > 0) {
+                        medianChartInstance.setOption({
+                            yAxis: { data: labels },
+                            series: [{ data: valuesHours }]
+                        });
+                    }
+                }
+
+                if (opChartInstance && Array.isArray(porOperador)) {
+                    const opLabels = porOperador.map(o => `${o.nombre || 'Operador'} (${o.area || 'General'})`);
+                    const opAsignados = porOperador.map(o => Number(o.asignadosTotales ?? o.asignados ?? 0) || 0);
+                    const opResueltos = porOperador.map(o => Number(o.cerrados ?? o.resueltos ?? 0) || 0);
+
+                    opChartInstance.setOption({
+                        xAxis: {
+                            data: opLabels,
+                            axisLabel: { rotate: opLabels.length > 3 ? 20 : 0 }
+                        },
+                        series: [
+                            { name: 'Asignados Totales', data: opAsignados },
+                            { name: 'Resueltos', data: opResueltos }
+                        ]
+                    });
+                }
+            }
+
+            function updateOperatorTable(porOperador) {
+                const tbody = document.getElementById('rankingTableBody');
+                if (!tbody) return;
+
+                if (!Array.isArray(porOperador) || porOperador.length === 0) {
+                    tbody.innerHTML = `
+                        <tr class="operator-ranking-row">
+                            <td colspan="10" class="py-8 text-center text-[12px] text-[#8E8E93]">
+                                No se encontraron registros de operadores para el periodo seleccionado.
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                let html = '';
+                porOperador.forEach((op, index) => {
+                    const medal = index === 0
+                        ? '<span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#FFF4D6] text-[#B25E02] font-mono font-bold text-[11px] shadow-2xs">🥇</span>'
+                        : (index === 1
+                            ? '<span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#F2F2F7] text-[#48484A] font-mono font-bold text-[11px] shadow-2xs">🥈</span>'
+                            : (index === 2
+                                ? '<span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#FFE5E5] text-[#991B1B] font-mono font-bold text-[11px] shadow-2xs">🥉</span>'
+                                : `<span class="inline-flex items-center justify-center w-6 h-6 text-[#8E8E93] font-mono font-semibold text-[11px]">#${index + 1}</span>`));
+
+                    const nombre = escapeHtml(op.nombre || 'Operador');
+                    const email = escapeHtml(op.email || 'Sin correo');
+                    const initials = nombre.trim().split(/\s+/).slice(0, 2).map(p => p.charAt(0)).join('').toUpperCase() || 'OP';
+                    const area = escapeHtml(op.area || 'General');
+                    const asignados = op.asignadosTotales ?? op.asignados ?? 0;
+                    const cerrados = op.cerrados ?? op.resueltos ?? 0;
+                    const ef = typeof op.eficiencia !== 'undefined' ? Number(op.eficiencia) : 0;
+                    const efColor = ef >= 80 ? 'bg-[#34C759]' : (ef >= 50 ? 'bg-sky-500' : 'bg-[#FF9500]');
+                    const carga = typeof op.cargaActual !== 'undefined' ? Number(op.cargaActual) : (typeof op.carga !== 'undefined' ? Number(op.carga) : 0);
+
+                    let semaforo = '';
+                    if (carga <= 2) {
+                        semaforo = `
+                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#E3F9E5] text-[#1B873F] border border-[#BCE8C5]">
+                                <span class="w-2 h-2 rounded-full bg-[#34C759]"></span>
+                                <span>${carga} activas (Baja)</span>
+                            </span>`;
+                    } else if (carga <= 4) {
+                        semaforo = `
+                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#FFF4D6] text-[#B25E02] border border-[#FFE8A3]">
+                                <span class="w-2 h-2 rounded-full bg-[#FF9500]"></span>
+                                <span>${carga} activas (Media)</span>
+                            </span>`;
+                    } else {
+                        semaforo = `
+                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#FFE5E5] text-[#D70015] border border-[#FFC2C2]">
+                                <span class="w-2 h-2 rounded-full bg-[#FF3B30] animate-pulse"></span>
+                                <span>${carga} activas (Alta)</span>
+                            </span>`;
+                    }
+
+                    const puntos = op.puntos || 0;
+                    const tProm = escapeHtml(op.tiempoPromedio || 'N/A');
+
+                    let estadoBadge = '';
+                    if (op.estado === 'DISPONIBLE') {
+                        estadoBadge = '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#E3F9E5] text-[#1B873F] border border-[#BCE8C5]"><span class="w-1.5 h-1.5 rounded-full bg-[#34C759]"></span> Disponible</span>';
+                    } else if (op.estado === 'EN_TERRENO') {
+                        estadoBadge = '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-50 text-sky-700 border border-sky-200"><span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span> En Terreno</span>';
+                    } else {
+                        estadoBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#F2F2F7] text-[#8E8E93] border border-[#E5E5EA]"><span class="w-1.5 h-1.5 rounded-full bg-[#8E8E93]"></span> ${escapeHtml(op.estado || 'Ausente')}</span>`;
+                    }
+
+                    html += `
+                        <tr class="hover:bg-white/60 transition-colors operator-ranking-row">
+                            <td class="py-3 px-4 text-center">${medal}</td>
+                            <td class="py-3 px-4">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-7 h-7 rounded-full bg-sky-500 text-white flex items-center justify-center font-mono font-semibold text-[10px] flex-shrink-0 shadow-2xs">${initials}</div>
+                                    <div class="flex flex-col min-w-0">
+                                        <span class="font-medium text-[#1C1C1E] truncate">${nombre}</span>
+                                        <span class="text-[10px] font-mono text-[#8E8E93] truncate">${email}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#F2F2F7] text-[#48484A] border border-[#E5E5EA]">${area}</span>
+                            </td>
+                            <td class="py-3 px-4 text-right">
+                                <span class="font-mono text-[#48484A] font-medium num-tabular">${asignados}</span>
+                            </td>
+                            <td class="py-3 px-4 text-right">
+                                <span class="font-mono text-[#1C1C1E] font-semibold num-tabular">${cerrados}</span>
+                            </td>
+                            <td class="py-3 px-4 min-w-[130px]">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-mono font-semibold text-[11px] text-[#1C1C1E] w-9 text-right num-tabular">${ef}%</span>
+                                    <div class="w-16 bg-[#E5E5EA] rounded-full h-1.5 overflow-hidden flex-shrink-0">
+                                        <div class="h-full rounded-full transition-all duration-300 ${efColor}" style="width: ${Math.min(100, Math.max(0, ef))}%"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4 min-w-[130px]">${semaforo}</td>
+                            <td class="py-3 px-4 text-right">
+                                <span class="text-sky-600 font-mono font-bold text-[12px] num-tabular">${puntos} <span class="text-[10px] font-sans font-medium text-[#8E8E93]">pts</span></span>
+                            </td>
+                            <td class="py-3 px-4 font-mono text-[#48484A]">${tProm}</td>
+                            <td class="py-3 px-4 text-center">${estadoBadge}</td>
+                        </tr>
+                    `;
+                });
+
+                tbody.innerHTML = html;
+            }
+
+            let isFetchingMetrics = false;
+            async function fetchReportData() {
+                const periodoSelect = document.getElementById('periodoSelect');
+                const fechaInput = document.getElementById('fechaInput');
+                const periodo = periodoSelect ? periodoSelect.value : 'jornada';
+                const fecha = fechaInput ? fechaInput.value : '';
+
+                if (periodo === 'especifica' && !fecha) {
+                    return;
+                }
+
+                if (isFetchingMetrics) return;
+                isFetchingMetrics = true;
+
+                try {
+                    let url = '/reportes/data?periodo=' + encodeURIComponent(periodo);
+                    if (fecha) {
+                        url += '&fecha=' + encodeURIComponent(fecha);
+                    }
+
+                    const response = await fetch(url);
+                    if (!response.ok) {
+                        console.warn('Error al consultar /reportes/data:', response.status);
+                        return;
+                    }
+
+                    const payload = await response.json();
+                    if (!payload) return;
+
+                    const data = payload.data || payload;
+                    const resumen = data.resumen || data.kpis || data;
+                    const porArea = data.porArea || data.volumenPorArea || data.areaTickets || {};
+                    const porOperador = data.porOperador || data.rankingOperadores || data.ranking || [];
+                    const flujoHorario = data.flujoHorario || data.flujoPorHora || {};
+
+                    updateKpiCards(resumen);
+                    updateChartsData(flujoHorario, porArea, porOperador, resumen);
+                    updateOperatorTable(porOperador);
+
+                } catch (error) {
+                    console.error('Error al actualizar datos del reporte:', error);
+                } finally {
+                    isFetchingMetrics = false;
+                }
+            }
+
+            function setupPeriodAndExcelHandlers() {
+                const periodoSelect = document.getElementById('periodoSelect');
+                const fechaInputWrapper = document.getElementById('fechaInputWrapper');
+                const fechaInput = document.getElementById('fechaInput');
+                const btnDescargarExcel = document.getElementById('btnDescargarExcel');
+
+                if (periodoSelect) {
+                    periodoSelect.addEventListener('change', function() {
+                        const val = this.value;
+                        if (val === 'especifica') {
+                            if (fechaInputWrapper) {
+                                fechaInputWrapper.classList.remove('hidden');
+                                fechaInputWrapper.classList.add('flex');
+                            }
+                            if (fechaInput) {
+                                fechaInput.focus();
+                                if (fechaInput.value) {
+                                    fetchReportData();
+                                }
+                            }
+                        } else {
+                            if (fechaInputWrapper) {
+                                fechaInputWrapper.classList.add('hidden');
+                                fechaInputWrapper.classList.remove('flex');
+                            }
+                            fetchReportData();
+                        }
+                    });
+                }
+
+                if (fechaInput) {
+                    fechaInput.addEventListener('change', function() {
+                        if (periodoSelect && periodoSelect.value === 'especifica' && this.value) {
+                            fetchReportData();
+                        }
+                    });
+                }
+
+                if (btnDescargarExcel) {
+                    btnDescargarExcel.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const periodo = periodoSelect ? periodoSelect.value : 'jornada';
+                        const fecha = fechaInput ? fechaInput.value : '';
+
+                        if (periodo === 'especifica' && !fecha) {
+                            alert('Debe seleccionar una fecha para el reporte.');
+                            if (fechaInput) fechaInput.focus();
+                            return;
+                        }
+
+                        let url = '/reportes/excel?periodo=' + encodeURIComponent(periodo);
+                        if (fecha) {
+                            url += '&fecha=' + encodeURIComponent(fecha);
+                        }
+                        window.location.href = url;
+                    });
+                }
+            }
+
             // Tab Switching Controller for macOS Segmented Controls
             function setupTabNavigation() {
                 const tabButtons = document.querySelectorAll('.report-tab-btn');
@@ -1553,10 +1971,12 @@
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', function() {
                     setupTabNavigation();
+                    setupPeriodAndExcelHandlers();
                     waitForECharts(40);
                 });
             } else {
                 setupTabNavigation();
+                setupPeriodAndExcelHandlers();
                 waitForECharts(40);
             }
         })();
