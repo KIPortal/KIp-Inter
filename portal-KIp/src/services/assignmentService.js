@@ -57,7 +57,7 @@ function eligibility(op, now = new Date(), rules = DEFAULT_RULES) {
     if (op.deGuardia) {
         const g = guardWindow(now);
         if (g.dentro) return { elegible: true, motivo: 'De guardia' };
-        if (g.faltan > 0 && g.faltan <= rules.sugerencia.guardiaAntesMin) return { elegible: true, motivo: `Su guardia empieza en ${g.faltan} min` };
+        if (rules.sugerencia.incluirGuardia && g.faltan > 0 && g.faltan <= rules.sugerencia.guardiaAntesMin) return { elegible: true, motivo: `Su guardia empieza en ${g.faltan} min` };
         return { elegible: false, motivo: `De guardia desde las ${g.inicio}` };
     }
     if (op.disponible) return { elegible: true, motivo: 'En turno' };

@@ -17,7 +17,7 @@ const {
     computeOverload
 } = require('./metricsService');
 const { AREA_NAMES } = require('./periodReportService');
-const { DEFAULT_RULES, ageLimitFor } = require('./rulesService');
+const { DEFAULT_RULES, ageLimitFor, overloadOptions } = require('./rulesService');
 const { buildSuggestions, normalizeOperator } = require('./assignmentService');
 
 const MINUTE_MS = 60 * 1000;
@@ -65,6 +65,7 @@ function shiftGroup(turno) {
  * cuentan: están detenidos a propósito.
  */
 function agingTickets(tickets, now, rules = DEFAULT_RULES) {
+    if (!rules.antiguedad.activa) return [];
     const nowMs = time(now);
     const out = [];
     for (const t of tickets) {
@@ -159,7 +160,7 @@ function buildCoordinatorPanel({ tickets = [], operators = [], now = new Date(),
     const carga = new Map(operators.map(o => [o.id, (o.tickets_asignados || []).length]));
     const overload = computeOverload(operators.map(o => ({
         id: o.id, area_designada: o.area_designada, estado_operativo: o.estado_operativo, cargaActual: carga.get(o.id)
-    })), { ratio: rules.sobrecarga.multiplicador, minimo: rules.sobrecarga.minimo });
+    })), overloadOptions(rules));
 
     // ----- Cola de espera: sin asignar y nadie disponible en su área (§4)
     const sugerencias = buildSuggestions({

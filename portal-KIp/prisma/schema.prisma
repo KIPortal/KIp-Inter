@@ -186,3 +186,11 @@ model TraspasoTicket {
   @@id([traspasoId, ticketId])
   @@index([ticketId])
 }
+
+// Configuración de Administración (reglas, avisos y plantillas). Una fila por
+// clave con su valor en JSON; los valores por defecto viven en el código.
+model Configuracion {
+  clave     String   @id @db.VarChar(40) // 'reglas' | 'avisos' | 'plantillas'
+  valor     Json
+  updatedAt DateTime @updatedAt
+}

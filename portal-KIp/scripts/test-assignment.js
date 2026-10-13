@@ -1,7 +1,7 @@
 // Pruebas de la asignación sugerida, la cola de espera y las reglas (sin base de datos).
 const assert = require('assert');
 const { guardWindow, eligibility, suggest, buildSuggestions, normalizeOperator } = require('../src/services/assignmentService');
-const { DEFAULT_RULES, mergeRules, ageLimitFor } = require('../src/services/rulesService');
+const { DEFAULT_RULES, mergeRules, ageLimitFor, overloadOptions } = require('../src/services/rulesService');
 const { agingTickets } = require('../src/services/dashboardService');
 const { computeOverload } = require('../src/services/metricsService');
 
@@ -65,12 +65,23 @@ t('normalizeOperator: desde el operador del controlador', () => {
 });
 
 t('Reglas: valores por defecto y combinación con datos inválidos', () => {
-    assert.deepStrictEqual(DEFAULT_RULES.antiguedad, { P1: 60, P2: 120, P3: 240, SP: 30 });
+    assert.deepStrictEqual(DEFAULT_RULES.antiguedad, { activa: true, P1: 60, P2: 120, P3: 240, SP: 30 });
     const r = mergeRules({ antiguedad: { P1: 45, P2: -3, SP: 'x' }, sobrecarga: { multiplicador: 2 } });
-    assert.deepStrictEqual(r.antiguedad, { P1: 45, P2: 120, P3: 240, SP: 30 });
-    assert.deepStrictEqual(r.sobrecarga, { multiplicador: 2, minimo: 3 });
+    assert.deepStrictEqual(r.antiguedad, { activa: true, P1: 45, P2: 120, P3: 240, SP: 30 });
+    assert.deepStrictEqual(r.sobrecarga, { activa: true, multiplicador: 2, minimo: 3 });
+    assert.strictEqual(mergeRules({ sobrecarga: { multiplicador: 9 } }).sobrecarga.multiplicador, 3, 'tope del paso');
     assert.strictEqual(ageLimitFor(8), 60);
     assert.strictEqual(ageLimitFor(7), 30, 'puntos desconocidos = sin prioridad');
+});
+
+t('Interruptores: sin antigüedad, sin sobrecarga y sin guardia anticipada', () => {
+    const tk = { codigo_incidencia: 'INC-9', estado_actual: 'NUEVO', puntos_complejidad: 8, asignado_a_id: null, createdAt: at('07:00') };
+    assert.strictEqual(agingTickets([tk], at('10:00'), mergeRules({ antiguedad: { activa: false } })).length, 0);
+    const ops = [{ id: 'a', cargaActual: 4 }, { id: 'b', cargaActual: 1 }, { id: 'c', cargaActual: 1 }];
+    assert.strictEqual(computeOverload(ops, overloadOptions(mergeRules({ sobrecarga: { activa: false } }))).get('a').sobrecarga, false);
+    const g = op({ deGuardia: true, disponible: false });
+    assert.strictEqual(eligibility(g, at('16:40'), mergeRules({ sugerencia: { incluirGuardia: false } })).elegible, false);
+    assert.strictEqual(eligibility(g, at('18:00'), mergeRules({ sugerencia: { incluirGuardia: false } })).elegible, true, 'durante su guardia sí');
 });
 
 t('Las reglas cambian la antigüedad y la sobrecarga', () => {

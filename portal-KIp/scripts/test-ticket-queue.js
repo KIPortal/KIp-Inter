@@ -122,6 +122,26 @@ const tickets = [
         assert.ok(!/\bSLA\b|\bDERS\b/.test(html));
     });
 
+    await t('Controlador /tickets: renderiza con datos, plantillas y siguiente código', async () => {
+        const prisma = require('../src/config/prisma');
+        prisma.ticket.findMany = async ({ where }) => (where && where.OR ? [{ codigo_incidencia: 'INC-007' }, { codigo_incidencia: 'INC-012' }] : tickets);
+        prisma.ticket.count = async () => 2;
+        prisma.user.findMany = async () => operators.map(o => ({ ...o, tickets_asignados: [] }));
+        prisma.horarioOperador = { findMany: async () => [] };
+        prisma.guardiaSemanal = { findMany: async () => [] };
+        prisma.traspaso = { findFirst: async () => null };
+        prisma.configuracion = { findMany: async () => [{ clave: 'plantillas', valor: { cierre: ['Motivo guardado'] } }] };
+        const { renderTickets } = require('../src/controllers/dashboardController');
+        let vista, data, error;
+        await renderTickets({ user: { rol: 'COORDINADOR' }, query: {} }, { render: (v, d) => { vista = v; data = d; }, status: () => ({ send: m => { error = m; } }) });
+        assert.strictEqual(error, undefined, 'no debe responder 500');
+        assert.strictEqual(vista, 'tickets');
+        assert.strictEqual(data.siguienteCodigo, 'INC-013');
+        assert.strictEqual(data.enPapelera, 2);
+        assert.deepStrictEqual(data.plantillas.cierre, ['Motivo guardado']);
+        assert.ok(data.cola.tickets.length > 0);
+    });
+
     console.log(`\n   RESUMEN: ${passed}/${total} pruebas pasaron correctamente\n`);
     if (passed !== total) process.exit(1);
 })();

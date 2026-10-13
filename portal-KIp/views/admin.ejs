@@ -1,0 +1,100 @@
+<%
+	// Administración (prototipo docs/rediseno/prototipo/Administracion.dc.html).
+	// Áreas y equipos se dibujan aquí; reglas, plantillas y avisos los dibuja
+	// public/js/admin.js con la configuración guardada y la vista previa.
+	const totalOps = areas.reduce((n, a) => n + a.operadores.length, 0);
+	const conOps = areas.filter(a => a.operadores.length);
+	const datos = { config, eventos, destinatarios, limites, vistaPrevia };
+	const SECS = [
+		['areas', 'Áreas y equipos', areas.length + ' áreas · ' + totalOps + ' operadores', '#0A84FF', 'M9 8a3 3 0 1 0 0-.01M3 19a6 6 0 0 1 12 0M16 5a3 3 0 0 1 0 6M18 13a5 5 0 0 1 3 6'],
+		['plantillas', 'Plantillas', (config.plantillas.traspaso.length + config.plantillas.cierre.length) + ' textos', '#FF9F0A', 'M5 4h10l4 4v12H5zM9 12h6M9 16h4'],
+		['reglas', 'Reglas de alerta', 'Sobrecarga, antigüedad y sugerencia', '#FF3B30', 'M12 3l10 18H2zM12 10v4M12 17.5v.5'],
+		['avisos', 'Avisos', 'Eventos y destinatarios', '#AF52DE', 'M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 21h4']
+	];
+%>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+	<%- include('partials/head', { titulo: 'Administración' }) %>
+</head>
+<body>
+<div class="app">
+	<%- include('partials/sidebar', { currentUser, activo: 'admin', conteos: { tickets: activos, enTurno, totalOperadores } }) %>
+
+	<main class="app-main">
+		<header class="toolbar">
+			<div style="display:flex;flex-direction:column;margin-right:6px">
+				<h1>Administración</h1>
+				<span class="sub">Áreas, plantillas, reglas de alerta y avisos</span>
+			</div>
+			<span class="grow"></span>
+			<span class="dirty" data-dirty hidden><i></i>Cambios sin guardar</span>
+			<button type="button" class="pill pillbtn plain" data-discard hidden style="height:36px">Descartar</button>
+			<button type="button" class="primary lg" data-save hidden>Guardar cambios</button>
+		</header>
+
+		<div class="admin-layout">
+			<nav class="glass admin-nav" aria-label="Secciones de administración">
+				<% SECS.forEach(([k, l, sub, tile, glyph], i) => { %>
+					<button type="button" data-sec="<%= k %>" aria-current="<%= i === 0 ? 'page' : 'false' %>">
+						<span class="tile" style="background:<%= tile %>"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="<%= glyph %>"/></svg></span>
+						<span class="txt"><b><%= l %></b><span data-sec-sub="<%= k %>"><%= sub %></span></span>
+					</button>
+				<% }) %>
+			</nav>
+
+			<div class="admin-body">
+				<!-- Áreas y equipos -->
+				<section class="glass" data-panel="areas" aria-labelledby="h-ar" style="display:flex;flex-direction:column;overflow:hidden">
+					<div class="card-head" style="padding:18px 24px 14px">
+						<h2 id="h-ar">Áreas y equipos</h2>
+						<span class="hint"><%= areas.length %> áreas · <%= totalOps %> operadores</span>
+					</div>
+					<div class="areas-split">
+						<div class="area-list" role="listbox" aria-label="Áreas">
+							<% areas.forEach((a, i) => { %>
+								<button type="button" role="option" data-area-pick="<%= a.codigo %>" aria-selected="<%= a.codigo === (conOps[0] || areas[0]).codigo %>">
+									<b><%= a.nombre %></b><span class="n"><%= a.operadores.length %></span>
+									<span class="meta"><span><i class="st-turno"></i><%= a.turno %> en turno</span><% if (a.guardia) { %><span><i class="st-guardia"></i><%= a.guardia %> de guardia</span><% } %></span>
+								</button>
+							<% }) %>
+						</div>
+						<div class="area-detail">
+							<% areas.forEach(a => { %>
+								<div data-area-panel="<%= a.codigo %>"<% if (a.codigo !== (conOps[0] || areas[0]).codigo) { %> hidden<% } %>>
+									<div style="display:flex;flex-direction:column;padding:16px 24px 12px"><b style="font-size:15px"><%= a.nombre %></b><span class="t2" style="font-size:12px"><%= a.operadores.length %> <%= a.operadores.length === 1 ? 'operador' : 'operadores' %> · <%= a.turno %> en turno<%= a.guardia ? ' · ' + a.guardia + ' de guardia' : '' %></span></div>
+									<% if (!a.operadores.length) { %>
+										<p class="empty" style="padding:4px 24px 12px">Esta área no tiene operadores.</p>
+									<% } else { %>
+									<table class="rank-table">
+										<thead><tr><th style="padding-left:24px">Operador</th><th style="width:150px">Estado de turno</th><th class="r" style="width:80px;padding-right:24px">Activos</th></tr></thead>
+										<tbody>
+											<% a.operadores.forEach(o => { %>
+												<tr class="row">
+													<td style="padding-left:24px"><span style="display:flex;align-items:center;gap:10px"><span class="avatar"><%= o.nombre.split(/\s+/).slice(0, 2).map(p => p[0]).join('').toUpperCase() %></span><span style="display:flex;flex-direction:column"><b style="font-size:13px"><%= o.nombre %></b><span class="t2"><%= o.email %></span></span></span></td>
+													<td><span class="opstate st-<%= o.estado.grupo %>" style="font-weight:500"><i></i><%= o.estado.etiqueta %></span></td>
+													<td class="r" style="padding-right:24px;font-weight:600"><%= o.carga %></td>
+												</tr>
+											<% }) %>
+										</tbody>
+									</table>
+									<% } %>
+								</div>
+							<% }) %>
+							<p class="t3" style="padding:12px 24px 16px;font-size:12px;margin:0">El estado de turno y la guardia se cambian en Gestión de Turno. Crear áreas u operadores queda pendiente: las áreas están fijas en la base y el alta de usuarios espera la seguridad del login.</p>
+						</div>
+					</div>
+				</section>
+
+				<div data-panel="plantillas" hidden style="display:flex;flex-direction:column;gap:16px"></div>
+				<div data-panel="reglas" hidden style="display:flex;flex-direction:column;gap:16px"></div>
+				<section class="glass" data-panel="avisos" hidden style="display:flex;flex-direction:column;overflow:hidden"></section>
+			</div>
+		</div>
+	</main>
+</div>
+
+<script id="admin-data" type="application/json"><%- JSON.stringify(datos).replace(/</g, '\\u003c') %></script>
+<script src="/js/admin.js" defer></script>
+</body>
+</html>
