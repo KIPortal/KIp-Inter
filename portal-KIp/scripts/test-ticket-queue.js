@@ -2,7 +2,7 @@
 const assert = require('assert');
 const path = require('path');
 const ejs = require('ejs');
-const { buildQueue, buildHandoffView, handoffExpiry, suggestOperator, daysAgo } = require('../src/services/ticketQueueService');
+const { buildQueue, buildHandoffView, handoffExpiry, daysAgo } = require('../src/services/ticketQueueService');
 
 let total = 0, passed = 0;
 async function t(name, fn) { total++; try { await fn(); passed++; console.log(`  ✅ [PASS] ${name}`); } catch (e) { console.error(`  ❌ [FAIL] ${name}\n     ${e.message}`); } }
@@ -10,12 +10,12 @@ async function t(name, fn) { total++; try { await fn(); passed++; console.log(` 
 // Martes 13/10/2026 14:30 en Caracas (UTC-4)
 const NOW = new Date('2026-10-13T18:30:00Z');
 const at = (hhmm, dia = '2026-10-13') => new Date(`${dia}T${hhmm}:00-04:00`);
-const turno = (codigo, etiqueta) => ({ codigo, etiqueta });
+const turno = (codigo, etiqueta) => ({ codigo, etiqueta, disponible: codigo === 'EN_TURNO', enTurno: ['EN_TURNO', 'DE_GUARDIA'].includes(codigo) });
 
 const operators = [
     { id: 'a', nombre: 'Ana Pérez', area_designada: 'WAN', estado_operativo: 'DISPONIBLE', turno: turno('EN_TURNO', 'En turno'), tickets_asignados: [1, 2, 3, 4, 5, 6] },
     { id: 'b', nombre: 'Beto Ruiz', area_designada: 'WAN', estado_operativo: 'DISPONIBLE', turno: turno('EN_TURNO', 'En turno'), tickets_asignados: [1] },
-    { id: 'c', nombre: 'Carla Díaz', area_designada: 'WAN', estado_operativo: 'DISPONIBLE', turno: turno('DE_GUARDIA', 'De guardia'), tickets_asignados: [] },
+    { id: 'c', nombre: 'Carla Díaz', area_designada: 'WAN', estado_operativo: 'DISPONIBLE', turno: turno('DE_GUARDIA', 'De guardia'), deGuardia: true, tickets_asignados: [] },
     { id: 'd', nombre: 'Dani Soto', area_designada: 'TELEFONIA', estado_operativo: 'DISPONIBLE', turno: turno('FUERA_DE_TURNO', 'Fuera de turno'), tickets_asignados: [] }
 ];
 const tk = o => Object.assign({ estado_actual: 'NUEVO', area_designada: 'WAN', puntos_complejidad: 0, asignado_a_id: null, asignado_a: null, origen_ingesta: 'CORREO', updatedAt: o.createdAt }, o);
@@ -60,7 +60,7 @@ const tickets = [
 
     await t('Tarjetas fijas: no dependen de filtros', () => {
         assert.deepStrictEqual(cola.resumen, {
-            activos: 4, sinAsignar: 2, criticosSinAsignar: 1, pausaEspera: 1, resueltosSinCerrar: 1, creadosHoy: 5, cerradosHoy: 1
+            activos: 4, sinAsignar: 2, criticosSinAsignar: 1, pausaEspera: 1, resueltosSinCerrar: 1, creadosHoy: 5, cerradosHoy: 1, enCola: 0
         });
     });
 
@@ -71,10 +71,15 @@ const tickets = [
         assert.strictEqual(cola.operadores.find(o => o.id === 'c').estado.grupo, 'guardia');
     });
 
-    await t('Sugerido: en turno, sin sobrecarga y con menos carga; si nadie, null', () => {
-        assert.strictEqual(cola.sugeridos.WAN, 'b', 'Ana está sobrecargada y Carla de guardia');
+    await t('Sugerido y cola de espera: Beto en WAN; Telefonía sin nadie → otra área', () => {
+        assert.strictEqual(cola.sugeridos.WAN.id, 'b', 'Ana está sobrecargada y la guardia de Carla empieza a las 17:00');
+        assert.ok(cola.sugeridos.WAN.motivo.startsWith('En turno'));
         assert.strictEqual(cola.sugeridos.TELEFONIA, null, 'Dani está fuera de turno');
-        assert.strictEqual(suggestOperator([], 'WAN'), null);
+        assert.strictEqual(cola.otraArea.TELEFONIA.id, 'b');
+        const telefonia = buildQueue({ tickets: [tk({ codigo_incidencia: 'INC-030', asunto: 'PBX', area_designada: 'TELEFONIA', createdAt: at('14:00') })], operators, now: NOW });
+        assert.strictEqual(telefonia.tickets[0].enCola, true);
+        assert.strictEqual(telefonia.resumen.enCola, 1);
+        assert.strictEqual(fila('INC-010').enCola, false);
     });
 
     await t('Traspaso: vence a las 08:00 siguientes y cuenta solo pendientes', () => {

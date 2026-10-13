@@ -33,6 +33,9 @@
 	D.operadores.forEach(o => { OPS[o.id] = o; });
 	const BY_CODE = {};
 	D.tickets.forEach(t => { BY_CODE[t.codigo] = t; });
+	// Sugerencia por área: { id, motivo } o null (assignmentService)
+	const sugOf = area => (D.sugeridos && D.sugeridos[area]) || null;
+	const otherOf = area => (D.otraArea && D.otraArea[area]) || null;
 
 	const ICON = {
 		assign: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M19 8v6M16 11h6"/></svg>',
@@ -142,7 +145,9 @@
 			if (f.fecha === '7d' && !(t.diasAtras <= 6)) return false;
 		}
 		if (skip !== 'op' && f.op) {
-			if (f.op === '__none' ? !!t.operador : (!t.operador || t.operador.id !== f.op)) return false;
+			if (f.op === '__none') { if (t.operador) return false; }
+			else if (f.op === '__cola') { if (!t.enCola) return false; }
+			else if (!t.operador || t.operador.id !== f.op) return false;
 		}
 		if (S.onlyHanded && !pendientesTraspaso.has(t.codigo)) return false;
 		if (S.q) {
@@ -215,7 +220,7 @@
 		['fecha', 'Fecha', () => [{ value: '', label: 'Todas' }, { value: 'hoy', label: 'Hoy' }, { value: 'ayer', label: 'Ayer' }, { value: '7d', label: 'Últimos 7 días' }]],
 		['prio', 'Prioridad', () => [{ value: '', label: 'Todas' }].concat(PKEYS.map(k => ({ value: k, label: PR[k][0], dot: k === 'SP' ? null : PR_DOT[k] })))],
 		['estado', 'Estado', () => [{ value: '', label: 'Todos' }].concat(STATES.map(s => ({ value: s[0], label: s[1], dot: ST_DOT[s[0]] })))],
-		['op', 'Operador', () => [{ value: '', label: 'Todos' }, { value: '__none', label: 'Sin asignar' }].concat(D.operadores.map(o => ({ value: o.id, label: o.nombre })))]
+		['op', 'Operador', () => [{ value: '', label: 'Todos' }, { value: '__none', label: 'Sin asignar' }, { value: '__cola', label: 'En cola de espera' }].concat(D.operadores.map(o => ({ value: o.id, label: o.nombre })))]
 	];
 	function countFor(key, value) {
 		const n = D.tickets.filter(t => {
@@ -225,7 +230,7 @@
 			if (key === 'area') return t.area === value;
 			if (key === 'prio') return t.prioridad === value;
 			if (key === 'fecha') return value === 'hoy' ? t.diasAtras === 0 : value === 'ayer' ? t.diasAtras === 1 : t.diasAtras <= 6;
-			if (key === 'op') return value === '__none' ? !t.operador : !!t.operador && t.operador.id === value;
+			if (key === 'op') return value === '__none' ? !t.operador : value === '__cola' ? !!t.enCola : !!t.operador && t.operador.id === value;
 			return true;
 		}).length;
 		return n ? String(n) : '';
@@ -314,7 +319,7 @@
 				h('span', { style: 'font-weight:500', text: t.asunto }), h('span', { class: 'area', text: '  ·  ' + t.areaNombre }))),
 			h('td', {}, t.operador
 				? h('span', { class: 'who' }, h('span', { class: 'avatar', text: t.operador.iniciales }), t.operador.nombre)
-				: h('span', { class: 'unassigned', text: 'Sin asignar' })),
+				: h('span', { class: 'unassigned' + (t.enCola ? ' t-red' : ''), text: t.enCola ? 'En cola de espera' : 'Sin asignar' })),
 			h('td', { class: 'qtime' + (t.alerta && viva ? ' late' : ''), title: t.alerta || '' },
 				t.alerta && viva ? h('span', { icon: 'warn' }) : null, fmt(t.edadMin)),
 			h('td', {}, h('div', { class: 'acts' },
@@ -395,19 +400,30 @@
 		const body = h('div', { class: 'dp-body' });
 		const viva = ACTIVE.includes(t.estado);
 		if (!t.operador && viva) {
-			const sugId = D.sugeridos[t.area];
-			const sug = sugId ? OPS[sugId] : null;
-			body.append(sug
-				? h('div', { class: 'sugbox' },
-					h('div', { class: 'row1' }, h('b', { text: 'Operador sugerido' }), h('span', { text: 'En turno, sin sobrecarga, menor carga' })),
-					h('div', { class: 'row2' }, h('span', { class: 'avatar', text: sug.iniciales }),
-						h('div', { class: 'nm' }, h('b', { text: sug.nombre }), h('span', { text: sug.areaNombre + ' · ' + plural(sug.carga, 'activo', 'activos') })),
-						h('button', { type: 'button', class: 'primary', text: 'Asignar', onclick: () => doAssign([t.codigo], sug.id, {}) })),
-					h('button', { type: 'button', class: 'linkbtn', style: 'align-self:flex-start;font-size:12px;font-weight:600', text: 'Elegir otro operador', onclick: () => openAssign([t.codigo]) }))
-				: h('div', { class: 'sugbox none' },
-					h('div', { class: 'row1' }, h('b', { text: 'Sin sugerencia' })),
-					h('span', { style: 'font-size:12px;line-height:17px', text: 'Nadie del área está en turno y sin sobrecarga. Puedes asignarlo a mano.' }),
-					h('button', { type: 'button', class: 'linkbtn', style: 'align-self:flex-start;font-size:12px;font-weight:600', text: 'Elegir operador', onclick: () => openAssign([t.codigo]) })));
+			const sg = sugOf(t.area);
+			const sug = sg ? OPS[sg.id] : null;
+			const sugBox = (op, motivo, titulo) => h('div', { class: 'sugbox' },
+				h('div', { class: 'row1' }, h('b', { text: titulo }), h('span', { text: motivo })),
+				h('div', { class: 'row2' }, h('span', { class: 'avatar', text: op.iniciales }),
+					h('div', { class: 'nm' }, h('b', { text: op.nombre }), h('span', { text: op.areaNombre + ' · ' + plural(op.carga, 'activo', 'activos') })),
+					h('button', { type: 'button', class: 'primary', text: 'Asignar', onclick: () => doAssign([t.codigo], op.id, {}) })),
+				h('button', { type: 'button', class: 'linkbtn', style: 'align-self:flex-start;font-size:12px;font-weight:600', text: 'Elegir otro operador', onclick: () => openAssign([t.codigo]) }));
+			if (sug) {
+				body.append(sugBox(sug, sg.motivo, 'Operador sugerido'));
+			} else {
+				const otra = otherOf(t.area);
+				const slot = h('div');
+				body.append(h('div', { class: 'sugbox none' },
+					h('div', { class: 'row1' }, h('b', { text: 'En cola de espera' })),
+					h('span', { style: 'font-size:12px;line-height:17px', text: 'Nadie de ' + t.areaNombre + ' está disponible ahora. El Dashboard le avisa al coordinador. Nunca se asigna solo.' }),
+					h('div', { style: 'display:flex;align-items:center;gap:14px;margin-top:4px' },
+						otra ? h('button', {
+							type: 'button', class: 'linkbtn', style: 'font-size:12px;font-weight:600', text: 'Sugerir de otra área',
+							onclick: e => { e.target.remove(); slot.replaceChildren(sugBox(OPS[otra.id], otra.motivo, 'Sugerido de otra área')); }
+						}) : null,
+						h('button', { type: 'button', class: 'linkbtn', style: 'font-size:12px;font-weight:600', text: 'Elegir operador', onclick: () => openAssign([t.codigo]) }))));
+				body.append(slot);
+			}
 		}
 		body.append(h('div', { class: 'dgrid' },
 			h('span', { text: 'Operador' }),
@@ -519,7 +535,8 @@
 
 		function paint() {
 			const pool = opPool(M.area);
-			const sugId = M.area ? D.sugeridos[M.area] : null;
+			const sg = M.area ? sugOf(M.area) : null;
+			const sugId = sg ? sg.id : null;
 			const maxL = Math.max(8, ...pool.map(o => o.carga));
 			const avg = M.area ? (pool.length ? (pool.reduce((s, o) => s + o.carga, 0) / pool.length).toFixed(1).replace('.', ',') : '—') : '—';
 			const okBtn = h('button', { type: 'button', class: 'primary', text: 'Asignar', disabled: !M.pick, onclick: save });
@@ -545,7 +562,7 @@
 					h('div', { style: 'display:flex;align-items:baseline;justify-content:space-between;margin-top:4px' },
 						h('span', { style: 'font-size:13px;font-weight:600', text: 'Operador' }),
 						h('span', { class: 't2', style: 'font-size:12px', text: 'Tickets activos · promedio del área ' + avg })),
-					M.area && !sugId ? h('div', { class: 'warnbox', text: 'Nadie del área está en turno y sin sobrecarga. Puedes asignarlo igual a alguien de guardia o con carga.' }) : null,
+					M.area && !sugId ? h('div', { class: 'warnbox', text: 'Nadie disponible en el área. Si no lo asignas, queda en cola de espera y el Dashboard avisa al coordinador.' }) : null,
 					pool.length ? h('div', { class: 'oplist', role: 'radiogroup', 'aria-label': 'Operador' }, pool.map(o => {
 						const off = o.estado.grupo === 'fuera';
 						return h('button', {
@@ -555,7 +572,7 @@
 						h('span', { class: 'avatar', text: o.iniciales }),
 						h('span', { class: 'nm' },
 							h('b', {}, o.nombre, o.id === sugId ? h('span', { class: 'tag green', text: 'Sugerido' }) : null, o.sobrecarga ? h('span', { class: 'tag red', text: 'Sobrecarga' }) : null),
-							h('span', {}, h('i', { style: 'background:' + ST_COLOR[o.estado.grupo] }), o.estado.etiqueta + (M.area ? '' : ' · ' + o.areaNombre))),
+							h('span', {}, h('i', { style: 'background:' + ST_COLOR[o.estado.grupo] }), (o.deGuardia ? o.elegible.motivo : o.estado.etiqueta) + (M.area ? '' : ' · ' + o.areaNombre))),
 						h('span', { class: 'track' }, h('span', { class: 'bar-fill', style: 'width:' + Math.min(o.carga / maxL * 100, 100) + '%;background:' + (o.sobrecarga ? 'var(--c-red)' : 'var(--c-blue)') })),
 						h('span', { class: 'load' + (o.sobrecarga ? ' over' : ''), text: o.carga }));
 					})) : h('div', { class: 'empty', text: 'No hay operadores en esta área.' })),
@@ -700,7 +717,7 @@
 						h('span', { class: 'mono t-accent', style: 'font-weight:600', text: t.codigo }),
 						h('span', { class: 'prio ' + t.prioridad, text: t.prioridad === 'SP' ? '—' : t.prioridad }),
 						h('span', { class: 'ellipsis', text: t.asunto }),
-						h('span', { class: 'ellipsis', style: 'color:' + (t.operador ? 'var(--t2)' : 'var(--orange-t)'), text: t.operador ? t.operador.nombre : 'Sin asignar' }),
+						h('span', { class: 'ellipsis', style: 'color:' + (t.operador ? 'var(--t2)' : 'var(--orange-t)'), text: t.operador ? t.operador.nombre : (t.enCola ? 'En cola de espera' : 'Sin asignar') }),
 						h('span', { style: 'text-align:right;font-weight:600;font-variant-numeric:tabular-nums' + (t.alerta ? ';color:var(--red-t)' : ''), text: fmt(t.edadMin) })))) : h('span', { class: 'empty', text: 'No hay tickets activos para traspasar.' })),
 				h('div', { style: 'display:flex;flex-direction:column;gap:6px' },
 					h('div', { class: 'flabel row' }, 'De guardia esta semana', h('small', { text: '17:00–24:00 · reciben la lista y la nota' })),
@@ -738,8 +755,9 @@
 				: h('span', { class: 'field ro', text: 'No aplica: lo registra el coordinador' }));
 		};
 		const paintOp = () => {
-			const sugId = N.area ? D.sugeridos[N.area] : null;
-			const opts = [{ value: '', label: 'Sin asignar', sel: !N.op }].concat(N.area ? opPool(N.area).map(o => {
+			const sg = N.area ? sugOf(N.area) : null;
+			const sugId = sg ? sg.id : null;
+			const opts = [{ value: '', label: 'Sin asignar', sel: !N.op, hint: N.area && !sugId ? 'Entra en cola de espera' : '' }].concat(N.area ? opPool(N.area).map(o => {
 				const b = o.id === sugId ? ['Sugerido', 'green'] : o.estado.grupo === 'fuera' ? ['Fuera de turno', 'gray'] : o.estado.grupo === 'guardia' ? ['De guardia', 'purple'] : o.sobrecarga ? ['Sobrecarga', 'red'] : null;
 				return { value: o.id, label: o.nombre, dot: ST_COLOR[o.estado.grupo], dis: o.estado.grupo === 'fuera', sel: N.op === o.id, badge: b, hint: o.estado.grupo === 'fuera' ? '' : plural(o.carga, 'activo', 'activos') };
 			}) : []);
@@ -748,7 +766,7 @@
 					sugId && N.op !== sugId ? h('button', { type: 'button', class: 'linkbtn', style: 'display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600', onclick: () => { N.op = sugId; paintOp(); } },
 						h('span', { class: 'tag green', text: 'Sugerido' }), OPS[sugId].nombre) : null),
 				combo(() => (N.op ? { label: OPS[N.op].nombre, dot: ST_COLOR[OPS[N.op].estado.grupo] } : { label: 'Sin asignar', muted: true }), () => opts, v => { N.op = v; paintOp(); }),
-				h('span', { class: 't3', style: 'font-size:12px', text: N.area ? (sugId ? 'Si no lo asignas, queda sin asignar en la cola.' : 'Nadie del área está en turno y sin sobrecarga.') : 'Elige primero el área.' }));
+				h('span', { class: 't3', style: 'font-size:12px', text: N.area ? (sugId ? 'Sugerido: ' + sg.motivo.toLowerCase() + '.' : 'Nadie disponible en el área: si no lo asignas, entra en cola de espera.') : 'Elige primero el área.' }));
 		};
 		box.append(
 			h('div', { style: 'display:flex;align-items:center;gap:12px;padding:18px 18px 14px 24px;border-bottom:1px solid var(--sep)' },

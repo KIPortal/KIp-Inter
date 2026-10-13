@@ -15,6 +15,8 @@ const {
 } = require('./metricsService');
 const { AREA_NAMES } = require('./periodReportService');
 const { agingTickets, formatAge } = require('./dashboardService');
+const { DEFAULT_RULES } = require('./rulesService');
+const { normalizeOperator, buildSuggestions, eligibility } = require('./assignmentService');
 
 const MINUTE_MS = 60 * 1000;
 const HOUR_MS = 60 * MINUTE_MS;
@@ -54,16 +56,6 @@ function handoffExpiry(instant) {
     return new Date(ocho);
 }
 
-/**
- * Sugerencia simple (Fase 4 la reemplaza): en turno, de su área, sin
- * sobrecarga y con la menor carga. Si nadie cumple, no hay sugerido.
- */
-function suggestOperator(operadores, area) {
-    const candidatos = operadores
-        .filter(o => o.area === area && o.estado.grupo === 'turno' && !o.sobrecarga)
-        .sort((a, b) => (a.carga - b.carga) || a.nombre.localeCompare(b.nombre));
-    return candidatos.length ? candidatos[0].id : null;
-}
 
 /**
  * Vista del traspaso vigente: pendientes (no resueltos ni cerrados) y vigencia.
@@ -94,14 +86,15 @@ function buildHandoffView(traspaso, now = new Date()) {
  * @param {Array} p.tickets    tickets no eliminados con asignado_a, creado_por y adjuntos
  * @param {Array} p.operators  operadores con { id, nombre, area_designada, estado_operativo, turno, tickets_asignados }
  * @param {Date}  [p.now]
+ * @param {object} [p.rules]  reglas de rulesService (antigüedad, sobrecarga, sugerencia)
  */
-function buildQueue({ tickets = [], operators = [], now = new Date() } = {}) {
+function buildQueue({ tickets = [], operators = [], now = new Date(), rules = DEFAULT_RULES } = {}) {
     const nowMs = time(now);
     const hoy = getDayBounds(now);
     const enHoy = v => { const t = time(v); return Number.isFinite(t) && t >= hoy.start.getTime() && t < hoy.end.getTime(); };
 
     // Antigüedad: misma regla que el Dashboard (P1 1 h, P2 2 h, P3 4 h, sin prioridad 30 min)
-    const atrasos = new Map(agingTickets(tickets, now).map(a => [a.codigo, a]));
+    const atrasos = new Map(agingTickets(tickets, now, rules).map(a => [a.codigo, a]));
 
     // Cola: activos, resueltos sin cerrar y cerrados hoy
     const visibles = tickets.filter(t =>
@@ -139,10 +132,14 @@ function buildQueue({ tickets = [], operators = [], now = new Date() } = {}) {
     const carga = new Map(operators.map(o => [o.id, (o.tickets_asignados || []).length]));
     const overload = computeOverload(operators.map(o => ({
         id: o.id, area_designada: o.area_designada, estado_operativo: o.estado_operativo, cargaActual: carga.get(o.id)
-    })));
+    })), { ratio: rules.sobrecarga.multiplicador, minimo: rules.sobrecarga.minimo });
     const operadores = operators.map(o => {
         const ov = overload.get(o.id) || {};
+        const norm = normalizeOperator(o, carga.get(o.id) || 0, ov.sobrecarga);
         return {
+            elegible: eligibility(norm, now, rules),
+            deGuardia: norm.deGuardia,
+            disponible: norm.disponible,
             id: o.id,
             nombre: o.nombre,
             iniciales: initials(o.nombre),
@@ -156,8 +153,16 @@ function buildQueue({ tickets = [], operators = [], now = new Date() } = {}) {
     }).sort((a, b) => a.nombre.localeCompare(b.nombre));
 
     const areas = Object.keys(AREA_NAMES).map(codigo => ({ codigo, nombre: AREA_NAMES[codigo] }));
-    const sugeridos = {};
-    areas.forEach(a => { sugeridos[a.codigo] = suggestOperator(operadores, a.codigo); });
+    // Sugerencia por área (§4) y cola de espera: sin asignar y nadie disponible en su área
+    const sug = buildSuggestions({
+        operadores: operadores.map(o => normalizeOperator(o)),
+        areas: areas.map(a => a.codigo),
+        tickets,
+        now,
+        rules
+    });
+    const enCola = new Set(sug.enCola);
+    filas.forEach(f => { f.enCola = enCola.has(f.codigo); });
 
     // Tarjetas fijas: total de la operación, no cambian con los filtros
     const activos = tickets.filter(t => ACTIVE_STATES.includes(t.estado_actual));
@@ -168,10 +173,11 @@ function buildQueue({ tickets = [], operators = [], now = new Date() } = {}) {
         pausaEspera: tickets.filter(t => ['EN_PAUSA', 'EN_ESPERA_TERCEROS'].includes(t.estado_actual)).length,
         resueltosSinCerrar: tickets.filter(t => t.estado_actual === 'RESUELTO').length,
         creadosHoy: tickets.filter(t => enHoy(t.createdAt)).length,
-        cerradosHoy: filas.filter(f => f.estado === 'CERRADO').length
+        cerradosHoy: filas.filter(f => f.estado === 'CERRADO').length,
+        enCola: enCola.size
     };
 
-    return { tickets: filas, operadores, areas, sugeridos, resumen };
+    return { tickets: filas, operadores, areas, sugeridos: sug.porArea, otraArea: sug.otraArea, resumen, reglas: rules };
 }
 
-module.exports = { buildQueue, buildHandoffView, handoffExpiry, suggestOperator, priorityOf, daysAgo };
+module.exports = { buildQueue, buildHandoffView, handoffExpiry, priorityOf, daysAgo };

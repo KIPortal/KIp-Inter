@@ -3,11 +3,14 @@
 	// El servidor dibuja la estructura y las tarjetas fijas; public/js/tickets.js
 	// dibuja la tabla, los filtros, el panel lateral y las ventanas con estos datos.
 	const r = cola.resumen;
+	const ag = cola.reglas.antiguedad;
+	const lim = m => m < 60 ? m + ' min' : (m / 60).toString().replace('.', ',') + ' h';
 	const datos = {
 		tickets: cola.tickets,
 		operadores: cola.operadores,
 		areas: cola.areas,
 		sugeridos: cola.sugeridos,
+		otraArea: cola.otraArea,
 		resumen: r,
 		traspaso,
 		guardias,
@@ -107,7 +110,7 @@
 				<span class="grow"></span>
 				<span style="display:inline-flex;align-items:center;gap:6px">
 					<svg width="12" height="12" viewBox="0 0 24 24" fill="none" style="stroke: var(--red-t)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2z"/><path d="M12 10v4M12 17.5v.5"/></svg>
-					Antigüedad: P1 más de 1 h, P2 más de 2 h, P3 más de 4 h y sin prioridad más de 30 min, sin asignar o sin movimiento
+					Antigüedad: P1 más de <%= lim(ag.P1) %>, P2 más de <%= lim(ag.P2) %>, P3 más de <%= lim(ag.P3) %> y sin prioridad más de <%= lim(ag.SP) %>, sin asignar o sin movimiento
 				</span>
 			</div>
 		</section>

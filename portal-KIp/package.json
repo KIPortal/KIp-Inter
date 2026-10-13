@@ -17,6 +17,7 @@
     "test:simulation": "node scripts/test-simulation.js",
     "test:dashboard": "node scripts/test-dashboard.js",
     "test:queue": "node scripts/test-ticket-queue.js",
+    "test:assignment": "node scripts/test-assignment.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

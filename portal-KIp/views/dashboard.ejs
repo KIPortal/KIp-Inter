@@ -19,7 +19,8 @@
 		info: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.5"/></svg>',
 		chev: '<svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>',
 		persona: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0',
-		reloj: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2'
+		reloj: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2',
+		cola: 'M4 6h16M4 12h10M4 18h6M18 14v6M15 17h6'
 	};
 %>
 <!DOCTYPE html>
@@ -66,6 +67,7 @@
 					<span class="kv count" style="--n: <%= k.activos %>" aria-label="<%= k.activos %>"></span>
 					<p class="bt">Tickets activos</p>
 					<span class="ks <%= k.sinAsignar ? 't-orange' : 't2' %>"><%= k.sinAsignar %> sin asignar</span>
+					<% if (k.enCola) { %><span class="ks t-red"><%= k.enCola %> en cola de espera</span><% } %>
 				</div>
 			</div>
 			<div class="bento">
@@ -240,7 +242,7 @@
 						<div style="display:flex;flex-direction:column">
 							<% panel.alertas.slice(0, 6).forEach((a, i) => { %>
 								<div class="alert-row" style="animation-delay: <%= i * 90 + 250 %>ms">
-									<span class="alert-ico <%= a.nivel %>"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="<%= a.tipo === 'sobrecarga' ? icono.persona : icono.reloj %>"/></svg></span>
+									<span class="alert-ico <%= a.nivel %>"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="<%= a.tipo === 'sobrecarga' ? icono.persona : (a.tipo === 'cola' ? icono.cola : icono.reloj) %>"/></svg></span>
 									<div class="txt">
 										<b><%= a.titulo %></b>
 										<span><%= a.detalle %> <strong class="<%= a.nivel === 'rojo' ? 't-red' : 't-orange' %>"><%= a.valor %></strong></span>
@@ -254,7 +256,7 @@
 					<% } else { %>
 						<div class="alert-row">
 							<span class="alert-ico verde"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L19 7"/></svg></span>
-							<div class="txt"><b>Todo en orden</b><span>Sin sobrecarga y sin tickets fuera de tiempo</span></div>
+							<div class="txt"><b>Todo en orden</b><span>Sin sobrecarga, sin cola de espera y sin tickets fuera de tiempo</span></div>
 						</div>
 					<% } %>
 				</section>

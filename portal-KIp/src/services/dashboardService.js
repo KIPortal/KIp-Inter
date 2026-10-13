@@ -17,6 +17,8 @@ const {
     computeOverload
 } = require('./metricsService');
 const { AREA_NAMES } = require('./periodReportService');
+const { DEFAULT_RULES, ageLimitFor } = require('./rulesService');
+const { buildSuggestions, normalizeOperator } = require('./assignmentService');
 
 const MINUTE_MS = 60 * 1000;
 const HOUR_MS = 60 * MINUTE_MS;
@@ -24,9 +26,8 @@ const HOUR_MS = 60 * MINUTE_MS;
 // Jornada normal (Caracas) para el anillo de "Estado del turno"
 const JORNADA = { inicio: 8, fin: 17 };
 
-// Antigüedad máxima (minutos) sin asignar o sin movimiento, según prioridad.
-// Fase 4 la leerá de la configuración de Administración.
-const AGE_LIMIT_MINUTES = { 8: 60, 5: 120, 1: 240, 0: 30 };
+// Antigüedad por defecto (minutos) según puntos; las reglas vigentes vienen de rulesService.
+const AGE_LIMIT_MINUTES = { 8: DEFAULT_RULES.antiguedad.P1, 5: DEFAULT_RULES.antiguedad.P2, 1: DEFAULT_RULES.antiguedad.P3, 0: DEFAULT_RULES.antiguedad.SP };
 
 const PRIORITY_LABEL = { 8: 'P1', 5: 'P2', 1: 'P3', 0: 'Sin prioridad' };
 
@@ -63,13 +64,13 @@ function shiftGroup(turno) {
  * antigüedad máxima de su prioridad. En pausa o en espera de terceros no
  * cuentan: están detenidos a propósito.
  */
-function agingTickets(tickets, now) {
+function agingTickets(tickets, now, rules = DEFAULT_RULES) {
     const nowMs = time(now);
     const out = [];
     for (const t of tickets) {
         if (!['NUEVO', 'EN_PROGRESO'].includes(t.estado_actual)) continue;
         const puntos = AGE_LIMIT_MINUTES[t.puntos_complejidad] !== undefined ? t.puntos_complejidad : 0;
-        const limite = AGE_LIMIT_MINUTES[puntos];
+        const limite = ageLimitFor(puntos, rules);
         const sinAsignar = !t.asignado_a_id;
         const desde = sinAsignar
             ? time(t.createdAt)
@@ -116,8 +117,9 @@ function jornadaStatus(now) {
  * @param {Array} p.operators   operadores con { id, nombre, area_designada, estado_operativo, turno, tickets_asignados }
  * @param {Date}  [p.now]
  * @param {string} [p.periodo]  'jornada' (hoy) o 'semana' (lunes a domingo); afecta resueltos, resolución y ranking
+ * @param {object} [p.rules]    reglas de rulesService (antigüedad, sobrecarga, sugerencia)
  */
-function buildCoordinatorPanel({ tickets = [], operators = [], now = new Date(), periodo = 'jornada' } = {}) {
+function buildCoordinatorPanel({ tickets = [], operators = [], now = new Date(), periodo = 'jornada', rules = DEFAULT_RULES } = {}) {
     const periodoValido = periodo === 'semana' ? 'semana' : 'jornada';
     const hoy = getDayBounds(now);
     const rango = getPeriodBounds(periodoValido, null, now);
@@ -157,7 +159,17 @@ function buildCoordinatorPanel({ tickets = [], operators = [], now = new Date(),
     const carga = new Map(operators.map(o => [o.id, (o.tickets_asignados || []).length]));
     const overload = computeOverload(operators.map(o => ({
         id: o.id, area_designada: o.area_designada, estado_operativo: o.estado_operativo, cargaActual: carga.get(o.id)
-    })));
+    })), { ratio: rules.sobrecarga.multiplicador, minimo: rules.sobrecarga.minimo });
+
+    // ----- Cola de espera: sin asignar y nadie disponible en su área (§4)
+    const sugerencias = buildSuggestions({
+        operadores: operators.map(o => normalizeOperator(o, carga.get(o.id) || 0, overload.get(o.id)?.sobrecarga)),
+        areas: [...new Set([...Object.keys(AREA_NAMES), ...tickets.map(t => t.area_designada || 'GENERAL')])],
+        tickets,
+        now,
+        rules
+    });
+    kpis.enCola = sugerencias.enCola.length;
 
     // ----- Resueltos del periodo por operador
     const porOperador = new Map();
@@ -232,8 +244,20 @@ function buildCoordinatorPanel({ tickets = [], operators = [], now = new Date(),
             .sort((a, b) => b.horas - a.horas)
     };
 
-    // ----- Alertas: sobrecarga y antigüedad
+    // ----- Alertas: cola de espera, sobrecarga y antigüedad
     const alertas = [];
+    if (sugerencias.enCola.length) {
+        const enCola = tickets.filter(t => sugerencias.enCola.includes(t.codigo_incidencia));
+        const areasCola = [...new Set(enCola.map(t => AREA_NAMES[t.area_designada] || t.area_designada))];
+        const codigos = enCola.slice(0, 2).map(t => t.codigo_incidencia).join(' y ') + (enCola.length > 2 ? ` y ${enCola.length - 2} más` : '');
+        alertas.push({
+            tipo: 'cola',
+            titulo: `En cola de espera · ${enCola.length} ${enCola.length === 1 ? 'ticket' : 'tickets'}`,
+            detalle: `${codigos} · nadie disponible en`,
+            valor: areasCola.join(', '),
+            nivel: 'rojo'
+        });
+    }
     operadores.filter(o => o.sobrecarga).sort((a, b) => b.indiceCarga - a.indiceCarga).forEach(o => {
         const ov = overload.get(o.id);
         alertas.push({
@@ -244,7 +268,7 @@ function buildCoordinatorPanel({ tickets = [], operators = [], now = new Date(),
             nivel: 'rojo'
         });
     });
-    const atrasados = agingTickets(tickets, now);
+    const atrasados = agingTickets(tickets, now, rules);
     atrasados.forEach(a => {
         alertas.push({
             tipo: 'antiguedad',
