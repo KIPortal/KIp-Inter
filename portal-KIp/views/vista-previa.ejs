@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+	<%- include('partials/head', { titulo: 'Vista previa' }) %>
+</head>
+<body>
+	<div class="app">
+		<%- include('partials/sidebar', { currentUser, activo: 'dashboard', conteos: { tickets: 12, enTurno: 4, totalOperadores: 7 } }) %>
+
+		<main class="app-main">
+			<header class="page-head">
+				<div>
+					<h1 class="page-title">Vista previa · Fase 1</h1>
+					<p class="page-sub">Base visual del rediseño: tokens, materiales, controles y gráficas. Página temporal de revisión.</p>
+				</div>
+				<div class="page-actions">
+					<button type="button" class="pill pillbtn" data-theme-toggle>Cambiar tema</button>
+					<button type="button" class="primary">Botón principal</button>
+				</div>
+			</header>
+
+			<div class="zone">Ahora</div>
+			<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin:16px 0 24px">
+				<div class="bento">
+					<div style="display:flex;align-items:center;gap:8px"><span class="ki">●</span><span class="kt">Tickets activos</span></div>
+					<div><div class="kv count" style="--n:12"></div><div class="ks" style="color:var(--orange-t)">3 sin asignar</div></div>
+				</div>
+				<div class="bento">
+					<div class="kt">Creados hoy</div>
+					<div class="kv count" style="--n:27"></div>
+				</div>
+				<div class="bento">
+					<div class="kt">Resueltos hoy</div>
+					<div><div class="kv count" style="--n:19"></div><div class="ks" style="color:var(--green-t)">5 pendientes de cierre</div></div>
+				</div>
+				<div class="bento">
+					<div class="kt">Críticos sin asignar</div>
+					<div class="kv count" style="--n:2;color:var(--red-t)"></div>
+				</div>
+			</div>
+
+			<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px">
+				<section class="glass" style="padding:20px 22px">
+					<h2 class="card-title">Carga por área</h2>
+					<% [['Core IP', 72, 'var(--red-t)'], ['Acceso', 48, 'var(--orange-t)'], ['Transporte', 25, 'var(--accent-t)']].forEach(([area, pct, color]) => { %>
+						<div style="margin-top:14px">
+							<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px"><span><%= area %></span><span style="color:var(--t2)"><%= pct %> %</span></div>
+							<div class="track">
+								<span class="bar-fill" style="width:<%= pct %>%;background:<%= color %>"></span>
+								<span class="tick" style="left:40%"></span><span class="tick" style="left:60%"></span>
+							</div>
+						</div>
+					<% }) %>
+				</section>
+
+				<section class="glass" style="padding:20px 22px;display:flex;flex-direction:column;gap:12px">
+					<h2 class="card-title">Controles</h2>
+					<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+						<button type="button" class="popup">Área: <strong>Todas</strong> ▾</button>
+						<button type="button" class="popup" data-active="true">Prioridad: <strong>P1</strong> ▾</button>
+						<button type="button" class="chip">Filtro activo ✕</button>
+						<span class="tbc">3 cambios sin guardar</span>
+						<button type="button" class="linkbtn">Ver lista</button>
+					</div>
+					<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+						<div role="tablist"><button role="tab" aria-selected="true">Jornada</button><button role="tab" aria-selected="false">Semana</button><button role="tab" aria-selected="false">Mes</button></div>
+						<button type="button" class="switch" role="switch" aria-checked="true"><span class="knob"></span></button>
+						<div class="stepper"><button type="button">−</button><span>1,5×</span><button type="button">+</button></div>
+						<button type="button" class="dangerbtn">Eliminar</button>
+					</div>
+					<input class="field" placeholder="Nota de traspaso (mínimo 10 caracteres)">
+					<div style="position:relative;min-height:120px">
+						<div class="mmenu" style="position:static;width:240px">
+							<button type="button" class="mitem"><span class="mk"></span><span class="mdot" style="background:var(--green-t)"></span><span class="ml">Ana Pérez</span><span class="mbadge" style="background:var(--green-bg);color:var(--green-t)">Sugerido</span><span class="mh">2 activos</span></button>
+							<button type="button" class="mitem" data-sel="true"><span class="mk">✓</span><span class="mdot" style="background:var(--red-t)"></span><span class="ml">Luis Gómez</span><span class="mbadge" style="background:var(--red-bg);color:var(--red-t)">Sobrecarga</span><span class="mh">6 activos</span></button>
+							<button type="button" class="mitem"><span class="mk"></span><span class="mdot" style="background:var(--purple-t)"></span><span class="ml">María Rojas</span><span class="mbadge" style="background:var(--purple-bg);color:var(--purple-t)">De guardia</span><span class="mh">1 activo</span></button>
+						</div>
+					</div>
+				</section>
+			</div>
+
+			<div style="position:fixed;top:16px;right:16px;z-index:80;width:320px">
+				<div class="notif" role="status"><span style="color:var(--green-t)">✔</span><div><strong>Aviso de prueba</strong><div style="color:var(--t2);font-size:12px">Recarga la página para verlo de nuevo. Código <span class="mono">INC-001</span>.</div></div></div>
+			</div>
+		</main>
+	</div>
+</body>
+</html>
