@@ -1,0 +1,21 @@
+<%#
+  Filtro desplegable "Etiqueta: Valor" con menú macOS (lo abre public/js/menus.js).
+  Uso: include('partials/popup', { etiqueta: 'Fecha', opciones: [{ etiqueta, href, sel, punto, pista }], porDefecto: true|false })
+%>
+<% const actual = opciones.find(o => o.sel) || opciones[0]; %>
+<span class="popwrap">
+	<button type="button" class="popup" data-menu-btn aria-haspopup="listbox" aria-expanded="false" data-active="<%= !porDefecto %>">
+		<span class="pl"><%= etiqueta %>:</span><span class="pv"><%= actual ? actual.etiqueta : '' %></span>
+		<svg class="t2" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+	</button>
+	<div class="mmenu right" role="listbox" aria-label="<%= etiqueta %>" hidden>
+		<% opciones.forEach(o => { %>
+			<a class="mitem" role="option" href="<%= o.href %>" aria-selected="<%= !!o.sel %>" data-sel="<%= !!o.sel %>">
+				<% if (o.punto) { %><span class="mdot" style="background:<%= o.punto %>"></span><% } %>
+				<span class="ml"><%= o.etiqueta %></span>
+				<span class="mh"><%= o.pista || '' %></span>
+				<span class="mk"><% if (o.sel) { %><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg><% } %></span>
+			</a>
+		<% }) %>
+	</div>
+</span>
