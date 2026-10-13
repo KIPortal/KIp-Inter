@@ -1,0 +1,931 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Dashboard General</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=Instrument+Sans:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0;background:#F1F5F9}
+a{color:#0369A1;text-decoration:none}a:hover{color:#075985}
+/* Liquid Glass – card (Materials / Liquid Glass Large, tarjeta) */
+.glass{background:rgba(255,255,255,0.85);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);border-radius:24px;box-shadow:0 0 0 0.5px rgba(15,23,42,0.05),0 4px 12px rgba(0,0,0,0.03);transition:box-shadow .4s ease}
+.glass:hover{box-shadow:0 0 0 0.5px rgba(15,23,42,0.05),0 12px 30px rgba(0,0,0,0.06)}
+.kt{font-size:12px;font-weight:600;color:var(--t2);letter-spacing:-0.005em}
+.bento{position:relative;background:rgba(255,255,255,0.85);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);border-radius:24px;padding:22px 24px 20px;min-height:150px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;gap:18px;box-shadow:0 0 0 0.5px rgba(15,23,42,0.05),0 4px 12px rgba(0,0,0,0.03);transition:transform .4s cubic-bezier(0.19,1,0.22,1),box-shadow .4s ease}
+.bento:hover{transform:scale(1.02);box-shadow:0 0 0 0.5px rgba(15,23,42,0.05),0 12px 30px rgba(0,0,0,0.08)}
+.ks{font-size:12px;font-weight:600;line-height:1.35}
+.bt{margin:0;font-size:14px;font-weight:600;line-height:1.3;letter-spacing:-0.015em;color:var(--t1)}
+.bplus{position:absolute;right:16px;bottom:16px;width:32px;height:32px;border-radius:50%;background:#E8E8ED;color:var(--t1);display:flex;align-items:center;justify-content:center;transition:background .3s ease,transform .4s cubic-bezier(0.19,1,0.22,1)}
+.bento:hover .bplus{background:#D1D1D6;transform:scale(1.1)}
+.notif{display:flex;align-items:flex-start;gap:10px;padding:12px 14px 12px 12px;border-radius:20px;background:rgba(255,255,255,0.78);-webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);box-shadow:1.25px 0 0 -0.75px #DBDBDB,-1.25px 0 0 -0.75px #DBDBDB,0 0 0 0.5px #DBDBDB,inset 0 1px 0 rgba(255,255,255,0.9),0 8px 32px rgba(0,0,0,0.08)}
+.info{width:18px;height:18px;padding:0;border:0;border-radius:50%;background:transparent;color:#94A3B8;display:inline-flex;align-items:center;justify-content:center;cursor:help}
+.info:hover{color:#0284C7;background:rgba(14,165,233,0.1)}
+.chip{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 6px 0 10px;border:0;border-radius:999px;background:#F0F9FF;box-shadow:inset 0 0 0 1px #BAE6FD;color:#0369A1;font:inherit;font-size:12px;font-weight:600;cursor:pointer}
+.chip:hover{background:#E0F2FE}
+@keyframes livePulse{0%{box-shadow:0 0 0 0 rgba(34,197,94,0.5)}70%{box-shadow:0 0 0 6px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+.live{width:7px;height:7px;border-radius:50%;background:#22C55E;animation:livePulse 2s infinite}
+.zone{display:flex;align-items:center;gap:12px;margin:10px 2px -2px;font-size:13px;font-weight:600;letter-spacing:-0.005em;color:var(--t2)}
+.zone::after{content:"";flex:1;height:1px;background:var(--sep)}
+[data-theme=dark] .chip{background:rgba(10,132,255,0.18);box-shadow:inset 0 0 0 1px rgba(64,156,255,0.35);color:#64B5FF}
+[data-theme=dark] .sideitem:hover,[data-theme=dark] .pillbtn:hover,[data-theme=dark] .ico:hover{background:rgba(255,255,255,0.08)}
+[data-theme=dark] .stat{border-color:rgba(255,255,255,0.10)}
+/* Texto: Primary / Secondary / Tertiary */
+[data-theme=dark] [style*="color: #0F172A"],[data-theme=dark] [style*="color: #1E293B"],[data-theme=dark] [style*="color: #1D1D1F"],[data-theme=dark] [style*="color: #1A1A1A"],[data-theme=dark] [style*="color: #1C1C1E"],[data-theme=dark] [style*="color: #334155"]{color:rgba(255,255,255,0.92)!important}
+[data-theme=dark] [style*="color: #64748B"],[data-theme=dark] [style*="color: #475569"]{color:rgba(235,235,245,0.60)!important}
+[data-theme=dark] [style*="color: #94A3B8"],[data-theme=dark] [style*="color: #8E8E93"]{color:rgba(235,235,245,0.32)!important}
+/* Colores de sistema (oscuro) */
+[data-theme=dark] [style*="color: #0369A1"],[data-theme=dark] [style*="color: #0284C7"]{color:#64B5FF!important}
+[data-theme=dark] [style*="color: #15803D"],[data-theme=dark] [style*="color: #047857"]{color:#30D158!important}
+[data-theme=dark] [style*="color: #B45309"],[data-theme=dark] [style*="color: #C2410C"]{color:#FF9F0A!important}
+[data-theme=dark] [style*="color: #B91C1C"]{color:#FF6961!important}
+[data-theme=dark] [style*="color: #6D28D9"]{color:#BF5AF2!important}
+[data-theme=dark] [fill="#0F172A"]{fill:rgba(255,255,255,0.92)}
+[data-theme=dark] svg [stroke="#1A1A1A"]{stroke:rgba(255,255,255,0.85)}
+[data-theme=dark] svg[stroke="#1A1A1A"]{stroke:rgba(255,255,255,0.85)}
+/* Separadores y superficies */
+[data-theme=dark] [style*="solid var(--sep)"],[data-theme=dark] [style*="solid #F1F5F9"],[data-theme=dark] [style*="solid #CBD5E1"]{border-color:rgba(255,255,255,0.08)!important}
+[data-theme=dark] [style*="background: #CBD5E1"],[data-theme=dark] [style*="background: #D9D9D9"]{background:rgba(255,255,255,0.14)!important}
+[data-theme=dark] [style*="background: #F0FDF4"],[data-theme=dark] [style*="background: #ECFDF5"]{background:rgba(48,209,88,0.16)!important;box-shadow:none!important}
+[data-theme=dark] [style*="background: #FFFBEB"]{background:rgba(255,159,10,0.16)!important;box-shadow:none!important}
+[data-theme=dark] [style*="background: #FEF2F2"]{background:rgba(255,69,58,0.18)!important;box-shadow:none!important}
+[data-theme=dark] [style*="background: #F0F9FF"],[data-theme=dark] [style*="background: #E0F2FE"]{background:rgba(10,132,255,0.20)!important;box-shadow:none!important}
+[data-theme=dark] [style*="background: #F8FAFC"],[data-theme=dark] [style*="background: #F1F5F9"],[data-theme=dark] [style*="background: rgba(255,255,255,0.6)"],[data-theme=dark] [style*="background: rgba(255,255,255,0.7)"],[data-theme=dark] [style*="background: rgba(255,255,255,0.45)"]{background:rgba(255,255,255,0.05)!important;box-shadow:inset 0 0 0 0.5px rgba(255,255,255,0.10)!important}
+[data-theme=dark] [style*="background: #FFFFFF"]:not(.knob){background:rgba(255,255,255,0.10)!important;color:rgba(255,255,255,0.92)!important}
+[data-theme=dark] [style*="background: #E6E6E6"]{background:rgba(255,255,255,0.18)!important}
+[data-theme=dark] [style*="background: #0284C7"]{background:#0A84FF!important}
+[data-theme=dark] [style*="linear-gradient(#E2E8F0 1px"]{background-image:linear-gradient(rgba(255,255,255,0.08) 1px,transparent 1px)!important}
+[data-theme=dark] [style*="linear-gradient(90deg, #E2E8F0 1px"]{background-image:linear-gradient(90deg,rgba(255,255,255,0.08) 1px,transparent 1px)!important}
+[data-theme=dark] [role=tab][aria-selected=true]{background:rgba(255,255,255,0.16)!important;color:rgba(255,255,255,0.95)!important;box-shadow:inset 0 0 0 0.5px rgba(255,255,255,0.12)!important}
+[data-theme=dark] [role=tablist]{background:rgba(0,0,0,0.25)!important;border-color:rgba(255,255,255,0.06)!important}
+[data-theme=dark] input{color:rgba(255,255,255,0.92)!important}
+[data-theme=dark] input::placeholder{color:rgba(235,235,245,0.32)}
+[data-theme=dark] .row:hover td,[data-theme=dark] .rowbtn:hover td,[data-theme=dark] .oprow:hover{background:rgba(255,255,255,0.04)!important}
+[data-theme=dark] .chip{background:rgba(14,165,233,0.16);box-shadow:inset 0 0 0 1px rgba(56,189,248,0.35);color:#7DD3FC}
+[data-theme=dark] [style*="color: #0F172A"],[data-theme=dark] [style*="color: #1E293B"],[data-theme=dark] [style*="color: #1D1D1F"],[data-theme=dark] [style*="color: #1A1A1A"],[data-theme=dark] [style*="color: #1C1C1E"],[data-theme=dark] [style*="color: #334155"]{color:#F5F5F7!important}
+[data-theme=dark] [style*="color: #64748B"],[data-theme=dark] [style*="color: #475569"]{color:#A1A1AA!important}
+[data-theme=dark] [style*="color: #0369A1"]{color:#7DD3FC!important}
+[data-theme=dark] [style*="color: #15803D"],[data-theme=dark] [style*="color: #047857"]{color:#4ADE80!important}
+[data-theme=dark] [style*="color: #B45309"],[data-theme=dark] [style*="color: #C2410C"]{color:#FBBF24!important}
+[data-theme=dark] [style*="color: #B91C1C"]{color:#F87171!important}
+[data-theme=dark] [fill="#0F172A"]{fill:#F5F5F7}
+[data-theme=dark] [style*="solid var(--sep)"],[data-theme=dark] [style*="solid #F1F5F9"],[data-theme=dark] [style*="solid #CBD5E1"]{border-color:rgba(255,255,255,0.08)!important}
+[data-theme=dark] [style*="background: #F0FDF4"],[data-theme=dark] [style*="background: #ECFDF5"]{background:rgba(34,197,94,0.14)!important;box-shadow:none!important}
+[data-theme=dark] [style*="background: #FFFBEB"]{background:rgba(245,158,11,0.14)!important;box-shadow:none!important}
+[data-theme=dark] [style*="background: #FEF2F2"]{background:rgba(239,68,68,0.16)!important}
+[data-theme=dark] [style*="background: #F0F9FF"],[data-theme=dark] [style*="background: #E0F2FE"]{background:rgba(14,165,233,0.16)!important;box-shadow:none!important}
+[data-theme=dark] [style*="background: #F8FAFC"],[data-theme=dark] [style*="background: #F1F5F9"],[data-theme=dark] [style*="background: rgba(255,255,255,0.6)"],[data-theme=dark] [style*="background: rgba(255,255,255,0.7)"],[data-theme=dark] [style*="background: rgba(255,255,255,0.45)"]{background:rgba(255,255,255,0.05)!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.08)!important}
+[data-theme=dark] a[style*="background: #FFFFFF"]{background:rgba(255,255,255,0.12)!important;color:#F5F5F7!important}
+[data-theme=dark] [style*="linear-gradient(#E2E8F0 1px"]{background-image:linear-gradient(rgba(255,255,255,0.08) 1px,transparent 1px)!important}
+[data-theme=dark] [style*="linear-gradient(90deg, #E2E8F0 1px"]{background-image:linear-gradient(90deg,rgba(255,255,255,0.08) 1px,transparent 1px)!important}
+[data-theme=dark] [role=tab][aria-selected=true]{background:rgba(255,255,255,0.16)!important;color:#F5F5F7!important;box-shadow:none!important}
+[data-theme=dark] [role=tablist]{background:rgba(255,255,255,0.08)!important;border-color:rgba(255,255,255,0.06)!important}
+[data-theme=dark] input{color:#F5F5F7!important}
+[data-theme=dark] .sideitem:hover,[data-theme=dark] .pillbtn:hover{background:rgba(255,255,255,0.08)}
+.kv{font-family:inherit;font-size:34px;line-height:38px;font-weight:600;color:var(--t1);letter-spacing:-0.02em;font-variant-numeric:tabular-nums}
+.ki{width:28px;height:28px;border-radius:8px;background:#F0F9FF;color:#0EA5E9;display:flex;align-items:center;justify-content:center;flex:none}
+/* Liquid Glass – capsule (Toolbars / Button, Search, Segmented Control) */
+.pill{background:rgba(255,255,255,0.72);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%);box-shadow:1.25px 0 0 -0.75px #D0D0D0,-1.25px 0 0 -0.75px #D0D0D0,0 0 0 0.5px #E2E8F0,inset 0 1px 0 rgba(255,255,255,0.95),inset 0 -6px 10px -8px rgba(40,40,40,0.18),0 8px 15px rgba(0,0,0,0.03);border-radius:1000px}
+/* Sidebar material (SideBars / BG) */
+.side{background:rgba(241,245,249,0.9);-webkit-backdrop-filter:blur(40px) saturate(150%);backdrop-filter:blur(40px) saturate(150%);box-shadow:0 0 0 0.5px rgba(15,23,42,0.08),inset 0 1px 0 rgba(255,255,255,0.8),0 10px 30px rgba(15,23,42,0.06);border-radius:18px}
+.sideitem:hover{background:rgba(15,23,42,0.05)}
+.pillbtn:hover{background:rgba(255,255,255,0.95)}
+.primary{background:#0284C7}.primary:hover{background:#0369A1}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(14,165,233,0.3)}
+
+/* ---------- Tokens de tema ---------- */
+[data-theme=light]{--t1:#1D1D1F;--t2:#556070;--t3:#7C7C82;--accent-t:#0369A1;--green-t:#15803D;--orange-t:#B45309;--red-t:#B91C1C;--purple-t:#6D28D9;--sep:#E2E8F0;--sep2:#F1F5F9;--green-bg:#ECFDF5;--orange-bg:#FFFBEB;--red-bg:#FEF2F2;--accent-bg:#E0F2FE;--accent-ring:#BAE6FD;--green-ring:#BBF7D0;--orange-ring:#FDE68A;--red-ring:#FECACA;--fill:#F8FAFC;--control:#FFFFFF;--seg-on:#FFFFFF;--seg-sel:#E6E6E6;--solid:#0284C7;--map-empty:rgba(229,229,234,0.7);--map-line:#FFFFFF;--glyph:#1A1A1A;--well:rgba(255,255,255,0.6)}
+[data-theme=dark]{--t1:rgba(255,255,255,0.92);--t2:rgba(235,235,245,0.76);--t3:rgba(235,235,245,0.54);--accent-t:#64B5FF;--green-t:#30D158;--orange-t:#FF9F0A;--red-t:#FF6961;--purple-t:#BF5AF2;--sep:rgba(255,255,255,0.10);--sep2:rgba(255,255,255,0.06);--green-bg:rgba(48,209,88,0.16);--orange-bg:rgba(255,159,10,0.16);--red-bg:rgba(255,69,58,0.18);--accent-bg:rgba(10,132,255,0.24);--accent-ring:rgba(64,156,255,0.38);--green-ring:rgba(48,209,88,0.32);--orange-ring:rgba(255,159,10,0.32);--red-ring:rgba(255,69,58,0.32);--fill:rgba(255,255,255,0.05);--control:rgba(255,255,255,0.10);--seg-on:rgba(255,255,255,0.18);--seg-sel:rgba(255,255,255,0.18);--solid:#0A84FF;--map-empty:rgba(255,255,255,0.08);--map-line:rgba(13,12,33,0.85);--glyph:rgba(255,255,255,0.85);--well:rgba(255,255,255,0.06)}
+[data-theme]{color:var(--t1);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+[data-theme] h1,[data-theme] h2,[data-theme] h3,[data-theme] h4,[data-theme] h5,[data-theme] h6,[data-theme] th,[data-theme] td{color:inherit}
+[data-theme=dark] .popup,[data-theme=dark] .field{background:var(--control)}
+
+/* ---------- Modo oscuro · macOS 27 Golden Gate ---------- */
+/* Materiales: Ultra Thick (sidebar), Regular (tarjetas), Thin (controles); texto Primary/Secondary/Tertiary */
+[data-theme=dark]{color-scheme:dark}
+[data-theme=dark] .glass,[data-theme=dark] .bento{background:rgba(38,37,58,0.62);-webkit-backdrop-filter:blur(30px) saturate(160%);backdrop-filter:blur(30px) saturate(160%);box-shadow:0 0 0 0.5px rgba(255,255,255,0.10),inset 0 1px 0 rgba(255,255,255,0.06),0 12px 32px rgba(5,4,20,0.40)}
+[data-theme=dark] .glass:hover,[data-theme=dark] .bento:hover{box-shadow:0 0 0 0.5px rgba(255,255,255,0.14),inset 0 1px 0 rgba(255,255,255,0.08),0 16px 40px rgba(5,4,20,0.5)}
+[data-theme=dark] .side{background:rgba(30,29,40,0.86);box-shadow:0 0 0 0.5px rgba(255,255,255,0.10),inset 0 1px 0 rgba(255,255,255,0.05),0 12px 36px rgba(5,4,20,0.45)}
+[data-theme=dark] .notif{background:linear-gradient(180deg,rgba(64,63,74,0.72),rgba(30,30,36,0.72));box-shadow:1.25px 0 0 -0.75px rgba(255,255,255,0.22),-1.25px 0 0 -0.75px rgba(255,255,255,0.22),0 0 0 0.5px rgba(255,255,255,0.14),0 8px 48px rgba(0,0,0,0.45)}
+[data-theme=dark] .pill{background:rgba(60,59,74,0.55);box-shadow:1.25px 0 0 -0.75px rgba(255,255,255,0.18),-1.25px 0 0 -0.75px rgba(255,255,255,0.18),0 0 0 0.5px rgba(255,255,255,0.10),inset 0 1px 0 rgba(255,255,255,0.06),0 8px 15px rgba(0,0,0,0.2)}
+[data-theme=dark] .popup,[data-theme=dark] .field{background:rgba(255,255,255,0.08);box-shadow:0 0 0 0.5px rgba(255,255,255,0.14);color:rgba(255,255,255,0.92)}
+[data-theme=dark] .primary{background:#0A84FF}
+[data-theme=dark] .primary:hover{background:#409CFF}
+[data-theme=dark] .bt,[data-theme=dark] .kv{color:rgba(255,255,255,0.92)}
+[data-theme=dark] .chip{background:rgba(10,132,255,0.18);box-shadow:inset 0 0 0 1px rgba(64,156,255,0.35);color:#64B5FF}
+[data-theme=dark] .sideitem:hover,[data-theme=dark] .pillbtn:hover,[data-theme=dark] .ico:hover{background:rgba(255,255,255,0.08)}
+[data-theme=dark] .stat{border-color:rgba(255,255,255,0.10)}
+[data-theme=dark] [fill="#0F172A"]{fill:rgba(255,255,255,0.92)}
+[data-theme=dark] svg [stroke="#1A1A1A"]{stroke:rgba(255,255,255,0.85)}
+[data-theme=dark] svg[stroke="#1A1A1A"]{stroke:rgba(255,255,255,0.85)}
+[data-theme=dark] [role=tab][aria-selected=true]{background:rgba(255,255,255,0.16)!important;color:rgba(255,255,255,0.95)!important;box-shadow:inset 0 0 0 0.5px rgba(255,255,255,0.12)!important}
+[data-theme=dark] [role=tablist]{background:rgba(0,0,0,0.25)!important;border-color:rgba(255,255,255,0.06)!important}
+[data-theme=dark] input{color:rgba(255,255,255,0.92)!important}
+[data-theme=dark] input::placeholder{color:rgba(235,235,245,0.32)}
+[data-theme=dark] .row:hover td,[data-theme=dark] .rowbtn:hover td,[data-theme=dark] .oprow:hover{background:rgba(255,255,255,0.04)!important}
+[data-theme=dark] [stroke="#1A1A1A"],[data-theme=dark] [stroke="#727272"]{stroke:rgba(255,255,255,0.85)}
+[data-theme=dark] [stroke="#64748B"]{stroke:rgba(235,235,245,0.76)}
+[data-theme=dark] [fill="#0F172A"]{fill:rgba(255,255,255,0.92)}
+/* Sidebar fijo: siempre visible al bajar la página; su contenido se desplaza si no cabe */
+@media (min-width: 900px){nav.side{position:sticky!important;top:10px;align-self:flex-start!important;height:calc(100vh - 20px)!important;min-height:0!important;overflow-y:auto;scrollbar-width:thin}}
+/* Sidebar minimizable y animado */
+nav.side{overflow-x:hidden;transition:flex-basis .38s cubic-bezier(.22,1,.36,1),max-width .38s cubic-bezier(.22,1,.36,1),padding .38s cubic-bezier(.22,1,.36,1);animation:sideIn .55s cubic-bezier(.22,1,.36,1) both}
+nav.side a{white-space:nowrap;overflow:hidden;transition:background .2s ease,box-shadow .2s ease,padding .38s cubic-bezier(.22,1,.36,1),gap .38s cubic-bezier(.22,1,.36,1)}
+nav.side a svg{flex:none;transition:transform .2s ease}
+nav.side a:hover svg{transform:scale(1.1)}
+nav.side a>span{transition:opacity .2s ease}
+nav.side>span{max-height:40px;overflow:hidden;white-space:nowrap;transition:opacity .2s ease,max-height .35s ease,padding .35s ease}
+nav.side .sb-brand,nav.side .sb-txt{max-width:200px;overflow:hidden;white-space:nowrap;transition:opacity .2s ease,max-width .38s cubic-bezier(.22,1,.36,1)}
+nav.side>div:first-child button svg{transition:transform .38s cubic-bezier(.22,1,.36,1)}
+nav.side[data-collapsed=true]{flex:0 0 64px!important;max-width:64px!important;padding-left:8px!important;padding-right:8px!important}
+nav.side[data-collapsed=true]>span{opacity:0;max-height:0;padding-top:0!important;padding-bottom:0!important}
+nav.side[data-collapsed=true] .sb-brand,nav.side[data-collapsed=true] .sb-txt{opacity:0;max-width:0}
+nav.side[data-collapsed=true] a>span{opacity:0}
+nav.side[data-collapsed=true] a{padding-left:16px!important;padding-right:0!important;height:36px!important;gap:40px!important}
+nav.side[data-collapsed=true]>div:first-child{justify-content:center!important;padding:2px 0 12px!important}
+nav.side[data-collapsed=true]>div:first-child button svg{transform:scaleX(-1)}
+nav.side[data-collapsed=true] .sb-top{align-items:center}
+nav.side[data-collapsed=true] .sb-top>div{padding:0!important}
+@keyframes sideIn{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){nav.side,nav.side *{transition:none!important;animation:none!important}}
+/* ---------- Gráficas: marcas finas, color sólido y animación de entrada ---------- */
+[data-theme=light]{--track:rgba(148,163,184,0.18);--grid:rgba(15,23,42,0.07)}
+[data-theme=dark]{--track:rgba(255,255,255,0.09);--grid:rgba(255,255,255,0.08)}
+.track{position:relative;height:8px;border-radius:999px;background:var(--track)}
+.bar-fill{display:block;height:100%;border-radius:999px;transform-origin:left center;animation:growX .9s cubic-bezier(.22,1,.36,1) both;transition:width .5s cubic-bezier(.22,1,.36,1)}
+.tick{position:absolute;top:-3px;bottom:-3px;width:1px;background:var(--t3);opacity:.45}
+.reveal{animation:revealX 1.5s cubic-bezier(.22,1,.36,1) both}
+.fade-up,section.glass,.bento{animation:fadeUp .6s cubic-bezier(.22,1,.36,1) both}
+.bento:nth-child(2){animation-delay:.06s}.bento:nth-child(3){animation-delay:.12s}.bento:nth-child(4){animation-delay:.18s}
+.ring-draw{animation:ringDraw 1.3s cubic-bezier(.22,1,.36,1) .2s both}
+.dot-pop{animation:dotPop .5s cubic-bezier(.34,1.56,.64,1) 1.1s both}
+@property --n{syntax:'<integer>';initial-value:0;inherits:false}
+.count{counter-reset:n var(--n);animation:countUp 1.2s cubic-bezier(.22,1,.36,1) both}
+.count::after{content:counter(n)}
+@keyframes growX{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes revealX{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes ringDraw{from{stroke-dasharray:0 213.6}}
+@keyframes dotPop{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:none}}
+@keyframes countUp{from{--n:0}}
+@media (prefers-reduced-motion: reduce){.bar-fill,.reveal,.fade-up,section.glass,.bento,.ring-draw,.dot-pop,.count{animation:none!important}}
+/* Notificaciones animadas: entrada con rebote, ícono que aparece, barra de tiempo y salida suave */
+.notif[role=status]{animation:nIn .55s cubic-bezier(.34,1.4,.64,1) both,nOut .35s ease 3.6s forwards}
+.notif[role=status]>span:first-child{animation:nIcon .45s cubic-bezier(.34,1.56,.64,1) .18s both}
+.notif[role=status]::after{content:'';position:absolute;left:18px;right:18px;bottom:5px;height:2px;border-radius:2px;background:currentColor;opacity:.18;transform-origin:left;animation:nBar 3.6s linear both}
+.alert-row{animation:nRow .5s cubic-bezier(.22,1,.36,1) both}
+@keyframes nIn{from{opacity:0;transform:translateX(48px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes nOut{to{opacity:0;transform:translateX(24px) scale(.98);pointer-events:none}}
+@keyframes nIcon{from{opacity:0;transform:scale(.3) rotate(-20deg)}to{opacity:1;transform:none}}
+@keyframes nBar{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+@keyframes nRow{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){.notif[role=status],.notif[role=status]>span:first-child,.notif[role=status]::after,.alert-row{animation:none!important}}
+/* ---------- Paleta oscura equilibrada: tonos menos saturados para que no se vean eléctricos ---------- */
+[data-theme=light]{--area-hd:#64B5FF;--area-hd-t:#0B2E4F}
+[data-theme=dark]{--accent-t:#7FB2E5;--green-t:#5DBB85;--orange-t:#E0A458;--red-t:#E07A74;--purple-t:#B59AE6;--solid:#3A7FCC;--accent-bg:rgba(58,127,204,0.22);--accent-ring:rgba(127,178,229,0.32);--green-bg:rgba(93,187,133,0.14);--green-ring:rgba(93,187,133,0.28);--orange-bg:rgba(224,164,88,0.14);--orange-ring:rgba(224,164,88,0.28);--red-bg:rgba(224,122,116,0.15);--red-ring:rgba(224,122,116,0.30);--area-hd:rgba(58,127,204,0.24);--area-hd-t:rgba(255,255,255,0.92)}
+[data-theme=dark] .primary{background:#3A7FCC}
+[data-theme=dark] .primary:hover{background:#4A8DD8}
+[data-theme=dark] .mitem:hover,[data-theme=dark] .mitem[data-sel=true]{background:#3A7FCC}
+[data-theme=dark] .bar-fill,[data-theme=dark] .mdot,[data-theme=dark] svg.reveal,[data-theme=dark] .ring-draw{filter:saturate(.72) brightness(.92)}
+[data-theme=dark] .notif[role=status]>span:first-child{filter:saturate(.75) brightness(.92)}
+/* Barra minimizada: íconos, avatar y botón en el mismo eje */
+nav.side[data-collapsed=true] a{justify-content:center!important;padding:0!important;gap:0!important;font-size:0!important}
+nav.side a{transition:background .2s ease,box-shadow .2s ease,padding .38s cubic-bezier(.22,1,.36,1),gap .38s cubic-bezier(.22,1,.36,1),font-size .2s ease}
+nav.side[data-collapsed=true] .sb-top>div{gap:0!important;justify-content:center!important}
+/* Barra minimizada: cada opción es una caja fija centrada (con o sin conteo) */
+nav.side[data-collapsed=true] a{width:40px!important;margin-left:auto!important;margin-right:auto!important;box-sizing:border-box;padding:0!important;gap:0!important;justify-content:center!important;font-size:0!important}
+nav.side[data-collapsed=true] a>span{display:none!important}
+nav.side[data-collapsed=true] .sb-top>div:first-child{width:40px;margin:0 auto}
+/* Paleta oscura también en íconos y gráficas */
+[data-theme=dark] svg{filter:saturate(.75) brightness(.95)}
+[data-theme=dark] svg svg,[data-theme=dark] svg .ring-draw{filter:none}
+[data-theme=dark] .alert-row>span:first-child{filter:saturate(.72) brightness(.92)}
+</style>
+</helmet>
+<div data-theme="{{theme}}" style="min-height: 100vh; background: {{bg}}; color: var(--t1); font-family: {{font}}; font-size: 13px; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px; padding: 10px; box-sizing: border-box">
+
+<!-- Sidebar (floating, macOS 27) -->
+<nav class="side" data-collapsed="{{sb.c}}" aria-label="Navegación principal" style="flex: 1 1 220px; max-width: 232px; align-self: stretch; padding: 12px 10px 10px; box-sizing: border-box; display: flex; flex-direction: column; gap: 1px; min-height: calc(100vh - 20px)">
+<div style="display: flex; align-items: center; justify-content: space-between; padding: 2px 2px 14px 8px">
+<div class="sb-brand" style="display: flex; align-items: center; gap: 8px">
+<span style="font-size: 16px; font-weight: 800; letter-spacing: -0.5px; color: #0284C7">inter</span>
+<span style="width: 1px; height: 14px; background: var(--sep)"></span>
+<span style="font-size: 13px; font-weight: 600">Operaciones IP</span>
+</div>
+<button class="pill pillbtn" onClick="{{sb.toggle}}" aria-label="{{sb.label}}" title="{{sb.label}}" style="cursor: pointer; width: 30px; height: 30px; border: 0; display: flex; align-items: center; justify-content: center; padding: 0">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="3"></rect><path d="M9 4.5v15"></path></svg>
+</button>
+</div>
+<div class="sb-top" style="display: flex; flex-direction: column; gap: 10px; padding: 0 0 14px; margin-bottom: 8px; border-bottom: 1px solid var(--sep)">
+<div style="display: flex; align-items: center; gap: 8px; padding: 2px 6px 0">
+<span style="width: 28px; height: 28px; border-radius: 50%; background: var(--solid); color: #FFFFFF; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center">C</span>
+<div class="sb-txt" style="display: flex; flex-direction: column; line-height: 1.3; min-width: 0">
+<span style="font-size: 12px; font-weight: 600">coordinador</span>
+<span style="font-size: 12px; color: var(--t2)">coordinador@test.com</span>
+</div>
+</div>
+</div>
+<span style="font-size: 12px; font-weight: 600; color: var(--t2); padding: 0 8px 4px">Coordinación</span>
+<a title="Dashboard General" href="Main.dc.html" aria-current="page" style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; border-radius: 8px; background: var(--accent-bg); color: var(--accent-t); font-size: 13px; font-weight: 600; box-shadow: inset 0 0 0 0.5px var(--accent-ring)">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="2"></rect><rect x="14" y="3" width="7" height="5" rx="2"></rect><rect x="14" y="12" width="7" height="9" rx="2"></rect><rect x="3" y="16" width="7" height="5" rx="2"></rect></svg>
+Dashboard General</a>
+<a class="sideitem" title="Tickets" href="Tickets.dc.html" style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; border-radius: 8px; color: var(--t1); font-size: 13px">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0078F0" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 9V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a3 3 0 0 0 0 6v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a3 3 0 0 0 0-6z"></path></svg>
+<span style="flex: 1">Tickets</span><span style="font-size: 12px; font-weight: 600; color: var(--t2); font-variant-numeric: tabular-nums">48</span></a>
+<a class="sideitem" title="Gestión de Turno" href="Turno.dc.html" style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; border-radius: 8px; color: var(--t1); font-size: 13px">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0078F0" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"></path></svg>
+<span style="flex: 1">Gestión de Turno</span><span style="font-size: 12px; font-weight: 600; color: var(--green-t); font-variant-numeric: tabular-nums">13/14</span></a>
+<span style="font-size: 12px; font-weight: 600; color: var(--t2); padding: 14px 8px 4px">Control</span>
+<a class="sideitem" title="Reportes" href="Reportes.dc.html" style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; border-radius: 8px; color: var(--t1); font-size: 13px">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0078F0" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"></path></svg>
+Reportes</a>
+<a class="sideitem" title="Auditoría" href="Auditoria.dc.html" style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; border-radius: 8px; color: var(--t1); font-size: 13px">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0078F0" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"></path><path d="M9 12l2 2 4-4"></path></svg>
+Auditoría</a>
+<a class="sideitem" title="Administración" href="Administracion.dc.html" style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; border-radius: 8px; color: var(--t1); font-size: 13px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0078F0" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"></path><circle cx="15" cy="6" r="2"></circle><circle cx="9" cy="12" r="2"></circle><circle cx="17" cy="18" r="2"></circle></svg>Administración</a>
+</nav>
+
+<!-- Main -->
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 16px; padding: 2px 8px 32px 6px; box-sizing: border-box">
+
+<!-- Unified toolbar -->
+<header style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-height: 44px">
+<div style="display: flex; flex-direction: column; margin-right: 6px">
+<h1 style="margin: 0; font-size: 20px; line-height: 24px; font-weight: 700; letter-spacing: -0.02em">Dashboard General</h1>
+<span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--t2)"><span class="live"></span>En vivo · actualizado hace 30 s</span>
+</div>
+<span style="display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 1000px; background: var(--accent-bg); color: var(--accent-t); box-shadow: inset 0 0 0 1px var(--accent-ring); font-size: 12px; font-weight: 600"><span style="width: 6px; height: 6px; border-radius: 50%; background: #0EA5E9"></span>Jornada 08:00–17:00</span>
+<span style="flex: 1"></span>
+<div role="tablist" aria-label="Periodo" style="display: inline-flex; padding: 4px; border-radius: 12px; background: rgba(0,0,0,0.08); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border: 1px solid rgba(0,0,0,0.05); box-shadow: inset 0 2px 4px rgba(0,0,0,0.05)">
+<button role="tab" aria-selected="{{p.jornadaSel}}" onClick="{{p.toJornada}}" style="display: flex; align-items: center; gap: 8px; padding: 6px 16px; border: 0; border-radius: 9px; font: inherit; font-size: 12px; font-weight: {{p.jW}}; color: {{p.jC}}; background: {{p.jBg}}; box-shadow: {{p.jSh}}; cursor: pointer">
+<svg style="stroke: {{p.jI}}" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+<span>Jornada actual</span>
+</button>
+<button role="tab" aria-selected="{{p.semanaSel}}" onClick="{{p.toSemana}}" style="display: flex; align-items: center; gap: 8px; padding: 6px 16px; border: 0; border-radius: 9px; font: inherit; font-size: 12px; font-weight: {{p.sW}}; color: {{p.sC}}; background: {{p.sBg}}; box-shadow: {{p.sSh}}; cursor: pointer">
+<svg style="stroke: {{p.sI}}" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>
+<span>Semana</span>
+</button>
+</div>
+<div class="pill" role="group" aria-label="Acciones" style="display: flex; align-items: center; gap: 4px; height: 36px; padding: 4px; box-sizing: border-box">
+<button class="pillbtn" aria-label="Actualizar" style="width: 28px; height: 28px; border: 0; border-radius: 100px; background: transparent; display: flex; align-items: center; justify-content: center; padding: 0">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"></path></svg></button>
+<button class="pillbtn" aria-label="Notificaciones" style="position: relative; width: 28px; height: 28px; border: 0; border-radius: 100px; background: transparent; display: flex; align-items: center; justify-content: center; padding: 0">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9zM10 20a2 2 0 0 0 4 0"></path></svg>
+<span style="position: absolute; top: 4px; right: 5px; width: 7px; height: 7px; border-radius: 50%; background: #EF4444; box-shadow: 0 0 0 1.5px #FFFFFF"></span></button>
+</div>
+
+</header>
+
+<div class="zone">Ahora</div>
+<!-- KPIs -->
+<section aria-label="Indicadores" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 16px">
+<div class="bento">
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4zM3 12l9 4 9-4M3 17l9 4 9-4"></path></svg>
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0"><span class="kv count" style="--n: 48" aria-label="48"></span><p class="bt">Tickets activos</p><span class="ks" style="color: var(--orange-t)">7 sin asignar</span><span class="ks" style="color: var(--red-t)">2 en cola de espera</span></div>
+</div>
+<div class="bento">
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0"><span class="kv count" style="--n: 53" aria-label="53"></span><p class="bt">Creados hoy</p><span class="ks" style="color: var(--t2)">61 en las últimas 24 h</span></div>
+</div>
+<div class="bento">
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 12l3 3 5-6M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z"></path></svg>
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0"><span class="kv count" style="--n: 44" aria-label="44"></span><p class="bt">Resueltos hoy</p><span class="ks" style="color: var(--t2)">5 pendientes de cierre</span></div>
+</div>
+<div class="bento">
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2zM12 10v5M12 18v.5"></path></svg>
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0"><span class="kv count" style="--n: 1" aria-label="1"></span><p class="bt">Críticos sin asignar</p><span class="ks" style="color: var(--red-t)">INC-004 · 1 h 12</span></div>
+</div>
+</section>
+<div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+<div style="flex: 2 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+<section class="glass" aria-labelledby="h-areas" style="padding: 20px 24px; display: flex; flex-direction: column; gap: 4px; min-width: 0">
+<div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding-bottom: 6px">
+<h2 id="h-areas" style="margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -0.01em">Carga por área</h2>
+<span style="font-size: 12px; color: var(--t2)">Pulsa un área para ver a sus operadores</span>
+<button class="info" aria-label="Saturación = porcentaje de los tickets del área que siguen abiertos. Pulsa un área para ver sus operadores." title="Saturación = porcentaje de los tickets del área que siguen abiertos. Pulsa un área para ver sus operadores."><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8v.5"></path></svg></button>
+<span style="flex: 1"></span>
+<span style="display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--t2)"><span style="width: 14px; height: 6px; border-radius: 3px; background: #0EA5E9"></span>Menos de 40 %</span>
+<span style="display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--t2)"><span style="width: 14px; height: 6px; border-radius: 3px; background: #F59E0B"></span>40–59 %</span>
+<span style="display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--t2)"><span style="width: 14px; height: 6px; border-radius: 3px; background: #EF4444"></span>60 % o más</span>
+</div>
+<div style="overflow-x: auto">
+<div style="min-width: 620px">
+<div style="display: grid; grid-template-columns: 200px minmax(0, 1fr) 56px 72px 56px 20px; column-gap: 12px; font-size: 12px; font-weight: 600; color: var(--t2); padding: 6px 0; border-bottom: 1px solid var(--sep)">
+<span>Área</span><span>Aún abiertos</span><span style="text-align: right">%</span><span style="text-align: right">Abiertos</span><span style="text-align: right">Recibidos</span><span></span>
+</div>
+<sc-for list="{{areas}}" as="r" hint-placeholder-count="7">
+<button onClick="{{r.pick}}" aria-pressed="{{r.on}}" aria-label="Ver operadores de {{r.name}}" style="width: 100%; display: grid; grid-template-columns: 200px minmax(0, 1fr) 56px 72px 56px 20px; column-gap: 12px; align-items: center; height: 36px; padding: 0 6px; margin: 1px 0; border: 0; border-radius: 9px; background: {{r.rowBg}}; box-shadow: {{r.rowRing}}; font: inherit; color: var(--t1); text-align: left; cursor: pointer; font-variant-numeric: tabular-nums">
+<span style="font-size: 12px; font-weight: {{r.nameW}}; color: {{r.nameC}}">{{r.name}}</span>
+<div class="track" title="{{r.sat}} % aún abiertos · {{r.active}} de {{r.total}}"><span class="bar-fill" style="width: {{r.satW}}; background: {{r.satFill}}; animation-delay: calc({{$index}} * 70ms)"></span><span class="tick" style="left: 40%"></span><span class="tick" style="left: 60%"></span></div>
+<span style="font-size: 12px; font-weight: 700; text-align: right; color: {{r.satText}}">{{r.sat}}%</span>
+<span style="font-size: 12px; text-align: right; font-weight: 500">{{r.active}}</span>
+<span style="font-size: 12px; text-align: right; color: var(--t2)">{{r.total}}</span>
+<svg style="transform: {{r.chev}}; transition: transform .2s ease" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
+</button>
+<sc-if value="{{r.on}}" hint-placeholder-val="{{ false }}">
+<div style="margin: 2px 0 10px; padding: 14px 16px 6px; border-radius: 14px; background: var(--well); box-shadow: inset 0 0 0 1px var(--sep)">
+<div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding-bottom: 10px">
+<span style="flex: 1; min-width: 200px; font-size: 12px; color: var(--t2)">{{sel.summary}}</span>
+<span style="display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--t2)"><span style="width: 14px; height: 6px; border-radius: 3px; background: #0EA5E9"></span>Carga actual</span>
+<span style="display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--t2)"><span style="width: 14px; height: 6px; border-radius: 3px; background: #22C55E"></span>Resueltos</span>
+<div role="tablist" aria-label="Ordenar operadores" style="display: inline-flex; padding: 3px; border-radius: 10px; background: rgba(0,0,0,0.08); border: 1px solid rgba(0,0,0,0.05); box-shadow: inset 0 2px 4px rgba(0,0,0,0.05)">
+<button role="tab" aria-selected="{{sort.cargaSel}}" onClick="{{sort.toCarga}}" style="padding: 4px 12px; border: 0; border-radius: 7px; font: inherit; font-size: 12px; font-weight: {{sort.cW}}; color: {{sort.cC}}; background: {{sort.cBg}}; box-shadow: {{sort.cSh}}; cursor: pointer">Más carga</button>
+<button role="tab" aria-selected="{{sort.resSel}}" onClick="{{sort.toRes}}" style="padding: 4px 12px; border: 0; border-radius: 7px; font: inherit; font-size: 12px; font-weight: {{sort.rW}}; color: {{sort.rC}}; background: {{sort.rBg}}; box-shadow: {{sort.rSh}}; cursor: pointer">Más resueltos</button>
+</div>
+</div>
+<div style="overflow-x: auto">
+<div style="min-width: 640px; display: flex; flex-direction: column">
+<div style="display: grid; grid-template-columns: 220px minmax(0, 1fr) 64px 64px; column-gap: 16px; font-size: 12px; font-weight: 600; color: var(--t2); padding: 0 0 6px">
+<span>Operador</span><span>Carga actual / Resueltos</span><span style="text-align: right">Prom.</span><span style="text-align: right">Puntos</span>
+</div>
+<sc-for list="{{opsRows}}" as="o" hint-placeholder-count="4">
+<div style="display: grid; grid-template-columns: 220px minmax(0, 1fr) 64px 64px; column-gap: 16px; align-items: center; padding: 8px 0; border-top: 1px solid var(--sep2); font-variant-numeric: tabular-nums">
+<div style="display: flex; align-items: center; gap: 10px; min-width: 0">
+<span style="width: 20px; font-size: 12px; font-weight: 700; color: var(--t2); text-align: center">{{o.pos}}</span>
+<span style="position: relative; width: 28px; height: 28px; border-radius: 50%; background: var(--accent-bg); color: var(--accent-t); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex: none">{{o.ini}}<span style="position: absolute; right: -1px; bottom: -1px; width: 8px; height: 8px; border-radius: 50%; background: {{o.stateColor}}; border: 2px solid #FFFFFF"></span></span>
+<div style="display: flex; flex-direction: column; min-width: 0">
+<span style="font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{o.name}}</span>
+<span style="font-size: 12px; color: var(--t2)">{{o.state}}</span>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 5px">
+<div style="display: flex; align-items: center; gap: 8px">
+<div class="track" style="flex: 1"><span class="bar-fill" style="width: {{o.cW}}; background: {{o.cFill}}; animation-delay: calc({{$index}} * 60ms)"></span></div>
+<span style="width: 72px; font-size: 12px; color: var(--t2)"><strong style="font-size: 12px; color: {{o.cText}}">{{o.carga}}</strong> activos</span>
+</div>
+<div style="display: flex; align-items: center; gap: 8px">
+<div class="track" style="flex: 1"><span class="bar-fill" style="width: {{o.rW}}; background: #22C55E; animation-delay: calc({{$index}} * 60ms + 120ms)"></span></div>
+<span style="width: 72px; font-size: 12px; color: var(--t2)"><strong style="font-size: 12px; color: var(--green-t)">{{o.res}}</strong> resueltos</span>
+</div>
+</div>
+<span style="font-size: 12px; text-align: right; color: var(--t2)">{{o.avg}} h</span>
+<span style="font-size: 12px; text-align: right; font-weight: 700">{{o.pts}}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</sc-if>
+</sc-for>
+</div>
+</div>
+</section>
+<!-- Promedio de resolución por área -->
+<section class="glass" aria-labelledby="h-resol" style="padding: 20px 24px; display: flex; flex-direction: column; gap: 22px; min-width: 0">
+<div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding-bottom: 6px">
+<h2 id="h-resol" style="margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -0.01em">Tiempo promedio de resolución por área</h2>
+<button class="info" aria-label="Promedio de horas entre la creación y la resolución de los tickets de cada área, medido desde la llegada del ticket (últimas 24 h)." title="Promedio de horas entre la creación y la resolución de los tickets de cada área, medido desde la llegada del ticket (últimas 24 h)."><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8v.5"></path></svg></button>
+<span style="flex: 1"></span>
+<span style="padding: 2px 8px; border-radius: 1000px; background: var(--accent-bg); color: var(--accent-t); box-shadow: inset 0 0 0 1px var(--accent-ring); font-size: 12px; font-weight: 600">Últimas 24 h</span>
+</div>
+<div style="position: relative; display: flex; flex-direction: column">
+<div aria-hidden="true" style="position: absolute; top: -4px; bottom: 22px; left: calc(154px + (100% - 224px) * 0.425); width: 0; border-left: 1.5px solid var(--t2); opacity: .55; z-index: 1; pointer-events: none"></div>
+<span aria-hidden="true" style="position: absolute; top: -20px; left: calc(154px + (100% - 224px) * 0.425); transform: translateX(-50%); font-size: 11px; font-weight: 600; color: var(--t2); white-space: nowrap">Promedio 3,4 h</span>
+<sc-for list="{{resol}}" as="r" hint-placeholder-count="7">
+<button onClick="{{r.pick}}" aria-pressed="{{r.on}}" aria-label="Ver operadores de {{r.name}}" style="width: 100%; display: grid; grid-template-columns: 136px minmax(0, 1fr) 52px; column-gap: 12px; align-items: center; height: 36px; padding: 0 6px; border: 0; border-radius: 9px; background: {{r.rowBg}}; box-shadow: {{r.rowRing}}; font: inherit; text-align: left; cursor: pointer">
+<span style="font-size: 12px; font-weight: {{r.nameW}}; text-align: right; color: {{r.nameC}}">{{r.name}}</span>
+<div style="position: relative; height: 100%; display: flex; align-items: center; background-image: linear-gradient(90deg, var(--grid) 1px, transparent 1px); background-size: 25% 100%">
+<div class="track" style="width: 100%; height: 10px; background: transparent" title="{{r.name}}: {{r.h}} h"><span class="bar-fill" style="width: {{r.w}}; background: {{r.fill}}; animation-delay: calc({{$index}} * 70ms + 150ms)"></span></div>
+</div>
+<span style="font-size: 12px; font-weight: 700; color: {{r.text}}; font-variant-numeric: tabular-nums">{{r.h}} h</span>
+</button>
+</sc-for>
+<div style="display: grid; grid-template-columns: 136px minmax(0, 1fr) 52px; column-gap: 12px; padding: 4px 6px 0">
+<span></span>
+<div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--t2); font-variant-numeric: tabular-nums"><span>0 h</span><span>2 h</span><span>4 h</span><span>6 h</span><span>8 h</span></div>
+<span></span>
+</div>
+</div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 8px; border-top: 1px solid var(--sep); font-size: 12px; color: var(--t2)">
+<span>Promedio general: <strong style="color: var(--t1)">3,4 h</strong></span>
+<span>Medido desde la llegada del ticket</span>
+</div>
+</section>
+</div>
+<div style="flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+<!-- Alertas: tarjeta compacta, no deja huecos cuando no hay -->
+<section class="glass" aria-labelledby="h-alertas" style="padding: 18px 20px 14px; display: flex; flex-direction: column; gap: 6px; min-width: 0">
+<div style="display: flex; align-items: center; gap: 10px; padding-bottom: 4px">
+<h2 id="h-alertas" style="margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -0.01em">Alertas</h2>
+<span style="padding: 2px 8px; border-radius: 1000px; background: {{alertState.badgeBg}}; color: {{alertState.badgeC}}; font-size: 12px; font-weight: 600">{{alertState.badge}}</span>
+<span style="flex: 1"></span>
+<sc-if value="{{alertState.has}}" hint-placeholder-val="{{ true }}"><a href="Tickets.dc.html" style="font-size: 12px; font-weight: 600; color: var(--accent-t)">Ver tickets</a></sc-if>
+</div>
+<sc-if value="{{alertState.has}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column">
+<sc-for list="{{alerts}}" as="a" hint-placeholder-count="4">
+<div class="alert-row" style="animation-delay: calc({{$index}} * 90ms + 250ms); display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; border-top: 1px solid var(--sep2)">
+<span style="width: 28px; height: 28px; border-radius: 8px; background: {{a.icon}}; box-shadow: inset 0 0 0 0.5px rgba(0,0,0,0.08); display: flex; align-items: center; justify-content: center; flex: none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{a.glyph}}"></path></svg></span>
+<div style="display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0">
+<div style="display: flex; align-items: baseline; gap: 8px"><span style="flex: 1; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{a.title}}</span><span style="font-size: 11px; color: var(--t3); white-space: nowrap">{{a.time}}</span></div>
+<span style="font-size: 12px; color: var(--t2)">{{a.detail}} <strong style="color: {{a.color}}">{{a.value}}</strong></span>
+</div>
+</div>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{alertState.none}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid var(--sep2)">
+<span style="width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(180deg, #4ADE80, #16A34A); display: flex; align-items: center; justify-content: center; flex: none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L19 7"></path></svg></span>
+<div style="display: flex; flex-direction: column"><span style="font-size: 13px; font-weight: 600">Todo en orden</span><span style="font-size: 12px; color: var(--t2)">Sin sobrecarga, sin cola de espera y sin tickets fuera de tiempo</span></div>
+</div>
+</sc-if>
+</section>
+<section class="glass" aria-labelledby="h-turno" style="padding: 20px 24px; display: flex; flex-direction: column; gap: 14px">
+<h2 id="h-turno" style="margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -0.01em">Estado del turno</h2>
+<div style="display: flex; align-items: center; gap: 14px">
+<svg width="84" height="84" viewBox="0 0 84 84" role="img" aria-label="Jornada al 48%">
+<circle cx="42" cy="42" r="34" fill="none" stroke="var(--track)" stroke-width="8"></circle>
+<circle class="ring-draw" cx="42" cy="42" r="34" fill="none" stroke="#0EA5E9" stroke-width="8" stroke-linecap="round" stroke-dasharray="102.5 213.6" transform="rotate(-90 42 42)"></circle>
+<text x="42" y="46" text-anchor="middle" font-size="16" font-weight="700" fill="#0F172A">48%</text>
+</svg>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<span style="font-size: 12px; font-weight: 600">Jornada normal</span>
+<span style="font-size: 12px; color: var(--t2); font-variant-numeric: tabular-nums">08:00 – 17:00</span>
+<span style="font-size: 12px; font-weight: 600; color: var(--accent-t)">Faltan 4 h 40 min</span>
+</div>
+</div>
+<div style="display: flex; flex-direction: column">
+<sc-for list="{{turnoGroups}}" as="g" hint-placeholder-count="3">
+<div style="display: flex; flex-direction: column; gap: 6px; padding: 10px 0; border-top: 1px solid var(--sep)">
+<div style="display: flex; align-items: center; gap: 8px; font-size: 12px"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{g.dot}}"></span><span style="font-weight: 600; flex: 1">{{g.label}}</span><span style="font-weight: 700; font-variant-numeric: tabular-nums">{{g.count}}</span></div>
+<div style="display: flex; flex-wrap: wrap; gap: 4px"><sc-for list="{{g.people}}" as="o" hint-placeholder-count="3"><span title="{{o.name}} · {{o.area}}" style="display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px 0 3px; border-radius: 999px; background: var(--fill); box-shadow: inset 0 0 0 0.5px var(--sep); font-size: 11px"><span style="width: 16px; height: 16px; border-radius: 50%; background: var(--accent-bg); color: var(--accent-t); font-size: 8px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{o.ini}}</span>{{o.short}}</span></sc-for></div>
+</div>
+</sc-for>
+</div>
+</section>
+</div>
+</div>
+<div class="zone">Tendencia</div>
+<section class="glass" aria-labelledby="h-flujo" style="padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; min-width: 0">
+<div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap">
+<h2 id="h-flujo" style="margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -0.01em">Flujo por hora</h2>
+<button class="info" aria-label="Tickets creados, asignados y cerrados por hora en las últimas 24 h." title="Tickets creados, asignados y cerrados por hora en las últimas 24 h."><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8v.5"></path></svg></button>
+<span style="padding: 2px 8px; border-radius: 1000px; background: var(--accent-bg); color: var(--accent-t); box-shadow: inset 0 0 0 1px var(--accent-ring); font-size: 12px; font-weight: 600">Últimas 24 h</span>
+<span style="flex: 1"></span>
+<span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--t2)"><span style="width: 14px; height: 3px; border-radius: 2px; background: #0EA5E9"></span>Creados</span>
+<span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--t2)"><span style="width: 14px; height: 3px; border-radius: 2px; background: #22C55E"></span>Cerrados</span>
+<span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--t2)"><span style="width: 14px; height: 0; border-top: 2px dashed #8B5CF6"></span>Asignados</span>
+</div>
+
+<div style="display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 20px; align-items: stretch">
+<!-- Sparkline KPIs -->
+<div style="display: flex; flex-direction: column; justify-content: space-between; gap: 8px">
+<sc-for list="{{sparks}}" as="s" hint-placeholder-count="3">
+<div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; background: var(--well); box-shadow: inset 0 0 0 1px var(--sep)">
+<div style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+<span class="kt" style="font-size: 11px">{{s.label}}</span>
+<span style="font-size: 20px; font-weight: 700; color: var(--t1); letter-spacing: -0.02em; font-variant-numeric: tabular-nums">{{s.value}}</span>
+<span style="align-self: flex-start; padding: 1px 6px; border-radius: 1000px; background: {{s.chipBg}}; color: {{s.chipC}}; font-size: 11px; font-weight: 600; white-space: nowrap">{{s.chip}}</span>
+</div>
+<svg class="reveal" viewBox="0 0 100 36" preserveAspectRatio="none" aria-hidden="true" style="animation-delay: calc({{$index}} * 120ms + 200ms); flex: 1; min-width: 60px; height: 40px; overflow: visible">
+<path style="fill: {{s.fill}}" d="{{s.area}}" stroke="none"></path>
+<path style="stroke: {{s.color}}" d="{{s.line}}" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="{{s.dash}}" vector-effect="non-scaling-stroke"></path>
+</svg>
+</div>
+</sc-for>
+</div>
+
+<!-- Area chart -->
+<div style="display: flex; gap: 8px">
+<div style="display: flex; flex-direction: column; justify-content: space-between; height: 240px; font-size: 11px; color: var(--t2); text-align: right; font-variant-numeric: tabular-nums; transform: translateY(-6px)">
+<span>15</span><span>10</span><span>5</span><span>0</span>
+</div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px">
+<div style="position: relative; height: 240px; background-image: linear-gradient(var(--grid) 1px, transparent 1px); background-size: 100% 80px; border-bottom: 1px solid var(--sep)">
+<div style="position: absolute; top: 0; bottom: 0; left: {{fc.jLeft}}; width: {{fc.jWidth}}; background: rgba(14,165,233,0.06); border-left: 1px solid rgba(14,165,233,0.25); border-right: 1px solid rgba(14,165,233,0.25)"></div>
+<span style="position: absolute; top: 6px; left: {{fc.jLeft}}; margin-left: 8px; font-size: 11px; font-weight: 700; color: var(--accent-t)">Jornada 08–17</span>
+<span style="position: absolute; top: 6px; left: 8px; font-size: 11px; font-weight: 600; color: var(--t3)">Guardia nocturna</span>
+<div style="position: absolute; top: 0; bottom: 0; left: {{fc.restLeft}}; right: 0; background: repeating-linear-gradient(135deg, rgba(148,163,184,0.10) 0 6px, transparent 6px 12px); border-left: 1px dashed var(--t3)"></div>
+<span style="position: absolute; bottom: 8px; right: 10px; font-size: 11px; font-weight: 600; color: var(--t3)">Por transcurrir</span>
+<svg class="reveal" viewBox="0 0 1000 240" preserveAspectRatio="none" aria-label="Tickets creados y resueltos por hora, últimas 24 horas" role="img" style="position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible">
+<defs>
+<linearGradient id="gCre" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0EA5E9" stop-opacity="0.20"></stop><stop offset="1" stop-color="#0EA5E9" stop-opacity="0"></stop></linearGradient>
+<linearGradient id="gRes" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#22C55E" stop-opacity="0.12"></stop><stop offset="1" stop-color="#22C55E" stop-opacity="0"></stop></linearGradient>
+</defs>
+<path d="{{fc.creArea}}" fill="url(#gCre)"></path>
+<path d="{{fc.resArea}}" fill="url(#gRes)"></path>
+<path d="{{fc.pend}}" fill="none" stroke="#8B5CF6" stroke-width="2" stroke-dasharray="5 5" stroke-linecap="round" vector-effect="non-scaling-stroke"></path>
+<path d="{{fc.res}}" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"></path>
+<path d="{{fc.cre}}" fill="none" stroke="#0EA5E9" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"></path>
+</svg>
+<div style="position: absolute; top: 0; bottom: 0; left: {{fc.selLeft}}; width: 0; border-left: 1px solid var(--t3); opacity: .6; transition: left .25s ease"></div>
+<span style="position: absolute; left: {{fc.selLeft}}; top: {{fc.cTop}}; width: 10px; height: 10px; margin: -7px 0 0 -7px; border-radius: 50%; background: #0EA5E9; border: 2px solid var(--control); box-sizing: content-box; box-shadow: 0 1px 4px rgba(0,0,0,0.18); transition: left .25s ease, top .25s ease"></span>
+<span style="position: absolute; left: {{fc.selLeft}}; top: {{fc.rTop}}; width: 10px; height: 10px; margin: -7px 0 0 -7px; border-radius: 50%; background: #22C55E; border: 2px solid var(--control); box-sizing: content-box; box-shadow: 0 1px 4px rgba(0,0,0,0.18); transition: left .25s ease, top .25s ease"></span>
+<div style="position: absolute; top: 8px; left: {{fc.tipLeft}}; transform: {{fc.tipShift}}; transition: left .25s ease; padding: 8px 10px; border-radius: 10px; background: rgba(28,28,30,0.92); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); box-shadow: 0 8px 24px rgba(0,0,0,0.25); color: #FFFFFF; font-size: 12px; pointer-events: none; white-space: nowrap">
+<div style="font-weight: 700; margin-bottom: 4px">{{fc.tipTitle}}</div>
+<div style="display: flex; align-items: center; gap: 6px; color: #D1D5DB"><span style="width: 7px; height: 7px; border-radius: 50%; background: #38BDF8"></span>Creados <strong style="color: #FFFFFF; margin-left: auto; padding-left: 10px">{{fc.tipC}}</strong></div>
+<div style="display: flex; align-items: center; gap: 6px; color: #D1D5DB"><span style="width: 7px; height: 7px; border-radius: 50%; background: #4ADE80"></span>Cerrados <strong style="color: #FFFFFF; margin-left: auto; padding-left: 10px">{{fc.tipR}}</strong></div>
+<div style="display: flex; align-items: center; gap: 6px; color: #D1D5DB"><span style="width: 7px; height: 7px; border-radius: 50%; background: #A78BFA"></span>Asignados <strong style="color: #FFFFFF; margin-left: auto; padding-left: 10px">{{fc.tipP}}</strong></div>
+</div>
+<div style="position: absolute; inset: 0; display: grid; grid-template-columns: repeat(24, minmax(0, 1fr))">
+<sc-for list="{{flow}}" as="h" hint-placeholder-count="24">
+<span onMouseEnter="{{h.enter}}" style="height: 100%; cursor: {{h.cursor}}"></span>
+</sc-for>
+</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(24, minmax(0, 1fr)); font-size: 11px; text-align: center; font-variant-numeric: tabular-nums">
+<sc-for list="{{flow}}" as="h" hint-placeholder-count="24"><span style="font-weight: {{h.weight}}; color: {{h.labelColor}}">{{h.hour}}</span></sc-for>
+</div>
+</div>
+</div>
+</div>
+</section>
+<div class="zone">Rendimiento</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); gap: 16px">
+
+<section class="glass" aria-labelledby="h-rank" style="display: flex; flex-direction: column; min-width: 0; overflow: hidden">
+<div style="display: flex; align-items: center; gap: 8px; padding: 20px 24px 10px">
+<h2 id="h-rank" style="margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -0.01em; flex: 1">Ranking de operadores</h2>
+<a class="pill pillbtn" href="#" style="height: 26px; padding: 0 10px; font-size: 12px; font-weight: 600; display: flex; align-items: center">Ver todos</a>
+</div>
+<div style="overflow-x: auto; padding: 0 16px 16px">
+<table style="width: 100%; border-collapse: collapse; font-size: 12px">
+<thead>
+<tr style="color: var(--t2); font-size: 12px; text-align: left">
+<th style="font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--sep); width: 20px">#</th>
+<th style="font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--sep)">Operador</th>
+<th style="font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--sep); text-align: right">Puntos</th>
+<th style="font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--sep); text-align: right">P1 / P2 / P3</th>
+<th style="font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--sep); text-align: right">Índice de carga</th>
+</tr>
+</thead>
+<tbody>
+<sc-for list="{{ranking}}" as="o" hint-placeholder-count="6">
+<tr style="background: {{o.rowBg}}">
+<td style="padding: 7px 8px; border-bottom: 1px solid var(--sep2)"><span style="display: inline-flex; width: 20px; height: 20px; border-radius: 50%; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; background: {{o.posBg}}; color: {{o.posColor}}">{{o.pos}}</span></td>
+<td style="padding: 7px 8px; border-bottom: 1px solid var(--sep2)">
+<div style="display: flex; align-items: center; gap: 8px">
+<span style="position: relative; width: 26px; height: 26px; border-radius: 50%; background: var(--accent-bg); color: var(--accent-t); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{o.ini}}<span style="position: absolute; right: -1px; bottom: -1px; width: 8px; height: 8px; border-radius: 50%; background: {{o.stateColor}}; border: 2px solid #FFFFFF"></span></span>
+<div style="display: flex; flex-direction: column">
+<span style="font-weight: 600">{{o.name}}</span>
+<span style="font-size: 12px; color: var(--t2)">{{o.area}} · {{o.state}}</span>
+</div>
+</div>
+</td>
+<td style="padding: 7px 8px; border-bottom: 1px solid var(--sep2); text-align: right; font-weight: 700; font-variant-numeric: tabular-nums"><span style="display: inline-flex; align-items: center; gap: 10px; justify-content: flex-end"><span class="track" style="width: 90px; height: 6px"><span class="bar-fill" style="width: {{o.ptsW}}; background: #0EA5E9; animation-delay: calc({{$index}} * 60ms + 200ms)"></span></span><span style="min-width: 22px">{{o.pts}}</span></span></td>
+<td style="padding: 7px 8px; border-bottom: 1px solid var(--sep2); text-align: right; font-variant-numeric: tabular-nums; color: var(--t2)">{{o.mix}}</td>
+<td style="padding: 7px 8px; border-bottom: 1px solid var(--sep2); text-align: right; font-variant-numeric: tabular-nums"><span style="padding: 2px 8px; border-radius: 999px; font-weight: 700; color: {{o.ixC}}; background: {{o.ixBg}}">{{o.ix}}</span></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+<section class="glass" aria-labelledby="h-mapa" style="padding: 20px 24px; display: flex; flex-direction: column; gap: 12px; min-width: 0">
+<div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding-bottom: {{mapv.pad}}; border-bottom: {{mapv.line}}">
+<h2 id="h-mapa" style="margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -0.01em; ">Distribución territorial</h2>
+<span style="flex: 1; font-size: 12px; color: var(--t2)">{{mapv.summary}}</span>
+<span style="display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px; border-radius: 1000px; background: var(--accent-bg); color: var(--accent-t); box-shadow: inset 0 0 0 1px var(--accent-ring); font-size: 12px; font-weight: 600"><span style="width: 6px; height: 6px; border-radius: 50%; background: #0EA5E9"></span>24 entidades</span>
+<button class="pill pillbtn" onClick="{{mapv.toggle}}" aria-expanded="{{mapv.open}}" style="height: 30px; border: 0; padding: 0 14px; font: inherit; font-size: 12px; font-weight: 600; color: var(--t1); cursor: pointer">{{mapv.label}}</button>
+</div>
+<sc-if value="{{mapv.open}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: stretch">
+<div style="position: relative; flex: 3 1 320px; min-width: 0; border-radius: 12px; background: var(--well); box-shadow: inset 0 0 0 1px rgba(226,232,240,0.7); padding: 12px; display: flex; align-items: center; justify-content: center">
+<svg class="fade-up" viewBox="40 55 925 790" role="img" aria-label="Mapa de Venezuela por estados, coloreado por tickets activos" style="width: 100%; max-height: 360px; height: auto; filter: drop-shadow(0 4px 14px rgba(15,23,42,0.06))" stroke-linejoin="round">
+<path style="fill: {{m.VEZ.fill}}; stroke: {{m.VEZ.stroke}}; stroke-width: {{m.VEZ.sw}}" d="{{m.VEZ.d}}" onMouseEnter="{{m.VEZ.enter}}" onMouseLeave="{{leave}}"></path>
+<path style="fill: {{m.VEB.fill}}; stroke: {{m.VEB.stroke}}; stroke-width: {{m.VEB.sw}}" d="{{m.VEB.d}}" onMouseEnter="{{m.VEB.enter}}" onMouseLeave="{{leave}}"></path>
+<path style="fill: {{m.VEC.fill}}; stroke: {{m.VEC.stroke}}; stroke-width: {{m.VEC.sw}}" d="{{m.VEC.d}}" onMouseEnter="{{m.VEC.enter}}" onMouseLeave="{{leave}}"></path>
+<path style="fill: {{m.VED.fill}}; stroke: {{m.VED.stroke}}; stroke-width: {{m.VED.sw}}" d="{{m.VED.d}}" onMouseEnter="{{m.VED.enter}}" onMouseLeave="{{leave}}"></path>
+<path style="fill: {{m.VEE.fill}}; stroke: {{m.VEE.stroke}}; stroke-width: {{m.VEE.sw}}" d="{{m.VEE.d}}" onMouseEnter="{{m.VEE.enter}}" onMouseLeave="{{leave}}"></path>
+<path style="fill: {{m.VEF.fill}}; stroke: {{m.VEF.stroke}}; stroke-width: {{m.VEF.sw}}" d="{{m.VEF.d}}" onMouseEnter="{{m.VEF.enter}}" onMouseLeave="{{leave}}"></path>
+<path style="fill: {{m.VEG.fill}}; stroke: {{m.VEG.stroke}}; stroke-width: {{m.VEG.sw}}" d="{{m.VEG.d}}" onMouseEnter="{{m.VEG.enter}}" onMouseLeave="{{leave}}"></path>
+<path style="fill: {{m.VEH.fill}}; stroke: {{m.VEH.stroke}}; stroke-width: {{m.VEH.sw}}" d="{{m.VEH.d}}" onMouseEnter="{{m.VEH.enter}}" onMouseLeave="{{leave}}"></path>
+<path style="fill: {{m.VEY.fill}}; stroke: {{m.VEY.stroke}}; stroke-width: {{m.VEY.sw}}" d="{{m.VEY.d}}" onMouseEnter="{{m.VEY.enter}}" onMouseLeave="{{leave}}"></path>
+<path style="fill: {{m.VEI.fill}}; stroke: {{m.VEI.stroke}}; stroke-width: {{m.VEI.sw}}" d="{{m.VEI.d}}" onMouseEnter="{{m.VEI.enter}}" onMouseLeave="{{leave}}"></path>
+<path style="fill: {{m.VEJ.fill}}; stroke: {{m.VEJ.stroke}}; stroke-width: {{m.VEJ.sw}}" d="{{m.VEJ.d}}" onMouseEnter="{{m.VEJ.enter}}" onMouseLeave="{{leave}}"></path>
+<path style="fill: {{m.VEK.fill}}; stroke: {{m.VEK.stroke}}; stroke-width: {{m.VEK.sw}}" d="{{m.VEK.d}}" onMouseEnter="{{m.VEK.enter}}" onMouseLeave="{{leave}}"></path>
+<path style="fill: {{m.VEL.fill}}; stroke: {{m.VEL.stroke}}; stroke-width: {{m.VEL.sw}}" d="{{m.VEL.d}}" onMouseEnter="{{m.VEL.enter}}" onMouseLeave="{{leave}}"></path>
+<path style="fill: {{m.VEN.fill}}; stroke: {{m.VEN.stroke}}; stroke-width: {{m.VEN.sw}}" d="{{m.VEN.d}}" onMouseEnter="{{m.VEN.enter}}" onMouseLeave="{{leave}}"></path>
+<path style="fill: {{m.VEO.fill}}; stroke: {{m.VEO.stroke}}; stroke-width: {{m.VEO.sw}}" d="{{m.VEO.d}}" onMouseEnter="{{m.VEO.enter}}" onMouseLeave="{{leave}}"></path>
+<path style="fill: {{m.VEP.fill}}; stroke: {{m.VEP.stroke}}; stroke-width: {{m.VEP.sw}}" d="{{m.VEP.d}}" onMouseEnter="{{m.VEP.enter}}" onMouseLeave="{{leave}}"></path>
+<path style="fill: {{m.VER.fill}}; stroke: {{m.VER.stroke}}; stroke-width: {{m.VER.sw}}" d="{{m.VER.d}}" onMouseEnter="{{m.VER.enter}}" onMouseLeave="{{leave}}"></path>
+<path style="fill: {{m.VES.fill}}; stroke: {{m.VES.stroke}}; stroke-width: {{m.VES.sw}}" d="{{m.VES.d}}" onMouseEnter="{{m.VES.enter}}" onMouseLeave="{{leave}}"></path>
+<path style="fill: {{m.VET.fill}}; stroke: {{m.VET.stroke}}; stroke-width: {{m.VET.sw}}" d="{{m.VET.d}}" onMouseEnter="{{m.VET.enter}}" onMouseLeave="{{leave}}"></path>
+<path style="fill: {{m.VEU.fill}}; stroke: {{m.VEU.stroke}}; stroke-width: {{m.VEU.sw}}" d="{{m.VEU.d}}" onMouseEnter="{{m.VEU.enter}}" onMouseLeave="{{leave}}"></path>
+<path style="fill: {{m.VEV.fill}}; stroke: {{m.VEV.stroke}}; stroke-width: {{m.VEV.sw}}" d="{{m.VEV.d}}" onMouseEnter="{{m.VEV.enter}}" onMouseLeave="{{leave}}"></path>
+<path style="fill: {{m.VEW.fill}}; stroke: {{m.VEW.stroke}}; stroke-width: {{m.VEW.sw}}" d="{{m.VEW.d}}" onMouseEnter="{{m.VEW.enter}}" onMouseLeave="{{leave}}"></path>
+<path style="fill: {{m.VEM.fill}}; stroke: {{m.VEM.stroke}}; stroke-width: {{m.VEM.sw}}" d="{{m.VEM.d}}" onMouseEnter="{{m.VEM.enter}}" onMouseLeave="{{leave}}"></path>
+<path style="fill: {{m.VEX.fill}}; stroke: {{m.VEX.stroke}}; stroke-width: {{m.VEX.sw}}" d="{{m.VEX.d}}" onMouseEnter="{{m.VEX.enter}}" onMouseLeave="{{leave}}"></path>
+<path style="fill: {{m.VEA.fill}}; stroke: {{m.VEA.stroke}}; stroke-width: {{m.VEA.sw}}" d="{{m.VEA.d}}" onMouseEnter="{{m.VEA.enter}}" onMouseLeave="{{leave}}"></path>
+</svg>
+<div style="position: absolute; top: 12px; left: 12px; padding: 8px 12px; border-radius: 10px; background: rgba(28,28,30,0.92); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 8px 24px rgba(0,0,0,0.25); color: #FFFFFF; font-size: 12px; pointer-events: none; min-width: 150px">
+<div style="display: flex; align-items: center; gap: 6px; font-weight: 700"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{tip.dot}}"></span>{{tip.name}}</div>
+<div style="margin-top: 4px; font-size: 12px; color: #AEAEB2">Tickets activos: <strong style="color: #FFFFFF; font-variant-numeric: tabular-nums">{{tip.total}}</strong></div>
+<div style="display: flex; gap: 10px; font-size: 12px; margin-top: 2px"><span style="color: #FF6961">Abiertos {{tip.open}}</span><span style="color: #30D158">Cerrados hoy {{tip.closed}}</span></div>
+</div>
+</div>
+<div style="flex: 2 1 220px; display: flex; flex-direction: column; justify-content: space-between; gap: 14px; min-width: 0">
+<div>
+<div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px solid var(--sep)">
+<span class="kt">Estados con mayor carga</span>
+<span style="font-size: 12px; color: var(--t2)">Activos</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px; margin-top: 6px">
+<sc-for list="{{topStates}}" as="t" hint-placeholder-count="7">
+<button onMouseEnter="{{t.enter}}" onMouseLeave="{{leave}}" style="display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 8px; border: 0; border-radius: 8px; background: {{t.bg}}; font: inherit; font-size: 12px; color: var(--t1); text-align: left; cursor: pointer">
+<span style="width: 20px; height: 20px; border-radius: 50%; background: var(--sep2); color: var(--t2); font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex: none">{{t.pos}}</span>
+<span style="flex: 1; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{t.name}}</span>
+<span style="font-weight: 700; font-variant-numeric: tabular-nums">{{t.total}}</span>
+<span style="width: 34px; text-align: right; font-size: 12px; color: var(--t2); font-variant-numeric: tabular-nums">{{t.pct}}%</span>
+</button>
+</sc-for>
+</div>
+</div>
+<div style="padding: 10px 12px; border-radius: 10px; background: var(--well); box-shadow: inset 0 0 0 1px var(--sep); display: flex; flex-direction: column; gap: 6px">
+<span class="kt" style="font-size: 11px">Intensidad de incidencias</span>
+<div style="height: 8px; border-radius: 1000px; background: linear-gradient(90deg, #E5E5EA 0%, var(--accent-bg) 25%, #7DD3FC 50%, #0EA5E9 75%, var(--accent-t) 100%)"></div>
+<div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--t2)"><span>Baja</span><span>Media</span><span>Crítica</span></div>
+</div>
+</div>
+</div>
+</sc-if>
+</section>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;fuente&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;IBM Plex Sans&quot;,&quot;Instrument Sans&quot;,&quot;Sistema (SF Pro)&quot;],&quot;default&quot;:&quot;IBM Plex Sans&quot;},&quot;tema&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Claro&quot;,&quot;Oscuro&quot;,&quot;Sistema&quot;],&quot;default&quot;:&quot;Oscuro&quot;},&quot;alertas&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true},&quot;fondo&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Ocean&quot;,&quot;Slate&quot;],&quot;default&quot;:&quot;Ocean&quot;},&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1400}}">
+class Component extends DCLogic {
+  renderVals() {
+    const FONTS = {
+      'IBM Plex Sans': "'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif",
+      'Instrument Sans': "'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif",
+      'Sistema (SF Pro)': "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif"
+    };
+    const font = FONTS[this.props.fuente ?? 'IBM Plex Sans'] || FONTS['IBM Plex Sans'];
+    const bgs = {
+      Ocean: 'radial-gradient(900px 500px at 85% -10%, rgba(56,189,248,0.22), transparent 60%), radial-gradient(700px 500px at 10% 110%, rgba(99,102,241,0.12), transparent 60%), linear-gradient(135deg, var(--sep2) 0%, #EFF6FF 50%, var(--accent-bg) 100%)',
+      Slate: 'linear-gradient(135deg, var(--fill) 0%, var(--sep2) 100%)'
+    };
+    const mode = this.props.tema ?? 'Claro';
+    let isDark = mode === 'Oscuro';
+    if (mode === 'Sistema') { try { isDark = window.matchMedia('(prefers-color-scheme: dark)').matches; } catch (e) {} }
+    const theme = isDark ? 'dark' : 'light';
+    const bgDark = 'radial-gradient(1200px 700px at 78% -12%, rgba(132,120,255,0.38), transparent 60%), radial-gradient(900px 650px at -5% 105%, rgba(88,80,190,0.45), transparent 62%), linear-gradient(118deg, transparent 38%, rgba(170,160,255,0.10) 46%, transparent 54%), linear-gradient(135deg, #0D0C21 0%, #1C1A40 40%, #2B2860 70%, #121128 100%)';
+    const bg = isDark ? bgDark : (bgs[this.props.fondo ?? 'Ocean'] || bgs.Ocean);
+    const hasAlerts = (this.props.alertas ?? true) !== false;
+    const alertState = hasAlerts
+      ? { has: true, none: false, badge: '4 activas', badgeBg: 'var(--red-bg)', badgeC: 'var(--red-t)' }
+      : { has: false, none: true, badge: 'Sin alertas', badgeBg: 'var(--green-bg)', badgeC: 'var(--green-t)' };
+    const I = {
+      stack: 'M3 7l9-4 9 4-9 4zM3 12l9 4 9-4M3 17l9 4 9-4',
+      plus: 'M12 5v14M5 12h14',
+      user: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0',
+      alert: 'M12 3l10 18H2zM12 10v5M12 18v.5',
+      check: 'M4 12l5 5L20 6',
+      clock: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2'
+    };
+    const kpis = [
+      { label: 'Activos', value: '48', delta: '+6', icon: I.stack, ink: 'var(--accent-t)', tint: 'var(--accent-bg)', ring: 'var(--accent-ring)', deltaColor: 'var(--orange-t)', deltaBg: 'var(--orange-bg)' },
+      { label: 'Creados hoy', value: '53', delta: 'hoy', icon: I.plus, ink: '#4338CA', tint: '#EEF2FF', ring: '#C7D2FE', deltaColor: 'var(--t2)', deltaBg: 'var(--sep2)' },
+      { label: 'Sin asignar', value: '7', delta: '2 > 30 min', icon: I.user, ink: 'var(--orange-t)', tint: 'var(--orange-bg)', ring: 'var(--orange-ring)', deltaColor: 'var(--orange-t)', deltaBg: 'var(--orange-bg)' },
+      { label: 'Críticos sin asignar', value: '1', delta: 'P1', icon: I.alert, ink: 'var(--red-t)', tint: 'var(--red-bg)', ring: 'var(--red-ring)', deltaColor: 'var(--red-t)', deltaBg: 'var(--red-bg)' },
+      { label: 'Resueltos hoy', value: '44', delta: '83%', icon: I.check, ink: 'var(--green-t)', tint: 'var(--green-bg)', ring: 'var(--green-ring)', deltaColor: 'var(--green-t)', deltaBg: 'var(--green-bg)' },
+      { label: 'Resolución prom.', value: '3,4 h', delta: '−0,3 h', icon: I.clock, ink: 'var(--accent-t)', tint: 'var(--accent-bg)', ring: 'var(--accent-ring)', deltaColor: 'var(--green-t)', deltaBg: 'var(--green-bg)' }
+    ];
+    const alerts = [
+      { title: 'En cola de espera · 2 tickets', detail: 'SIM-050 y SIM-048 · nadie disponible en', value: 'WAN', color: 'var(--red-t)', tint: 'var(--red-bg)', dot: '#EF4444', time: 'hace 4 min', icon: 'linear-gradient(180deg, #F87171, #DC2626)', glyph: 'M4 6h16M4 12h10M4 18h6M18 14v6M15 17h6' },
+      { title: 'Demo FTTH 1 · sobrecarga', detail: '8 activos · promedio del área 4,8 · índice', value: '1,7', color: 'var(--red-t)', tint: 'var(--red-bg)', dot: '#EF4444', time: 'hace 8 min', icon: 'linear-gradient(180deg, #F87171, #DC2626)', glyph: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0' },
+      { title: 'Demo WAN 1 · sobrecarga', detail: '6 activos · promedio del área 3,0 · índice', value: '2,0', color: 'var(--red-t)', tint: 'var(--red-bg)', dot: '#EF4444', time: 'hace 15 min', icon: 'linear-gradient(180deg, #F87171, #DC2626)', glyph: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0' },
+      { title: 'INC-004 · P1 sin asignar', detail: 'Sin asignar desde la llegada ·', value: '1 h 12', color: 'var(--orange-t)', tint: 'var(--orange-bg)', dot: '#F59E0B', time: 'hace 12 min', icon: 'linear-gradient(180deg, #FCD34D, #F59E0B)', glyph: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2' }
+    ];
+    // ----- Flujo por hora: área suave + sparklines
+    // 00h–12h de las últimas 24 h (hora actual = 12h)
+    const created = [1, 0, 1, 0, 0, 1, 2, 3, 6, 9, 11, 14, 13];
+    const solved = [0, 1, 0, 1, 0, 0, 1, 1, 2, 5, 7, 9, 12];   // cerrados
+    const pending = [1, 0, 1, 0, 0, 1, 2, 2, 5, 9, 10, 13, 12]; // asignados
+    const HOURS = 24, NOW = created.length - 1, J0 = 8, J1 = 17;
+    const smooth = (pts) => {
+      if (!pts.length) return '';
+      let d = 'M' + pts[0][0] + ' ' + pts[0][1];
+      for (let i = 0; i < pts.length - 1; i++) {
+        const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+        const c1x = p1[0] + (p2[0] - p0[0]) / 6, c1y = p1[1] + (p2[1] - p0[1]) / 6;
+        const c2x = p2[0] - (p3[0] - p1[0]) / 6, c2y = p2[1] - (p3[1] - p1[1]) / 6;
+        d += ' C' + c1x.toFixed(1) + ' ' + c1y.toFixed(1) + ' ' + c2x.toFixed(1) + ' ' + c2y.toFixed(1) + ' ' + p2[0] + ' ' + p2[1];
+      }
+      return d;
+    };
+    const X = (i) => (i + 0.5) * (1000 / HOURS);
+    const Y = (v) => +(240 - v / 15 * 226).toFixed(1);
+    const series = (arr) => arr.map((v, i) => [X(i), Y(v)]);
+    const closeArea = (pts) => smooth(pts) + ' L' + pts[pts.length - 1][0] + ' 240 L' + pts[0][0] + ' 240 Z';
+    const fhRaw = this.state && this.state.fh;
+    const fh = (fhRaw === undefined || fhRaw === null) ? NOW : fhRaw;
+    const pct = (i) => ((i + 0.5) / HOURS * 100) + '%';
+    const fc = {
+      cre: smooth(series(created)), creArea: closeArea(series(created)),
+      res: smooth(series(solved)), resArea: closeArea(series(solved)),
+      pend: smooth(series(pending)),
+      restLeft: ((NOW + 1) / HOURS * 100) + '%',
+      jLeft: (J0 / HOURS * 100) + '%', jWidth: ((J1 - J0) / HOURS * 100) + '%',
+      selLeft: pct(fh),
+      cTop: (Y(created[fh]) / 240 * 100) + '%',
+      rTop: (Y(solved[fh]) / 240 * 100) + '%',
+      tipLeft: pct(fh),
+      tipShift: fh >= 16 ? 'translateX(calc(-100% - 12px))' : 'translateX(12px)',
+      tipTitle: String(fh).padStart(2, '0') + ':00 – ' + String(fh + 1).padStart(2, '0') + ':00' + (fh === NOW ? ' · en curso' : (fh < J0 ? ' · guardia' : '')),
+      tipC: created[fh], tipR: solved[fh], tipP: pending[fh]
+    };
+    const flow = Array.from({ length: HOURS }, (_, i) => {
+      const past = i <= NOW;
+      const inJ = i >= J0 && i < J1;
+      return {
+        hour: String(i).padStart(2, '0'),
+        weight: i === fh ? '700' : (inJ ? '600' : '500'),
+        labelColor: i === fh ? 'var(--accent-t)' : (past ? (inJ ? 'var(--t1)' : 'var(--t2)') : 'var(--t3)'),
+        cursor: past ? 'crosshair' : 'default',
+        enter: past ? () => this.setState({ fh: i }) : () => {}
+      };
+    });
+    const spark = (arr, color, fill, dash) => {
+      const mn = Math.min(...arr), mx = Math.max(...arr), rg = (mx - mn) || 1;
+      const pts = arr.map((v, i) => [+(i / (arr.length - 1) * 100).toFixed(1), +(33 - (v - mn) / rg * 28).toFixed(1)]);
+      return { line: smooth(pts), area: smooth(pts) + ' L100 36 L0 36 Z', color, fill, dash };
+    };
+    const sparks = [
+      { label: 'Creados', value: created.reduce((a, b) => a + b, 0), chip: 'Pico 11:00 · 14', chipBg: 'var(--accent-bg)', chipC: 'var(--accent-t)', ...spark(created, '#0EA5E9', 'rgba(14,165,233,0.12)', 'none') },
+      { label: 'Cerrados', value: solved.reduce((a, b) => a + b, 0), chip: 'Pico 12:00 · 12', chipBg: 'var(--green-bg)', chipC: 'var(--green-t)', ...spark(solved, '#22C55E', 'rgba(34,197,94,0.12)', 'none') },
+      { label: 'Asignados', value: pending.reduce((a, b) => a + b, 0), chip: Math.round(pending.reduce((a, b) => a + b, 0) / created.reduce((a, b) => a + b, 0) * 100) + '% de lo creado', chipBg: 'var(--green-bg)', chipC: 'var(--green-t)', ...spark(pending, '#8B5CF6', 'rgba(139,92,246,0.10)', '4 4') }
+    ];
+    const lvl = (s) => s >= 60
+      ? ['#EF4444', 'var(--red-t)']
+      : s >= 40 ? ['#F59E0B', 'var(--orange-t)']
+      : ['#0EA5E9', 'var(--t1)'];
+    // [área, % aún abiertos, abiertos (incluye sin asignar), operadores, resolución h, sin asignar, recibidos hoy]
+    const areaRaw = [
+      ['Redes FTTH / OLT', 0, 22, 4, 4.3, 3, 34], ['WAN', 0, 8, 2, 3.9, 2, 19], ['Grandes Clientes', 0, 7, 2, 5.6, 1, 11],
+      ['Tráfico inalámbrico', 0, 5, 2, 3.1, 0, 12], ['Operaciones IP', 0, 4, 2, 1.8, 0, 13], ['Telefonía', 0, 1, 1, 2.4, 0, 6], ['Seguridad', 0, 1, 1, 1.2, 1, 7]
+    ].map((a) => { a[1] = Math.round(a[2] / a[6] * 100); return a; }).sort((x, y) => y[1] - x[1]);
+    const areas = areaRaw.map(([name, sat, active, ops, res, un, total]) => ({
+      name, sat, active, ops, total, satW: Math.min(sat, 100) + '%', satFill: lvl(sat)[0], satText: lvl(sat)[1],
+      res: res.toFixed(1).replace('.', ',')
+    }));
+    const resol = areaRaw.map((a) => ({ name: a[0], hours: a[4] }))
+      .sort((x, y) => y.hours - x.hours)
+      .map(({ name, hours }) => {
+        const over = false;
+        return {
+          name, h: hours.toFixed(1).replace('.', ','), w: Math.min(hours / 8 * 100, 100) + '%',
+          fill: over ? '#F59E0B' : '#0EA5E9',
+          glow: over ? 'rgba(245,158,11,0.22)' : 'rgba(14,165,233,0.2)',
+          text: over ? 'var(--orange-t)' : 'var(--t1)'
+        };
+      });
+    // ----- Periodo (Jornada actual / Semana) – estilo segmented de Reportes
+    const S = this.state || {};
+    const period = S.period || 'jornada';
+    const tabOn = { w: 600, c: 'var(--t1)', bg: 'var(--seg-on)', sh: '0 1px 2px rgba(0,0,0,0.08)', i: '#0EA5E9' };
+    const tabOff = { w: 500, c: 'var(--t3)', bg: 'transparent', sh: 'none', i: 'var(--t3)' };
+    const jt = period === 'jornada' ? tabOn : tabOff;
+    const stb = period === 'semana' ? tabOn : tabOff;
+    const p = {
+      jornadaSel: period === 'jornada', semanaSel: period === 'semana',
+      jW: jt.w, jC: jt.c, jBg: jt.bg, jSh: jt.sh, jI: jt.i,
+      sW: stb.w, sC: stb.c, sBg: stb.bg, sSh: stb.sh, sI: stb.i,
+      toJornada: () => this.setState({ period: 'jornada' }),
+      toSemana: () => this.setState({ period: 'semana' })
+    };
+
+    // ----- Selección de área → operadores
+    const ALL = '__all';
+    const selArea = S.area || areaRaw[0][0];
+    const allMode = selArea === ALL;
+    const pickArea = (name) => () => this.setState({ area: selArea === name ? '__none' : name });
+    const mark = (row) => {
+      const on = row.name === selArea;
+      return {
+        ...row, on, pick: pickArea(row.name), chev: on ? 'rotate(90deg)' : 'none',
+        rowBg: on ? 'rgba(14,165,233,0.10)' : 'transparent',
+        rowRing: on ? 'inset 0 0 0 1px var(--accent-ring)' : 'none',
+        nameW: on ? 700 : 500, nameC: on ? 'var(--accent-t)' : 'var(--t1)'
+      };
+    };
+    areas.forEach((r, i) => { areas[i] = mark(r); });
+    resol.forEach((r, i) => { resol[i] = mark(r); });
+
+    // [nombre, iniciales, activos, resueltos (jornada), prom h, puntos, estado]
+    // [operador, iniciales, área, activos, turno, P1, P2, P3 resueltos hoy, prom h]
+    const TEAM = [
+      ['Demo FTTH 1', 'F1', 'Redes FTTH / OLT', 8, 'turno', 1, 2, 3, '2,1'], ['Demo FTTH 2', 'F2', 'Redes FTTH / OLT', 5, 'turno', 0, 1, 2, '4,9'],
+      ['Demo FTTH 3', 'F3', 'Redes FTTH / OLT', 4, 'turno', 0, 1, 1, '5,2'], ['Demo FTTH 4', 'F4', 'Redes FTTH / OLT', 2, 'guardia', 0, 1, 2, '3,8'],
+      ['Demo WAN 1', 'W1', 'WAN', 6, 'turno', 1, 1, 3, '2,8'], ['Demo WAN 2', 'W2', 'WAN', 0, 'fuera', 0, 0, 1, '5,0'],
+      ['Demo Grandes Clientes 1', 'G1', 'Grandes Clientes', 4, 'turno', 0, 2, 2, '4,4'], ['Demo Grandes Clientes 2', 'G2', 'Grandes Clientes', 2, 'turno', 0, 0, 1, '6,8'],
+      ['Demo Inalámbrico 1', 'I1', 'Tráfico inalámbrico', 3, 'turno', 0, 2, 2, '3,0'], ['Demo Inalámbrico 2', 'I2', 'Tráfico inalámbrico', 2, 'guardia', 0, 1, 1, '3,2'],
+      ['Demo Operaciones 1', 'O1', 'Operaciones IP', 3, 'turno', 0, 1, 2, '1,7'], ['Demo Operaciones 2', 'O2', 'Operaciones IP', 1, 'turno', 0, 0, 2, '1,9'],
+      ['Demo Telefonía 1', 'T1', 'Telefonía', 1, 'guardia', 0, 1, 2, '2,2'], ['Demo Seguridad 1', 'S1', 'Seguridad', 0, 'turno', 1, 2, 2, '1,6']
+    ];
+    const pts = (o) => o[5] * 8 + o[6] * 5 + o[7];
+    const areaAvg = {};
+    TEAM.forEach((o) => { areaAvg[o[2]] = (areaAvg[o[2]] || []).concat(o[3]); });
+    Object.keys(areaAvg).forEach((k) => { const a = areaAvg[k]; areaAvg[k] = a.reduce((x, y) => x + y, 0) / a.length; });
+    const idx = (o) => areaAvg[o[2]] ? o[3] / areaAvg[o[2]] : 0;
+    const overloaded = (o) => o[3] >= 3 && o[3] > 1.5 * areaAvg[o[2]];
+    const OPS = {};
+    TEAM.forEach((o) => { (OPS[o[2]] = OPS[o[2]] || []).push([o[0], o[1], o[3], o[5] + o[6] + o[7], o[8], pts(o), o[4]]); });
+    const stName = { turno: ['En turno', '#22C55E'], guardia: ['De guardia', '#8B5CF6'], fuera: ['Fuera de turno', 'var(--t3)'] };
+    const sortBy = S.sort || 'carga';
+    const pool = allMode ? Object.keys(OPS).reduce((acc, k) => acc.concat(OPS[k].map((o) => o.concat([k]))), []) : (OPS[selArea] || []);
+    const list = pool.slice()
+      .sort((a, b) => sortBy === 'carga' ? (b[2] - a[2]) || (b[3] - a[3]) : (b[3] - a[3]) || (b[2] - a[2]));
+    const maxV = Math.max(1, ...list.map((o) => Math.max(o[2], o[3])));
+    const opsRows = list.map((o, i) => ({
+      pos: i + 1, name: o[0], ini: o[1], carga: o[2], res: o[3], avg: o[4], pts: o[5],
+      state: (allMode ? o[7] + ' · ' : '') + stName[o[6]][0], stateColor: stName[o[6]][1],
+      cW: (o[2] / maxV * 100) + '%', rW: (o[3] / maxV * 100) + '%',
+      cFill: o[2] >= 6 ? '#F59E0B' : '#0EA5E9',
+      cText: o[2] >= 6 ? 'var(--orange-t)' : 'var(--accent-t)'
+    }));
+    const selRow = areaRaw.find((a) => a[0] === selArea) || areaRaw[0];
+    const totRes = list.reduce((acc, o) => acc + o[3], 0);
+    const scope = allMode ? areaRaw : [selRow];
+    const totAct = scope.reduce((acc, a) => acc + a[2], 0);
+    const totUn = scope.reduce((acc, a) => acc + a[5], 0);
+    const sel = {
+      name: allMode ? 'Todas las áreas' : selArea,
+      filtered: !allMode,
+      clear: () => this.setState({ area: ALL }),
+      summary: list.length + (list.length === 1 ? ' operador' : ' operadores') + ' · ' + totAct + ' activos' + (totUn ? ' (' + totUn + ' sin asignar)' : '') + ' · ' + totRes + ' resueltos' + (allMode ? '' : ' · ' + selRow[1] + '% aún abiertos')
+    };
+    const so = sortBy === 'carga' ? tabOn : tabOff;
+    const sr = sortBy === 'resueltos' ? tabOn : tabOff;
+    const sort = {
+      cargaSel: sortBy === 'carga', resSel: sortBy === 'resueltos',
+      cW: so.w, cC: so.c, cBg: so.bg, cSh: so.sh,
+      rW: sr.w, rC: sr.c, rBg: sr.bg, rSh: sr.sh,
+      toCarga: () => this.setState({ sort: 'carga' }),
+      toRes: () => this.setState({ sort: 'resueltos' })
+    };
+
+    const st = { d: '#22C55E', t: '#F59E0B', a: 'var(--t3)' };
+    const medal = [['#FEF3C7', '#92400E'], ['var(--sep2)', 'var(--t1)'], ['#FFEDD5', '#9A3412']];
+    const ptsMax = Math.max(...TEAM.map(pts));
+    const ranking = TEAM.slice().sort((a, b) => pts(b) - pts(a)).slice(0, 7).map((o, i) => {
+      const ix = idx(o); const ov = overloaded(o);
+      return {
+        pos: i + 1, name: o[0], ini: o[1], area: o[2], pts: pts(o), ptsW: Math.round(pts(o) / ptsMax * 100) + '%', mix: o[5] + ' / ' + o[6] + ' / ' + o[7],
+        ix: ix.toFixed(1).replace('.', ','), ixC: ov ? 'var(--red-t)' : 'var(--t1)', ixBg: ov ? 'var(--red-bg)' : 'transparent',
+        stateColor: stName[o[4]][1], state: stName[o[4]][0],
+        posBg: medal[i] ? medal[i][0] : 'transparent', posColor: medal[i] ? medal[i][1] : 'var(--t2)', rowBg: 'transparent'
+      };
+    });
+    const turnoGroups = [['turno', 'En turno'], ['guardia', 'De guardia'], ['fuera', 'Fuera de turno']].map(([k, label]) => {
+      const people = TEAM.filter((o) => o[4] === k).map((o) => ({ name: o[0], ini: o[1], area: o[2], short: o[0].replace('Demo ', '').replace('Grandes Clientes', 'G. Clientes') }));
+      return { label, count: people.length, people, dot: stName[k][1] };
+    });
+    const SHAPES = {VEZ:'M440 466 444 471 449 469 452 472 458 471 462 476 456 498 457 499 463 496 470 504 474 503 475 500 476 502 505 494 510 495 514 491 518 494 534 498 547 480 548 473 565 470 566 473 562 487 567 500 571 501 577 497 580 499 585 495 590 496 587 502 594 510 593 517 597 521 585 528 589 537 594 535 595 543 598 544 595 549 597 558 610 574 614 575 621 569 633 568 630 583 625 583 624 585 629 594 628 599 618 593 616 599 622 604 621 610 624 610 634 623 649 632 657 642 654 652 655 672 671 699 667 715 682 720 692 718 713 720 710 737 696 740 685 748 673 749 668 752 664 772 647 789 644 787 648 781 643 780 622 797 616 795 602 804 595 805 590 819 582 820 574 834 569 837 565 834 570 826 567 816 556 814 545 819 539 827 529 831 518 831 513 829 481 800 478 795 480 790 476 785 473 769 466 751 462 748 463 739 460 738 455 730 458 723 438 702 433 703 429 693 426 694 420 691 413 694 413 689 441 663 445 663 450 655 448 650 443 648 437 629 430 630 428 627 417 597 419 585 413 578 417 543 413 537 415 533 414 526 429 514 430 510 428 501 430 491 443 480 437 471 440 466Z',VEB:'M635 193 641 197 641 201 644 201 647 204 651 203 654 206 668 202 673 203 673 206 666 206 666 209 668 215 672 214 676 220 674 222 673 227 682 241 672 249 676 265 686 262 697 268 697 271 705 274 706 276 710 277 714 293 737 293 734 301 737 308 755 313 759 319 753 319 745 326 738 323 725 324 705 334 692 334 682 336 675 346 670 349 660 344 654 339 651 339 646 345 639 343 633 347 632 353 639 356 640 358 613 368 603 361 571 350 572 342 590 320 594 308 594 295 598 293 609 294 614 298 619 288 607 277 605 270 598 266 591 266 586 259 583 254 590 248 589 244 583 243 575 233 570 240 561 240 561 235 557 231 559 225 556 221 556 212 561 213 575 200 599 206 607 203 616 204 623 201 623 195 625 196 629 193 635 193Z',VEC:'M110 384 122 383 126 387 130 385 137 388 149 379 156 384 169 384 173 381 183 382 206 392 212 390 223 393 244 383 249 372 256 372 264 364 273 363 277 359 288 357 309 340 323 340 334 347 339 344 342 351 351 352 363 347 378 350 380 353 386 350 400 354 407 351 423 351 431 346 437 351 448 352 449 355 456 360 467 359 489 366 491 364 494 365 493 360 500 360 502 357 505 363 513 363 515 369 507 374 499 390 484 394 478 401 471 400 467 405 465 410 469 419 468 428 464 432 460 448 441 466 434 462 416 458 402 465 394 464 383 467 375 466 361 470 333 464 321 474 315 469 308 471 262 414 249 417 242 412 237 412 233 407 227 408 225 405 209 409 202 414 196 413 195 410 164 411 164 408 156 410 153 408 141 412 134 410 125 395 127 390 124 386 115 387 110 384Z',VED:'M444 174 447 184 454 181 459 187 458 190 464 194 461 199 463 204 466 206 472 205 475 209 482 208 496 212 499 221 495 229 501 236 498 241 499 248 493 258 490 260 487 257 477 255 472 248 469 249 471 243 478 240 481 233 473 231 472 226 467 224 463 224 459 215 453 216 442 210 435 213 434 210 424 208 427 200 429 202 430 195 425 193 427 191 425 187 416 187 411 185 412 179 413 177 414 180 415 177 444 174Z',VEE:'M435 349 430 346 422 351 407 351 399 354 386 350 380 353 374 349 362 347 356 351 345 352 341 350 339 344 333 347 323 340 308 340 288 357 277 359 273 363 264 364 256 373 249 372 244 383 220 393 212 390 206 392 183 382 173 381 169 384 158 384 152 380 146 379 150 376 157 375 177 380 182 379 179 379 174 372 170 372 170 368 174 365 173 360 197 342 203 333 201 328 210 327 210 320 215 316 213 305 221 303 223 299 221 295 227 288 232 287 232 284 236 278 245 273 252 275 257 274 259 279 267 283 270 289 278 293 291 297 298 296 312 303 318 302 326 315 330 316 327 320 330 325 339 329 347 339 349 338 347 334 351 324 369 307 368 304 397 304 405 313 404 315 408 320 413 321 412 325 413 324 415 328 418 327 419 330 425 331 428 339 432 340 430 342 433 347 437 348 435 349Z',VEF:'M627 599 629 594 624 585 625 583 630 583 633 568 621 569 614 575 610 574 597 558 595 549 598 544 595 543 594 535 589 537 585 528 597 521 593 517 594 510 587 502 590 496 585 495 580 499 577 497 571 501 567 500 562 487 566 473 565 470 548 473 546 480 534 498 518 494 514 491 510 495 505 494 476 502 474 500 474 503 470 504 463 496 456 499 462 476 458 471 452 472 449 469 444 471 441 466 460 448 464 432 468 428 469 419 465 410 467 405 471 400 478 401 484 394 499 390 506 377 507 374 515 369 521 370 529 366 546 366 561 352 591 357 603 360 610 367 618 367 640 358 639 356 632 353 633 347 639 343 646 344 651 339 654 339 660 344 670 349 675 346 682 336 692 333 705 334 725 324 738 323 745 326 753 319 759 319 763 315 783 326 824 315 825 322 818 326 818 329 827 341 827 348 840 358 842 351 851 346 854 351 872 361 877 361 882 353 893 356 919 352 913 357 902 357 898 369 890 375 898 389 895 395 896 398 902 404 907 398 915 400 919 404 918 409 914 411 913 417 909 416 902 422 895 424 891 429 877 425 878 428 875 431 862 432 857 441 857 444 860 444 862 449 860 457 864 461 864 467 860 467 857 472 853 473 845 482 888 533 892 534 898 549 888 563 876 567 875 575 871 579 861 581 850 578 852 583 847 586 838 586 835 596 820 597 815 603 808 605 805 602 800 603 794 608 775 601 767 606 767 612 754 611 752 620 755 634 752 639 745 643 739 642 724 625 722 619 715 616 710 616 705 623 696 616 686 618 682 616 670 622 667 613 661 606 653 604 651 608 648 605 639 603 631 607 624 599 627 599Z',VEG:'M426 201 424 208 434 210 436 218 432 216 431 220 425 222 417 215 417 220 411 222 403 221 403 218 396 220 394 215 387 211 390 206 388 204 378 210 375 198 380 192 377 185 378 174 387 170 395 177 400 176 405 178 403 177 405 177 409 179 413 177 412 185 416 188 425 187 427 191 425 194 421 192 416 195 412 202 422 203 423 200 426 201Z',VEH:'M402 309 396 304 368 305 361 302 360 297 356 297 354 295 367 288 359 278 362 263 352 259 353 256 344 250 343 239 338 229 338 223 340 220 347 221 355 218 356 214 359 211 363 214 368 214 367 217 369 217 388 204 390 206 387 211 394 215 396 221 403 218 403 221 409 223 417 220 420 231 416 235 409 236 405 241 409 250 407 256 411 261 414 271 409 281 405 283 406 285 402 293 404 306 402 309Z',VEY:'M919 352 893 356 882 353 877 361 872 362 854 351 851 346 842 351 840 358 827 348 826 341 818 329 818 326 825 322 824 315 783 326 763 315 770 310 789 304 790 299 799 294 804 286 800 285 798 280 800 273 795 274 794 270 789 273 786 269 782 269 784 262 782 254 777 250 777 245 774 244 780 234 780 230 784 227 784 212 793 209 808 217 816 224 817 221 830 225 830 220 827 217 833 219 847 236 855 239 856 237 861 240 871 240 874 243 872 245 881 250 886 261 892 268 892 273 885 278 894 293 893 300 898 303 898 308 906 310 911 307 910 303 914 302 934 306 954 328 954 330 941 330 935 342 930 343 919 352Z',VEA:'M479 173 477 182 474 181 469 184 459 182 466 178 466 175 469 172 479 173Z',VEI:'M388 171 360 168 362 157 359 161 352 160 347 166 341 162 332 165 323 162 302 163 302 159 291 161 288 159 282 162 282 159 266 166 260 165 252 172 247 171 241 179 235 180 232 188 222 189 217 178 208 178 202 175 202 171 198 167 197 157 191 154 189 147 183 144 214 129 235 126 238 123 258 117 261 111 259 110 264 113 267 112 267 110 269 110 267 107 262 107 265 106 261 104 272 109 277 107 277 111 280 113 289 109 283 95 258 101 254 99 256 90 254 91 250 84 256 68 270 61 277 64 281 72 286 96 295 110 299 111 302 108 312 109 319 106 330 108 333 112 348 112 352 117 368 124 374 130 377 130 386 148 379 148 387 149 387 147 389 150 389 152 382 152 384 154 382 153 382 159 388 171Z',VEJ:'M556 212 556 221 559 225 557 231 561 235 561 240 570 240 575 233 583 243 589 244 590 248 583 254 586 259 591 266 598 266 605 270 608 274 607 277 619 286 614 298 609 295 599 293 592 298 594 306 590 320 571 343 570 350 576 351 579 355 561 352 546 366 529 366 521 370 515 369 513 363 505 363 502 358 500 360 493 361 494 365 491 364 489 366 467 359 457 360 449 355 448 352 436 351 435 349 437 348 433 347 430 342 432 340 428 339 425 331 419 330 418 327 415 328 414 324 412 325 413 321 408 320 402 312 402 293 406 286 405 283 409 281 414 271 411 261 407 256 409 250 405 241 409 236 416 235 420 231 416 215 425 222 428 219 431 220 432 216 436 218 435 213 442 210 453 216 459 215 463 224 467 224 472 226 473 231 481 233 478 240 471 243 469 249 471 248 477 255 487 257 490 261 497 253 500 245 498 241 500 233 495 229 499 221 496 212 501 212 505 208 512 207 526 213 527 211 540 214 544 212 556 212Z',VEX:'M456 182 451 181 447 184 444 174 459 172 469 168 495 167 516 168 515 174 469 172 466 175 466 179 456 182Z',VEK:'M339 220 337 226 323 232 319 229 318 220 314 227 311 237 299 242 295 240 293 250 287 248 277 250 281 239 273 240 269 244 271 247 265 249 262 236 264 232 270 232 265 226 261 226 256 221 254 226 251 222 248 222 246 216 236 218 227 207 225 210 224 217 221 217 211 207 221 200 224 189 232 188 235 180 241 179 244 176 247 171 252 172 260 165 266 166 282 160 282 162 288 159 291 161 302 160 302 163 323 162 332 165 343 163 345 170 341 173 338 172 334 175 332 179 336 194 331 194 329 201 324 201 323 204 327 208 329 218 331 219 331 213 339 209 341 216 339 220Z',VEL:'M233 281 232 287 228 288 220 296 223 300 222 303 214 305 215 316 210 320 210 327 202 329 203 332 200 337 173 360 174 365 171 368 168 362 169 348 165 342 163 341 158 344 149 334 143 334 143 331 150 323 149 317 152 312 149 305 143 302 146 299 157 299 178 282 183 284 197 275 190 269 189 264 198 267 201 272 210 264 214 271 222 274 225 279 231 276 234 277 233 281Z',VEM:'M575 200 567 210 563 210 561 213 557 211 554 214 547 212 540 214 527 211 523 213 512 207 505 208 501 212 494 212 482 208 475 209 472 205 466 206 461 199 464 194 458 190 459 187 456 182 459 180 469 184 474 181 477 182 479 173 515 174 516 168 521 166 533 170 529 176 530 177 529 173 531 178 542 187 575 200Z',VEN:'M758 319 755 313 737 308 734 301 737 293 714 293 710 277 705 276 705 274 697 271 697 268 686 262 676 265 672 249 682 241 673 227 673 222 676 220 671 214 668 215 666 206 683 203 686 197 693 195 699 196 700 192 706 188 710 190 709 192 722 197 725 200 728 195 731 197 733 196 738 205 744 203 744 206 747 205 749 207 753 204 757 206 763 203 762 196 762 192 771 198 775 210 784 210 782 222 784 227 780 230 780 234 774 244 777 245 777 250 782 254 784 262 782 269 786 269 789 273 793 270 796 274 797 272 800 273 798 280 800 285 804 286 799 294 790 299 789 304 770 310 758 319Z',VEO:'M678 130 685 142 683 144 678 146 678 150 675 149 677 148 674 146 674 149 666 151 659 143 657 146 643 144 645 139 656 136 660 141 667 143 670 137 678 130Z',VEP:'M368 305 370 307 351 324 347 334 349 338 347 339 339 329 330 325 327 320 330 316 326 315 318 302 312 303 298 296 291 297 278 293 261 279 257 274 267 267 264 263 266 259 263 257 268 252 272 241 281 239 277 250 287 248 293 250 295 240 299 242 311 237 314 227 318 220 318 227 322 231 332 229 338 225 343 239 344 250 353 256 352 259 362 263 359 278 367 288 354 295 360 297 361 302 368 305Z',VER:'M673 204 668 202 659 205 647 204 644 201 641 201 641 197 635 193 646 189 639 187 645 187 644 184 646 183 646 187 648 186 648 183 656 182 658 177 669 180 683 180 694 177 690 177 682 173 667 171 669 170 667 169 657 172 655 176 653 173 655 170 651 167 653 165 661 168 667 166 676 168 685 164 682 165 683 162 686 165 702 167 711 163 719 165 727 160 744 163 756 158 792 164 809 160 814 160 810 165 787 167 781 174 760 171 747 174 749 184 750 177 753 176 760 186 763 202 759 206 753 204 750 208 748 205 744 206 744 204 738 205 733 196 731 197 729 195 725 200 722 197 709 193 710 190 707 188 701 192 699 196 693 195 686 197 683 203 673 204Z',VES:'M110 320 113 311 116 320 122 316 132 316 139 310 138 301 149 305 152 314 149 317 150 323 143 331 143 334 148 334 158 344 163 341 165 342 169 348 168 362 170 365 170 372 176 373 174 375 179 379 181 378 182 379 179 380 150 376 145 378 147 379 145 384 136 388 130 385 126 387 122 383 111 385 107 383 105 379 107 353 104 349 109 343 114 345 115 340 110 320Z',VET:'M257 274 252 275 245 273 233 281 234 277 231 276 225 279 222 274 214 271 210 260 199 253 197 245 199 236 214 238 221 226 224 226 226 223 223 218 225 212 228 207 236 218 246 216 248 222 252 222 254 226 256 220 271 232 265 232 262 236 265 248 268 249 263 257 266 259 264 263 267 267 257 274Z',VEU:'M387 171 383 173 379 173 377 177 380 192 375 198 379 211 369 217 368 214 363 214 359 211 356 214 355 218 351 219 339 221 339 209 331 213 331 219 326 214 324 201 329 201 331 194 336 192 334 181 332 182 333 175 343 172 345 166 352 161 359 161 362 157 360 168 387 171Z',VEV:'M210 264 201 272 191 265 189 264 199 256 200 253 210 260 210 264ZM182 144 185 144 189 146 191 154 197 157 198 167 202 171 202 175 211 179 217 178 219 187 224 189 221 200 211 207 226 222 214 238 200 236 202 229 198 219 194 213 189 212 186 201 176 189 172 183 173 176 167 172 170 169 168 167 168 161 164 156 175 156 174 150 176 148 170 145 182 144ZM188 266 197 274 187 282 183 284 178 282 157 299 146 299 141 303 138 301 139 310 132 316 122 317 116 320 114 311 109 321 93 304 86 270 82 268 74 271 70 258 58 266 46 266 46 263 58 247 57 246 61 240 65 240 66 232 74 221 70 215 76 202 77 180 88 166 94 150 100 146 105 138 103 136 113 132 120 132 139 98 181 85 181 88 174 93 140 102 140 116 144 125 151 135 163 143 151 142 155 145 159 157 165 162 162 167 161 180 151 187 143 202 137 205 133 216 128 223 141 243 137 237 136 240 138 239 139 243 137 243 140 244 136 243 137 247 141 244 148 248 144 248 143 251 145 250 144 249 148 249 152 255 156 252 155 259 152 258 149 261 152 264 154 262 154 267 151 270 160 275 168 275 181 272 188 266Z',VEW:'M583 144 583 144 589 145 590 149 575 148 583 144ZM633 87 628 86 629 81 633 84 633 87Z'};
+    const NAMES = { VEZ: 'Amazonas', VEB: 'Anzoátegui', VEC: 'Apure', VED: 'Aragua', VEE: 'Barinas', VEF: 'Bolívar', VEG: 'Carabobo', VEH: 'Cojedes', VEY: 'Delta Amacuro', VEA: 'Distrito Capital', VEI: 'Falcón', VEJ: 'Guárico', VEX: 'La Guaira', VEK: 'Lara', VEL: 'Mérida', VEM: 'Miranda', VEN: 'Monagas', VEO: 'Nueva Esparta', VEP: 'Portuguesa', VER: 'Sucre', VES: 'Táchira', VET: 'Trujillo', VEU: 'Yaracuy', VEV: 'Zulia', VEW: 'Dependencias Federales' };
+    // [activos, cerrados hoy]
+    const DATA = { VEA: [9, 6], VEV: [7, 5], VEG: [6, 4], VEF: [5, 3], VEM: [5, 4], VEK: [4, 3], VED: [3, 4], VEB: [3, 2], VEL: [2, 2], VES: [2, 1], VEN: [1, 2], VEX: [1, 1] };
+    const totalActive = Object.values(DATA).reduce((a, v) => a + v[0], 0);
+    const scale = (n) => n === 0 ? 'var(--map-empty)' : n <= 2 ? 'var(--accent-bg)' : n <= 5 ? '#7DD3FC' : n <= 10 ? '#0EA5E9' : '#0284C7';
+    const hover = this.state && this.state.hover;
+    const m = {};
+    Object.keys(SHAPES).forEach((id) => {
+      const n = (DATA[id] || [0])[0];
+      const on = hover === id;
+      m[id] = {
+        d: SHAPES[id],
+        fill: on ? (n > 0 ? '#0284C7' : '#C7C7CC') : scale(n),
+        stroke: on ? '#0EA5E9' : 'var(--map-line)',
+        sw: on ? 3 : 1.5,
+        enter: () => this.setState({ hover: id })
+      };
+    });
+    const ranked = Object.keys(DATA).sort((a, b) => DATA[b][0] - DATA[a][0]);
+    const focus = hover || ranked[0];
+    const fd = DATA[focus] || [0, 0];
+    const tip = { name: NAMES[focus], total: fd[0], open: fd[0], closed: fd[1], dot: fd[0] > 0 ? '#FF453A' : '#30D158' };
+    const topStates = ranked.slice(0, 7).map((id, i) => ({
+      pos: i + 1, name: NAMES[id], total: DATA[id][0],
+      pct: Math.round(DATA[id][0] / totalActive * 100),
+      bg: hover === id ? 'rgba(14,165,233,0.1)' : 'transparent',
+      enter: () => this.setState({ hover: id })
+    }));
+    const mapOpen = !!S.mapOpen;
+    const mapv = {
+      open: mapOpen, label: mapOpen ? 'Ocultar mapa' : 'Ver mapa',
+      toggle: () => this.setState({ mapOpen: !mapOpen }),
+      pad: mapOpen ? '10px' : '0', line: mapOpen ? '1px solid var(--sep)' : '0',
+      summary: 'Más incidencias: ' + ranked.slice(0, 3).map((id) => NAMES[id] + ' ' + DATA[id][0]).join(' · ')
+    };
+    const leave = () => this.setState({ hover: null });
+    // Barra lateral minimizable (se recuerda entre pantallas)
+    const sbStored = (() => { try { return localStorage.getItem('kip.sidebar') === 'min'; } catch (e) { return false; } })();
+    const sbMin = (this.state && this.state.sbMin !== undefined) ? this.state.sbMin : sbStored;
+    const sb = {
+      c: sbMin ? 'true' : 'false', label: sbMin ? 'Mostrar barra lateral' : 'Minimizar barra lateral',
+      toggle: (e) => { if (e && e.stopPropagation) e.stopPropagation(); const nv = !sbMin; try { localStorage.setItem('kip.sidebar', nv ? 'min' : 'full'); } catch (err) {} this.setState({ sbMin: nv }); }
+    };
+    return { sb, font, theme, alertState, bg, kpis, alerts, flow, areas, resol, ranking, m, tip, topStates, leave, p, sel, sort, opsRows, fc, sparks, mapv, turnoGroups };
+  }
+}
+</script>
+</body>
+</html>

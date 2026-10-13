@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Reportes</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0;background:#F1F5F9}
+a{color:#0369A1;text-decoration:none}a:hover{color:#075985}
+.glass{background:rgba(255,255,255,0.85);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);border-radius:24px;box-shadow:0 0 0 0.5px rgba(15,23,42,0.05),0 4px 12px rgba(0,0,0,0.03)}
+.bento{background:rgba(255,255,255,0.85);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);border-radius:24px;padding:22px 24px 20px;min-height:140px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;gap:16px;box-shadow:0 0 0 0.5px rgba(15,23,42,0.05),0 4px 12px rgba(0,0,0,0.03)}
+.bt{margin:0;font-size:14px;font-weight:600;line-height:1.3;letter-spacing:-0.015em;color:var(--t1)}
+.kv{font-family:inherit;font-size:34px;line-height:38px;font-weight:600;color:var(--t1);letter-spacing:-0.02em;font-variant-numeric:tabular-nums}
+.pill{background:rgba(255,255,255,0.72);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%);box-shadow:1.25px 0 0 -0.75px #D0D0D0,-1.25px 0 0 -0.75px #D0D0D0,0 0 0 0.5px #E2E8F0,inset 0 1px 0 rgba(255,255,255,0.95),0 8px 15px rgba(0,0,0,0.03);border-radius:1000px}
+.side{background:rgba(241,245,249,0.9);-webkit-backdrop-filter:blur(40px) saturate(150%);backdrop-filter:blur(40px) saturate(150%);box-shadow:0 0 0 0.5px rgba(15,23,42,0.08),inset 0 1px 0 rgba(255,255,255,0.8),0 10px 30px rgba(15,23,42,0.06);border-radius:18px}
+.sideitem:hover{background:rgba(15,23,42,0.05)}
+.pillbtn:hover{background:rgba(255,255,255,0.95)}
+.popup{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 8px 0 12px;border:0;border-radius:8px;background:var(--control);box-shadow:0 0 0 0.5px rgba(0,0,0,0.12),0 1px 2px rgba(0,0,0,0.06);font:inherit;font-size:12px;color:var(--t1);cursor:pointer}
+.rowbtn{cursor:pointer}
+.rowbtn:hover td{background:rgba(14,165,233,0.05)}
+.acard{cursor:pointer;text-align:left;border:0;font:inherit;color:inherit;transition:transform .4s cubic-bezier(0.19,1,0.22,1),box-shadow .4s ease}
+.acard:hover{transform:scale(1.015);box-shadow:0 0 0 0.5px rgba(15,23,42,0.05),0 12px 30px rgba(0,0,0,0.07)}
+button:focus-visible,a:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(14,165,233,0.3)}
+[data-theme=dark] .chip{background:rgba(10,132,255,0.18);box-shadow:inset 0 0 0 1px rgba(64,156,255,0.35);color:#64B5FF}
+[data-theme=dark] .sideitem:hover,[data-theme=dark] .pillbtn:hover,[data-theme=dark] .ico:hover{background:rgba(255,255,255,0.08)}
+[data-theme=dark] .stat{border-color:rgba(255,255,255,0.10)}
+/* Texto: Primary / Secondary / Tertiary */
+[data-theme=dark] [style*="color: #0F172A"],[data-theme=dark] [style*="color: #1E293B"],[data-theme=dark] [style*="color: #1D1D1F"],[data-theme=dark] [style*="color: #1A1A1A"],[data-theme=dark] [style*="color: #1C1C1E"],[data-theme=dark] [style*="color: #334155"]{color:rgba(255,255,255,0.92)!important}
+[data-theme=dark] [style*="color: #64748B"],[data-theme=dark] [style*="color: #475569"]{color:rgba(235,235,245,0.60)!important}
+[data-theme=dark] [style*="color: #94A3B8"],[data-theme=dark] [style*="color: #8E8E93"]{color:rgba(235,235,245,0.32)!important}
+/* Colores de sistema (oscuro) */
+[data-theme=dark] [style*="color: #0369A1"],[data-theme=dark] [style*="color: #0284C7"]{color:#64B5FF!important}
+[data-theme=dark] [style*="color: #15803D"],[data-theme=dark] [style*="color: #047857"]{color:#30D158!important}
+[data-theme=dark] [style*="color: #B45309"],[data-theme=dark] [style*="color: #C2410C"]{color:#FF9F0A!important}
+[data-theme=dark] [style*="color: #B91C1C"]{color:#FF6961!important}
+[data-theme=dark] [style*="color: #6D28D9"]{color:#BF5AF2!important}
+[data-theme=dark] [fill="#0F172A"]{fill:rgba(255,255,255,0.92)}
+[data-theme=dark] svg [stroke="#1A1A1A"]{stroke:rgba(255,255,255,0.85)}
+[data-theme=dark] svg[stroke="#1A1A1A"]{stroke:rgba(255,255,255,0.85)}
+/* Separadores y superficies */
+[data-theme=dark] [style*="solid var(--sep)"],[data-theme=dark] [style*="solid #F1F5F9"],[data-theme=dark] [style*="solid #CBD5E1"]{border-color:rgba(255,255,255,0.08)!important}
+[data-theme=dark] [style*="background: #CBD5E1"],[data-theme=dark] [style*="background: #D9D9D9"]{background:rgba(255,255,255,0.14)!important}
+[data-theme=dark] [style*="background: #F0FDF4"],[data-theme=dark] [style*="background: #ECFDF5"]{background:rgba(48,209,88,0.16)!important;box-shadow:none!important}
+[data-theme=dark] [style*="background: #FFFBEB"]{background:rgba(255,159,10,0.16)!important;box-shadow:none!important}
+[data-theme=dark] [style*="background: #FEF2F2"]{background:rgba(255,69,58,0.18)!important;box-shadow:none!important}
+[data-theme=dark] [style*="background: #F0F9FF"],[data-theme=dark] [style*="background: #E0F2FE"]{background:rgba(10,132,255,0.20)!important;box-shadow:none!important}
+[data-theme=dark] [style*="background: #F8FAFC"],[data-theme=dark] [style*="background: #F1F5F9"],[data-theme=dark] [style*="background: rgba(255,255,255,0.6)"],[data-theme=dark] [style*="background: rgba(255,255,255,0.7)"],[data-theme=dark] [style*="background: rgba(255,255,255,0.45)"]{background:rgba(255,255,255,0.05)!important;box-shadow:inset 0 0 0 0.5px rgba(255,255,255,0.10)!important}
+[data-theme=dark] [style*="background: #FFFFFF"]:not(.knob){background:rgba(255,255,255,0.10)!important;color:rgba(255,255,255,0.92)!important}
+[data-theme=dark] [style*="background: #E6E6E6"]{background:rgba(255,255,255,0.18)!important}
+[data-theme=dark] [style*="background: #0284C7"]{background:#0A84FF!important}
+[data-theme=dark] [style*="linear-gradient(#E2E8F0 1px"]{background-image:linear-gradient(rgba(255,255,255,0.08) 1px,transparent 1px)!important}
+[data-theme=dark] [style*="linear-gradient(90deg, #E2E8F0 1px"]{background-image:linear-gradient(90deg,rgba(255,255,255,0.08) 1px,transparent 1px)!important}
+[data-theme=dark] [role=tab][aria-selected=true]{background:rgba(255,255,255,0.16)!important;color:rgba(255,255,255,0.95)!important;box-shadow:inset 0 0 0 0.5px rgba(255,255,255,0.12)!important}
+[data-theme=dark] [role=tablist]{background:rgba(0,0,0,0.25)!important;border-color:rgba(255,255,255,0.06)!important}
+[data-theme=dark] input{color:rgba(255,255,255,0.92)!important}
+[data-theme=dark] input::placeholder{color:rgba(235,235,245,0.32)}
+[data-theme=dark] .row:hover td,[data-theme=dark] .rowbtn:hover td,[data-theme=dark] .oprow:hover{background:rgba(255,255,255,0.04)!important}
+
+/* ---------- Tokens de tema ---------- */
+[data-theme=light]{--t1:#1D1D1F;--t2:#556070;--t3:#7C7C82;--accent-t:#0369A1;--green-t:#15803D;--orange-t:#B45309;--red-t:#B91C1C;--purple-t:#6D28D9;--sep:#E2E8F0;--sep2:#F1F5F9;--green-bg:#ECFDF5;--orange-bg:#FFFBEB;--red-bg:#FEF2F2;--accent-bg:#E0F2FE;--accent-ring:#BAE6FD;--green-ring:#BBF7D0;--orange-ring:#FDE68A;--red-ring:#FECACA;--fill:#F8FAFC;--control:#FFFFFF;--seg-on:#FFFFFF;--seg-sel:#E6E6E6;--solid:#0284C7;--map-empty:rgba(229,229,234,0.7);--map-line:#FFFFFF;--glyph:#1A1A1A;--well:rgba(255,255,255,0.6)}
+[data-theme=dark]{--t1:rgba(255,255,255,0.92);--t2:rgba(235,235,245,0.76);--t3:rgba(235,235,245,0.54);--accent-t:#64B5FF;--green-t:#30D158;--orange-t:#FF9F0A;--red-t:#FF6961;--purple-t:#BF5AF2;--sep:rgba(255,255,255,0.10);--sep2:rgba(255,255,255,0.06);--green-bg:rgba(48,209,88,0.16);--orange-bg:rgba(255,159,10,0.16);--red-bg:rgba(255,69,58,0.18);--accent-bg:rgba(10,132,255,0.24);--accent-ring:rgba(64,156,255,0.38);--green-ring:rgba(48,209,88,0.32);--orange-ring:rgba(255,159,10,0.32);--red-ring:rgba(255,69,58,0.32);--fill:rgba(255,255,255,0.05);--control:rgba(255,255,255,0.10);--seg-on:rgba(255,255,255,0.18);--seg-sel:rgba(255,255,255,0.18);--solid:#0A84FF;--map-empty:rgba(255,255,255,0.08);--map-line:rgba(13,12,33,0.85);--glyph:rgba(255,255,255,0.85);--well:rgba(255,255,255,0.06)}
+[data-theme]{color:var(--t1);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+[data-theme] h1,[data-theme] h2,[data-theme] h3,[data-theme] h4,[data-theme] h5,[data-theme] h6,[data-theme] th,[data-theme] td{color:inherit}
+[data-theme=dark] .popup,[data-theme=dark] .field{background:var(--control)}
+
+/* ---------- Modo oscuro · macOS 27 Golden Gate ---------- */
+/* Materiales: Ultra Thick (sidebar), Regular (tarjetas), Thin (controles); texto Primary/Secondary/Tertiary */
+[data-theme=dark]{color-scheme:dark}
+[data-theme=dark] .glass,[data-theme=dark] .bento{background:rgba(38,37,58,0.62);-webkit-backdrop-filter:blur(30px) saturate(160%);backdrop-filter:blur(30px) saturate(160%);box-shadow:0 0 0 0.5px rgba(255,255,255,0.10),inset 0 1px 0 rgba(255,255,255,0.06),0 12px 32px rgba(5,4,20,0.40)}
+[data-theme=dark] .glass:hover,[data-theme=dark] .bento:hover{box-shadow:0 0 0 0.5px rgba(255,255,255,0.14),inset 0 1px 0 rgba(255,255,255,0.08),0 16px 40px rgba(5,4,20,0.5)}
+[data-theme=dark] .side{background:rgba(30,29,40,0.86);box-shadow:0 0 0 0.5px rgba(255,255,255,0.10),inset 0 1px 0 rgba(255,255,255,0.05),0 12px 36px rgba(5,4,20,0.45)}
+[data-theme=dark] .notif{background:linear-gradient(180deg,rgba(64,63,74,0.72),rgba(30,30,36,0.72));box-shadow:1.25px 0 0 -0.75px rgba(255,255,255,0.22),-1.25px 0 0 -0.75px rgba(255,255,255,0.22),0 0 0 0.5px rgba(255,255,255,0.14),0 8px 48px rgba(0,0,0,0.45)}
+[data-theme=dark] .pill{background:rgba(60,59,74,0.55);box-shadow:1.25px 0 0 -0.75px rgba(255,255,255,0.18),-1.25px 0 0 -0.75px rgba(255,255,255,0.18),0 0 0 0.5px rgba(255,255,255,0.10),inset 0 1px 0 rgba(255,255,255,0.06),0 8px 15px rgba(0,0,0,0.2)}
+[data-theme=dark] .popup,[data-theme=dark] .field{background:rgba(255,255,255,0.08);box-shadow:0 0 0 0.5px rgba(255,255,255,0.14);color:rgba(255,255,255,0.92)}
+[data-theme=dark] .primary{background:#0A84FF}
+[data-theme=dark] .primary:hover{background:#409CFF}
+[data-theme=dark] .bt,[data-theme=dark] .kv{color:rgba(255,255,255,0.92)}
+[data-theme=dark] .chip{background:rgba(10,132,255,0.18);box-shadow:inset 0 0 0 1px rgba(64,156,255,0.35);color:#64B5FF}
+[data-theme=dark] .sideitem:hover,[data-theme=dark] .pillbtn:hover,[data-theme=dark] .ico:hover{background:rgba(255,255,255,0.08)}
+[data-theme=dark] .stat{border-color:rgba(255,255,255,0.10)}
+[data-theme=dark] [fill="#0F172A"]{fill:rgba(255,255,255,0.92)}
+[data-theme=dark] svg [stroke="#1A1A1A"]{stroke:rgba(255,255,255,0.85)}
+[data-theme=dark] svg[stroke="#1A1A1A"]{stroke:rgba(255,255,255,0.85)}
+[data-theme=dark] [role=tab][aria-selected=true]{background:rgba(255,255,255,0.16)!important;color:rgba(255,255,255,0.95)!important;box-shadow:inset 0 0 0 0.5px rgba(255,255,255,0.12)!important}
+[data-theme=dark] [role=tablist]{background:rgba(0,0,0,0.25)!important;border-color:rgba(255,255,255,0.06)!important}
+[data-theme=dark] input{color:rgba(255,255,255,0.92)!important}
+[data-theme=dark] input::placeholder{color:rgba(235,235,245,0.32)}
+[data-theme=dark] .row:hover td,[data-theme=dark] .rowbtn:hover td,[data-theme=dark] .oprow:hover{background:rgba(255,255,255,0.04)!important}
+[data-theme=dark] [stroke="#1A1A1A"],[data-theme=dark] [stroke="#727272"]{stroke:rgba(255,255,255,0.85)}
+[data-theme=dark] [stroke="#64748B"]{stroke:rgba(235,235,245,0.76)}
+[data-theme=dark] [fill="#0F172A"]{fill:rgba(255,255,255,0.92)}
+/* Sidebar fijo: siempre visible al bajar la página; su contenido se desplaza si no cabe */
+@media (min-width: 900px){nav.side{position:sticky!important;top:10px;align-self:flex-start!important;height:calc(100vh - 20px)!important;min-height:0!important;overflow-y:auto;scrollbar-width:thin}}
+/* Sidebar minimizable y animado */
+nav.side{overflow-x:hidden;transition:flex-basis .38s cubic-bezier(.22,1,.36,1),max-width .38s cubic-bezier(.22,1,.36,1),padding .38s cubic-bezier(.22,1,.36,1);animation:sideIn .55s cubic-bezier(.22,1,.36,1) both}
+nav.side a{white-space:nowrap;overflow:hidden;transition:background .2s ease,box-shadow .2s ease,padding .38s cubic-bezier(.22,1,.36,1),gap .38s cubic-bezier(.22,1,.36,1)}
+nav.side a svg{flex:none;transition:transform .2s ease}
+nav.side a:hover svg{transform:scale(1.1)}
+nav.side a>span{transition:opacity .2s ease}
+nav.side>span{max-height:40px;overflow:hidden;white-space:nowrap;transition:opacity .2s ease,max-height .35s ease,padding .35s ease}
+nav.side .sb-brand,nav.side .sb-txt{max-width:200px;overflow:hidden;white-space:nowrap;transition:opacity .2s ease,max-width .38s cubic-bezier(.22,1,.36,1)}
+nav.side>div:first-child button svg{transition:transform .38s cubic-bezier(.22,1,.36,1)}
+nav.side[data-collapsed=true]{flex:0 0 64px!important;max-width:64px!important;padding-left:8px!important;padding-right:8px!important}
+nav.side[data-collapsed=true]>span{opacity:0;max-height:0;padding-top:0!important;padding-bottom:0!important}
+nav.side[data-collapsed=true] .sb-brand,nav.side[data-collapsed=true] .sb-txt{opacity:0;max-width:0}
+nav.side[data-collapsed=true] a>span{opacity:0}
+nav.side[data-collapsed=true] a{padding-left:16px!important;padding-right:0!important;height:36px!important;gap:40px!important}
+nav.side[data-collapsed=true]>div:first-child{justify-content:center!important;padding:2px 0 12px!important}
+nav.side[data-collapsed=true]>div:first-child button svg{transform:scaleX(-1)}
+nav.side[data-collapsed=true] .sb-top{align-items:center}
+nav.side[data-collapsed=true] .sb-top>div{padding:0!important}
+@keyframes sideIn{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){nav.side,nav.side *{transition:none!important;animation:none!important}}
+/* ---------- Gráficas: marcas finas, color sólido y animación de entrada ---------- */
+[data-theme=light]{--track:rgba(148,163,184,0.18);--grid:rgba(15,23,42,0.07)}
+[data-theme=dark]{--track:rgba(255,255,255,0.09);--grid:rgba(255,255,255,0.08)}
+.track{position:relative;height:8px;border-radius:999px;background:var(--track)}
+.bar-fill{display:block;height:100%;border-radius:999px;transform-origin:left center;animation:growX .9s cubic-bezier(.22,1,.36,1) both;transition:width .5s cubic-bezier(.22,1,.36,1)}
+section.glass{animation:fadeUp .6s cubic-bezier(.22,1,.36,1) both}
+@keyframes growX{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){.bar-fill,section.glass{animation:none!important}}
+/* ---------- Paleta oscura equilibrada: tonos menos saturados para que no se vean eléctricos ---------- */
+[data-theme=light]{--area-hd:#64B5FF;--area-hd-t:#0B2E4F}
+[data-theme=dark]{--accent-t:#7FB2E5;--green-t:#5DBB85;--orange-t:#E0A458;--red-t:#E07A74;--purple-t:#B59AE6;--solid:#3A7FCC;--accent-bg:rgba(58,127,204,0.22);--accent-ring:rgba(127,178,229,0.32);--green-bg:rgba(93,187,133,0.14);--green-ring:rgba(93,187,133,0.28);--orange-bg:rgba(224,164,88,0.14);--orange-ring:rgba(224,164,88,0.28);--red-bg:rgba(224,122,116,0.15);--red-ring:rgba(224,122,116,0.30);--area-hd:rgba(58,127,204,0.24);--area-hd-t:rgba(255,255,255,0.92)}
+[data-theme=dark] .primary{background:#3A7FCC}
+[data-theme=dark] .primary:hover{background:#4A8DD8}
+[data-theme=dark] .mitem:hover,[data-theme=dark] .mitem[data-sel=true]{background:#3A7FCC}
+[data-theme=dark] .bar-fill,[data-theme=dark] .mdot,[data-theme=dark] svg.reveal,[data-theme=dark] .ring-draw{filter:saturate(.72) brightness(.92)}
+[data-theme=dark] .notif[role=status]>span:first-child{filter:saturate(.75) brightness(.92)}
+/* Barra minimizada: íconos, avatar y botón en el mismo eje */
+nav.side[data-collapsed=true] a{justify-content:center!important;padding:0!important;gap:0!important;font-size:0!important}
+nav.side a{transition:background .2s ease,box-shadow .2s ease,padding .38s cubic-bezier(.22,1,.36,1),gap .38s cubic-bezier(.22,1,.36,1),font-size .2s ease}
+nav.side[data-collapsed=true] .sb-top>div{gap:0!important;justify-content:center!important}
+/* Barra minimizada: cada opción es una caja fija centrada (con o sin conteo) */
+nav.side[data-collapsed=true] a{width:40px!important;margin-left:auto!important;margin-right:auto!important;box-sizing:border-box;padding:0!important;gap:0!important;justify-content:center!important;font-size:0!important}
+nav.side[data-collapsed=true] a>span{display:none!important}
+nav.side[data-collapsed=true] .sb-top>div:first-child{width:40px;margin:0 auto}
+/* Paleta oscura también en íconos y gráficas */
+[data-theme=dark] svg{filter:saturate(.75) brightness(.95)}
+[data-theme=dark] svg svg,[data-theme=dark] svg .ring-draw{filter:none}
+[data-theme=dark] .alert-row>span:first-child{filter:saturate(.72) brightness(.92)}
+</style>
+</helmet>
+<div data-theme="{{theme}}" style="min-height: 100vh; background: {{bg}}; color: var(--t1); font-family: {{font}}; font-size: 13px; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px; padding: 10px; box-sizing: border-box">
+
+<!-- Sidebar -->
+<nav class="side" data-collapsed="{{sb.c}}" aria-label="Navegación principal" style="flex: 1 1 220px; max-width: 232px; align-self: stretch; padding: 12px 10px 10px; box-sizing: border-box; display: flex; flex-direction: column; gap: 1px; min-height: calc(100vh - 20px)">
+<div style="display: flex; align-items: center; justify-content: space-between; padding: 2px 2px 14px 8px">
+<div class="sb-brand" style="display: flex; align-items: center; gap: 8px">
+<span style="font-size: 16px; font-weight: 800; letter-spacing: -0.5px; color: #0284C7">inter</span>
+<span style="width: 1px; height: 14px; background: var(--sep)"></span>
+<span style="font-size: 13px; font-weight: 600">Operaciones IP</span>
+</div>
+<button class="pill pillbtn" onClick="{{sb.toggle}}" aria-label="{{sb.label}}" title="{{sb.label}}" style="cursor: pointer; width: 30px; height: 30px; border: 0; display: flex; align-items: center; justify-content: center; padding: 0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="3"></rect><path d="M9 4.5v15"></path></svg></button>
+</div>
+<div class="sb-top" style="display: flex; flex-direction: column; gap: 10px; padding: 0 0 14px; margin-bottom: 8px; border-bottom: 1px solid var(--sep)">
+<div style="display: flex; align-items: center; gap: 8px; padding: 2px 6px 0">
+<span style="width: 28px; height: 28px; border-radius: 50%; background: var(--solid); color: #FFFFFF; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center">C</span>
+<div class="sb-txt" style="display: flex; flex-direction: column; line-height: 1.3; min-width: 0"><span style="font-size: 12px; font-weight: 600">coordinador</span><span style="font-size: 12px; color: var(--t2)">coordinador@test.com</span></div>
+</div>
+</div>
+<span style="font-size: 12px; font-weight: 600; color: var(--t2); padding: 0 8px 4px">Coordinación</span>
+<a class="sideitem" title="Dashboard General" href="Main.dc.html" style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; border-radius: 8px; color: var(--t1); font-size: 13px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0078F0" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="2"></rect><rect x="14" y="3" width="7" height="5" rx="2"></rect><rect x="14" y="12" width="7" height="9" rx="2"></rect><rect x="3" y="16" width="7" height="5" rx="2"></rect></svg>Dashboard General</a>
+<a class="sideitem" title="Tickets" href="Tickets.dc.html" style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; border-radius: 8px; color: var(--t1); font-size: 13px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0078F0" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 9V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a3 3 0 0 0 0 6v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a3 3 0 0 0 0-6z"></path></svg><span style="flex: 1">Tickets</span><span style="font-size: 12px; font-weight: 600; color: var(--t2); font-variant-numeric: tabular-nums">48</span></a>
+<a class="sideitem" title="Gestión de Turno" href="Turno.dc.html" style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; border-radius: 8px; color: var(--t1); font-size: 13px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0078F0" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"></path></svg><span style="flex: 1">Gestión de Turno</span><span style="font-size: 12px; font-weight: 600; color: var(--green-t); font-variant-numeric: tabular-nums">13/14</span></a>
+<span style="font-size: 12px; font-weight: 600; color: var(--t2); padding: 14px 8px 4px">Control</span>
+<a title="Reportes" href="Reportes.dc.html" aria-current="page" style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; border-radius: 8px; background: var(--accent-bg); color: var(--accent-t); font-size: 13px; font-weight: 600; box-shadow: inset 0 0 0 0.5px var(--accent-ring)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"></path></svg>Reportes</a>
+<a class="sideitem" title="Auditoría" href="Auditoria.dc.html" style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; border-radius: 8px; color: var(--t1); font-size: 13px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0078F0" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"></path><path d="M9 12l2 2 4-4"></path></svg>Auditoría</a>
+<a class="sideitem" title="Administración" href="Administracion.dc.html" style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; border-radius: 8px; color: var(--t1); font-size: 13px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0078F0" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"></path><circle cx="15" cy="6" r="2"></circle><circle cx="9" cy="12" r="2"></circle><circle cx="17" cy="18" r="2"></circle></svg>Administración</a>
+</nav>
+
+<!-- Main -->
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 16px; padding: 2px 8px 32px 6px; box-sizing: border-box">
+
+<header style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-height: 44px">
+<div style="display: flex; flex-direction: column; margin-right: 6px">
+<h1 style="margin: 0; font-size: 20px; line-height: 24px; font-weight: 700; letter-spacing: -0.02em">Reportes</h1>
+<span style="font-size: 12px; color: var(--t2)">{{per.range}}</span>
+</div>
+<span style="flex: 1"></span>
+<div role="tablist" aria-label="Periodo" style="display: inline-flex; padding: 4px; border-radius: 12px; background: rgba(0,0,0,0.08); border: 1px solid rgba(0,0,0,0.05); box-shadow: inset 0 2px 4px rgba(0,0,0,0.05)">
+<sc-for list="{{per.tabs}}" as="t" hint-placeholder-count="3">
+<button role="tab" aria-selected="{{t.sel}}" onClick="{{t.go}}" style="padding: 6px 16px; border: 0; border-radius: 9px; font: inherit; font-size: 12px; font-weight: {{t.w}}; color: {{t.c}}; background: {{t.bg}}; box-shadow: {{t.sh}}; cursor: pointer">{{t.label}}</button>
+</sc-for>
+</div>
+<div class="pill" style="display: flex; align-items: center; gap: 2px; height: 36px; padding: 4px; box-sizing: border-box">
+<button class="pillbtn" aria-label="Periodo anterior" style="width: 28px; height: 28px; border: 0; border-radius: 100px; background: transparent; display: flex; align-items: center; justify-content: center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button>
+<span style="padding: 0 8px; font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums">{{per.label}}</span>
+<button class="pillbtn" aria-label="Periodo siguiente" style="width: 28px; height: 28px; border: 0; border-radius: 100px; background: transparent; display: flex; align-items: center; justify-content: center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></button>
+</div>
+<button style="display: inline-flex; align-items: center; gap: 10px; height: 36px; padding: 4px 4px 4px 16px; border: 0; border-radius: 999px; background: var(--control); box-shadow: 0 0 0 0.5px rgba(15,23,42,0.06), 0 4px 14px rgba(0,0,0,0.06); font: inherit; font-size: 13px; font-weight: 600; color: var(--t1); cursor: pointer">Exportar Excel<span style="width: 28px; height: 28px; border-radius: 50%; background: var(--solid); color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"></path></svg></span></button>
+</header>
+
+<!-- Secciones -->
+<div role="tablist" aria-label="Secciones del reporte" style="align-self: flex-start; display: inline-flex; padding: 4px; border-radius: 12px; background: rgba(0,0,0,0.08); border: 1px solid rgba(0,0,0,0.05); box-shadow: inset 0 2px 4px rgba(0,0,0,0.05)">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="3">
+<button role="tab" aria-selected="{{t.sel}}" onClick="{{t.go}}" style="display: flex; align-items: center; gap: 8px; padding: 6px 16px; border: 0; border-radius: 9px; font: inherit; font-size: 12px; font-weight: {{t.w}}; color: {{t.c}}; background: {{t.bg}}; box-shadow: {{t.sh}}; cursor: pointer">
+<svg style="stroke: {{t.i}}" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{t.icon}}"></path></svg>{{t.label}}</button>
+</sc-for>
+</div>
+
+<!-- ================= RESUMEN ================= -->
+<sc-if value="{{show.resumen}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 16px">
+
+<section aria-label="Totales del periodo" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px">
+<div class="bento">
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4zM3 12l9 4 9-4M3 17l9 4 9-4"></path></svg>
+<div style="display: flex; flex-direction: column; gap: 4px"><span class="kv">642</span><p class="bt">Casos en el <span style="color: var(--accent-t)">periodo</span></p></div>
+</div>
+<div class="bento">
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8 12l3 3 5-6"></path></svg>
+<div style="display: flex; flex-direction: column; gap: 4px"><span class="kv">607</span><p class="bt">Resueltos · <span style="color: var(--green-t)">95%</span></p></div>
+</div>
+<div class="bento">
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+<div style="display: flex; flex-direction: column; gap: 4px"><span class="kv">3,7 h</span><p class="bt">Resolución · <span style="color: var(--accent-t)">meta 4 h</span></p></div>
+</div>
+<div class="bento">
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V14M10 20V9M16 20V4M22 20H2"></path></svg>
+<div style="display: flex; flex-direction: column; gap: 4px"><span class="kv">59%</span><p class="bt">Saturación media · <span style="color: var(--orange-t)">1 área alta</span></p></div>
+</div>
+</section>
+
+<section class="glass" aria-labelledby="h-areas" style="padding: 20px 24px 12px; display: flex; flex-direction: column; gap: 8px; min-width: 0">
+<div style="display: flex; align-items: center; gap: 10px">
+<h2 id="h-areas" style="margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -0.01em; flex: 1">Casos por área</h2>
+<span style="font-size: 12px; color: var(--t2)">Pulsa un área para ver a sus operadores</span>
+</div>
+<div style="overflow-x: auto">
+<table style="width: 100%; min-width: 760px; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums">
+<thead>
+<tr style="text-align: left; font-size: 12px; color: var(--t2)">
+<th style="padding: 8px 8px 8px 0; border-bottom: 1px solid var(--sep); font-weight: 600; width: 170px">Área</th>
+<th style="padding: 8px; border-bottom: 1px solid var(--sep); font-weight: 600">Casos</th>
+<th style="padding: 8px; border-bottom: 1px solid var(--sep); font-weight: 600; text-align: right; width: 80px">Resueltos</th>
+<th style="padding: 8px; border-bottom: 1px solid var(--sep); font-weight: 600; text-align: right; width: 64px">%</th>
+<th style="padding: 8px; border-bottom: 1px solid var(--sep); font-weight: 600; text-align: right; width: 76px">Prom.</th>
+<th style="padding: 8px; border-bottom: 1px solid var(--sep); font-weight: 600; width: 180px">Saturación media</th>
+<th style="padding: 8px 0 8px 8px; border-bottom: 1px solid var(--sep); font-weight: 600; text-align: right; width: 80px">Operadores</th>
+</tr>
+</thead>
+<tbody>
+<sc-for list="{{areas}}" as="r" hint-placeholder-count="7">
+<tr class="rowbtn" onClick="{{r.open}}">
+<td style="padding: 10px 8px 10px 0; border-bottom: 1px solid var(--sep2); font-weight: 600">{{r.name}}</td>
+<td style="padding: 10px 8px; border-bottom: 1px solid var(--sep2)"><div style="display: flex; align-items: center; gap: 10px"><span style="width: 34px; font-weight: 600">{{r.casos}}</span><div class="track" style="flex: 1; "><span class="bar-fill" style="width: {{r.casosW}}; background: #0EA5E9; animation-delay: calc({{$index}} * 60ms)"></span></div></div></td>
+<td style="padding: 10px 8px; border-bottom: 1px solid var(--sep2); text-align: right">{{r.res}}</td>
+<td style="padding: 10px 8px; border-bottom: 1px solid var(--sep2); text-align: right; font-weight: 600; color: {{r.pctC}}">{{r.pct}}%</td>
+<td style="padding: 10px 8px; border-bottom: 1px solid var(--sep2); text-align: right; color: {{r.avgC}}">{{r.avg}} h</td>
+<td style="padding: 10px 8px; border-bottom: 1px solid var(--sep2)"><div style="display: flex; align-items: center; gap: 10px"><div class="track" style="flex: 1; "><span class="bar-fill" style="width: {{r.satW}}; background: {{r.satFill}}; animation-delay: calc({{$index}} * 60ms)"></span></div><span style="width: 34px; text-align: right; font-weight: 600; color: {{r.satC}}">{{r.sat}}%</span></div></td>
+<td style="padding: 10px 0 10px 8px; border-bottom: 1px solid var(--sep2); text-align: right; color: var(--t2)">{{r.ops}}</td>
+</tr>
+</sc-for>
+</tbody>
+<tfoot>
+<tr style="font-weight: 700">
+<td style="padding: 10px 8px 10px 0">Total</td>
+<td style="padding: 10px 8px">642</td>
+<td style="padding: 10px 8px; text-align: right">607</td>
+<td style="padding: 10px 8px; text-align: right">95%</td>
+<td style="padding: 10px 8px; text-align: right">3,7 h</td>
+<td style="padding: 10px 8px">59% de media</td>
+<td style="padding: 10px 0 10px 8px; text-align: right">14</td>
+</tr>
+</tfoot>
+</table>
+</div>
+</section>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 16px">
+<section class="glass" aria-labelledby="h-top" style="padding: 20px 24px; display: flex; flex-direction: column; gap: 8px">
+<h2 id="h-top" style="margin: 0 0 4px; font-size: 15px; font-weight: 600; letter-spacing: -0.01em">Más casos resueltos</h2>
+<sc-for list="{{topRes}}" as="o" hint-placeholder-count="5">
+<div style="display: grid; grid-template-columns: 22px 1fr 120px 40px; align-items: center; gap: 10px; height: 40px; border-bottom: 1px solid var(--sep2)">
+<span style="font-size: 12px; font-weight: 700; color: var(--t2)">{{o.pos}}</span>
+<div style="display: flex; flex-direction: column; min-width: 0"><span style="font-size: 12px; font-weight: 600">{{o.name}}</span><span style="font-size: 12px; color: var(--t2)">{{o.area}}</span></div>
+<div class="track" style=""><span class="bar-fill" style="width: {{o.w}}; background: #22C55E; animation-delay: calc({{$index}} * 60ms)"></span></div>
+<span style="font-size: 13px; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums">{{o.value}}</span>
+</div>
+</sc-for>
+</section>
+<section class="glass" aria-labelledby="h-sat" style="padding: 20px 24px; display: flex; flex-direction: column; gap: 8px">
+<h2 id="h-sat" style="margin: 0 0 4px; font-size: 15px; font-weight: 600; letter-spacing: -0.01em">Mayor saturación individual</h2>
+<sc-for list="{{topSat}}" as="o" hint-placeholder-count="5">
+<div style="display: grid; grid-template-columns: 22px 1fr 120px 40px; align-items: center; gap: 10px; height: 40px; border-bottom: 1px solid var(--sep2)">
+<span style="font-size: 12px; font-weight: 700; color: var(--t2)">{{o.pos}}</span>
+<div style="display: flex; flex-direction: column; min-width: 0"><span style="font-size: 12px; font-weight: 600">{{o.name}}</span><span style="font-size: 12px; color: var(--t2)">{{o.area}}</span></div>
+<div class="track" style=""><span class="bar-fill" style="width: {{o.w}}; background: {{o.fill}}; animation-delay: calc({{$index}} * 60ms)"></span></div>
+<span style="font-size: 13px; font-weight: 700; text-align: right; color: {{o.c}}; font-variant-numeric: tabular-nums">{{o.value}}</span>
+</div>
+</sc-for>
+</section>
+</div>
+
+</div>
+</sc-if>
+
+<!-- ================= POR ÁREA ================= -->
+<sc-if value="{{show.area}}" hint-placeholder-val="{{ false }}">
+<section aria-label="Áreas" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px">
+<sc-for list="{{areas}}" as="r" hint-placeholder-count="7">
+<button class="glass acard" onClick="{{r.open}}" aria-label="Ver operadores de {{r.name}}" style="padding: 20px 22px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px; width: 100%">
+<span style="font-size: 15px; font-weight: 600; letter-spacing: -0.01em">{{r.name}}</span>
+<span style="font-size: 12px; color: var(--t2)">{{r.ops}} operadores</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%">
+<div style="display: flex; flex-direction: column"><span class="kv" style="font-size: 26px; line-height: 30px">{{r.casos}}</span><span style="font-size: 12px; color: var(--t2)">casos</span></div>
+<div style="display: flex; flex-direction: column; padding-left: 12px; border-left: 1px solid var(--sep)"><span class="kv" style="font-size: 26px; line-height: 30px; color: {{r.pctC}}">{{r.pct}}%</span><span style="font-size: 12px; color: var(--t2)">resueltos</span></div>
+<div style="display: flex; flex-direction: column; padding-left: 12px; border-left: 1px solid var(--sep)"><span class="kv" style="font-size: 26px; line-height: 30px; color: {{r.avgC}}">{{r.avg}} h</span><span style="font-size: 12px; color: var(--t2)">promedio</span></div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px; width: 100%">
+<div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--t2)"><span>Saturación media</span><span style="font-weight: 700; color: {{r.satC}}">{{r.sat}}%</span></div>
+<div class="track" style=""><span class="bar-fill" style="width: {{r.satW}}; background: {{r.satFill}}; animation-delay: calc({{$index}} * 60ms)"></span></div>
+</div>
+</button>
+</sc-for>
+</section>
+</sc-if>
+
+<!-- ================= POR OPERADOR ================= -->
+<sc-if value="{{show.op}}" hint-placeholder-val="{{ false }}">
+<section class="glass" aria-labelledby="h-ops" style="display: flex; flex-direction: column; min-width: 0; overflow: hidden">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 20px 24px 12px">
+<div style="display: flex; flex-direction: column; flex: 1; min-width: 220px">
+<h2 id="h-ops" style="margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -0.01em">Rendimiento por operador</h2>
+<span style="font-size: 12px; color: var(--t2)">{{opv.summary}}</span>
+</div>
+<sc-if value="{{opv.filtered}}" hint-placeholder-val="{{ false }}">
+<button onClick="{{opv.clear}}" aria-label="Quitar filtro de área" style="display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 6px 0 12px; border: 0; border-radius: 999px; background: var(--accent-bg); box-shadow: inset 0 0 0 1px var(--accent-ring); color: var(--accent-t); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer">{{opv.area}}<span style="width: 16px; height: 16px; border-radius: 50%; background: rgba(3,105,161,0.14); display: flex; align-items: center; justify-content: center"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></span></button>
+</sc-if>
+<div role="tablist" aria-label="Ordenar" style="display: inline-flex; padding: 3px; border-radius: 10px; background: rgba(0,0,0,0.08); border: 1px solid rgba(0,0,0,0.05); box-shadow: inset 0 2px 4px rgba(0,0,0,0.05)">
+<sc-for list="{{opv.sorts}}" as="s" hint-placeholder-count="3">
+<button role="tab" aria-selected="{{s.sel}}" onClick="{{s.go}}" style="padding: 4px 12px; border: 0; border-radius: 7px; font: inherit; font-size: 12px; font-weight: {{s.w}}; color: {{s.c}}; background: {{s.bg}}; box-shadow: {{s.sh}}; cursor: pointer">{{s.label}}</button>
+</sc-for>
+</div>
+</div>
+<div style="overflow-x: auto">
+<table style="width: 100%; min-width: 900px; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums">
+<thead>
+<tr style="text-align: left; font-size: 12px; color: var(--t2)">
+<th style="padding: 8px 8px 8px 24px; border-top: 1px solid var(--sep); border-bottom: 1px solid var(--sep); font-weight: 600; width: 32px">#</th>
+<th style="padding: 8px; border-top: 1px solid var(--sep); border-bottom: 1px solid var(--sep); font-weight: 600">Operador</th>
+<th style="padding: 8px; border-top: 1px solid var(--sep); border-bottom: 1px solid var(--sep); font-weight: 600; text-align: right; width: 70px">Casos</th>
+<th style="padding: 8px; border-top: 1px solid var(--sep); border-bottom: 1px solid var(--sep); font-weight: 600; text-align: right; width: 80px">Resueltos</th>
+<th style="padding: 8px; border-top: 1px solid var(--sep); border-bottom: 1px solid var(--sep); font-weight: 600; text-align: right; width: 60px">%</th>
+<th style="padding: 8px; border-top: 1px solid var(--sep); border-bottom: 1px solid var(--sep); font-weight: 600; text-align: right; width: 70px">Prom.</th>
+<th style="padding: 8px; border-top: 1px solid var(--sep); border-bottom: 1px solid var(--sep); font-weight: 600; width: 200px">Saturación individual</th>
+<th style="padding: 8px 24px 8px 8px; border-top: 1px solid var(--sep); border-bottom: 1px solid var(--sep); font-weight: 600; text-align: right; width: 70px">Puntos</th>
+</tr>
+</thead>
+<tbody>
+<sc-for list="{{opRows}}" as="o" hint-placeholder-count="8">
+<tr>
+<td style="padding: 9px 8px 9px 24px; border-bottom: 1px solid var(--sep2); font-weight: 700; color: var(--t2)">{{o.pos}}</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid var(--sep2)"><div style="display: flex; align-items: center; gap: 10px"><span style="width: 28px; height: 28px; border-radius: 50%; background: var(--accent-bg); color: var(--accent-t); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex: none">{{o.ini}}</span><div style="display: flex; flex-direction: column"><span style="font-weight: 600">{{o.name}}</span><span style="font-size: 12px; color: var(--t2)">{{o.area}}</span></div></div></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid var(--sep2); text-align: right; font-weight: 600">{{o.casos}}</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid var(--sep2); text-align: right">{{o.res}}</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid var(--sep2); text-align: right; color: var(--t2)">{{o.pct}}%</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid var(--sep2); text-align: right; color: {{o.avgC}}">{{o.avg}} h</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid var(--sep2)"><div style="display: flex; align-items: center; gap: 10px"><div class="track" style="flex: 1; "><span class="bar-fill" style="width: {{o.satW}}; background: {{o.satFill}}; animation-delay: calc({{$index}} * 60ms)"></span></div><span style="width: 36px; text-align: right; font-weight: 700; color: {{o.satC}}">{{o.sat}}%</span></div></td>
+<td style="padding: 9px 24px 9px 8px; border-bottom: 1px solid var(--sep2); text-align: right; font-weight: 700">{{o.pts}}</td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+<div style="padding: 12px 24px 16px; font-size: 12px; color: var(--t2)">Saturación individual: promedio diario de tickets activos ÷ capacidad del operador (6).</div>
+</section>
+</sc-if>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;fuente&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;IBM Plex Sans&quot;,&quot;Instrument Sans&quot;,&quot;Sistema (SF Pro)&quot;],&quot;default&quot;:&quot;IBM Plex Sans&quot;},&quot;tema&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Claro&quot;,&quot;Oscuro&quot;,&quot;Sistema&quot;],&quot;default&quot;:&quot;Oscuro&quot;},&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1500}}">
+class Component extends DCLogic {
+  renderVals() {
+    const FONTS = {
+      'IBM Plex Sans': "'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif",
+      'Instrument Sans': "'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif",
+      'Sistema (SF Pro)': "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif"
+    };
+    const font = FONTS[this.props.fuente ?? 'IBM Plex Sans'] || FONTS['IBM Plex Sans'];
+    const mode = this.props.tema ?? 'Claro';
+    let isDark = mode === 'Oscuro';
+    if (mode === 'Sistema') { try { isDark = window.matchMedia('(prefers-color-scheme: dark)').matches; } catch (e) {} }
+    const theme = isDark ? 'dark' : 'light';
+    const bg = isDark ? 'radial-gradient(1200px 700px at 78% -12%, rgba(132,120,255,0.38), transparent 60%), radial-gradient(900px 650px at -5% 105%, rgba(88,80,190,0.45), transparent 62%), linear-gradient(118deg, transparent 38%, rgba(170,160,255,0.10) 46%, transparent 54%), linear-gradient(135deg, #0D0C21 0%, #1C1A40 40%, #2B2860 70%, #121128 100%)' : 'radial-gradient(900px 500px at 85% -10%, rgba(56,189,248,0.22), transparent 60%), radial-gradient(700px 500px at 10% 110%, rgba(99,102,241,0.12), transparent 60%), linear-gradient(135deg, var(--sep2) 0%, #EFF6FF 50%, var(--accent-bg) 100%)';
+    const S = this.state || {};
+    const tab = S.tab || 'resumen';
+    const period = S.period || 'mes';
+    const on = { w: 600, c: 'var(--t1)', bg: 'var(--seg-on)', sh: '0 1px 2px rgba(0,0,0,0.08)', i: '#0EA5E9' };
+    const off = { w: 500, c: 'var(--t3)', bg: 'transparent', sh: 'none', i: 'var(--t3)' };
+    const seg = (key, cur, setter) => (x) => {
+      const st = x.id === cur ? on : off;
+      return { ...x, sel: x.id === cur, w: st.w, c: st.c, bg: st.bg, sh: st.sh, i: st.i, go: () => this.setState({ [key]: x.id, ...(setter || {}) }) };
+    };
+    const ranges = { dia: ['Hoy, 12 oct 2026', 'Domingo 12 oct'], semana: ['Semana del 6 al 12 oct 2026', '6 – 12 oct'], mes: ['Octubre 2026 · del 1 al 12', 'Octubre 2026'] };
+    const per = {
+      range: ranges[period][0], label: ranges[period][1],
+      tabs: [{ id: 'dia', label: 'Día' }, { id: 'semana', label: 'Semana' }, { id: 'mes', label: 'Mes' }].map(seg('period', period))
+    };
+    const tabs = [
+      { id: 'resumen', label: 'Resumen', icon: 'M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z' },
+      { id: 'area', label: 'Por área', icon: 'M4 20V14M10 20V9M16 20V4M22 20H2' },
+      { id: 'op', label: 'Por operador', icon: 'M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6' }
+    ].map(seg('tab', tab));
+    const show = { resumen: tab === 'resumen', area: tab === 'area', op: tab === 'op' };
+
+    const satStyle = (s) => s > 85
+      ? { fill: '#EF4444', c: 'var(--red-t)' }
+      : s >= 70 ? { fill: '#F59E0B', c: 'var(--orange-t)' }
+      : { fill: '#0EA5E9', c: 'var(--t1)' };
+    // [área, casos, resueltos, prom h, saturación media %, operadores]
+    const AREAS = [
+      ['Redes FTTH / OLT', 268, 251, 4.1, 84, 4], ['WAN', 112, 106, 3.8, 61, 2], ['Grandes Clientes', 96, 88, 5.4, 57, 2],
+      ['Tráfico inalámbrico', 71, 68, 3.0, 44, 2], ['Operaciones IP', 58, 57, 1.9, 38, 2], ['Telefonía', 22, 22, 2.3, 21, 1], ['Seguridad', 15, 15, 1.3, 18, 1]
+    ];
+    const maxC = Math.max(...AREAS.map((a) => a[1]));
+    const fmt = (h) => h.toFixed(1).replace('.', ',');
+    const areas = AREAS.map(([name, casos, res, avg, sat, ops]) => {
+      const st = satStyle(sat);
+      const pct = Math.round(res / casos * 100);
+      return {
+        name, casos, res, ops, pct, avg: fmt(avg), sat,
+        casosW: (casos / maxC * 100) + '%', satW: sat + '%', satFill: st.fill, satC: st.c,
+        pctC: pct < 93 ? 'var(--orange-t)' : 'var(--green-t)', avgC: avg > 4 ? 'var(--orange-t)' : 'var(--t1)',
+        open: () => this.setState({ tab: 'op', area: name })
+      };
+    });
+
+    // [operador, iniciales, área, casos, resueltos, prom h, saturación %, puntos]
+    const OPS = [
+      ['Demo FTTH 1', 'F1', 'Redes FTTH / OLT', 92, 88, 3.2, 96, 1240], ['Demo FTTH 2', 'F2', 'Redes FTTH / OLT', 71, 64, 4.6, 82, 905],
+      ['Demo FTTH 3', 'F3', 'Redes FTTH / OLT', 58, 52, 4.9, 79, 731], ['Demo FTTH 4', 'F4', 'Redes FTTH / OLT', 47, 47, 3.9, 68, 702],
+      ['Demo WAN 1', 'W1', 'WAN', 74, 71, 3.4, 78, 1012], ['Demo WAN 2', 'W2', 'WAN', 38, 35, 4.6, 42, 455],
+      ['Demo Grandes Clientes 1', 'G1', 'Grandes Clientes', 58, 54, 5.0, 66, 820], ['Demo Grandes Clientes 2', 'G2', 'Grandes Clientes', 38, 34, 6.0, 48, 402],
+      ['Demo Inalámbrico 1', 'I1', 'Tráfico inalámbrico', 42, 41, 2.9, 52, 588], ['Demo Inalámbrico 2', 'I2', 'Tráfico inalámbrico', 29, 27, 3.1, 36, 361],
+      ['Demo Operaciones 1', 'O1', 'Operaciones IP', 34, 34, 1.8, 44, 455], ['Demo Operaciones 2', 'O2', 'Operaciones IP', 24, 23, 2.0, 31, 298],
+      ['Demo Telefonía 1', 'T1', 'Telefonía', 22, 22, 2.3, 21, 286], ['Demo Seguridad 1', 'S1', 'Seguridad', 15, 15, 1.3, 18, 214]
+    ];
+    const byRes = OPS.slice().sort((a, b) => b[4] - a[4]);
+    const topRes = byRes.slice(0, 5).map((o, i) => ({ pos: i + 1, name: o[0], area: o[2], value: o[4], w: (o[4] / byRes[0][4] * 100) + '%' }));
+    const bySat = OPS.slice().sort((a, b) => b[6] - a[6]);
+    const topSat = bySat.slice(0, 5).map((o, i) => { const st = satStyle(o[6]); return { pos: i + 1, name: o[0], area: o[2], value: o[6] + '%', w: o[6] + '%', fill: st.fill, c: st.c }; });
+
+    const area = S.area || null;
+    const sortBy = S.sort || 'casos';
+    const idx = { casos: 3, res: 4, sat: 6 };
+    const list = OPS.filter((o) => !area || o[2] === area).sort((a, b) => b[idx[sortBy]] - a[idx[sortBy]]);
+    const opRows = list.map((o, i) => {
+      const st = satStyle(o[6]);
+      return {
+        pos: i + 1, name: o[0], ini: o[1], area: o[2], casos: o[3], res: o[4], pct: Math.round(o[4] / o[3] * 100),
+        avg: fmt(o[5]), avgC: o[5] > 4 ? 'var(--orange-t)' : 'var(--t1)', sat: o[6], satW: o[6] + '%', satFill: st.fill, satC: st.c, pts: o[7].toLocaleString('es-VE')
+      };
+    });
+    const tc = list.reduce((s, o) => s + o[3], 0), tr = list.reduce((s, o) => s + o[4], 0);
+    const opv = {
+      filtered: !!area, area: area || '', clear: () => this.setState({ area: null }),
+      summary: list.length + ' operadores · ' + tc + ' casos · ' + tr + ' resueltos' + (area ? ' · ' + area : ' · todas las áreas'),
+      sorts: [{ id: 'casos', label: 'Más casos' }, { id: 'res', label: 'Más resueltos' }, { id: 'sat', label: 'Más saturación' }].map(seg('sort', sortBy))
+    };
+    // Barra lateral minimizable (se recuerda entre pantallas)
+    const sbStored = (() => { try { return localStorage.getItem('kip.sidebar') === 'min'; } catch (e) { return false; } })();
+    const sbMin = (this.state && this.state.sbMin !== undefined) ? this.state.sbMin : sbStored;
+    const sb = {
+      c: sbMin ? 'true' : 'false', label: sbMin ? 'Mostrar barra lateral' : 'Minimizar barra lateral',
+      toggle: (e) => { if (e && e.stopPropagation) e.stopPropagation(); const nv = !sbMin; try { localStorage.setItem('kip.sidebar', nv ? 'min' : 'full'); } catch (err) {} this.setState({ sbMin: nv }); }
+    };
+    return { sb, font, theme, bg, per, tabs, show, areas, topRes, topSat, opRows, opv };
+  }
+}
+</script>
+</body>
+</html>
