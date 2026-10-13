@@ -7,6 +7,7 @@ const { buildQueue } = require('../services/ticketQueueService');
 const { loadActiveHandoff } = require('./ticketController');
 const { AREA_NAMES } = require('../services/periodReportService');
 const { loadConfig } = require('../services/configService');
+const { getNextTicketCode } = require('../services/ticketCodeService');
 
 const ticketRelations = {
     asignado_a: { select: { id: true, nombre: true, email: true, rol: true, area_designada: true, estado_operativo: true } },
@@ -77,7 +78,7 @@ async function renderTickets(req, res) {
     if (req.user.rol === 'OPERADOR') return res.redirect(302, '/');
     try {
         const ahora = new Date();
-        const [tickets, operadores, enPapelera, traspaso, config, codigos] = await Promise.all([
+        const [tickets, operadores, enPapelera, traspaso, config, siguienteCodigo] = await Promise.all([
             prisma.ticket.findMany({
                 include: {
                     ...ticketRelations,
@@ -90,17 +91,9 @@ async function renderTickets(req, res) {
             prisma.ticket.count({ where: { eliminado_en: { not: null } } }),
             loadActiveHandoff(ahora),
             loadConfig(prisma),
-            prisma.ticket.findMany({
-                where: prisma.INCLUDE_DELETED, // incluye eliminados: no se reutilizan códigos
-                select: { codigo_incidencia: true }
-            })
+            getNextTicketCode(prisma)
         ]);
         const cola = buildQueue({ tickets, operators: operadores, now: ahora, rules: config.reglas });
-        const numeros = codigos
-            .map(t => /^INC-(\d+)$/i.exec(String(t.codigo_incidencia || '').trim()))
-            .filter(Boolean)
-            .map(m => Number(m[1]))
-            .filter(Number.isInteger);
         const guardias = operadores.filter(o => o.deGuardia)
             .map(o => ({ id: o.id, nombre: o.nombre, area: AREA_NAMES[o.area_designada] || o.area_designada }));
 
@@ -111,7 +104,7 @@ async function renderTickets(req, res) {
             traspaso,
             guardias,
             enPapelera,
-            siguienteCodigo: `INC-${String((numeros.length ? Math.max(...numeros) : 0) + 1).padStart(3, '0')}`,
+            siguienteCodigo,
             enTurno: operadores.filter(o => o.turno?.enTurno).length,
             plantillas: config.plantillas
         });

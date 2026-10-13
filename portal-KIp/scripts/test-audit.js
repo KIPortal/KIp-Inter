@@ -93,6 +93,7 @@ const log = (accion, hhmm, dia, extra = {}) => Object.assign({ accion, createdAt
         prisma.auditLog = { create: async ({ data }) => { audits.push(data); } };
         prisma.user.findFirst = async () => ({ id: 'op2', nombre: 'Beto Ruiz' });
         prisma.ticket.findUnique = async () => ({ id: 't1', estado_actual: 'EN_PROGRESO', asignado_a_id: 'op1', asignado_a: { nombre: 'Ana Pérez' } });
+        prisma.ticket.update = async () => ({ id: 't1' });
         prisma.ticket.updateMany = async () => ({ count: 1 });
         const res = () => { const r = {}; r.status = () => r; r.json = b => { r.body = b; return r; }; return r; };
         await ctrl.assignTicket({ body: { ticketCode: 'INC-1', operatorId: 'op2' }, user: { id: 'u' } }, res());
