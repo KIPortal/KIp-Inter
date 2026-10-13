@@ -214,6 +214,84 @@
 			h('span', { class: 't3', style: 'padding:12px 24px 16px;font-size:12px', text: 'Esta configuración se guarda ya; la entrega de los avisos dentro del portal llega en una próxima fase. Mientras tanto, las alertas se ven en el Dashboard y en Tickets.' }));
 	}
 
+	// ---------- Usuarios: agregar y editar ----------
+	const ROLES = [['OPERADOR', 'Operador'], ['COORDINADOR', 'Coordinador']];
+	function genClave() {
+		const abc = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+		const n = new Uint32Array(10);
+		(window.crypto || {}).getRandomValues ? window.crypto.getRandomValues(n) : n.forEach((_, i) => { n[i] = Math.floor(Math.random() * 1e9); });
+		return Array.from(n, x => abc[x % abc.length]).join('');
+	}
+	function openUser(id, areaInicial) {
+		const u = id ? D.usuarios.find(x => x.id === id) : null;
+		const esYo = !!u && u.id === D.miId;
+		const M = {
+			nombre: u ? u.nombre : '', email: u ? u.email : '',
+			rol: u ? u.rol : (areaInicial === '__coord' ? 'COORDINADOR' : 'OPERADOR'),
+			area: u ? u.area : (areaInicial && areaInicial !== '__coord' ? areaInicial : 'GENERAL'),
+			clave: u ? '' : genClave()
+		};
+		const ov = h('div', { class: 'overlay', onclick: e => { if (e.target === ov) ov.remove(); } });
+		const box = h('div', { class: 'dialog', role: 'dialog', 'aria-modal': 'true', style: 'width:520px' });
+		ov.append(box);
+		const err = h('div', { class: 'warnbox', hidden: true });
+		const ok = h('button', { type: 'button', class: 'primary', text: u ? 'Guardar' : 'Crear usuario' });
+		const input = (key, attrs) => h('input', Object.assign({ class: 'field', value: M[key], oninput: e => { M[key] = e.target.value; } }, attrs));
+		const claveIn = input('clave', { type: 'text', autocomplete: 'off', placeholder: u ? 'Déjala vacía para no cambiarla' : '', 'aria-label': 'Clave temporal', style: 'flex:1' });
+		const rolSeg = h('div', { class: 'seg', role: 'radiogroup', 'aria-label': 'Rol' });
+		const areaSel = h('select', { class: 'field', 'aria-label': 'Área', onchange: e => { M.area = e.target.value; } },
+			D.areas.map(a => h('option', { value: a.codigo, selected: a.codigo === M.area, text: a.nombre })));
+		const areaRow = h('label', { class: 'dsec' }, h('b', { text: 'Área' }), areaSel);
+		const paintRol = () => {
+			rolSeg.replaceChildren(...ROLES.map(([v, l]) => h('button', {
+				type: 'button', role: 'radio', 'aria-checked': String(M.rol === v), disabled: esYo && M.rol !== v,
+				onclick: () => { M.rol = v; paintRol(); }
+			}, h('span', { text: l }))));
+			areaRow.hidden = M.rol === 'COORDINADOR';
+		};
+		paintRol();
+		box.append(
+			h('div', { class: 'dlg-head' }, h('h2', { text: u ? 'Editar ' + u.nombre : (M.rol === 'COORDINADOR' ? 'Nuevo coordinador' : 'Nuevo operador') }),
+				h('span', { text: u ? u.email : 'Podrá entrar al portal con su correo y la clave temporal' })),
+			h('div', { class: 'dlg-body', style: 'gap:14px' },
+				h('label', { class: 'dsec' }, h('b', { text: 'Nombre y apellido' }), input('nombre', { maxlength: 80, placeholder: 'Ej. Ana Pérez' })),
+				h('label', { class: 'dsec' }, h('b', { text: 'Correo' }), input('email', { type: 'email', maxlength: 120, placeholder: 'nombre@inter.com' })),
+				h('div', { class: 'dsec' }, h('b', { text: 'Rol' }), rolSeg, esYo ? h('span', { class: 't3', style: 'font-size:12px', text: 'No puedes cambiar tu propio rol' }) : null),
+				areaRow,
+				h('div', { class: 'dsec' }, h('b', { text: u ? 'Nueva clave temporal (opcional)' : 'Clave temporal' }),
+					h('div', { style: 'display:flex;gap:8px' }, claveIn,
+						h('button', { type: 'button', class: 'pill pillbtn plain', style: 'height:34px;font-size:12px', text: 'Generar', onclick: () => { M.clave = genClave(); claveIn.value = M.clave; } }))),
+				h('div', { class: 'warnbox', text: 'Comparte la clave en persona. Por ahora se guarda sin cifrar: usa una clave temporal, no una personal. Se cifrará al activar la seguridad del login.' }),
+				err),
+			h('div', { class: 'dlg-foot' }, h('span', { class: 'note', text: 'El cambio queda en Auditoría' }), h('span', { class: 'grow' }),
+				h('button', { type: 'button', class: 'pill pillbtn plain', text: 'Cancelar', onclick: () => ov.remove() }), ok));
+		ok.addEventListener('click', async () => {
+			const body = { nombre: M.nombre, email: M.email, rol: M.rol, area: M.rol === 'COORDINADOR' ? 'GENERAL' : M.area };
+			if (M.clave) body.clave = M.clave;
+			if (u) Object.keys(body).forEach(k => { if (k !== 'clave' && body[k] === u[k]) delete body[k]; });
+			if (u && !Object.keys(body).length) { ov.remove(); return; }
+			ok.disabled = true;
+			try {
+				const res = await fetch(u ? '/api/admin/usuarios/' + encodeURIComponent(u.id) : '/api/admin/usuarios', {
+					method: u ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+				});
+				let j = {};
+				try { j = await res.json(); } catch (e) { /* sin cuerpo */ }
+				if (!res.ok || !j.success) throw new Error(j.error || 'Error ' + res.status);
+				const msg = u ? 'Los cambios quedaron en Auditoría' : (M.clave ? 'Clave temporal: ' + M.clave : '');
+				try { sessionStorage.setItem('kip.toast', JSON.stringify({ title: u ? 'Usuario actualizado' : 'Usuario creado', msg })); } catch (e) { /* nada */ }
+				leaving = true;
+				window.location.reload();
+			} catch (e) {
+				ok.disabled = false;
+				err.textContent = e.message;
+				err.hidden = false;
+			}
+		});
+		document.body.append(ov);
+		setTimeout(() => box.querySelector('input').focus(), 30);
+	}
+
 	// ---------- Secciones ----------
 	function showSection(key) {
 		$$('[data-sec]').forEach(b => b.setAttribute('aria-current', b.dataset.sec === key ? 'page' : 'false'));
@@ -245,6 +323,9 @@
 			$$('[data-area-panel]').forEach(p => { p.hidden = p.dataset.areaPanel !== b.dataset.areaPick; });
 		}));
 		$('[data-discard]').addEventListener('click', () => { leaving = true; window.location.reload(); });
+		$$('[data-user-new]').forEach(b => b.addEventListener('click', () => openUser(null, b.dataset.userNew)));
+		$$('[data-user-edit]').forEach(b => b.addEventListener('click', () => openUser(b.dataset.userEdit)));
+		document.addEventListener('keydown', e => { if (e.key === 'Escape') { const o = document.querySelector('.overlay'); if (o) o.remove(); } });
 		$('[data-save]').addEventListener('click', save);
 		window.addEventListener('beforeunload', e => { if (!leaving && paintDirty()) { e.preventDefault(); e.returnValue = ''; } });
 		renderPlantillas();

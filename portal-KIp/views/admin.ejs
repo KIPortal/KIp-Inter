@@ -4,7 +4,14 @@
 	// public/js/admin.js con la configuración guardada y la vista previa.
 	const totalOps = areas.reduce((n, a) => n + a.operadores.length, 0);
 	const conOps = areas.filter(a => a.operadores.length);
-	const datos = { config, eventos, destinatarios, limites, vistaPrevia };
+	const coordinadores = typeof locals.coordinadores !== 'undefined' ? locals.coordinadores : [];
+	const miId = locals.miId || null;
+	const minClave = locals.minClave || 8;
+	const usuarios = areas.flatMap(a => a.operadores.map(o => ({ id: o.id, nombre: o.nombre, email: o.email, rol: 'OPERADOR', area: o.area })))
+		.concat(coordinadores.map(c => ({ id: c.id, nombre: c.nombre, email: c.email, rol: 'COORDINADOR', area: 'GENERAL' })));
+	const datos = { config, eventos, destinatarios, limites, vistaPrevia, usuarios, areas: areas.map(a => ({ codigo: a.codigo, nombre: a.nombre })), miId, minClave };
+	const ini = n => String(n || '?').split(/\s+/).slice(0, 2).map(p => p[0]).join('').toUpperCase();
+	const lapiz = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>';
 	const SECS = [
 		['areas', 'Áreas y equipos', areas.length + ' áreas · ' + totalOps + ' operadores', '#0A84FF', 'M9 8a3 3 0 1 0 0-.01M3 19a6 6 0 0 1 12 0M16 5a3 3 0 0 1 0 6M18 13a5 5 0 0 1 3 6'],
 		['plantillas', 'Plantillas', (config.plantillas.traspaso.length + config.plantillas.cierre.length) + ' textos', '#FF9F0A', 'M5 4h10l4 4v12H5zM9 12h6M9 16h4'],
@@ -48,7 +55,9 @@
 				<section class="glass" data-panel="areas" aria-labelledby="h-ar" style="display:flex;flex-direction:column;overflow:hidden">
 					<div class="card-head" style="padding:18px 24px 14px">
 						<h2 id="h-ar">Áreas y equipos</h2>
-						<span class="hint"><%= areas.length %> áreas · <%= totalOps %> operadores</span>
+						<span class="hint"><%= areas.length %> áreas · <%= totalOps %> operadores · <%= coordinadores.length %> coordinadores</span>
+						<span class="grow"></span>
+						<button type="button" class="pill pillbtn plain" style="height:30px;font-size:12px" disabled title="Las áreas pasan a una tabla editable en la próxima fase">＋ Nueva área</button>
 					</div>
 					<div class="areas-split">
 						<div class="area-list" role="listbox" aria-label="Áreas">
@@ -58,22 +67,28 @@
 									<span class="meta"><span><i class="st-turno"></i><%= a.turno %> en turno</span><% if (a.guardia) { %><span><i class="st-guardia"></i><%= a.guardia %> de guardia</span><% } %></span>
 								</button>
 							<% }) %>
+							<button type="button" role="option" data-area-pick="__coord" aria-selected="false">
+								<b>Coordinadores</b><span class="n"><%= coordinadores.length %></span>
+								<span class="meta"><span>Acceso completo al portal</span></span>
+							</button>
 						</div>
 						<div class="area-detail">
 							<% areas.forEach(a => { %>
 								<div data-area-panel="<%= a.codigo %>"<% if (a.codigo !== (conOps[0] || areas[0]).codigo) { %> hidden<% } %>>
-									<div style="display:flex;flex-direction:column;padding:16px 24px 12px"><b style="font-size:15px"><%= a.nombre %></b><span class="t2" style="font-size:12px"><%= a.operadores.length %> <%= a.operadores.length === 1 ? 'operador' : 'operadores' %> · <%= a.turno %> en turno<%= a.guardia ? ' · ' + a.guardia + ' de guardia' : '' %></span></div>
+									<div style="display:flex;align-items:center;gap:10px;padding:16px 24px 12px"><span style="display:flex;flex-direction:column;flex:1"><b style="font-size:15px"><%= a.nombre %></b><span class="t2" style="font-size:12px"><%= a.operadores.length %> <%= a.operadores.length === 1 ? 'operador' : 'operadores' %> · <%= a.turno %> en turno<%= a.guardia ? ' · ' + a.guardia + ' de guardia' : '' %></span></span>
+										<button type="button" class="primary" style="height:30px;padding:0 14px;font-size:12px" data-user-new="<%= a.codigo %>">＋ Agregar operador</button></div>
 									<% if (!a.operadores.length) { %>
 										<p class="empty" style="padding:4px 24px 12px">Esta área no tiene operadores.</p>
 									<% } else { %>
 									<table class="rank-table">
-										<thead><tr><th style="padding-left:24px">Operador</th><th style="width:150px">Estado de turno</th><th class="r" style="width:80px;padding-right:24px">Activos</th></tr></thead>
+										<thead><tr><th style="padding-left:24px">Operador</th><th style="width:150px">Estado de turno</th><th class="r" style="width:70px">Activos</th><th style="width:56px;padding-right:24px"><span class="sr-only">Acciones</span></th></tr></thead>
 										<tbody>
 											<% a.operadores.forEach(o => { %>
 												<tr class="row">
 													<td style="padding-left:24px"><span style="display:flex;align-items:center;gap:10px"><span class="avatar"><%= o.nombre.split(/\s+/).slice(0, 2).map(p => p[0]).join('').toUpperCase() %></span><span style="display:flex;flex-direction:column"><b style="font-size:13px"><%= o.nombre %></b><span class="t2"><%= o.email %></span></span></span></td>
 													<td><span class="opstate st-<%= o.estado.grupo %>" style="font-weight:500"><i></i><%= o.estado.etiqueta %></span></td>
-													<td class="r" style="padding-right:24px;font-weight:600"><%= o.carga %></td>
+													<td class="r" style="font-weight:600"><%= o.carga %></td>
+													<td style="padding-right:24px;text-align:right"><button type="button" class="ico" data-user-edit="<%= o.id %>" title="Editar" aria-label="Editar <%= o.nombre %>"><%- lapiz %></button></td>
 												</tr>
 											<% }) %>
 										</tbody>
@@ -81,7 +96,22 @@
 									<% } %>
 								</div>
 							<% }) %>
-							<p class="t3" style="padding:12px 24px 16px;font-size:12px;margin:0">El estado de turno y la guardia se cambian en Gestión de Turno. Crear áreas u operadores queda pendiente: las áreas están fijas en la base y el alta de usuarios espera la seguridad del login.</p>
+							<div data-area-panel="__coord" hidden>
+								<div style="display:flex;align-items:center;gap:10px;padding:16px 24px 12px"><span style="display:flex;flex-direction:column;flex:1"><b style="font-size:15px">Coordinadores</b><span class="t2" style="font-size:12px">Cierran tickets, asignan y administran el portal</span></span>
+									<button type="button" class="primary" style="height:30px;padding:0 14px;font-size:12px" data-user-new="__coord">＋ Agregar coordinador</button></div>
+								<table class="rank-table">
+									<thead><tr><th style="padding-left:24px">Coordinador</th><th style="width:56px;padding-right:24px"><span class="sr-only">Acciones</span></th></tr></thead>
+									<tbody>
+										<% coordinadores.forEach(c => { %>
+											<tr class="row">
+												<td style="padding-left:24px"><span style="display:flex;align-items:center;gap:10px"><span class="avatar"><%= ini(c.nombre) %></span><span style="display:flex;flex-direction:column"><b style="font-size:13px"><%= c.nombre %><%= c.id === miId ? ' (tú)' : '' %></b><span class="t2"><%= c.email %></span></span></span></td>
+												<td style="padding-right:24px;text-align:right"><button type="button" class="ico" data-user-edit="<%= c.id %>" title="Editar" aria-label="Editar <%= c.nombre %>"><%- lapiz %></button></td>
+											</tr>
+										<% }) %>
+									</tbody>
+								</table>
+							</div>
+							<p class="t3" style="padding:12px 24px 16px;font-size:12px;margin:0">El estado de turno y la guardia se cambian en Gestión de Turno. Las claves de usuarios nuevos son temporales: se guardan sin cifrar hasta activar la seguridad del login.</p>
 						</div>
 					</div>
 				</section>

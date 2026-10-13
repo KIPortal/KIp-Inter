@@ -11,6 +11,7 @@ const { AREA_NAMES } = require('../services/periodReportService');
 const { loadConfig, mergeConfig, describeChanges, previewRules, EVENTOS, DESTINATARIOS, MAX_PLANTILLAS, MAX_TEXTO } = require('../services/configService');
 const { LIMITS } = require('../services/rulesService');
 const { loadOperatorsWithShift } = require('./dashboardController');
+const { validateUser, describeUser, MIN_CLAVE } = require('../services/userAdminService');
 
 const grupo = codigo => (codigo === 'EN_TURNO' ? 'turno' : (codigo === 'DE_GUARDIA' || codigo === 'EN_CASA_GUARDIA') ? 'guardia' : 'fuera');
 
@@ -24,9 +25,14 @@ async function activeTickets() {
 async function renderAdmin(req, res) {
     try {
         const ahora = new Date();
-        const [config, operadores, tickets] = await Promise.all([loadConfig(prisma), loadOperatorsWithShift(ahora), activeTickets()]);
+        const [config, operadores, tickets, coordinadores] = await Promise.all([
+            loadConfig(prisma), loadOperatorsWithShift(ahora), activeTickets(),
+            prisma.user.findMany({ where: { rol: 'COORDINADOR' }, select: { id: true, nombre: true, email: true }, orderBy: { nombre: 'asc' } })
+        ]);
         const areas = Object.keys(AREA_NAMES).map(codigo => {
             const ops = operadores.filter(o => (o.area_designada || 'GENERAL') === codigo).map(o => ({
+                id: o.id,
+                area: o.area_designada || 'GENERAL',
                 nombre: o.nombre,
                 email: o.email,
                 estado: { etiqueta: o.turno?.etiqueta || 'Fuera de turno', grupo: grupo(o.turno?.codigo) },
@@ -45,6 +51,9 @@ async function renderAdmin(req, res) {
             currentUser: req.user,
             config,
             areas,
+            coordinadores,
+            miId: req.user?.id || null,
+            minClave: MIN_CLAVE,
             eventos: EVENTOS,
             destinatarios: DESTINATARIOS,
             limites: { ...LIMITS, plantillas: MAX_PLANTILLAS, texto: MAX_TEXTO },
@@ -103,4 +112,57 @@ async function preview(req, res) {
     }
 }
 
-module.exports = { renderAdmin, saveConfig, preview };
+const auditUser = async (req, accion, detalles) => {
+    try {
+        await prisma.auditLog.create({ data: { accion, userId: req.user?.id && !req.user.id.startsWith('temporary:') ? req.user.id : null, detalles } });
+    } catch (e) {
+        console.error('No se pudo registrar auditoría:', e.message);
+    }
+};
+const publico = u => ({ id: u.id, nombre: u.nombre, email: u.email, rol: u.rol, area: u.area_designada });
+
+// Alta de usuario con clave temporal (se guarda sin cifrar hasta feat/seguridad-login)
+async function createUser(req, res) {
+    const { error, datos } = validateUser(req.body, { nuevo: true });
+    if (error) return res.status(400).json({ success: false, error });
+    try {
+        if (await prisma.user.findUnique({ where: { email: datos.email }, select: { id: true } })) {
+            return res.status(409).json({ success: false, error: 'Ya existe un usuario con ese correo' });
+        }
+        const user = await prisma.user.create({ data: datos });
+        await auditUser(req, 'USUARIO_CREADO', describeUser(null, datos));
+        return res.status(201).json({ success: true, usuario: publico(user) });
+    } catch (e) {
+        console.error('Error al crear usuario:', e);
+        return res.status(e.code === 'P2002' ? 409 : 500).json({ success: false, error: e.code === 'P2002' ? 'Ya existe un usuario con ese correo' : 'No se pudo crear el usuario' });
+    }
+}
+
+async function updateUser(req, res) {
+    const id = String(req.params.id || '').trim();
+    const { error, datos } = validateUser(req.body);
+    if (error) return res.status(400).json({ success: false, error });
+    try {
+        const antes = await prisma.user.findUnique({ where: { id }, select: { id: true, nombre: true, email: true, rol: true, area_designada: true } });
+        if (!antes) return res.status(404).json({ success: false, error: 'Usuario no encontrado' });
+        if (datos.rol && datos.rol !== antes.rol && id === req.user?.id) {
+            return res.status(409).json({ success: false, error: 'No puedes cambiar tu propio rol' });
+        }
+        if (datos.email && datos.email !== antes.email) {
+            const otro = await prisma.user.findUnique({ where: { email: datos.email }, select: { id: true } });
+            if (otro && otro.id !== id) return res.status(409).json({ success: false, error: 'Ya existe un usuario con ese correo' });
+        }
+        if (datos.rol === 'COORDINADOR' && antes.rol === 'OPERADOR') {
+            const activos = await prisma.ticket.count({ where: { asignado_a_id: id, estado_actual: { in: ACTIVE_STATES } } });
+            if (activos > 0) return res.status(409).json({ success: false, error: `Tiene ${activos} tickets activos asignados: reasígnalos antes de cambiarle el rol` });
+        }
+        const user = await prisma.user.update({ where: { id }, data: datos });
+        await auditUser(req, 'USUARIO_EDITADO', describeUser(antes, datos));
+        return res.json({ success: true, usuario: publico(user) });
+    } catch (e) {
+        console.error('Error al editar usuario:', e);
+        return res.status(500).json({ success: false, error: 'No se pudo guardar el usuario' });
+    }
+}
+
+module.exports = { renderAdmin, saveConfig, preview, createUser, updateUser };
