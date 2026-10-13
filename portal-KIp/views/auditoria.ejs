@@ -1,0 +1,94 @@
+<%
+	// Auditoría (prototipo docs/rediseno/prototipo/Auditoria.dc.html).
+	// Solo dibuja lo que entrega auditViewService.buildAuditView.
+	const v = vista;
+	const f = v.filtros;
+	const enlace = cambios => {
+		const p = Object.assign({ usuario: f.usuario, accion: f.accion, fecha: f.fecha, q: f.q }, cambios);
+		const qs = Object.keys(p).filter(k => p[k] && !(k === 'fecha' && p[k] === '7d')).map(k => k + '=' + encodeURIComponent(p[k])).join('&');
+		return '/auditoria' + (qs ? '?' + qs : '');
+	};
+	const TONO = { azul: 'var(--c-blue)', verde: 'var(--c-green)', ambar: 'var(--c-amber)', rojo: 'var(--c-red)', violeta: 'var(--c-violet)', gris: 'var(--t3)' };
+	const filtrosActivos = !!(f.usuario || f.accion || f.q || f.fecha !== '7d');
+	const exportar = '/auditoria/exportar' + enlace({}).replace('/auditoria', '');
+%>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+	<%- include('partials/head', { titulo: 'Auditoría' }) %>
+</head>
+<body>
+<div class="app">
+	<%- include('partials/sidebar', { currentUser, activo: 'auditoria', conteos: { tickets: activos } }) %>
+
+	<main class="app-main">
+		<header class="toolbar">
+			<div style="display:flex;flex-direction:column;margin-right:6px">
+				<h1>Auditoría</h1>
+				<span class="sub">Registro de acciones sobre tickets, turnos y configuración</span>
+			</div>
+			<span class="grow"></span>
+			<form class="pill search" method="get" action="/auditoria" role="search">
+				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+				<label class="sr-only" for="q">Buscar en el registro</label>
+				<input id="q" type="search" name="q" value="<%= f.q %>" placeholder="Ticket, usuario o detalle" autocomplete="off">
+				<% ['usuario', 'accion', 'fecha'].forEach(k => { if (f[k]) { %><input type="hidden" name="<%= k %>" value="<%= f[k] %>"><% } }) %>
+			</form>
+			<a class="export-btn" href="<%= exportar %>" download>Exportar
+				<span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg></span>
+			</a>
+		</header>
+
+		<section class="glass summary" aria-label="Resumen de actividad de hoy">
+			<div class="stat"><span>Eventos hoy</span><span class="kv"><%= v.resumen.eventosHoy %></span></div>
+			<div class="stat"><span>Usuarios activos hoy</span><span class="kv"><%= v.resumen.usuariosHoy %></span></div>
+			<div class="stat"><span>Reasignaciones hoy</span><span class="kv"><%= v.resumen.reasignacionesHoy %></span></div>
+			<div class="stat"><span>Eliminaciones hoy</span><span class="kv<%= v.resumen.eliminacionesHoy ? ' t-red' : '' %>"><%= v.resumen.eliminacionesHoy %></span></div>
+		</section>
+
+		<section class="glass" aria-labelledby="h-log" style="position:relative;display:flex;flex-direction:column;min-width:0">
+			<div class="queue-head">
+				<h2 id="h-log" style="flex:1">Registro</h2>
+				<% if (filtrosActivos) { %><a class="linkbtn" href="/auditoria" style="font-size:12px;font-weight:600;margin-right:4px">Quitar filtros</a><% } %>
+				<%- include('partials/popup', { etiqueta: 'Usuario', porDefecto: !f.usuario, opciones: [{ etiqueta: 'Todos', href: enlace({ usuario: '' }), sel: !f.usuario }, { etiqueta: 'Sistema', href: enlace({ usuario: 'sistema' }), sel: f.usuario === 'sistema' }].concat(v.opciones.usuarios.map(u => ({ etiqueta: u.nombre, href: enlace({ usuario: u.id }), sel: f.usuario === u.id }))) }) %>
+				<%- include('partials/popup', { etiqueta: 'Acción', porDefecto: !f.accion, opciones: [{ etiqueta: 'Todas', href: enlace({ accion: '' }), sel: !f.accion }].concat(v.opciones.acciones.map(a => ({ etiqueta: a.etiqueta, href: enlace({ accion: a.codigo }), sel: f.accion === a.codigo }))) }) %>
+				<%- include('partials/popup', { etiqueta: 'Fecha', porDefecto: f.fecha === '7d', opciones: v.opciones.fechas.map(x => ({ etiqueta: x.etiqueta, href: enlace({ fecha: x.valor }), sel: f.fecha === x.valor })) }) %>
+			</div>
+			<div class="scroll-x">
+				<table class="rank-table audit-table">
+					<thead>
+						<tr><th style="padding-left:24px;width:70px">Hora</th><th style="width:200px">Usuario</th><th style="width:150px">Acción</th><th style="width:90px">Ticket</th><th style="padding-right:24px">Detalle</th></tr>
+					</thead>
+					<% v.dias.forEach(d => { %>
+						<tbody>
+							<tr class="dayhead"><td colspan="5"><%= d.etiqueta %><span><%= d.filas.length %> <%= d.filas.length === 1 ? 'evento' : 'eventos' %></span></td></tr>
+							<% d.filas.forEach(r => { %>
+								<tr class="row">
+									<td class="t2" style="padding-left:24px;font-variant-numeric:tabular-nums"><%= r.hora %></td>
+									<td><span style="display:inline-flex;align-items:center;gap:8px"><span class="avatar<%= r.sistema ? ' sys' : '' %>" style="width:22px;height:22px;font-size:9px"><%= r.iniciales %></span><span style="font-weight:500"><%= r.usuario %></span></span></td>
+									<td><span class="act"><i style="background:<%= TONO[r.accion.tono] %>"></i><%= r.accion.etiqueta %></span></td>
+									<td class="mono"><% if (r.ticket) { %><a href="/tickets#<%= r.ticket %>"><%= r.ticket %></a><% } else { %><span class="t3">—</span><% } %></td>
+									<td style="padding-right:24px"><%= r.detalle %></td>
+								</tr>
+							<% }) %>
+						</tbody>
+					<% }) %>
+				</table>
+				<% if (!v.dias.length) { %>
+					<div class="queue-empty">
+						<span style="font-size:13px;font-weight:600">No hay eventos con estos filtros</span>
+						<% if (filtrosActivos) { %><a class="linkbtn" href="/auditoria" style="font-size:12px;font-weight:600">Quitar filtros</a><% } %>
+					</div>
+				<% } %>
+			</div>
+			<div class="queue-foot">
+				<span>Mostrando <%= v.total %> <%= v.total === 1 ? 'evento' : 'eventos' %><%= f.q ? ' que coinciden con «' + f.q + '»' : '' %></span>
+				<span class="grow"></span>
+				<% if (v.hayMas) { %><a class="pill pillbtn plain" href="<%= enlace({ limite: f.limite + 200 }) %>" style="height:30px;font-size:12px">Cargar más</a><% } %>
+			</div>
+		</section>
+	</main>
+</div>
+<script src="/js/menus.js" defer></script>
+</body>
+</html>

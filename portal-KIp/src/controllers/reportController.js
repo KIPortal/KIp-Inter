@@ -8,7 +8,8 @@ const {
     computeOverload,
     getPeriodBounds
 } = require('../services/metricsService');
-const { buildPeriodReport, AREAS: REPORT_AREAS } = require('../services/periodReportService');
+const { buildPeriodReport, AREAS: REPORT_AREAS, AREA_NAMES } = require('../services/periodReportService');
+const { buildReportView } = require('../services/reportViewService');
 const { buildWorkbook } = require('../services/excelExportService');
 
 const AREA_DISPLAY_NAMES = {
@@ -1018,4 +1019,25 @@ async function downloadExcel(req, res) {
     }
 }
 
-module.exports = { getReports, getPeriodData, downloadExcel, parsePeriodQuery };
+// Reportes (rediseño, IMPLEMENTACION.md §3.5): mismo reporte por periodo que el Excel
+async function renderReportes(req, res) {
+    if (req.user?.rol === 'OPERADOR') return res.redirect(302, '/');
+    try {
+        const periodo = ['jornada', 'semana', 'mes', 'especifica'].includes(req.query.periodo) ? req.query.periodo : 'jornada';
+        const query = { ...req.query, periodo: periodo === 'especifica' ? 'jornada' : periodo };
+        const result = await loadPeriodReport(query);
+        if (result.error) return res.redirect(302, '/reportes');
+        const [activos] = await Promise.all([prisma.ticket.count({ where: { estado_actual: { in: ACTIVE_STATES } } })]);
+        const vista = buildReportView(result.report, {
+            periodo: query.periodo,
+            fecha: typeof req.query.fecha === 'string' && req.query.fecha ? req.query.fecha : null,
+            area: typeof req.query.area === 'string' && req.query.area ? req.query.area : null
+        });
+        return res.render('reportes', { titulo: 'Reportes', currentUser: req.user, vista, areasCatalogo: REPORT_AREAS.map(c => ({ codigo: c, nombre: AREA_NAMES[c] })), activos });
+    } catch (error) {
+        console.error('Error al cargar Reportes:', error);
+        return res.status(500).send('Error en el servidor');
+    }
+}
+
+module.exports = { getReports, getPeriodData, downloadExcel, parsePeriodQuery, renderReportes };

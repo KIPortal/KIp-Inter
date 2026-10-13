@@ -18,10 +18,10 @@ function assignmentValidationError({ operatorId, areaDesignada, prioridad }) {
 }
 
 async function isOperator(operatorId) {
-    return Boolean(await prisma.user.findFirst({
+    return prisma.user.findFirst({
         where: { id: operatorId, rol: 'OPERADOR' },
-        select: { id: true }
-    }));
+        select: { id: true, nombre: true }
+    });
 }
 
 async function getNextTicketCode() {
@@ -102,12 +102,13 @@ async function assignTicket(req, res) {
         const validationError = assignmentValidationError({ operatorId, areaDesignada, prioridad });
         if (validationError) return res.status(400).json({ success: false, error: validationError });
         if (!ticketCode) return res.status(400).json({ success: false, error: 'Falta código de incidencia' });
-        if (!await isOperator(operatorId)) {
+        const operador = await isOperator(operatorId);
+        if (!operador) {
             return res.status(404).json({ success: false, error: 'Operador no encontrado' });
         }
         const existingTicket = await prisma.ticket.findUnique({
             where: { codigo_incidencia: ticketCode },
-            select: { id: true, estado_actual: true }
+            select: { id: true, estado_actual: true, asignado_a_id: true, asignado_a: { select: { nombre: true } } }
         });
         if (!existingTicket) return res.status(404).json({ success: false, error: 'Ticket no encontrado' });
         if (['RESUELTO', 'CERRADO'].includes(existingTicket.estado_actual)) {
@@ -138,6 +139,13 @@ async function assignTicket(req, res) {
             where: { codigo_incidencia: ticketCode },
             include: { asignado_a: { select: { id: true, nombre: true, email: true, rol: true, area_designada: true } } }
         });
+        const nombre = operador.nombre || 'el operador';
+        const extras = [areaDesignada ? `área ${areaDesignada}` : '', prioridad ? `prioridad ${prioridad}` : ''].filter(Boolean).join(', ');
+        if (existingTicket.asignado_a_id && existingTicket.asignado_a_id !== operatorId) {
+            await logAudit(req, 'TICKET_REASIGNADO', existingTicket.id, `De ${existingTicket.asignado_a?.nombre || 'otro operador'} a ${nombre}${extras ? ` (${extras})` : ''}`);
+        } else {
+            await logAudit(req, 'TICKET_ASIGNADO', existingTicket.id, `A ${nombre}${extras ? ` (${extras})` : ''}`);
+        }
         return res.json({ success: true, ticket });
     } catch (error) {
         console.error('Error al asignar ticket:', error);
@@ -155,7 +163,7 @@ async function unassignTicket(req, res) {
         if (!ticketCode) return res.status(400).json({ success: false, error: 'Falta código de incidencia' });
         const existingTicket = await prisma.ticket.findUnique({
             where: { codigo_incidencia: ticketCode },
-            select: { id: true, estado_actual: true }
+            select: { id: true, estado_actual: true, asignado_a: { select: { nombre: true } } }
         });
         if (!existingTicket) return res.status(404).json({ success: false, error: 'Ticket no encontrado' });
         if (existingTicket.estado_actual === 'CERRADO') {
@@ -180,6 +188,7 @@ async function unassignTicket(req, res) {
             return res.status(409).json({ success: false, error: 'Un ticket cerrado no puede desasignarse' });
         }
         const ticket = await prisma.ticket.findUnique({ where: { codigo_incidencia: ticketCode } });
+        await logAudit(req, 'TICKET_DESASIGNADO', existingTicket.id, `Quitado a ${existingTicket.asignado_a?.nombre || 'nadie'}; vuelve a la cola`);
         return res.json({ success: true, ticket });
     } catch (error) {
         console.error('Error al desasignar ticket:', error);
@@ -199,7 +208,8 @@ async function batchAssignTickets(req, res) {
         const uniqueCodes = [...new Set(ticketCodes.map(code => code.trim()))];
         const validationError = assignmentValidationError({ operatorId, areaDesignada, prioridad });
         if (validationError) return res.status(400).json({ success: false, error: validationError });
-        if (!await isOperator(operatorId)) {
+        const operador = await isOperator(operatorId);
+        if (!operador) {
             return res.status(404).json({ success: false, error: 'Operador no encontrado' });
         }
 
@@ -215,7 +225,7 @@ async function batchAssignTickets(req, res) {
         const count = await prisma.$transaction(async transaction => {
             const existingTickets = await transaction.ticket.findMany({
                 where: { codigo_incidencia: { in: uniqueCodes } },
-                select: { codigo_incidencia: true, asignado_a_id: true, estado_actual: true }
+                select: { id: true, codigo_incidencia: true, asignado_a_id: true, estado_actual: true }
             });
             if (existingTickets.length !== uniqueCodes.length) {
                 const error = new Error('Uno o más tickets no existen');
@@ -241,10 +251,13 @@ async function batchAssignTickets(req, res) {
                 error.status = 409;
                 throw error;
             }
-            return result.count;
+            return { count: result.count, ids: existingTickets.map(t => t.id) };
         });
 
-        return res.json({ success: true, count, fechaAsignacion: fechaAsignacion.toISOString() });
+        for (const id of count.ids) {
+            await logAudit(req, 'TICKET_ASIGNADO', id, `A ${operador.nombre || 'el operador'} (asignación múltiple de ${count.count})`);
+        }
+        return res.json({ success: true, count: count.count, fechaAsignacion: fechaAsignacion.toISOString() });
     } catch (error) {
         console.error('Error en asignación masiva:', error);
         const status = error.status || 500;
@@ -293,6 +306,7 @@ async function claimTicket(req, res) {
         if (result.count !== 1) {
             return res.status(409).json({ success: false, error: 'El ticket ya no está disponible para reclamar' });
         }
+        await logAudit(req, 'TICKET_TOMADO', ticket.id, 'El operador lo tomó y quedó en progreso');
         return await sendTicket(req, res, ticket.id);
     } catch (error) {
         console.error('Error al reclamar ticket:', error);
@@ -341,6 +355,8 @@ async function updateOperatorTicket(req, res, action) {
         if (result.count !== 1) {
             return res.status(409).json({ success: false, error: 'El ticket cambió antes de completar la acción' });
         }
+        const ACCION = { pause: 'TICKET_PAUSADO', resume: 'TICKET_REANUDADO', resolve: 'TICKET_RESUELTO' }[action];
+        if (ACCION) await logAudit(req, ACCION, ticket.id, `Estado: ${ticket.estado_actual} → ${transition.to}`);
         return await sendTicket(req, res, ticket.id);
     } catch (error) {
         console.error(`Error al ${action} ticket:`, error);
