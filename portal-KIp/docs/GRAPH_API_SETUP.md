@@ -16,7 +16,7 @@ Este método permite que el servidor lea los correos de forma 100% invisible, si
 2. Navegar a **App registrations** (Registros de aplicaciones) > **New registration**.
 3. Nombrar la aplicación (ej. `NOC-Portal-Ingestion`) y elegir **Accounts in this organizational directory only** (Single tenant).
 4. Ir a **API permissions** > **Add a permission** > **Microsoft Graph** > **Application permissions** (NO delegados).
-5. Buscar y marcar la casilla `Mail.Read`.
+5. Buscar y marcar la casilla `Mail.ReadWrite` (el servicio marca los correos como leídos con PATCH; con solo `Mail.Read` esa llamada falla con 403). **Pedir a TI que restrinja la app al buzón compartido del NOC** (Application Access Policy / RBAC for Applications); sin esa restricción el permiso de aplicación alcanza todos los buzones del tenant.
 6. **[CRÍTICO]** Hacer clic en **Grant admin consent for [Tu Organización]** y confirmar.
 7. Ir a **Certificates & secrets** > **New client secret**. Copiar el `Value` (Secreto).
 8. Ir a **Overview**. Copiar el `Application (client) ID` y el `Directory (tenant) ID`.
@@ -39,7 +39,7 @@ Este método requiere que un usuario inicie sesión manualmente una vez a travé
 
 ### Pasos de Configuración:
 1. El administrador de tu propio Azure (o tú mismo en una cuenta de desarrollador) debe crear una App Registration.
-2. En **API permissions**, se debe agregar **Microsoft Graph** > **Delegated permissions** > `Mail.Read` y `offline_access`. *(En este caso, NO se requiere el botón de "Admin Consent").*
+2. En **API permissions**, se debe agregar **Microsoft Graph** > **Delegated permissions** > `Mail.ReadWrite` y `offline_access`. *(En este caso, NO se requiere el botón de "Admin Consent").*
 3. En **Authentication**, agregar una plataforma tipo **Mobile and desktop applications** o configurar una **Redirect URI** (`http://localhost:3000/auth/callback`).
 4. Al arrancar el servidor, la terminal mostrará un enlace de inicio de sesión.
 5. El operador abre el enlace, inicia sesión con la **cuenta corporativa prestada**, y acepta los permisos.
