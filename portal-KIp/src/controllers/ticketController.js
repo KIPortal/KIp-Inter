@@ -1,4 +1,5 @@
 const prisma = require('../config/prisma');
+const { auditUserId } = require('../services/auditUser');
 const { getWeekStart } = require('../services/shiftService');
 const { buildHandoffView } = require('../services/ticketQueueService');
 
@@ -406,7 +407,7 @@ function updateOperatorStatus(req, res) {
 async function logAudit(req, accion, ticketId, detalles) {
     try {
         await prisma.auditLog.create({
-            data: { accion, ticketId, userId: req.user?.id || null, detalles: detalles || null }
+            data: { accion, ticketId, userId: auditUserId(req.user), detalles: detalles || null }
         });
     } catch (error) {
         // La auditoría no debe impedir la acción principal

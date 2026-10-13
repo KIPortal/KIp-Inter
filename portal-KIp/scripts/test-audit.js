@@ -105,6 +105,21 @@ const log = (accion, hhmm, dia, extra = {}) => Object.assign({ accion, createdAt
         assert.strictEqual(audits[2].accion, 'TICKET_DESASIGNADO');
     });
 
+    await t('Usuario temporal (acceso de desarrollo): el registro queda sin usuario, no rompe la llave foránea', async () => {
+        const { auditUserId } = require('../src/services/auditUser');
+        assert.strictEqual(auditUserId({ id: 'temporary:admin@prueba.local' }), null);
+        assert.strictEqual(auditUserId({ id: '3f2a-uuid' }), '3f2a-uuid');
+        assert.strictEqual(auditUserId(undefined), null);
+        const ctrl = require('../src/controllers/ticketController');
+        const audits = [];
+        prisma.auditLog = { create: async ({ data }) => { audits.push(data); } };
+        prisma.ticket.findUnique = async () => ({ id: 't1', estado_actual: 'NUEVO', asignado_a: { nombre: 'Ana' } });
+        prisma.ticket.updateMany = async () => ({ count: 1 });
+        const r = {}; r.status = () => r; r.json = () => r;
+        await ctrl.unassignTicket({ body: { ticketCode: 'INC-1' }, user: { id: 'temporary:admin@prueba.local' } }, r);
+        assert.strictEqual(audits[0].userId, null);
+    });
+
     console.log(`\n   RESUMEN: ${passed}/${total} pruebas pasaron correctamente\n`);
     if (passed !== total) process.exit(1);
 })();

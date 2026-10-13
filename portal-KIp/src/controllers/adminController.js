@@ -6,6 +6,7 @@
  */
 
 const prisma = require('../config/prisma');
+const { auditUserId } = require('../services/auditUser');
 const { ACTIVE_STATES } = require('../services/metricsService');
 const { AREA_NAMES } = require('../services/periodReportService');
 const { loadConfig, mergeConfig, describeChanges, previewRules, EVENTOS, DESTINATARIOS, MAX_PLANTILLAS, MAX_TEXTO } = require('../services/configService');
@@ -91,7 +92,7 @@ async function saveConfig(req, res) {
             update: { valor: despues[clave] }
         })));
         try {
-            await prisma.auditLog.create({ data: { accion: 'CONFIGURACION_EDITADA', userId: req.user?.id && !req.user.id.startsWith('temporary:') ? req.user.id : null, detalles: cambios.join('. ') } });
+            await prisma.auditLog.create({ data: { accion: 'CONFIGURACION_EDITADA', userId: auditUserId(req.user), detalles: cambios.join('. ') } });
         } catch (e) {
             console.error('No se pudo registrar auditoría:', e.message);
         }
@@ -119,7 +120,7 @@ async function preview(req, res) {
 
 const auditUser = async (req, accion, detalles) => {
     try {
-        await prisma.auditLog.create({ data: { accion, userId: req.user?.id && !req.user.id.startsWith('temporary:') ? req.user.id : null, detalles } });
+        await prisma.auditLog.create({ data: { accion, userId: auditUserId(req.user), detalles } });
     } catch (e) {
         console.error('No se pudo registrar auditoría:', e.message);
     }
