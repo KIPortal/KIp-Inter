@@ -14,7 +14,7 @@ const { LIMITS } = require('../services/rulesService');
 const { auditUserId } = require('../services/auditViewService');
 const { loadOperatorsWithShift } = require('./dashboardController');
 const { validateUser, describeUser, MIN_CLAVE } = require('../services/userAdminService');
-const { allAreas, refreshAreas, validateAreaName } = require('../services/areaCatalog');
+const { allAreas, refreshAreas, validateAreaName, allSubgrupos, isValidSubgrupo, subgrupoName } = require('../services/areaCatalog');
 const { SUPERVISORES, motivoNoGestionar } = require('../services/roleService');
 
 const grupo = codigo => (codigo === 'EN_TURNO' ? 'turno' : (codigo === 'DE_GUARDIA' || codigo === 'EN_CASA_GUARDIA') ? 'guardia' : 'fuera');
@@ -32,13 +32,15 @@ async function renderAdmin(req, res) {
         await refreshAreas(prisma, { force: true });
         const [config, operadores, tickets, coordinadores, desactivados] = await Promise.all([
             loadConfig(prisma), loadOperatorsWithShift(ahora), activeTickets(),
-            prisma.user.findMany({ where: { rol: { in: SUPERVISORES }, activo: true }, select: { id: true, nombre: true, email: true, rol: true, area_designada: true, atiende_tickets: true, telefono: true }, orderBy: { nombre: 'asc' } }),
+            prisma.user.findMany({ where: { rol: { in: SUPERVISORES }, activo: true }, select: { id: true, nombre: true, email: true, rol: true, area_designada: true, atiende_tickets: true, telefono: true, subgrupo_id: true }, orderBy: { nombre: 'asc' } }),
             prisma.user.findMany({ where: { activo: false }, select: { id: true, nombre: true, email: true, rol: true, area_designada: true, telefono: true }, orderBy: { nombre: 'asc' } })
         ]);
         const areas = allAreas().map(({ codigo, activa }) => {
             const ops = operadores.filter(o => o.rol === 'OPERADOR' && (o.area_designada || 'GENERAL') === codigo).map(o => ({
                 id: o.id,
                 telefono: o.telefono || '',
+                subgrupo: o.subgrupo_id || '',
+                subgrupoNombre: subgrupoName(o.subgrupo_id),
                 area: o.area_designada || 'GENERAL',
                 nombre: o.nombre,
                 email: o.email,
@@ -49,6 +51,7 @@ async function renderAdmin(req, res) {
                 codigo,
                 activa,
                 nombre: AREA_NAMES[codigo],
+                subgrupos: allSubgrupos().filter(g => g.area === codigo),
                 operadores: ops,
                 turno: ops.filter(o => o.estado.grupo === 'turno').length,
                 guardia: ops.filter(o => o.estado.grupo === 'guardia').length
@@ -129,11 +132,12 @@ const auditUser = async (req, accion, detalles) => {
         console.error('No se pudo registrar auditoría:', e.message);
     }
 };
-const publico = u => ({ id: u.id, nombre: u.nombre, email: u.email, rol: u.rol, area: u.area_designada, atiende: u.atiende_tickets === true, telefono: u.telefono || '' });
+const publico = u => ({ id: u.id, nombre: u.nombre, email: u.email, rol: u.rol, area: u.area_designada, atiende: u.atiende_tickets === true, telefono: u.telefono || '', subgrupo: u.subgrupo_id || '' });
 
-/** Reglas que dependen del rol final del usuario (ya validado campo a campo). */
+/** Reglas que dependen del estado final del usuario (ya validado campo a campo). */
 function motivoRolFinal(final) {
     if (final.rol === 'JEFE' && (final.area_designada || 'GENERAL') === 'GENERAL') return 'El jefe de área necesita su área: elige una distinta de General';
+    if (final.subgrupo_id && !isValidSubgrupo(final.subgrupo_id, final.area_designada || 'GENERAL')) return 'El subgrupo no es de esa área o está desactivado';
     return null;
 }
 
@@ -163,10 +167,12 @@ async function updateUser(req, res) {
     const { error, datos } = validateUser(req.body);
     if (error) return res.status(400).json({ success: false, error });
     try {
-        const antes = await prisma.user.findUnique({ where: { id }, select: { id: true, nombre: true, email: true, rol: true, area_designada: true, activo: true, atiende_tickets: true, telefono: true } });
+        const antes = await prisma.user.findUnique({ where: { id }, select: { id: true, nombre: true, email: true, rol: true, area_designada: true, activo: true, atiende_tickets: true, telefono: true, subgrupo_id: true } });
         if (!antes) return res.status(404).json({ success: false, error: 'Usuario no encontrado' });
         const prohibido = motivoNoGestionar(req.user, antes, datos.rol);
         if (prohibido) return res.status(403).json({ success: false, error: prohibido });
+        // Cambiar de área sin elegir subgrupo lo deja sin subgrupo
+        if (datos.area_designada && datos.area_designada !== antes.area_designada && datos.subgrupo_id === undefined && antes.subgrupo_id) datos.subgrupo_id = null;
         const motivo = motivoRolFinal({ ...antes, ...datos });
         if (motivo) return res.status(400).json({ success: false, error: motivo });
         if (datos.rol && datos.rol !== antes.rol && id === req.user?.id) {
@@ -254,4 +260,70 @@ async function updateArea(req, res) {
     }
 }
 
-module.exports = { renderAdmin, saveConfig, preview, createUser, updateUser, createArea, updateArea };
+// Subgrupos de un área: crear, renombrar y activar/desactivar (no se borran)
+function validateSubgrupoName(nombre) {
+    const limpio = String(nombre || '').replace(/\s+/g, ' ').trim();
+    if (limpio.length < 2 || limpio.length > 60) return { error: 'El nombre del subgrupo debe tener entre 2 y 60 caracteres' };
+    return { nombre: limpio };
+}
+
+async function createSubgrupo(req, res) {
+    const codigo = String(req.params.codigo || '').trim();
+    const v = validateSubgrupoName(req.body?.nombre);
+    if (v.error) return res.status(400).json({ success: false, error: v.error });
+    try {
+        const area = await prisma.area.findUnique({ where: { codigo } });
+        if (!area) return res.status(404).json({ success: false, error: 'Área no encontrada' });
+        if (await prisma.subgrupo.findFirst({ where: { area_codigo: codigo, nombre: { equals: v.nombre, mode: 'insensitive' } } })) {
+            return res.status(409).json({ success: false, error: 'Esa área ya tiene un subgrupo con ese nombre' });
+        }
+        const ultimo = await prisma.subgrupo.findFirst({ where: { area_codigo: codigo }, orderBy: { orden: 'desc' }, select: { orden: true } });
+        const subgrupo = await prisma.subgrupo.create({ data: { area_codigo: codigo, nombre: v.nombre, orden: (ultimo?.orden ?? -1) + 1 } });
+        await refreshAreas(prisma, { force: true });
+        await auditUser(req, 'SUBGRUPO_CREADO', `${area.nombre} · ${subgrupo.nombre}`);
+        return res.status(201).json({ success: true, subgrupo });
+    } catch (e) {
+        console.error('Error al crear subgrupo:', e);
+        return res.status(e.code === 'P2002' ? 409 : 500).json({ success: false, error: e.code === 'P2002' ? 'Esa área ya tiene un subgrupo con ese nombre' : 'No se pudo crear el subgrupo' });
+    }
+}
+
+async function updateSubgrupo(req, res) {
+    const id = String(req.params.id || '').trim();
+    const data = {};
+    if (req.body?.nombre !== undefined) {
+        const v = validateSubgrupoName(req.body.nombre);
+        if (v.error) return res.status(400).json({ success: false, error: v.error });
+        data.nombre = v.nombre;
+    }
+    if (req.body?.activo !== undefined) {
+        if (typeof req.body.activo !== 'boolean') return res.status(400).json({ success: false, error: 'Valor de activo no válido' });
+        data.activo = req.body.activo;
+    }
+    if (!Object.keys(data).length) return res.status(400).json({ success: false, error: 'No hay cambios para guardar' });
+    try {
+        const antes = await prisma.subgrupo.findUnique({ where: { id } });
+        if (!antes) return res.status(404).json({ success: false, error: 'Subgrupo no encontrado' });
+        if (data.activo === false && antes.activo) {
+            const [personas, tickets] = await Promise.all([
+                prisma.user.count({ where: { subgrupo_id: id, activo: true } }),
+                prisma.ticket.count({ where: { subgrupo_id: id, estado_actual: { in: ACTIVE_STATES } } })
+            ]);
+            if (personas || tickets) {
+                return res.status(409).json({ success: false, error: `Antes de desactivarlo, saca del subgrupo a sus ${personas} personas activas y ${tickets} tickets activos` });
+            }
+        }
+        const subgrupo = await prisma.subgrupo.update({ where: { id }, data });
+        await refreshAreas(prisma, { force: true });
+        const cambios = [];
+        if (data.nombre && data.nombre !== antes.nombre) cambios.push(`nombre: ${antes.nombre} → ${data.nombre}`);
+        if (data.activo !== undefined && data.activo !== antes.activo) cambios.push(data.activo ? 'reactivado' : 'desactivado');
+        await auditUser(req, 'SUBGRUPO_EDITADO', `${AREA_NAMES[antes.area_codigo] || antes.area_codigo} · ${antes.nombre}: ${cambios.join(', ') || 'sin cambios'}`);
+        return res.json({ success: true, subgrupo });
+    } catch (e) {
+        console.error('Error al editar subgrupo:', e);
+        return res.status(e.code === 'P2002' ? 409 : 500).json({ success: false, error: e.code === 'P2002' ? 'Esa área ya tiene un subgrupo con ese nombre' : 'No se pudo guardar el subgrupo' });
+    }
+}
+
+module.exports = { renderAdmin, saveConfig, preview, createUser, updateUser, createArea, updateArea, createSubgrupo, updateSubgrupo };

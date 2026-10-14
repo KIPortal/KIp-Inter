@@ -56,6 +56,7 @@ async function loadOperatorsWithShift(ahora = new Date(), filtro = {}) {
             rol: true,
             area_designada: true,
             telefono: true,
+            subgrupo_id: true,
             estado_operativo: true,
             tickets_asignados: {
                 // Carga activa completa: incluye recién asignados (NUEVO) y en pausa
@@ -131,7 +132,10 @@ async function renderOperatorDashboard(req, res) {
 
         const [entrantes, mios, resueltos, operador, { horarioPorUsuario, guardiaIds }, config] = await Promise.all([
             prisma.ticket.findMany({
-                where: { estado_actual: 'NUEVO', asignado_a_id: null, area_designada: { in: [...new Set([area, 'GENERAL'])] } },
+                where: {
+                    estado_actual: 'NUEVO', asignado_a_id: null, area_designada: { in: [...new Set([area, 'GENERAL'])] },
+                    ...(user.subgrupo_id ? { OR: [{ subgrupo_id: null }, { subgrupo_id: user.subgrupo_id }] } : {})
+                },
                 include: detalle,
                 orderBy: { createdAt: 'asc' }
             }),

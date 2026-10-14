@@ -11,11 +11,11 @@
 	const miRol = locals.miRol || null;
 	const ROL_TXT = { OPERADOR: 'Operador', COORDINADOR: 'Coordinador', JEFE: 'Jefe de área', GERENTE: 'Gerente' };
 	const nombreArea = c => (areas.find(a => a.codigo === c) || {}).nombre || c;
-	const usuarios = areas.flatMap(a => a.operadores.map(o => ({ id: o.id, nombre: o.nombre, email: o.email, rol: 'OPERADOR', area: o.area, telefono: o.telefono || '' })))
-		.concat(coordinadores.map(c => ({ id: c.id, nombre: c.nombre, email: c.email, rol: c.rol || 'COORDINADOR', area: c.area_designada || 'GENERAL', atiende: c.atiende_tickets === true, telefono: c.telefono || '' })))
+	const usuarios = areas.flatMap(a => a.operadores.map(o => ({ id: o.id, nombre: o.nombre, email: o.email, rol: 'OPERADOR', area: o.area, telefono: o.telefono || '', subgrupo: o.subgrupo || '' })))
+		.concat(coordinadores.map(c => ({ id: c.id, nombre: c.nombre, email: c.email, rol: c.rol || 'COORDINADOR', area: c.area_designada || 'GENERAL', atiende: c.atiende_tickets === true, telefono: c.telefono || '', subgrupo: c.subgrupo_id || '' })))
 		.map(u => Object.assign(u, { activo: true }))
 		.concat(desactivados.map(u => Object.assign({}, u, { activo: false })));
-	const datos = { config, eventos, destinatarios, limites, vistaPrevia, usuarios, areas: areas.map(a => ({ codigo: a.codigo, nombre: a.nombre, activa: a.activa !== false, operadores: a.operadores.length })), miId, miRol, minClave };
+	const datos = { config, eventos, destinatarios, limites, vistaPrevia, usuarios, areas: areas.map(a => ({ codigo: a.codigo, nombre: a.nombre, activa: a.activa !== false, operadores: a.operadores.length, subgrupos: a.subgrupos || [] })), miId, miRol, minClave };
 	const ini = n => String(n || '?').split(/\s+/).slice(0, 2).map(p => p[0]).join('').toUpperCase();
 	const lapiz = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>';
 	const SECS = [
@@ -87,7 +87,7 @@
 						<div class="area-detail">
 							<% areas.forEach(a => { %>
 								<div data-area-panel="<%= a.codigo %>"<% if (a.codigo !== (conOps[0] || areas[0]).codigo) { %> hidden<% } %>>
-									<div style="display:flex;align-items:center;gap:10px;padding:16px 24px 12px"><span style="display:flex;flex-direction:column;flex:1"><b style="font-size:15px"><%= a.nombre %></b><span class="t2" style="font-size:12px"><%= a.operadores.length %> <%= a.operadores.length === 1 ? 'operador' : 'operadores' %> · <%= a.turno %> en turno<%= a.guardia ? ' · ' + a.guardia + ' de guardia' : '' %></span></span>
+									<div style="display:flex;align-items:center;gap:10px;padding:16px 24px 12px"><span style="display:flex;flex-direction:column;flex:1"><b style="font-size:15px"><%= a.nombre %></b><span class="t2" style="font-size:12px"><%= a.operadores.length %> <%= a.operadores.length === 1 ? 'operador' : 'operadores' %> · <%= a.turno %> en turno<%= a.guardia ? ' · ' + a.guardia + ' de guardia' : '' %><% const sgs = (a.subgrupos || []).filter(g => g.activo); if (sgs.length) { %> · Subgrupos: <%= sgs.map(g => g.nombre).join(', ') %><% } %></span></span>
 										<button type="button" class="pill pillbtn plain" style="height:30px;padding:0 14px;font-size:12px" data-area-edit="<%= a.codigo %>">Editar área</button>
 										<% if (a.activa !== false) { %><button type="button" class="primary" style="height:30px;padding:0 14px;font-size:12px" data-user-new="<%= a.codigo %>">＋ Agregar operador</button><% } %></div>
 									<% if (!a.operadores.length) { %>
@@ -98,7 +98,7 @@
 										<tbody>
 											<% a.operadores.forEach(o => { %>
 												<tr class="row">
-													<td style="padding-left:24px"><span style="display:flex;align-items:center;gap:10px"><span class="avatar"><%= o.nombre.split(/\s+/).slice(0, 2).map(p => p[0]).join('').toUpperCase() %></span><span style="display:flex;flex-direction:column"><b style="font-size:13px"><%= o.nombre %></b><span class="t2"><%= o.email %></span></span></span></td>
+													<td style="padding-left:24px"><span style="display:flex;align-items:center;gap:10px"><span class="avatar"><%= o.nombre.split(/\s+/).slice(0, 2).map(p => p[0]).join('').toUpperCase() %></span><span style="display:flex;flex-direction:column"><b style="font-size:13px"><%= o.nombre %><% if (o.subgrupoNombre) { %> <span class="t2" style="font-weight:500">· <%= o.subgrupoNombre %></span><% } %></b><span class="t2"><%= o.email %></span></span></span></td>
 													<td><span class="opstate st-<%= o.estado.grupo %>" style="font-weight:500"><i></i><%= o.estado.etiqueta %></span></td>
 													<td class="r" style="font-weight:600"><%= o.carga %></td>
 													<td style="padding-right:24px;text-align:right"><button type="button" class="ico" data-user-edit="<%= o.id %>" title="Editar" aria-label="Editar <%= o.nombre %>"><%- lapiz %></button></td>

@@ -1,4 +1,4 @@
-// Pruebas de los roles Jefe de área y Gerente, y de Contactos.
+// Pruebas de los roles Jefe de área y Gerente, de Contactos y de los subgrupos de área.
 // Sin base de datos: prisma se simula.
 const assert = require('assert');
 const fs = require('fs');
@@ -35,7 +35,7 @@ const GER = { id: 'g1', rol: 'GERENTE', area_designada: 'GENERAL' };
 const OP = { id: 'o1', rol: 'OPERADOR', area_designada: 'WAN' };
 
 (async () => {
-    console.log('\n=== Roles Jefe y Gerente, y Contactos ===\n');
+    console.log('\n=== Roles Jefe y Gerente, Contactos y subgrupos ===\n');
 
     await t('Quién supervisa, quién administra y qué ve cada uno', () => {
         assert.deepStrictEqual([COORD, JEFE, GER, OP].map(R.esSupervisor), [true, true, true, false]);
@@ -153,7 +153,7 @@ const OP = { id: 'o1', rol: 'OPERADOR', area_designada: 'WAN' };
             ticket: { findMany: async args => { consultas.push(args.where); return []; }, count: async () => 0, findFirst: async () => null },
             user: { findMany: async args => { consultas.push(args.where); return []; } },
             horarioOperador: { findMany: async () => [] },
-            guardiaSemanal: { findMany: async () => [] },
+            guardiaDia: { findMany: async () => [] },
             traspaso: { findFirst: async () => null },
             configuracion: { findMany: async () => [] }
         }, async () => {
@@ -212,6 +212,104 @@ const OP = { id: 'o1', rol: 'OPERADOR', area_designada: 'WAN' };
         const ger = pinta(GER);
         assert.ok(ger.includes('href="/admin"') && ger.includes('href="/auditoria"'));
         assert.ok(pinta(OP).includes('/contactos'));
+    });
+
+    // ---------- Subgrupos (FTTx: Soporte y Cabecera) ----------
+    const cat = require('../src/services/areaCatalog');
+    cat.setSubgrupos([
+        { id: 'sg-sop', area_codigo: 'REDES_FTTH', nombre: 'Soporte', activo: true },
+        { id: 'sg-cab', area_codigo: 'REDES_FTTH', nombre: 'Cabecera', activo: true },
+        { id: 'sg-old', area_codigo: 'REDES_FTTH', nombre: 'Viejo', activo: false }
+    ]);
+
+    await t('Subgrupos: catálogo por área, nombre y validez', () => {
+        assert.deepStrictEqual(cat.subgruposDe('REDES_FTTH').map(g => g.nombre), ['Soporte', 'Cabecera']);
+        assert.strictEqual(cat.subgruposDe('REDES_FTTH', { todos: true }).length, 3);
+        assert.strictEqual(cat.subgrupoName('sg-cab'), 'Cabecera');
+        assert.strictEqual(cat.isValidSubgrupo('sg-sop', 'REDES_FTTH'), true);
+        assert.strictEqual(cat.isValidSubgrupo('sg-sop', 'WAN'), false, 'de otra área');
+        assert.strictEqual(cat.isValidSubgrupo('sg-old', 'REDES_FTTH'), false, 'desactivado');
+    });
+
+    await t('Subgrupos en tickets: al crear se valida y al asignar toma el del operador', async () => {
+        const tc = require('../src/controllers/ticketController');
+        let r = mockRes();
+        await tc.createTicket({ body: { asunto: 'X', areaDesignada: 'WAN', origenIngesta: 'COORDINADOR', prioridad: 'NONE', subgrupoId: 'sg-sop' }, user: COORD }, r);
+        assert.strictEqual(r.code, 400);
+        let creado = null, actualizado = null;
+        await con({
+            ticket: {
+                create: async ({ data }) => { creado = data; return data; },
+                findMany: async () => [],
+                findUnique: async () => ({ id: 't1', estado_actual: 'NUEVO', asignado_a_id: null, area_designada: 'REDES_FTTH', subgrupo_id: null, asignado_a: null }),
+                update: async ({ data }) => { actualizado = data; return { id: 't1', ...data }; }
+            },
+            user: { findFirst: async () => ({ id: 'o5', nombre: 'Enza', area_designada: 'REDES_FTTH', subgrupo_id: 'sg-cab' }) },
+            auditLog: { create: async () => ({}) }
+        }, async () => {
+            r = mockRes();
+            await tc.createTicket({ body: { asunto: 'OLT', areaDesignada: 'REDES_FTTH', origenIngesta: 'COORDINADOR', prioridad: 'NONE', subgrupoId: 'sg-sop' }, user: COORD }, r);
+            assert.strictEqual(r.code, 201);
+            assert.strictEqual(creado.subgrupo_id, 'sg-sop');
+            r = mockRes();
+            await tc.assignTicket({ body: { ticketCode: 'INC-1', operatorId: 'o5' }, user: COORD }, r);
+            assert.strictEqual(r.code, 200);
+            assert.strictEqual(actualizado.subgrupo_id, 'sg-cab', 'sin subgrupo: toma el del operador');
+        });
+    });
+
+    await t('Subgrupos en Mi panel: el operador ve su subgrupo y los del área sin subgrupo', () => {
+        const { buildOperatorPanel } = require('../src/services/operatorPanelService');
+        const tk = (codigo_incidencia, subgrupo_id) => ({ codigo_incidencia, asunto: codigo_incidencia, estado_actual: 'NUEVO', area_designada: 'REDES_FTTH', subgrupo_id, asignado_a_id: null, puntos_complejidad: 0, createdAt: new Date('2026-10-14T14:00:00Z') });
+        const p = buildOperatorPanel({ user: { id: 'o5', nombre: 'Enza', area_designada: 'REDES_FTTH', subgrupo_id: 'sg-cab' }, entrantes: [tk('INC-1', null), tk('INC-2', 'sg-cab'), tk('INC-3', 'sg-sop')], now: new Date('2026-10-14T16:00:00Z') });
+        const entr = p.colas.find(q => q.k === 'entrantes').tickets;
+        assert.deepStrictEqual(entr.map(x => x.code).sort(), ['INC-1', 'INC-2']);
+        assert.ok(entr.find(x => x.code === 'INC-2').areaNombre.endsWith('· Cabecera'));
+        assert.ok(p.usuario.areaNombre.endsWith('· Cabecera'));
+    });
+
+    await t('Administración: crear subgrupo, nombre repetido y no desactivar con gente', async () => {
+        const ctrl = require('../src/controllers/adminController');
+        await con({
+            area: { findUnique: async () => ({ codigo: 'REDES_FTTH', nombre: 'Redes FTTH' }), findMany: async () => [] },
+            subgrupo: {
+                findFirst: async ({ where }) => (where.nombre ? (where.nombre.equals === 'Soporte' ? { id: 'sg-sop' } : null) : { orden: 1 }),
+                create: async ({ data }) => ({ id: 'sg-new', ...data }),
+                findUnique: async () => ({ id: 'sg-sop', area_codigo: 'REDES_FTTH', nombre: 'Soporte', activo: true }),
+                findMany: async () => []
+            },
+            user: { count: async () => 2 },
+            ticket: { count: async () => 0 },
+            auditLog: { create: async () => ({}) }
+        }, async () => {
+            let r = mockRes();
+            await ctrl.createSubgrupo({ params: { codigo: 'REDES_FTTH' }, body: { nombre: 'Soporte' }, user: GER }, r);
+            assert.strictEqual(r.code, 409);
+            r = mockRes();
+            await ctrl.createSubgrupo({ params: { codigo: 'REDES_FTTH' }, body: { nombre: ' Planta  externa ' }, user: GER }, r);
+            assert.strictEqual(r.code, 201);
+            assert.strictEqual(r.body.subgrupo.nombre, 'Planta externa');
+            assert.strictEqual(r.body.subgrupo.orden, 2);
+            r = mockRes();
+            await ctrl.updateSubgrupo({ params: { id: 'sg-sop' }, body: { activo: false }, user: GER }, r);
+            assert.strictEqual(r.code, 409);
+            assert.match(r.body.error, /2 personas/);
+        });
+        cat.setSubgrupos([
+            { id: 'sg-sop', area_codigo: 'REDES_FTTH', nombre: 'Soporte', activo: true },
+            { id: 'sg-cab', area_codigo: 'REDES_FTTH', nombre: 'Cabecera', activo: true }
+        ]);
+    });
+
+    await t('Tickets: cada área lleva sus subgrupos activos para filtrar y elegir', () => {
+        const { buildQueue } = require('../src/services/ticketQueueService');
+        const cola = buildQueue({ tickets: [{ codigo_incidencia: 'INC-9', asunto: 'x', area_designada: 'REDES_FTTH', subgrupo_id: 'sg-sop', estado_actual: 'NUEVO', puntos_complejidad: 0, createdAt: new Date() }], operators: [], now: new Date() });
+        assert.deepStrictEqual(cola.areas.find(a => a.codigo === 'REDES_FTTH').subgrupos.map(g => g.nombre), ['Soporte', 'Cabecera']);
+        assert.deepStrictEqual(cola.areas.find(a => a.codigo === 'WAN').subgrupos, []);
+        assert.strictEqual(cola.tickets[0].subgrupoNombre, 'Soporte');
+        const js = fs.readFileSync(path.join(__dirname, '..', 'public', 'js', 'tickets.js'), 'utf8');
+        ['areaMatch', 'subgrupoId', 'subgrupo_id', 'sgField'].forEach(x => assert.ok(js.includes(x), 'falta ' + x));
+        cat.setSubgrupos([]);
     });
 
     console.log(`\nResultado: ${passed}/${total} pruebas pasaron\n`);

@@ -28,6 +28,7 @@ Portal de tickets y estadísticas del depto. **Operaciones IP** (Inter Telecomun
 - Lógica pura en `src/services/` (metricsService, periodReportService, excelExportService, shiftService, simulationService, dashboardService, ticketQueueService, assignmentService, rulesService, shiftBoardService, configService, auditViewService, reportViewService, userAdminService, conversationService, operatorPanelService, roleService, contactService); controladores en `src/controllers/`; las vistas solo dibujan lo que entrega el controlador.
 - Los ids de usuario son **UUID (texto)**, nunca números.
 - Las áreas son la tabla `Area` (ya no un enum): usa el catálogo vivo de `src/services/areaCatalog.js` (`AREA_NAMES`, `activeAreas()`, `isActiveArea()`), nunca listas fijas. Las áreas y los usuarios se desactivan, no se borran (`Area.activa`, `User.activo`).
+- Subgrupos de área (tabla `Subgrupo`, p. ej. FTTx: Soporte y Cabecera): se configuran en Administración > Editar área; `User.subgrupo_id` y `Ticket.subgrupo_id` son opcionales. El operador con subgrupo ve en Entrantes los de su subgrupo y los del área sin subgrupo; al asignar, un ticket sin subgrupo toma el del operador. Catálogo vivo en `areaCatalog` (`subgruposDe`, `isValidSubgrupo`, `subgrupoName`).
 
 ## Pruebas (sin framework, sin base de datos real)
 Scripts `scripts/test-*.js` con `assert`; en `package.json`: `test:metrics`, `test:tickets`, `test:period`, `test:shifts`, `test:simulation`, `test:dashboard`, `test:queue`, `test:assignment`, `test:turno`, `test:admin`, `test:audit`, `test:report-view`, `test:usuarios`, `test:areas`, `test:conversacion`, `test:operador`, `test:roles` y `test:ui` (revisión transversal de las 6 pantallas). Corre todas antes de dar algo por terminado. Estas pruebas simulan Prisma: no prueban la base real.
@@ -45,6 +46,5 @@ Scripts `scripts/test-*.js` con `assert`; en `package.json`: `test:metrics`, `te
 - Rediseño del login: sigue con el estilo anterior (Tailwind CDN). El panel del operador ya es el nuevo (Fase 9: `operatorPanelService`, `public/css/operador.css`, `public/js/operador.js`; detalle con pestañas en `ticket-detalle.css` + `ticket-conversacion.js`).
 - Entrega de avisos dentro del portal: la matriz se configura en Administración; la campana del operador hoy deduce sus avisos de las colas (Fase 10 la conecta).
 - Telefonía: el teléfono de cada persona ya está en Contactos; falta un número fijo de guardia, si se necesita.
-- Pendiente de Check.txt: subgrupos de área (FTTx: Soporte y Cabecera).
 - "Tiempo en horario" usa una ventana fija lun–vie 8–17 (aún no usa horarios por operador).
 - Seguridad del login (ver `docs/pendientes.md`).

@@ -65,3 +65,11 @@ Campo `User.atiende_tickets` (migración `20261014180000_coordinador_atiende`), 
 - Jefe: Dashboard, Tickets (incluida la papelera), Gestión de Turno y Reportes filtran por su área; el reporte fuerza `area` a la suya. Al definir la guardia solo reemplaza la de su área.
 - Administración: `POST/PATCH /api/admin/usuarios` aceptan `rol` JEFE/GERENTE y `telefono` (texto ≤40, números, +, (), guiones, puntos, "ext"; vacío = sin teléfono). Solo el gerente da esos roles o edita a jefes y gerentes (403). El jefe necesita un área distinta de General (400).
 - Contactos: `GET /contactos` (cualquier usuario) dibuja `contactService.buildContacts` → `{ grupos[{codigo, nombre, personas[{id, nombre, iniciales, rol, rolTxt, email, telefono, tel, estado{etiqueta, grupo}|null, esYo}]}], total, sinTelefono, yo{telefono} }`. Gerencia primero, luego las áreas en su orden; dentro, jefe, coordinador y operador. `PATCH /api/contactos/yo { telefono }` guarda el propio teléfono y deja `USUARIO_EDITADO` en Auditoría.
+
+## Subgrupos de área
+
+- Tabla `Subgrupo { id, area_codigo, nombre, activo, orden }` (migración `20261015000000_subgrupos`); `User.subgrupo_id` y `Ticket.subgrupo_id` opcionales (al borrar: null).
+- Administración: `POST /api/admin/areas/:codigo/subgrupos { nombre }` (409 si se repite en el área), `PATCH /api/admin/subgrupos/:id { nombre?, activo? }` (409 al desactivar con personas activas o tickets activos). Usuarios: `subgrupo` (id o vacío) en `POST/PATCH /api/admin/usuarios`; debe ser activo y de su área; si cambia de área sin elegir otro, queda sin subgrupo.
+- Tickets: `POST /api/tickets { subgrupoId? }`, `PATCH /api/tickets/:code { subgrupo_id }` (validados contra el área final). Al asignar, si el ticket no tiene subgrupo toma el del operador (misma área); si cambia de área, se quita.
+- `buildQueue`: `areas[].subgrupos[{id,nombre}]` (activos), `tickets[].subgrupo/subgrupoNombre`, `operadores[].subgrupo/subgrupoNombre`. El filtro Área acepta `AREA|subgrupo`.
+- Mi panel: con subgrupo, Entrantes = los de su subgrupo + los del área sin subgrupo (+ General).

@@ -9,7 +9,7 @@
  * y nunca se escriben en Auditoría.
  */
 
-const { AREA_NAMES, isActiveArea } = require('./areaCatalog');
+const { AREA_NAMES, isActiveArea, subgrupoName } = require('./areaCatalog');
 
 const ROLES = ['OPERADOR', 'COORDINADOR', 'JEFE', 'GERENTE'];
 const ROL = { OPERADOR: 'operador', COORDINADOR: 'coordinador', JEFE: 'jefe de área', GERENTE: 'gerente' };
@@ -52,6 +52,10 @@ function validateUser(input, { nuevo = false } = {}) {
         if (clave.length < MIN_CLAVE || clave.length > 72) return { error: `La clave temporal debe tener al menos ${MIN_CLAVE} caracteres` };
         datos.clave = clave;
     }
+    if (b.subgrupo !== undefined) {
+        if (b.subgrupo !== null && typeof b.subgrupo !== 'string') return { error: 'Subgrupo no válido' };
+        datos.subgrupo_id = (b.subgrupo || '').trim() || null;
+    }
     if (b.telefono !== undefined) {
         const tel = validatePhone(b.telefono);
         if (tel.error) return tel;
@@ -93,6 +97,7 @@ function describeUser(antes, datos) {
     }
     if (datos.atiende_tickets === true && antes.atiende_tickets !== true) cambios.push('atiende tickets');
     if (datos.atiende_tickets === false && antes.atiende_tickets === true) cambios.push('ya no atiende tickets');
+    if (datos.subgrupo_id !== undefined && (datos.subgrupo_id || null) !== (antes.subgrupo_id || null)) cambios.push(datos.subgrupo_id ? `subgrupo: ${subgrupoName(datos.subgrupo_id) || datos.subgrupo_id}` : 'sin subgrupo');
     if (datos.telefono !== undefined && (datos.telefono || null) !== (antes.telefono || null)) cambios.push(datos.telefono ? `teléfono: ${datos.telefono}` : 'sin teléfono');
     if (datos.clave) cambios.push('clave temporal cambiada');
     if (datos.activo === false && antes.activo !== false) cambios.push('desactivado');

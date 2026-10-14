@@ -64,6 +64,8 @@ model User {
   rol              Rol             @default(OPERADOR)
   area_designada   String          @default("GENERAL") @db.VarChar(40)
   area             Area            @relation(fields: [area_designada], references: [codigo])
+  subgrupo_id      String?         // subgrupo dentro de su área (p. ej. FTTx: Soporte o Cabecera)
+  subgrupo         Subgrupo?       @relation(fields: [subgrupo_id], references: [id], onDelete: SetNull)
   activo           Boolean         @default(true) // desactivado: no entra ni recibe tickets; se conserva su historial
   estado_operativo EstadoOperativo @default(DISPONIBLE)
   atiende_tickets  Boolean         @default(false) // coordinador o jefe que también toma y trabaja tickets (Mi panel)
@@ -95,6 +97,8 @@ model Ticket {
   origen_ingesta     OrigenIngesta @default(CORREO)
   area_designada     String        @default("GENERAL") @db.VarChar(40)
   area               Area          @relation(fields: [area_designada], references: [codigo])
+  subgrupo_id        String?
+  subgrupo           Subgrupo?     @relation(fields: [subgrupo_id], references: [id], onDelete: SetNull)
   
   // Relación: Quién reportó o creó el ticket (Opcional, si viene de correo automático puede ser nulo)
   creado_por_id      String?
@@ -249,4 +253,20 @@ model Area {
   createdAt DateTime @default(now())
   usuarios  User[]
   tickets   Ticket[]
+  subgrupos Subgrupo[]
+}
+
+// Subgrupo de un área (FTTx: Soporte y Cabecera). Se desactiva, no se borra.
+model Subgrupo {
+  id          String   @id @default(uuid())
+  area_codigo String   @db.VarChar(40)
+  area        Area     @relation(fields: [area_codigo], references: [codigo])
+  nombre      String   @db.VarChar(60)
+  activo      Boolean  @default(true)
+  orden       Int      @default(0)
+  createdAt   DateTime @default(now())
+  usuarios    User[]
+  tickets     Ticket[]
+
+  @@unique([area_codigo, nombre])
 }

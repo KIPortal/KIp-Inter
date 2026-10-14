@@ -9,7 +9,7 @@
  */
 
 const { getDayBounds, getClosingDate, UTC_OFFSET_HOURS } = require('./metricsService');
-const { AREA_NAMES } = require('./areaCatalog');
+const { AREA_NAMES, subgrupoName } = require('./areaCatalog');
 const { DEFAULT_RULES } = require('./rulesService');
 const { DEFAULT_SCHEDULE, GUARDIA_WEEKDAY, GUARDIA_WEEKEND, caracasClock } = require('./shiftService');
 
@@ -166,7 +166,7 @@ function buildRow(ticket, k, { now, myArea, rules, operatorName }) {
         estado: ticket.estado_actual,
         cola: k,
         area,
-        areaNombre: AREA_NAMES[area] || area,
+        areaNombre: (AREA_NAMES[area] || area) + (subgrupoName(ticket.subgrupo_id) ? ' · ' + subgrupoName(ticket.subgrupo_id) : ''),
         otraArea: area !== myArea,
         tag: tag ? tag[0] : '',
         tagTono: tag ? tag[1] : '',
@@ -252,6 +252,8 @@ function buildOperatorPanel({
     const colas = {
         entrantes: entrantes
             .filter(t => t.estado_actual === 'NUEVO' && !t.asignado_a_id && [myArea, 'GENERAL'].includes(t.area_designada || 'GENERAL'))
+            // Con subgrupo (p. ej. FTTx Soporte): los de su subgrupo y los del área sin subgrupo
+            .filter(t => !user.subgrupo_id || !t.subgrupo_id || t.subgrupo_id === user.subgrupo_id)
             .map(t => buildRow(t, 'entrantes', ctx)).sort(byUrgency),
         asignados: mine.filter(t => t.estado_actual === 'NUEVO').map(t => buildRow(t, 'asignados', ctx)).sort(byUrgency),
         atencion: mine.filter(t => t.estado_actual === 'EN_PROGRESO').map(t => buildRow(t, 'atencion', ctx)).sort(byUrgency),
@@ -318,7 +320,7 @@ function buildOperatorPanel({
 
     return {
         saludo: saludo(user.nombre, now),
-        usuario: { id: user.id, nombre: user.nombre || 'Operador', iniciales: initials(user.nombre), area: myArea, areaNombre },
+        usuario: { id: user.id, nombre: user.nombre || 'Operador', iniciales: initials(user.nombre), area: myArea, areaNombre: areaNombre + (subgrupoName(user.subgrupo_id) ? ' · ' + subgrupoName(user.subgrupo_id) : '') },
         turno: shiftWindow({ horario, deGuardia, turno }, now),
         disponibilidad,
         puntosHoy,

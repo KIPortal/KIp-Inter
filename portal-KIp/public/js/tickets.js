@@ -30,6 +30,12 @@
 	const HAND_TPL = (D.plantillas && D.plantillas.traspaso) || ['Sin novedades pendientes', 'Quedan P1 abiertos, revisar primero', 'Esperando respuesta de proveedor', 'Vigilar enlaces con saturación'];
 	const AREA_NAME = {};
 	D.areas.forEach(a => { AREA_NAME[a.codigo] = a.nombre; });
+	// Subgrupos activos de cada área (p. ej. FTTx: Soporte y Cabecera)
+	const SUBS = {};
+	const SG_NAME = {};
+	D.areas.forEach(a => { SUBS[a.codigo] = a.subgrupos || []; SUBS[a.codigo].forEach(g => { SG_NAME[g.id] = g.nombre; }); });
+	// Filtro de área: "AREA" o "AREA|subgrupo"
+	const areaMatch = (t, v) => { const [a, g] = String(v).split('|'); return t.area === a && (!g || t.subgrupo === g); };
 	const OPS = {};
 	D.operadores.forEach(o => { OPS[o.id] = o; });
 	const BY_CODE = {};
@@ -138,7 +144,7 @@
 		if (skip !== 'estado') {
 			if (f.estado ? t.estado !== f.estado : t.estado === 'CERRADO') return false;
 		} else if (t.estado === 'CERRADO') return false;
-		if (skip !== 'area' && f.area && t.area !== f.area) return false;
+		if (skip !== 'area' && f.area && !areaMatch(t, f.area)) return false;
 		if (skip !== 'prio' && f.prio && t.prioridad !== f.prio) return false;
 		if (skip !== 'fecha' && f.fecha) {
 			if (f.fecha === 'hoy' && t.diasAtras !== 0) return false;
@@ -227,7 +233,8 @@
 
 	// ---------- Filtros ----------
 	const FILTERS = [
-		['area', 'Área', () => [{ value: '', label: 'Todas' }].concat(D.areas.map(a => ({ value: a.codigo, label: a.nombre })))],
+		['area', 'Área', () => [{ value: '', label: 'Todas' }].concat(...D.areas.map(a => [{ value: a.codigo, label: a.nombre }]
+			.concat(SUBS[a.codigo].map(g => ({ value: a.codigo + '|' + g.id, label: a.nombre + ' · ' + g.nombre })))))],
 		['fecha', 'Fecha', () => [{ value: '', label: 'Todas' }, { value: 'hoy', label: 'Hoy' }, { value: 'ayer', label: 'Ayer' }, { value: '7d', label: 'Últimos 7 días' }]],
 		['prio', 'Prioridad', () => [{ value: '', label: 'Todas' }].concat(PKEYS.map(k => ({ value: k, label: PR[k][0], dot: k === 'SP' ? null : PR_DOT[k] })))],
 		['estado', 'Estado', () => [{ value: '', label: 'Todos' }].concat(STATES.map(s => ({ value: s[0], label: s[1], dot: ST_DOT[s[0]] })))],
@@ -238,7 +245,7 @@
 			if (!match(t, key)) return false;
 			if (key === 'estado') return value ? t.estado === value : t.estado !== 'CERRADO';
 			if (!value) return true;
-			if (key === 'area') return t.area === value;
+			if (key === 'area') return areaMatch(t, value);
 			if (key === 'prio') return t.prioridad === value;
 			if (key === 'fecha') return value === 'hoy' ? t.diasAtras === 0 : value === 'ayer' ? t.diasAtras === 1 : t.diasAtras <= 6;
 			if (key === 'op') return value === '__none' ? !t.operador : value === '__cola' ? !!t.enCola : !!t.operador && t.operador.id === value;
@@ -327,7 +334,7 @@
 			h('td', {}, h('span', { class: 'prio ' + t.prioridad }, h('i'), PR[t.prioridad][0])),
 			h('td', {}, h('span', { class: 'state' }, h('i', { class: 's-' + t.estado }), STATE_NAME[t.estado])),
 			h('td', { style: 'max-width:0' }, h('button', { type: 'button', class: 'subj', title: t.asunto, onclick: () => openPanel(t.codigo) },
-				h('span', { style: 'font-weight:500', text: t.asunto }), h('span', { class: 'area', text: '  ·  ' + t.areaNombre }))),
+				h('span', { style: 'font-weight:500', text: t.asunto }), h('span', { class: 'area', text: '  ·  ' + t.areaNombre + (t.subgrupoNombre ? ' · ' + t.subgrupoNombre : '') }))),
 			h('td', {}, t.operador
 				? h('span', { class: 'who' }, h('span', { class: 'avatar', text: t.operador.iniciales }), t.operador.nombre)
 				: h('span', { class: 'unassigned' + (t.enCola ? ' t-red' : ''), text: t.enCola ? 'En cola de espera' : 'Sin asignar' })),
@@ -510,14 +517,32 @@
 		return box;
 	}
 	const areaOpts = cur => D.areas.map(a => ({ value: a.codigo, label: a.nombre, sel: a.codigo === cur }));
+	// Campo Subgrupo: solo aparece si el área tiene subgrupos
+	function sgField(cls, getArea, get, set) {
+		const slot = h('div', { class: cls });
+		slot.repaint = () => {
+			const lista = SUBS[getArea()] || [];
+			slot.hidden = !lista.length;
+			slot.replaceChildren(...(lista.length ? [
+				cls === 'dsec' ? h('b', { text: 'Subgrupo' }) : h('span', { class: 'flabel', text: 'Subgrupo' }),
+				combo(() => (get() ? { label: SG_NAME[get()] || 'Subgrupo' } : { label: 'Sin subgrupo', muted: true }),
+					() => [{ value: '', label: 'Sin subgrupo', sel: !get(), hint: 'Lo ve todo el área' }].concat(lista.map(g => ({ value: g.id, label: g.nombre, sel: g.id === get() }))),
+					v => set(v))
+			] : []));
+		};
+		slot.repaint();
+		return slot;
+	}
 
 	function editView(t) {
-		const ed = { asunto: t.asunto, prioridad: t.prioridad, area: t.area };
+		const ed = { asunto: t.asunto, prioridad: t.prioridad, area: t.area, subgrupo: t.subgrupo || '' };
 		const input = h('input', { class: 'field', value: t.asunto, oninput: e => { ed.asunto = e.target.value; } });
+		const sgSlot = sgField('dsec', () => ed.area, () => ed.subgrupo, v => { ed.subgrupo = v; });
 		const body = h('div', { class: 'dp-body', style: 'gap:18px' },
 			h('label', { class: 'dsec' }, h('b', { text: 'Asunto' }), input),
 			h('div', { class: 'dsec' }, h('b', { text: 'Prioridad' }), prioSeg(() => ed.prioridad, k => { ed.prioridad = k; })),
-			h('div', { class: 'dsec' }, h('b', { text: 'Área' }), combo(() => ({ label: AREA_NAME[ed.area] }), () => areaOpts(ed.area), v => { ed.area = v; })));
+			h('div', { class: 'dsec' }, h('b', { text: 'Área' }), combo(() => ({ label: AREA_NAME[ed.area] }), () => areaOpts(ed.area), v => { if (v !== ed.area) ed.subgrupo = ''; ed.area = v; sgSlot.repaint(); })),
+			sgSlot);
 		const foot = h('div', { class: 'dp-foot' },
 			h('span', { class: 't3', style: 'font-size:12px', text: 'El cambio queda en Auditoría' }),
 			h('span', { class: 'grow' }),
@@ -528,6 +553,7 @@
 					if (ed.asunto.trim() !== t.asunto) cambios.asunto = ed.asunto.trim();
 					if (ed.prioridad !== t.prioridad) cambios.prioridad = PR_API[ed.prioridad];
 					if (ed.area !== t.area) cambios.area_designada = ed.area;
+					if (ed.subgrupo !== (t.subgrupo || '')) cambios.subgrupo_id = ed.subgrupo || null;
 					if (!Object.keys(cambios).length) { openPanel(t.codigo); return; }
 					if (cambios.asunto === '') { toast('Falta el asunto', 'El asunto no puede quedar vacío', 'red'); return; }
 					api('PATCH', '/api/tickets/' + encodeURIComponent(t.codigo), cambios)
@@ -757,7 +783,8 @@
 
 	// ---------- Nuevo ticket ----------
 	function openNew() {
-		const N = { asunto: '', desc: '', origen: 'COORDINADOR', area: '', remitente: '', p: 'SP', op: '' };
+		const N = { asunto: '', desc: '', origen: 'COORDINADOR', area: '', subgrupo: '', remitente: '', p: 'SP', op: '' };
+		const sgSlot = sgField('fld', () => N.area, () => N.subgrupo, v => { N.subgrupo = v; });
 		const ov = dialog(940, []);
 		const box = ov.firstElementChild;
 		const missing = h('span', { class: 'note' });
@@ -806,7 +833,8 @@
 					h('div', { class: 'fld' }, h('span', { class: 'flabel', text: 'Origen' }),
 						combo(() => ({ label: ORIGINS.find(o => o[0] === N.origen)[1] }), () => ORIGINS.map(o => ({ value: o[0], label: o[1], sel: o[0] === N.origen })), v => { N.origen = v; paintSender(); sync(); })),
 					h('div', { class: 'fld' }, h('span', { class: 'flabel', text: 'Área' }),
-						combo(() => (N.area ? { label: AREA_NAME[N.area] } : { label: 'Elegir área', muted: true }), () => areaOpts(N.area), v => { N.area = v; N.op = ''; paintOp(); sync(); })),
+						combo(() => (N.area ? { label: AREA_NAME[N.area] } : { label: 'Elegir área', muted: true }), () => areaOpts(N.area), v => { N.area = v; N.op = ''; N.subgrupo = ''; sgSlot.repaint(); paintOp(); sync(); })),
+					sgSlot,
 					senderSlot,
 					h('div', { class: 'fld' }, h('span', { class: 'flabel', text: 'Fecha de creación' }), h('span', { class: 'field ro', text: 'Al crear (ahora)' })),
 					h('div', { class: 'fld' }, h('span', { class: 'flabel', text: 'Creado por' }),
@@ -819,7 +847,7 @@
 			ok.disabled = true;
 			try {
 				const res = await api('POST', '/api/tickets', {
-					asunto: N.asunto.trim(), descripcion: N.desc.trim(), areaDesignada: N.area,
+					asunto: N.asunto.trim(), descripcion: N.desc.trim(), areaDesignada: N.area, subgrupoId: N.subgrupo || undefined,
 					origenIngesta: N.origen, remitente: N.remitente.trim(), prioridad: PR_API[N.p]
 				});
 				const code = res.ticket.codigo_incidencia;
