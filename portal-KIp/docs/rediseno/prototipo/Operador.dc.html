@@ -290,6 +290,15 @@ nav.side[data-collapsed=true] .sb-top>div:first-child{width:40px;margin:0 auto}
 .qlist{max-height:680px}
 .qmain .tlink{font-size:14px}
 
+[data-theme=light]{--clk-face:rgba(255,255,255,0.9);--clk-face-solid:#FFFFFF;--clk-rim:rgba(0,0,0,0.10);--clk-track:rgba(0,0,0,0.07);--track:rgba(0,0,0,0.07)}
+[data-theme=dark]{--clk-face:rgba(255,255,255,0.05);--clk-face-solid:#2A2A30;--clk-rim:rgba(255,255,255,0.12);--clk-track:rgba(255,255,255,0.10)}
+.clk{filter:drop-shadow(0 2px 6px rgba(0,0,0,0.10))}
+.clk .hand{transform-origin:39px 39px;transform-box:view-box;transition:transform .5s cubic-bezier(.3,1.5,.5,1)}
+.clk .hand-s{transition:transform .25s cubic-bezier(.4,2.2,.6,1)}
+.clk-arc{animation:clkDraw 1.2s cubic-bezier(.22,1,.36,1) both}
+.clk-done{animation-delay:.15s}
+@keyframes clkDraw{from{stroke-dasharray:0 189}}
+@media (prefers-reduced-motion: reduce){.clk .hand,.clk-arc{transition:none;animation:none}}
 </style>
 </helmet>
 <div data-theme="{{theme}}" data-device="{{device}}" onClick="{{closeMenu}}" style="min-height: 100vh; background: {{bg}}; color: var(--t1); font-family: {{font}}; font-size: 13px; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px; padding: {{rootPad}}; box-sizing: border-box">
@@ -358,14 +367,16 @@ nav.side[data-collapsed=true] .sb-top>div:first-child{width:40px;margin:0 auto}
 <span class="kbig" style="font-size: 22px">{{shift.hours}}</span>
 <span class="ksub">{{shift.left}}</span>
 </div>
-<svg width="78" height="78" viewBox="0 0 78 78" role="img" aria-label="{{clk.aria}}" style="flex: none">
-<circle cx="39" cy="39" r="30" fill="none" stroke="var(--track)" stroke-width="6"></circle>
-<circle cx="39" cy="39" r="30" fill="none" stroke="{{shift.bar}}" stroke-opacity="0.28" stroke-width="6" stroke-linecap="round" stroke-dasharray="{{clk.shiftDash}}" transform="rotate({{clk.rot}} 39 39)"></circle>
-<circle class="ring-draw" cx="39" cy="39" r="30" fill="none" stroke="{{shift.bar}}" stroke-width="6" stroke-linecap="round" stroke-dasharray="{{clk.doneDash}}" transform="rotate({{clk.rot}} 39 39)"></circle>
-<path d="M39 13v3M65 39h-3M39 65v-3M13 39h3" stroke="var(--t3)" stroke-width="1.6" stroke-linecap="round"></path>
-<line x1="39" y1="39" x2="{{clk.hx}}" y2="{{clk.hy}}" stroke="var(--t1)" stroke-width="2.6" stroke-linecap="round"></line>
-<line x1="39" y1="39" x2="{{clk.mx}}" y2="{{clk.my}}" stroke="var(--t2)" stroke-width="1.6" stroke-linecap="round"></line>
-<circle cx="39" cy="39" r="2.8" fill="{{shift.bar}}"></circle>
+<svg class="clk" width="80" height="80" viewBox="0 0 78 78" role="img" aria-label="{{clk.aria}}" style="flex: none">
+<circle cx="39" cy="39" r="35.5" fill="var(--clk-face)" stroke="var(--clk-rim)" stroke-width="0.75"></circle>
+<circle cx="39" cy="39" r="30" fill="none" stroke="var(--clk-track)" stroke-width="5"></circle>
+<circle class="clk-arc" cx="39" cy="39" r="30" fill="none" stroke="{{shift.bar}}" stroke-opacity="0.30" stroke-width="5" stroke-linecap="round" stroke-dasharray="{{clk.shiftDash}}" transform="rotate({{clk.rot}} 39 39)"></circle>
+<circle class="clk-arc clk-done" cx="39" cy="39" r="30" fill="none" stroke="{{shift.bar}}" stroke-width="5" stroke-linecap="round" stroke-dasharray="{{clk.doneDash}}" transform="rotate({{clk.rot}} 39 39)"></circle>
+<path d="M39.0 15.0L39.0 18.5M51.0 18.2L50.0 19.9M59.8 27.0L58.1 28.0M63.0 39.0L59.5 39.0M59.8 51.0L58.1 50.0M51.0 59.8L50.0 58.1M39.0 63.0L39.0 59.5M27.0 59.8L28.0 58.1M18.2 51.0L19.9 50.0M15.0 39.0L18.5 39.0M18.2 27.0L19.9 28.0M27.0 18.2L28.0 19.9" stroke="var(--t3)" stroke-width="1.3" stroke-linecap="round"></path>
+<g class="hand" style="transform: rotate({{clk.hD}}deg)"><line x1="39" y1="42" x2="39" y2="26" stroke="var(--t1)" stroke-width="2.8" stroke-linecap="round"></line></g>
+<g class="hand" style="transform: rotate({{clk.mD}}deg)"><line x1="39" y1="42" x2="39" y2="18" stroke="var(--t1)" stroke-width="1.8" stroke-linecap="round"></line></g>
+<sc-if value="{{clk.live}}" hint-placeholder-val="{{ true }}"><g class="hand hand-s" style="transform: rotate({{clk.sD}}deg)"><line x1="39" y1="45" x2="39" y2="16" stroke="#FF9F0A" stroke-width="1" stroke-linecap="round"></line></g></sc-if>
+<circle cx="39" cy="39" r="2.6" fill="{{shift.bar}}" stroke="var(--clk-face-solid)" stroke-width="1"></circle>
 </svg>
 </div>
 <div class="glass kcard kc-carga">
@@ -439,7 +450,6 @@ nav.side[data-collapsed=true] .sb-top>div:first-child{width:40px;margin:0 auto}
 </div>
 </div>
 </section>
-</div>
 </div>
 
 <!-- Detalle del ticket (se puede ver antes de tomarlo) -->
@@ -523,7 +533,7 @@ nav.side[data-collapsed=true] .sb-top>div:first-child{width:40px;margin:0 auto}
 </div>
 </x-dc>
 
-<script type="text/x-dc" data-dc-script data-props="{&quot;fuente&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;IBM Plex Sans&quot;,&quot;Instrument Sans&quot;,&quot;Sistema (SF Pro)&quot;],&quot;default&quot;:&quot;IBM Plex Sans&quot;},&quot;tema&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Claro&quot;,&quot;Oscuro&quot;,&quot;Sistema&quot;],&quot;default&quot;:&quot;Oscuro&quot;},&quot;dispositivo&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Escritorio&quot;,&quot;Teléfono&quot;],&quot;default&quot;:&quot;Escritorio&quot;},&quot;turno&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;En turno&quot;,&quot;De guardia&quot;],&quot;default&quot;:&quot;En turno&quot;},&quot;volumen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Normal&quot;,&quot;Muchos tickets&quot;],&quot;default&quot;:&quot;Normal&quot;},&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1100}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;fuente&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;IBM Plex Sans&quot;,&quot;Instrument Sans&quot;,&quot;Sistema (SF Pro)&quot;],&quot;default&quot;:&quot;IBM Plex Sans&quot;},&quot;tema&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Claro&quot;,&quot;Oscuro&quot;,&quot;Sistema&quot;],&quot;default&quot;:&quot;Claro&quot;},&quot;dispositivo&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Escritorio&quot;,&quot;Teléfono&quot;],&quot;default&quot;:&quot;Escritorio&quot;},&quot;turno&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;En turno&quot;,&quot;De guardia&quot;],&quot;default&quot;:&quot;En turno&quot;},&quot;reloj&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;En vivo&quot;,&quot;Fijo&quot;],&quot;default&quot;:&quot;En vivo&quot;},&quot;volumen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Normal&quot;,&quot;Muchos tickets&quot;],&quot;default&quot;:&quot;Normal&quot;},&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1100}}">
 class Component extends DCLogic {
   renderVals() {
     const FONTS = {
@@ -630,20 +640,30 @@ class Component extends DCLogic {
       c: 'var(--green-t)', chipBg: 'var(--green-bg)', bar: '#22C55E', tile: '#22C55E', glyph: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2'
     };
 
-    // Reloj del turno (esfera de 12 h): arco de la jornada y agujas en la hora actual
-    const nowMin = guard ? 18 * 60 + 58 : 12 * 60 + 20;
+    // Reloj del turno (esfera de 12 h): arco de la jornada y agujas. "En vivo" usa la hora real y se mueve cada segundo
+    const live = (this.props.reloj ?? 'En vivo') === 'En vivo';
+    const nowD = new Date();
+    const localSec = live ? (nowD.getTime() / 1000) - nowD.getTimezoneOffset() * 60 : (guard ? 18 * 3600 + 58 * 60 : 12 * 3600 + 20 * 60);
+    const daySec = ((Math.floor(localSec) % 86400) + 86400) % 86400;
+    const nowMin = Math.floor(daySec / 60);
+    if (live && !this._clkT) this._clkT = setInterval(() => this.setState({ tick: Date.now() }), 1000);
+    if (!live && this._clkT) { clearInterval(this._clkT); this._clkT = null; }
+    const clkMode = live ? 'live' : 'fixed';
+    if (this._t0mode !== clkMode) { this._t0mode = clkMode; this._t0 = Math.floor(localSec); }
+    const t0 = this._t0, rel = Math.floor(localSec) - t0;
     const sStart = guard ? 17 * 60 : 8 * 60, sEnd = guard ? 24 * 60 : 17 * 60;
     const CIRC = 2 * Math.PI * 30, toLen = (min) => (min / 720) * CIRC;
-    const pt = (deg, L) => [39 + L * Math.sin(deg * Math.PI / 180), 39 - L * Math.cos(deg * Math.PI / 180)].map((v) => v.toFixed(1));
-    const hDeg = ((nowMin / 60) % 12) * 30, mDeg = (nowMin % 60) * 6;
-    const [hx, hy] = pt(hDeg, 14), [mx, my] = pt(mDeg, 21);
     const hh = (m) => String(Math.floor(m / 60) % 24).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+    const dur = (m) => m < 60 ? m + ' min' : Math.floor(m / 60) + ' h ' + String(m % 60).padStart(2, '0') + ' min';
     const clk = {
-      rot: ((sStart / 60) % 12) * 30 - 90,
+      live, rot: ((sStart / 60) % 12) * 30 - 90,
       shiftDash: toLen(sEnd - sStart).toFixed(1) + ' ' + CIRC.toFixed(1),
-      doneDash: toLen(Math.max(0, nowMin - sStart)).toFixed(1) + ' ' + CIRC.toFixed(1),
-      hx, hy, mx, my, aria: 'Son las ' + hh(nowMin) + ', turno de ' + hh(sStart) + ' a ' + hh(sEnd)
+      doneDash: toLen(Math.min(sEnd - sStart, Math.max(0, nowMin - sStart))).toFixed(1) + ' ' + CIRC.toFixed(1),
+      // ángulos acumulados: la aguja nunca gira hacia atrás al pasar por las 12
+      hD: (((t0 % 43200) + rel) / 120).toFixed(2), mD: (((t0 % 3600) + rel) / 10).toFixed(1), sD: ((t0 % 60) + rel) * 6,
+      aria: 'Son las ' + hh(nowMin) + ', turno de ' + hh(sStart) + ' a ' + hh(sEnd)
     };
+    shift.left = nowMin < sStart ? 'Empieza en ' + dur(sStart - nowMin) : nowMin >= sEnd ? 'Jornada terminada' : (guard ? 'Desde casa · faltan ' : 'Faltan ') + dur(sEnd - nowMin);
     // Mi carga: solo cómo se reparten mis tickets activos (sin comparar con el área)
     const MIXC = [['Asignados', ['nuevo'], '#8B5CF6'], ['En atención', ['progreso'], '#0A84FF'], ['En espera', ['pausa', 'espera'], '#FF9F0A']];
     const segs = MIXC.map(([label, sts, color]) => ({ label, color, n: active.filter((t) => sts.includes(t.st)).length })).filter((g) => g.n > 0);
