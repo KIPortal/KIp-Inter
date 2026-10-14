@@ -9,6 +9,7 @@
  * Funciones puras: sin base de datos ni envío de correo.
  */
 const { UTC_OFFSET_HOURS } = require('./metricsService');
+const { atiendeTickets } = require('./roleService');
 
 const MAX_TEXTO = 5000;
 const MAX_ADJUNTOS = 5;
@@ -115,7 +116,7 @@ function puedeVer(ticket, user) {
 /** Por qué no puede escribir (null = sí puede). */
 function motivoNoEscribir(ticket, user) {
     if (ticket.estado_actual === 'CERRADO') return 'Ticket cerrado: la conversación queda como registro';
-    if (!user || user.rol !== 'OPERADOR') return 'Solo el operador asignado responde desde aquí';
+    if (!atiendeTickets(user)) return 'Solo el operador asignado responde desde aquí';
     if (ticket.asignado_a_id == null) return 'Toma el ticket para responder o dejar notas';
     if (ticket.asignado_a_id !== user.id) return 'Solo el operador asignado puede responder';
     return null;

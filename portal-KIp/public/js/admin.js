@@ -246,7 +246,8 @@
 			rol: u ? u.rol : (areaInicial === '__coord' ? 'COORDINADOR' : 'OPERADOR'),
 			area: u ? u.area : (areaInicial && areaInicial !== '__coord' ? areaInicial : 'GENERAL'),
 			clave: u ? '' : genClave(),
-			activo: u ? u.activo !== false : true
+			activo: u ? u.activo !== false : true,
+			atiende: u ? u.atiende === true : false
 		};
 		const ov = h('div', { class: 'overlay', onclick: e => { if (e.target === ov) ov.remove(); } });
 		const box = h('div', { class: 'dialog', role: 'dialog', 'aria-modal': 'true', style: 'width:520px' });
@@ -259,12 +260,17 @@
 		const areaSel = h('select', { class: 'field', 'aria-label': 'Área', onchange: e => { M.area = e.target.value; } },
 			D.areas.filter(a => a.activa || a.codigo === M.area).map(a => h('option', { value: a.codigo, selected: a.codigo === M.area, text: a.nombre + (a.activa ? '' : ' (desactivada)') })));
 		const areaRow = h('label', { class: 'dsec' }, h('b', { text: 'Área' }), areaSel);
+		// Coordinador que además toma y trabaja tickets: tiene Mi panel y entra en la carga
+		const atiendeSw = sw(M.atiende, e => { M.atiende = !M.atiende; e.currentTarget.setAttribute('aria-checked', String(M.atiende)); paintRol(); }, 'También atiende tickets');
+		const atiendeRow = h('div', { class: 'rule-row', style: 'min-height:40px;border:0' },
+			h('span', { class: 'lbl', style: 'flex:1' }, h('b', { text: 'También atiende tickets' }), h('span', { text: 'Puede tomarlos y trabajarlos en Mi panel; cuenta en la carga, los turnos y los reportes como un operador' })), atiendeSw);
 		const paintRol = () => {
 			rolSeg.replaceChildren(...ROLES.map(([v, l]) => h('button', {
 				type: 'button', role: 'radio', 'aria-checked': String(M.rol === v), disabled: esYo && M.rol !== v,
 				onclick: () => { M.rol = v; paintRol(); }
 			}, h('span', { text: l }))));
-			areaRow.hidden = M.rol === 'COORDINADOR';
+			atiendeRow.hidden = M.rol !== 'COORDINADOR';
+			areaRow.hidden = M.rol === 'COORDINADOR' && !M.atiende;
 		};
 		paintRol();
 		box.append(
@@ -274,6 +280,7 @@
 				h('label', { class: 'dsec' }, h('b', { text: 'Nombre y apellido' }), input('nombre', { maxlength: 80, placeholder: 'Ej. Ana Pérez' })),
 				h('label', { class: 'dsec' }, h('b', { text: 'Correo' }), input('email', { type: 'email', maxlength: 120, placeholder: 'nombre@inter.com' })),
 				h('div', { class: 'dsec' }, h('b', { text: 'Rol' }), rolSeg, esYo ? h('span', { class: 't3', style: 'font-size:12px', text: 'No puedes cambiar tu propio rol' }) : null),
+				atiendeRow,
 				areaRow,
 				u && !esYo ? h('div', { class: 'rule-row', style: 'min-height:40px;border:0' }, h('span', { class: 'lbl', style: 'flex:1' }, h('b', { text: 'Usuario activo' }), h('span', { text: 'Desactivado no entra al portal ni recibe tickets; su historial se conserva' })), sw(M.activo, e => { M.activo = !M.activo; e.currentTarget.setAttribute('aria-checked', String(M.activo)); }, 'Usuario activo')) : null,
 				h('div', { class: 'dsec' }, h('b', { text: u ? 'Nueva clave temporal (opcional)' : 'Clave temporal' }),
@@ -284,9 +291,10 @@
 			h('div', { class: 'dlg-foot' }, h('span', { class: 'note', text: 'El cambio queda en Auditoría' }), h('span', { class: 'grow' }),
 				h('button', { type: 'button', class: 'pill pillbtn plain', text: 'Cancelar', onclick: () => ov.remove() }), ok));
 		ok.addEventListener('click', async () => {
-			const body = { nombre: M.nombre, email: M.email, rol: M.rol, area: M.rol === 'COORDINADOR' ? 'GENERAL' : M.area };
+			const coordSolo = M.rol === 'COORDINADOR' && !M.atiende;
+			const body = { nombre: M.nombre, email: M.email, rol: M.rol, area: coordSolo ? 'GENERAL' : M.area, atiende: M.rol === 'COORDINADOR' && M.atiende };
 			if (M.clave) body.clave = M.clave;
-			if (u) { body.activo = M.activo; Object.keys(body).forEach(k => { if (k !== 'clave' && body[k] === (k === 'activo' ? u.activo !== false : u[k])) delete body[k]; }); }
+			if (u) { body.activo = M.activo; Object.keys(body).forEach(k => { if (k !== 'clave' && body[k] === (k === 'activo' ? u.activo !== false : k === 'atiende' ? u.atiende === true : u[k])) delete body[k]; }); }
 			if (u && !Object.keys(body).length) { ov.remove(); return; }
 			ok.disabled = true;
 			try {

@@ -231,6 +231,62 @@ const cola = (p, k) => p.colas.find(q => q.k === k);
         assert(!/sobrecarga|promedio del área/i.test(html));
     });
 
+    await t('Coordinador que atiende tickets: permiso, filtro, conversación y alta en Administración', () => {
+        const { atiendeTickets, ATIENDE_WHERE, authorizeWorker } = require('../src/services/roleService');
+        const coord = { id: 'c1', rol: 'COORDINADOR', atiende_tickets: false };
+        assert.strictEqual(atiendeTickets({ rol: 'OPERADOR' }), true);
+        assert.strictEqual(atiendeTickets(coord), false);
+        assert.strictEqual(atiendeTickets({ ...coord, atiende_tickets: true }), true);
+        assert.deepStrictEqual(ATIENDE_WHERE.OR, [{ rol: 'OPERADOR' }, { rol: 'COORDINADOR', atiende_tickets: true }]);
+        let res = mockRes(), next = false;
+        authorizeWorker({ user: coord }, res, () => { next = true; });
+        assert.strictEqual(res.code, 403);
+        authorizeWorker({ user: { ...coord, atiende_tickets: true } }, mockRes(), () => { next = true; });
+        assert.strictEqual(next, true);
+        const conv = require('../src/services/conversationService');
+        const tk1 = { estado_actual: 'EN_PROGRESO', asignado_a_id: 'c1' };
+        assert.strictEqual(conv.motivoNoEscribir(tk1, { ...coord, atiende_tickets: true }), null, 'el coordinador que atiende responde sus tickets');
+        assert.notStrictEqual(conv.motivoNoEscribir(tk1, coord), null);
+        const { validateUser, describeUser } = require('../src/services/userAdminService');
+        const v = validateUser({ nombre: 'Rafael Aguilar', email: 'ra@inter.com', rol: 'COORDINADOR', area: 'WAN', clave: 'temporal123', atiende: true }, { nuevo: true });
+        assert.strictEqual(v.datos.atiende_tickets, true);
+        assert(describeUser(null, v.datos).includes('que atiende tickets'));
+        assert.strictEqual(validateUser({ atiende: 'si' }).error, 'Valor de "atiende tickets" no válido');
+        assert.strictEqual(describeUser({ nombre: 'R', atiende_tickets: true }, { atiende_tickets: false }), 'R: ya no atiende tickets');
+    });
+
+    await t('El coordinador que atiende toma tickets de cualquier área; el operador solo de la suya', async () => {
+        const orig = { ticket: prisma.ticket, auditLog: prisma.auditLog };
+        let where = null;
+        prisma.ticket = {
+            findUnique: async () => ({ id: 't9', estado_actual: 'NUEVO', asignado_a_id: null, area_designada: 'SEGURIDAD' }),
+            updateMany: async args => { where = args.where; return { count: 1 }; }
+        };
+        prisma.auditLog = { create: async () => ({}) };
+        try {
+            const { claimTicket } = require('../src/controllers/ticketController');
+            const res = mockRes();
+            await claimTicket({ params: { ticketCode: 'INC-090' }, user: USER }, res);
+            assert.strictEqual(res.code, 403, 'operador de otra área');
+            prisma.ticket.findUnique = async args => (args.include ? { id: 't9', estado_actual: 'EN_PROGRESO' } : { id: 't9', estado_actual: 'NUEVO', asignado_a_id: null, area_designada: 'SEGURIDAD' });
+            const res2 = mockRes();
+            await claimTicket({ params: { ticketCode: 'INC-090' }, user: { id: 'c1', rol: 'COORDINADOR', atiende_tickets: true, area_designada: 'GENERAL' } }, res2);
+            assert.strictEqual(res2.code, 200, JSON.stringify(res2.body));
+            assert.strictEqual(where.area_designada, undefined, 'sin filtro de área para el coordinador');
+        } finally {
+            Object.assign(prisma, orig);
+        }
+    });
+
+    await t('Barra lateral: Mi panel solo para el coordinador que atiende', () => {
+        const file = path.join(__dirname, '..', 'views', 'partials', 'sidebar.ejs');
+        const tpl = fs.readFileSync(file, 'utf8');
+        const con = ejs.render(tpl, { currentUser: { nombre: 'R', rol: 'COORDINADOR', atiende_tickets: true }, activo: 'panel', conteos: { misTickets: 2 } }, { filename: file });
+        const sin = ejs.render(tpl, { currentUser: { nombre: 'R', rol: 'COORDINADOR' }, activo: 'dashboard' }, { filename: file });
+        assert(con.includes('href="/mi-panel"') && con.includes('Coordinación'));
+        assert(!sin.includes('/mi-panel'));
+    });
+
     await t('Script y estilos: sin innerHTML, teléfono, tema oscuro y movimiento reducido', () => {
         const js = fs.readFileSync(path.join(__dirname, '..', 'public', 'js', 'operador.js'), 'utf8');
         assert(!/innerHTML/.test(js), 'no usar innerHTML');

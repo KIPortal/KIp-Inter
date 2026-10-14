@@ -64,6 +64,7 @@ model User {
   area             Area            @relation(fields: [area_designada], references: [codigo])
   activo           Boolean         @default(true) // desactivado: no entra ni recibe tickets; se conserva su historial
   estado_operativo EstadoOperativo @default(DISPONIBLE)
+  atiende_tickets  Boolean         @default(false) // coordinador que también toma y trabaja tickets (Mi panel)
   tickets_resueltos Int            @default(0)
   
   tickets_creados   Ticket[] @relation("CreadorTicket")

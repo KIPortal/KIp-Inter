@@ -410,6 +410,18 @@
 	function detailView(t) {
 		const body = h('div', { class: 'dp-body' });
 		const viva = ACTIVE.includes(t.estado);
+		// Coordinador que también atiende tickets: lo toma él y lo trabaja en Mi panel
+		if (D.usuario.atiende && !t.operador && t.estado === 'NUEVO') {
+			body.append(h('div', { class: 'sugbox' },
+				h('div', { class: 'row1' }, h('b', { text: 'Tomarlo tú' }), h('span', { text: 'Pasa a En atención a tu nombre' })),
+				h('div', { class: 'row2' }, h('span', { style: 'flex:1;font-size:12px;color:var(--t2)', text: 'Lo trabajas, respondes y resuelves desde Mi panel.' }),
+					h('button', { type: 'button', class: 'primary', text: 'Tomar', onclick: e => {
+						e.currentTarget.disabled = true;
+						api('POST', '/api/tickets/' + encodeURIComponent(t.codigo) + '/claim')
+							.then(() => done('Ticket tomado', t.codigo + ' está en tu panel, En atención', 'green'))
+							.catch(err => { e.target.disabled = false; showError(err); });
+					} }))));
+		}
 		if (!t.operador && viva) {
 			const sg = sugOf(t.area);
 			const sug = sg ? OPS[sg.id] : null;

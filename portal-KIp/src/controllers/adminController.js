@@ -30,11 +30,11 @@ async function renderAdmin(req, res) {
         await refreshAreas(prisma, { force: true });
         const [config, operadores, tickets, coordinadores, desactivados] = await Promise.all([
             loadConfig(prisma), loadOperatorsWithShift(ahora), activeTickets(),
-            prisma.user.findMany({ where: { rol: 'COORDINADOR', activo: true }, select: { id: true, nombre: true, email: true }, orderBy: { nombre: 'asc' } }),
+            prisma.user.findMany({ where: { rol: 'COORDINADOR', activo: true }, select: { id: true, nombre: true, email: true, area_designada: true, atiende_tickets: true }, orderBy: { nombre: 'asc' } }),
             prisma.user.findMany({ where: { activo: false }, select: { id: true, nombre: true, email: true, rol: true, area_designada: true }, orderBy: { nombre: 'asc' } })
         ]);
         const areas = allAreas().map(({ codigo, activa }) => {
-            const ops = operadores.filter(o => (o.area_designada || 'GENERAL') === codigo).map(o => ({
+            const ops = operadores.filter(o => o.rol !== 'COORDINADOR' && (o.area_designada || 'GENERAL') === codigo).map(o => ({
                 id: o.id,
                 area: o.area_designada || 'GENERAL',
                 nombre: o.nombre,
@@ -125,7 +125,7 @@ const auditUser = async (req, accion, detalles) => {
         console.error('No se pudo registrar auditoría:', e.message);
     }
 };
-const publico = u => ({ id: u.id, nombre: u.nombre, email: u.email, rol: u.rol, area: u.area_designada });
+const publico = u => ({ id: u.id, nombre: u.nombre, email: u.email, rol: u.rol, area: u.area_designada, atiende: u.atiende_tickets === true });
 
 // Alta de usuario con clave temporal (se guarda sin cifrar hasta feat/seguridad-login)
 async function createUser(req, res) {
@@ -149,7 +149,7 @@ async function updateUser(req, res) {
     const { error, datos } = validateUser(req.body);
     if (error) return res.status(400).json({ success: false, error });
     try {
-        const antes = await prisma.user.findUnique({ where: { id }, select: { id: true, nombre: true, email: true, rol: true, area_designada: true, activo: true } });
+        const antes = await prisma.user.findUnique({ where: { id }, select: { id: true, nombre: true, email: true, rol: true, area_designada: true, activo: true, atiende_tickets: true } });
         if (!antes) return res.status(404).json({ success: false, error: 'Usuario no encontrado' });
         if (datos.rol && datos.rol !== antes.rol && id === req.user?.id) {
             return res.status(409).json({ success: false, error: 'No puedes cambiar tu propio rol' });

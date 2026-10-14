@@ -16,7 +16,7 @@
 		guardias,
 		enPapelera,
 		siguienteCodigo,
-		usuario: { nombre: currentUser.nombre || 'Coordinador' },
+		usuario: { id: currentUser.id, nombre: currentUser.nombre || 'Coordinador', atiende: currentUser.atiende_tickets === true },
 		plantillas: typeof plantillas !== 'undefined' && plantillas ? plantillas : null
 	};
 	const tarjetas = [

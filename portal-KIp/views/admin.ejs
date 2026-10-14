@@ -9,7 +9,7 @@
 	const desactivados = locals.desactivados || [];
 	const minClave = locals.minClave || 8;
 	const usuarios = areas.flatMap(a => a.operadores.map(o => ({ id: o.id, nombre: o.nombre, email: o.email, rol: 'OPERADOR', area: o.area })))
-		.concat(coordinadores.map(c => ({ id: c.id, nombre: c.nombre, email: c.email, rol: 'COORDINADOR', area: 'GENERAL' })))
+		.concat(coordinadores.map(c => ({ id: c.id, nombre: c.nombre, email: c.email, rol: 'COORDINADOR', area: c.area_designada || 'GENERAL', atiende: c.atiende_tickets === true })))
 		.map(u => Object.assign(u, { activo: true }))
 		.concat(desactivados.map(u => Object.assign({}, u, { activo: false })));
 	const datos = { config, eventos, destinatarios, limites, vistaPrevia, usuarios, areas: areas.map(a => ({ codigo: a.codigo, nombre: a.nombre, activa: a.activa !== false, operadores: a.operadores.length })), miId, minClave };

@@ -33,6 +33,10 @@
 		{ clave: 'tickets', texto: 'Tickets', href: '/tickets#tickets', dato: Number.isFinite(c.tickets) ? String(c.tickets) : '' },
 		{ clave: 'turno', texto: 'Gestión de Turno', href: '/gestion-turno', dato: tieneTurno ? `${c.enTurno}/${c.totalOperadores}` : '', datoClase: 'ok' }
 	];
+	// Coordinador que también atiende tickets: tiene su propio panel de trabajo
+	if (esCoordinador && usuario.atiende_tickets === true) {
+		coordinacion.push({ clave: 'panel', texto: 'Mi panel', href: '/mi-panel', dato: Number.isFinite(c.misTickets) ? String(c.misTickets) : '' });
+	}
 	const operacion = [
 		{ clave: 'panel', texto: 'Mi panel', href: '/', dato: Number.isFinite(c.misTickets) ? String(c.misTickets) : '' }
 	];

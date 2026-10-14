@@ -1,4 +1,5 @@
 const prisma = require('../config/prisma');
+const { ATIENDE_WHERE } = require('../services/roleService');
 const {
     ACTIVE_STATES,
     getPeriodBounds
@@ -41,7 +42,7 @@ async function loadPeriodReport(query) {
         },
         orderBy: { createdAt: 'asc' }
     }), prisma.user.findMany({
-        where: { rol: 'OPERADOR' },
+        where: ATIENDE_WHERE,
         select: { id: true, nombre: true, area_designada: true, estado_operativo: true },
         orderBy: { nombre: 'asc' }
     })]);

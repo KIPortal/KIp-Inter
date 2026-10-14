@@ -2,6 +2,7 @@ const express = require('express');
 const ticketController = require('../controllers/ticketController');
 const requireAuth = require('../middlewares/requireAuth');
 const authorizeRole = require('../middlewares/authorizeRole');
+const { authorizeWorker } = require('../services/roleService');
 const conversationController = require('../controllers/conversationController');
 const upload = require('../middlewares/upload');
 
@@ -27,12 +28,12 @@ router.post('/:ticketCode/close', authorizeRole('COORDINADOR'), ticketController
 router.patch('/:ticketCode', authorizeRole('COORDINADOR'), ticketController.editTicket);
 router.delete('/:ticketCode', authorizeRole('COORDINADOR'), ticketController.deleteTicket);
 router.post('/:ticketCode/restore', authorizeRole('COORDINADOR'), ticketController.restoreTicket);
-router.post('/:ticketCode/claim', authorizeRole('OPERADOR'), ticketController.claimTicket);
-router.post('/:ticketCode/pause', authorizeRole('OPERADOR'), ticketController.pauseTicket);
-router.post('/:ticketCode/resume', authorizeRole('OPERADOR'), ticketController.resumeTicket);
-router.post('/:ticketCode/resolve', authorizeRole('OPERADOR'), ticketController.resolveTicket);
+router.post('/:ticketCode/claim', authorizeWorker, ticketController.claimTicket);
+router.post('/:ticketCode/pause', authorizeWorker, ticketController.pauseTicket);
+router.post('/:ticketCode/resume', authorizeWorker, ticketController.resumeTicket);
+router.post('/:ticketCode/resolve', authorizeWorker, ticketController.resolveTicket);
 router.get('/:ticketCode/conversacion', conversationController.getConversation);
-router.post('/:ticketCode/mensajes', authorizeRole('OPERADOR'), subirAdjuntos, conversationController.postMessage);
-router.patch('/:ticketCode/status', authorizeRole('OPERADOR'), ticketController.updateOperatorStatus);
+router.post('/:ticketCode/mensajes', authorizeWorker, subirAdjuntos, conversationController.postMessage);
+router.patch('/:ticketCode/status', authorizeWorker, ticketController.updateOperatorStatus);
 
 module.exports = router;

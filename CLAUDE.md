@@ -11,6 +11,7 @@ Portal de tickets y estadísticas del depto. **Operaciones IP** (Inter Telecomun
 - Tiempo medido desde la llegada del ticket; se usa **promedio**, no mediana. No usar las palabras "SLA" ni "DERS".
 - Prioridad y puntos los fija el coordinador: P1=8, P2=5, P3=1, sin prioridad=0.
 - El operador resuelve (RESUELTO); el coordinador cierra (CERRADO).
+- Un coordinador marcado "Atiende tickets" (`User.atiende_tickets`) también toma y trabaja casos (Mi panel) y cuenta como operador en carga, turnos y reportes. Usa `roleService` (`atiendeTickets`, `ATIENDE_WHERE`), nunca `rol: 'OPERADOR'` a secas para "quién atiende".
 - Sobrecarga: tickets activos > 1.5× el promedio del área (mínimo 3; ausentes excluidos; un solo operador = sin comparación).
 - Zona horaria Caracas (UTC-4). Semana lunes–domingo. Turno normal 8:00–17:00 (lun–vie por defecto, editable por operador).
 - Guardia (rota por semana, la define el coordinador): 17:00–24:00 entre semana; 08:00–24:00 en fin de semana desde casa. El de guardia aparece "De guardia", no "Disponible", pero puede recibir tickets. El traspaso a guardia exige nota (≥10 caracteres).
@@ -22,7 +23,7 @@ Portal de tickets y estadísticas del depto. **Operaciones IP** (Inter Telecomun
 - `portal-KIp/docs/pendientes.md` — pendientes (incluye la seguridad del login aplazada).
 
 ## Arquitectura
-- Lógica pura en `src/services/` (metricsService, periodReportService, excelExportService, shiftService, simulationService, dashboardService, ticketQueueService, assignmentService, rulesService, shiftBoardService, configService, auditViewService, reportViewService, userAdminService, conversationService, operatorPanelService); controladores en `src/controllers/`; las vistas solo dibujan lo que entrega el controlador.
+- Lógica pura en `src/services/` (metricsService, periodReportService, excelExportService, shiftService, simulationService, dashboardService, ticketQueueService, assignmentService, rulesService, shiftBoardService, configService, auditViewService, reportViewService, userAdminService, conversationService, operatorPanelService, roleService); controladores en `src/controllers/`; las vistas solo dibujan lo que entrega el controlador.
 - Los ids de usuario son **UUID (texto)**, nunca números.
 - Las áreas son la tabla `Area` (ya no un enum): usa el catálogo vivo de `src/services/areaCatalog.js` (`AREA_NAMES`, `activeAreas()`, `isActiveArea()`), nunca listas fijas. Las áreas y los usuarios se desactivan, no se borran (`Area.activa`, `User.activo`).
 

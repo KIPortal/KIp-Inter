@@ -50,6 +50,10 @@ function validateUser(input, { nuevo = false } = {}) {
         if (clave.length < MIN_CLAVE || clave.length > 72) return { error: `La clave temporal debe tener al menos ${MIN_CLAVE} caracteres` };
         datos.clave = clave;
     }
+    if (b.atiende !== undefined) {
+        if (typeof b.atiende !== 'boolean') return { error: 'Valor de "atiende tickets" no válido' };
+        datos.atiende_tickets = b.atiende;
+    }
     if (!nuevo && b.activo !== undefined) {
         if (typeof b.activo !== 'boolean') return { error: 'Valor de activo no válido' };
         datos.activo = b.activo;
@@ -62,7 +66,7 @@ function validateUser(input, { nuevo = false } = {}) {
 function describeUser(antes, datos) {
     const ROL = { OPERADOR: 'operador', COORDINADOR: 'coordinador' };
     if (!antes) {
-        return `${datos.nombre} (${datos.email}) · ${ROL[datos.rol]} · ${AREA_NAMES[datos.area_designada] || datos.area_designada}`;
+        return `${datos.nombre} (${datos.email}) · ${ROL[datos.rol]}${datos.atiende_tickets ? ' que atiende tickets' : ''} · ${AREA_NAMES[datos.area_designada] || datos.area_designada}`;
     }
     const cambios = [];
     if (datos.nombre && datos.nombre !== antes.nombre) cambios.push(`nombre: ${antes.nombre} → ${datos.nombre}`);
@@ -71,6 +75,8 @@ function describeUser(antes, datos) {
     if (datos.area_designada && datos.area_designada !== antes.area_designada) {
         cambios.push(`área: ${AREA_NAMES[antes.area_designada] || antes.area_designada} → ${AREA_NAMES[datos.area_designada]}`);
     }
+    if (datos.atiende_tickets === true && antes.atiende_tickets !== true) cambios.push('atiende tickets');
+    if (datos.atiende_tickets === false && antes.atiende_tickets === true) cambios.push('ya no atiende tickets');
     if (datos.clave) cambios.push('clave temporal cambiada');
     if (datos.activo === false && antes.activo !== false) cambios.push('desactivado');
     if (datos.activo === true && antes.activo === false) cambios.push('reactivado');

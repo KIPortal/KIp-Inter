@@ -5,6 +5,7 @@ const { loadShiftData } = require('./turnoController');
 const { buildCoordinatorPanel } = require('../services/dashboardService');
 const { buildQueue } = require('../services/ticketQueueService');
 const { buildOperatorPanel } = require('../services/operatorPanelService');
+const { ATIENDE_WHERE, atiendeTickets } = require('../services/roleService');
 const { loadActiveHandoff } = require('./ticketController');
 const { AREA_NAMES } = require('../services/periodReportService');
 const { loadConfig } = require('../services/configService');
@@ -45,7 +46,7 @@ async function renderDashboard(req, res) {
  */
 async function loadOperatorsWithShift(ahora = new Date()) {
     const [operadores, { horarioPorUsuario, guardiaIds }] = await Promise.all([prisma.user.findMany({
-        where: { rol: 'OPERADOR', activo: true },
+        where: { activo: true, ...ATIENDE_WHERE },
         select: {
             id: true,
             email: true,
@@ -180,4 +181,11 @@ async function renderOperatorDashboard(req, res) {
     }
 }
 
-module.exports = { renderDashboard, renderTickets, loadOperatorsWithShift };
+// Mi panel del coordinador que también atiende tickets (el operador lo tiene en /)
+function renderMyPanel(req, res) {
+    if (req.user.rol === 'OPERADOR') return res.redirect(302, '/');
+    if (!atiendeTickets(req.user)) return res.redirect(302, '/tickets');
+    return renderOperatorDashboard(req, res);
+}
+
+module.exports = { renderDashboard, renderTickets, renderMyPanel, loadOperatorsWithShift };

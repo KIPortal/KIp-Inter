@@ -1,4 +1,5 @@
 const prisma = require('../config/prisma');
+const { ATIENDE_WHERE } = require('../services/roleService');
 const { getWeekStart } = require('../services/shiftService');
 const { buildHandoffView } = require('../services/ticketQueueService');
 const { getNextTicketCode } = require('../services/ticketCodeService');
@@ -20,7 +21,7 @@ function assignmentValidationError({ operatorId, areaDesignada, prioridad }) {
 
 async function isOperator(operatorId) {
     return prisma.user.findFirst({
-        where: { id: operatorId, rol: 'OPERADOR', activo: true },
+        where: { id: operatorId, activo: true, ...ATIENDE_WHERE },
         select: { id: true, nombre: true }
     });
 }
@@ -269,7 +270,9 @@ async function claimTicket(req, res) {
         }
 
         const operatorArea = req.user.area_designada || 'GENERAL';
-        if (ticket.area_designada !== 'GENERAL' && ticket.area_designada !== operatorArea) {
+        // El coordinador ve todas las áreas: puede tomar cualquiera
+        const esCoordinador = req.user.rol === 'COORDINADOR';
+        if (!esCoordinador && ticket.area_designada !== 'GENERAL' && ticket.area_designada !== operatorArea) {
             return res.status(403).json({ success: false, error: 'El ticket no pertenece a tu área' });
         }
 
@@ -281,7 +284,7 @@ async function claimTicket(req, res) {
                     { asignado_a_id: null },
                     { asignado_a_id: req.user.id }
                 ],
-                area_designada: { in: [...new Set([operatorArea, 'GENERAL'])] }
+                ...(esCoordinador ? {} : { area_designada: { in: [...new Set([operatorArea, 'GENERAL'])] } })
             },
             data: {
                 estado_actual: 'EN_PROGRESO',

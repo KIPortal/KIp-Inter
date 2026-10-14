@@ -48,3 +48,11 @@ Lo arma `src/services/operatorPanelService.js` (`buildOperatorPanel`); la vista 
 - **Pausar / Resolver:** `PATCH /api/tickets/:code/status` con `status` = `EN_PAUSA`, `EN_ESPERA_TERCEROS` (nuevo, desde EN_PROGRESO, audita `TICKET_EN_ESPERA`) o `RESUELTO`, y `nota` opcional (≤ 500) que va al detalle de la auditoría.
 - **Avisos (campana):** se deducen de las colas (P1 nuevo en su área, antigüedad superada, asignado por el coordinador). La matriz de avisos de Administración se conecta en la Fase 10.
 - **Pendientes del traspaso:** solo si está de guardia y hay un traspaso vigente.
+
+## Coordinador que también atiende tickets
+
+Campo `User.atiende_tickets` (migración `20261014180000_coordinador_atiende`), se marca en Administración → Usuarios ("También atiende tickets"). `src/services/roleService.js` define `atiendeTickets(user)`, `ATIENDE_WHERE` y el middleware `authorizeWorker`.
+
+- Puede usar las rutas del operador (`claim`, `status`, `pause`, `resume`, `resolve`, `mensajes`, `PATCH /api/operators/:id/status`) y tiene `GET /mi-panel` (el mismo panel del operador).
+- Toma tickets de cualquier área: botón **Tomar** en el detalle de Tickets (`POST /api/tickets/:code/claim`, queda EN_PROGRESO a su nombre).
+- Cuenta como operador en carga, sugerencias, Gestión de Turno y reportes; en Administración aparece en la lista de coordinadores.
