@@ -4,6 +4,7 @@ const { TokenCredentialAuthenticationProvider } = require('@microsoft/microsoft-
 const cron = require('node-cron');
 const prisma = require('../config/prisma');
 const { getNextTicketCode } = require('./ticketCodeService');
+const { textoDeCorreo, extraerCorreo } = require('./conversationService');
 
 // Estas variables deben ir en el archivo .env
 const TENANT_ID = process.env.GRAPH_TENANT_ID;
@@ -43,7 +44,7 @@ async function procesarCorreosEntrantes() {
             .api(`/users/${NOC_MAILBOX}/mailFolders/inbox/messages`)
             .filter('isRead eq false')
             .top(10)
-            .select('id,subject,bodyPreview,from,receivedDateTime')
+            .select('id,subject,body,bodyPreview,from,receivedDateTime')
             .get();
 
         if (!messages.value || messages.value.length === 0) {
@@ -62,9 +63,11 @@ async function procesarCorreosEntrantes() {
                 codigoIncidencia = await getNextTicketCode(prisma);
             }
 
-            // 2. Insertar o saltar si ya existe el código
+            // 2. Insertar, o sumar el correo a la conversación si el ticket ya existe
             const existe = await prisma.ticket.findUnique({ where: { codigo_incidencia: codigoIncidencia } });
-            if (!existe) {
+            if (existe && !existe.eliminado_en) {
+                await registrarRespuestaCliente(existe, message);
+            } else if (!existe) {
                 await prisma.ticket.create({
                     data: {
                         codigo_incidencia: codigoIncidencia,
@@ -90,6 +93,61 @@ async function procesarCorreosEntrantes() {
 }
 
 /**
+ * Correo del cliente sobre un ticket que ya existe: queda en la conversación y,
+ * si el ticket esperaba su respuesta, vuelve a En atención.
+ */
+async function registrarRespuestaCliente(ticket, message, db = prisma) {
+    const de = message.from && message.from.emailAddress ? message.from.emailAddress.address : null;
+    await db.mensaje.create({
+        data: {
+            ticketId: ticket.id,
+            tipo: 'ENTRANTE',
+            texto: textoDeCorreo(message) || '(Correo sin texto)',
+            de: de ? String(de).slice(0, 180) : null,
+            ...(message.receivedDateTime ? { createdAt: new Date(message.receivedDateTime) } : {})
+        }
+    });
+    if (ticket.estado_actual !== 'EN_ESPERA_TERCEROS') return false;
+    const result = await db.ticket.updateMany({
+        where: { id: ticket.id, estado_actual: 'EN_ESPERA_TERCEROS' },
+        data: { estado_actual: 'EN_PROGRESO' }
+    });
+    if (result.count === 1) {
+        await db.auditLog.create({
+            data: { accion: 'TICKET_REANUDADO', ticketId: ticket.id, userId: null, detalles: 'Respondió el cliente' + (de ? ` (${de})` : '') }
+        });
+    }
+    return result.count === 1;
+}
+
+/**
+ * Envía la respuesta del operador desde el buzón compartido.
+ * Devuelve { enviado: true } o { enviado: false, configurado: false } si falta configurar Graph.
+ * Si Graph está configurado y falla, lanza el error.
+ */
+async function enviarCorreo({ para, asunto, texto, adjuntos = [] }) {
+    const client = getGraphClient();
+    if (!client || !NOC_MAILBOX) return { enviado: false, configurado: false };
+    const destino = extraerCorreo(para);
+    if (!destino) throw new Error('Destinatario no válido');
+    await client.api(`/users/${NOC_MAILBOX}/sendMail`).post({
+        message: {
+            subject: asunto,
+            body: { contentType: 'Text', content: texto },
+            toRecipients: [{ emailAddress: { address: destino } }],
+            attachments: adjuntos.map(a => ({
+                '@odata.type': '#microsoft.graph.fileAttachment',
+                name: a.nombre,
+                contentType: a.mimetype || 'application/octet-stream',
+                contentBytes: a.contenido.toString('base64')
+            }))
+        },
+        saveToSentItems: true
+    });
+    return { enviado: true, configurado: true };
+}
+
+/**
  * Inicializa el Cron Job que se ejecutará cada 2 minutos
  */
 function iniciarIngesta() {
@@ -103,5 +161,7 @@ function iniciarIngesta() {
 
 module.exports = {
     iniciarIngesta,
-    procesarCorreosEntrantes
+    procesarCorreosEntrantes,
+    registrarRespuestaCliente,
+    enviarCorreo
 };

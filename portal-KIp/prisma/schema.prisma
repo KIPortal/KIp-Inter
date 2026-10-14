@@ -41,6 +41,13 @@ enum EstadoTicket {
   CERRADO
 }
 
+// Conversación del ticket: correo del cliente, respuesta del operador o nota interna
+enum TipoMensaje {
+  ENTRANTE // Correo recibido del cliente
+  SALIENTE // Respuesta enviada al cliente
+  NOTA // Nota interna: solo la ve el equipo
+}
+
 // Las áreas viven en la tabla Area (antes eran el enum AreaDesignada)
 
 // ==========================================
@@ -65,6 +72,7 @@ model User {
   horario           HorarioOperador?
   guardias          GuardiaSemanal[]
   traspasos_creados Traspaso[]     @relation("TraspasosCreados")
+  mensajes          Mensaje[]      @relation("MensajesAutor")
   
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -105,6 +113,7 @@ model Ticket {
   adjuntos           Adjunto[]
   auditorias         AuditLog[]
   traspasos          TraspasoTicket[]
+  mensajes           Mensaje[]
 }
 
 model Adjunto {
@@ -116,7 +125,29 @@ model Adjunto {
   peso            Int?
   ticketId        String
   ticket          Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  // Nulo: adjunto del correo que abrió el ticket. Con valor: adjunto de un mensaje de la conversación
+  mensajeId       String?
+  mensaje         Mensaje? @relation(fields: [mensajeId], references: [id], onDelete: Cascade)
   createdAt       DateTime @default(now())
+}
+
+// Mensajes de la conversación del ticket. El primer correo (el que abrió el ticket)
+// no se copia aquí: sale de Ticket.descripcion y Ticket.remitente.
+model Mensaje {
+  id         String      @id @default(uuid())
+  ticketId   String
+  ticket     Ticket      @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  tipo       TipoMensaje
+  texto      String      @db.Text
+  autor_id   String? // Operador que escribió (nulo en correos recibidos)
+  autor      User?       @relation("MensajesAutor", fields: [autor_id], references: [id], onDelete: SetNull)
+  de         String?     @db.VarChar(180) // Remitente del correo recibido
+  para       String?     @db.VarChar(180) // Destinatario de la respuesta
+  enviado    Boolean     @default(false) // SALIENTE: true si el correo salió por Graph
+  adjuntos   Adjunto[]
+  createdAt  DateTime    @default(now())
+
+  @@index([ticketId, createdAt])
 }
 
 // Registro de acciones (editar, eliminar, restaurar, cerrar, traspasar...)

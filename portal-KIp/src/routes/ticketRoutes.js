@@ -2,6 +2,13 @@ const express = require('express');
 const ticketController = require('../controllers/ticketController');
 const requireAuth = require('../middlewares/requireAuth');
 const authorizeRole = require('../middlewares/authorizeRole');
+const conversationController = require('../controllers/conversationController');
+const upload = require('../middlewares/upload');
+
+// Adjuntos de la conversación: un error de subida responde en JSON, no en HTML
+const subirAdjuntos = (req, res, next) => upload.any()(req, res, err => (
+    err ? res.status(400).json({ success: false, error: 'No se pudieron subir los adjuntos (máximo 25 MB por archivo)' }) : next()
+));
 
 const router = express.Router();
 
@@ -24,6 +31,8 @@ router.post('/:ticketCode/claim', authorizeRole('OPERADOR'), ticketController.cl
 router.post('/:ticketCode/pause', authorizeRole('OPERADOR'), ticketController.pauseTicket);
 router.post('/:ticketCode/resume', authorizeRole('OPERADOR'), ticketController.resumeTicket);
 router.post('/:ticketCode/resolve', authorizeRole('OPERADOR'), ticketController.resolveTicket);
+router.get('/:ticketCode/conversacion', conversationController.getConversation);
+router.post('/:ticketCode/mensajes', authorizeRole('OPERADOR'), subirAdjuntos, conversationController.postMessage);
 router.patch('/:ticketCode/status', authorizeRole('OPERADOR'), ticketController.updateOperatorStatus);
 
 module.exports = router;

@@ -74,6 +74,19 @@
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link href="/css/figma-assets.css" rel="stylesheet">
+    <link href="/css/ticket-detalle.css" rel="stylesheet">
+    <%# Tema del detalle del ticket: el mismo del resto del portal (kip.theme) o el del sistema %>
+    <script>
+        (function () {
+            var tema = null;
+            try { tema = localStorage.getItem('kip.theme'); } catch (e) {}
+            if (tema !== 'light' && tema !== 'dark') {
+                tema = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+            document.documentElement.setAttribute('data-theme', tema);
+        })();
+    </script>
+    <script src="/js/ticket-conversacion.js" defer></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -676,65 +689,88 @@
         </div>
     </div>
 
-    <!-- BEGIN: Ticket Details Modal (macOS Liquid Glass Style) -->
-    <div id="ticketDetailsOverlay" class="fixed inset-0 bg-black/35 backdrop-blur-[3px] z-[60] items-center justify-center p-4 hidden" onclick="handleTicketDetailsBackdrop(event)">
-        <section id="ticketDetailsCard" role="dialog" aria-modal="true" aria-labelledby="modalDetailCode" class="w-[620px] max-w-[calc(100vw-2rem)] max-h-[calc(100vh-2rem)] bg-white rounded-[20px] border border-[#E5E5EA] shadow-[0_24px_60px_rgba(0,0,0,0.18)] flex flex-col overflow-hidden">
-            <!-- Header -->
-            <header class="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-[#E5E5EA] flex items-center justify-between gap-3 bg-[#FAFAFC]">
-                <div class="flex flex-wrap items-center gap-2 sm:gap-3">
-                    <span id="modalDetailCode" class="font-mono text-[14px] font-bold text-[#007AFF]"></span>
-                    <span id="modalDetailPriorityBadge" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-[4px] text-[10px] font-mono font-medium border"></span>
-                    <span id="modalDetailAreaBadge" class="inline-flex items-center rounded-[5px] bg-[#F2F2F7] border border-[#E5E5EA] px-2 py-0.5 text-[10px] font-medium text-[#48484A]"></span>
-                    <span id="modalDetailStatusBadge" class="inline-flex items-center rounded-[5px] border px-2 py-0.5 text-[10px] font-medium"></span>
+    <!-- BEGIN: Ticket Details Modal (rediseño: pestañas Detalle y Conversación) -->
+    <div id="ticketDetailsOverlay" class="tdlg-overlay hidden" onclick="handleTicketDetailsBackdrop(event)">
+        <section id="ticketDetailsCard" class="tdlg" role="dialog" aria-modal="true" aria-labelledby="modalDetailSubject">
+            <header class="tdlg-hd">
+                <div class="tdlg-row">
+                    <span id="modalDetailCode" class="tdlg-code"></span>
+                    <span id="modalDetailPriorityBadge" class="tdlg-tag"></span>
+                    <span id="modalDetailStatusBadge" class="tdlg-tag"></span>
+                    <span class="tdlg-sp"></span>
+                    <button type="button" class="tdlg-x" onclick="closeTicketDetailsModal()" aria-label="Cerrar detalle">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+                    </button>
                 </div>
-                <button type="button" onclick="closeTicketDetailsModal()" aria-label="Cerrar detalles" class="w-8 h-8 shrink-0 flex items-center justify-center rounded-[8px] text-[#8E8E93] hover:bg-[#F2F2F7] hover:text-[#1C1C1E] transition cursor-pointer">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"></path></svg>
-                </button>
+                <h2 id="modalDetailSubject" class="tdlg-title"></h2>
+                <div role="tablist" aria-label="Secciones del ticket" class="dtabs">
+                    <button type="button" role="tab" id="tdTabInfo" aria-controls="tdPanelInfo" aria-selected="true">Detalle</button>
+                    <button type="button" role="tab" id="tdTabThread" aria-controls="tdPanelThread" aria-selected="false" tabindex="-1">Conversación<span class="dn" id="tdMsgCount" aria-label="mensajes">…</span></button>
+                </div>
             </header>
 
-            <!-- Body -->
-            <div class="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-4 text-[12px]">
-                <div>
-                    <span class="text-[10px] font-bold uppercase text-[#8E8E93] tracking-wider">Asunto</span>
-                    <h3 id="modalDetailSubject" class="text-[15px] font-semibold text-[#1C1C1E] mt-1 break-words"></h3>
+            <!-- Pestaña Detalle -->
+            <div id="tdPanelInfo" role="tabpanel" aria-labelledby="tdTabInfo" class="tdlg-body">
+                <div class="dgrid">
+                    <div class="dfield"><span>Área</span><span id="modalDetailArea"></span></div>
+                    <div class="dfield"><span>Asignado a</span><span id="modalDetailAssigned"></span></div>
+                    <div class="dfield"><span>Remitente</span><span id="modalDetailSender"></span></div>
+                    <div class="dfield"><span>Origen</span><span id="modalDetailOrigin"></span></div>
+                    <div class="dfield"><span>Recibido</span><span id="modalDetailCreated"></span></div>
+                    <div class="dfield"><span>Puntos</span><span id="modalDetailPts"></span></div>
                 </div>
-
-                <!-- Metadata 2x2 grid -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div class="rounded-[8px] bg-[#F9F9FA] border border-[#E5E5EA] px-3.5 py-2.5">
-                        <div class="text-[10px] font-bold uppercase text-[#8E8E93]">Fecha de creación</div>
-                        <div id="modalDetailCreated" class="mt-1 font-mono text-[11.5px] text-[#1C1C1E]"></div>
-                    </div>
-                    <div class="rounded-[8px] bg-[#F9F9FA] border border-[#E5E5EA] px-3.5 py-2.5">
-                        <div class="text-[10px] font-bold uppercase text-[#8E8E93]">Origen de ingesta</div>
-                        <div id="modalDetailOrigin" class="mt-1 text-[11.5px] text-[#1C1C1E]"></div>
-                    </div>
-                    <div id="modalDetailSenderSection" class="rounded-[8px] bg-[#F9F9FA] border border-[#E5E5EA] px-3.5 py-2.5 sm:col-span-2">
-                        <div class="text-[10px] font-bold uppercase text-[#8E8E93]">Remitente</div>
-                        <div id="modalDetailSender" class="mt-1 text-[11.5px] text-[#1C1C1E] break-words"></div>
-                    </div>
+                <div class="dsec">
+                    <span class="dlabel">Descripción</span>
+                    <div id="modalDetailDescription" class="ddesc"></div>
                 </div>
-
-                <!-- Full Description -->
-                <div>
-                    <div class="flex items-center justify-between mb-1.5">
-                        <span class="text-[10px] font-bold uppercase text-[#8E8E93] tracking-wider">Descripción y Detalles</span>
-                        <span id="modalDetailPts" class="font-mono text-[10px] text-[#8E8E93]"></span>
-                    </div>
-                    <div id="modalDetailDescription" class="min-h-[100px] max-h-[240px] overflow-y-auto rounded-[8px] bg-[#F9F9FA] border border-[#E5E5EA] p-3.5 text-[12px] leading-relaxed text-[#3A3A3C] whitespace-pre-wrap break-words"></div>
+                <div class="dsec">
+                    <span class="dlabel">Adjuntos</span>
+                    <div id="modalDetailFiles" class="dfiles"><span class="dmuted">Cargando…</span></div>
                 </div>
-                
-                <div id="modalDetailFeedback" role="alert" class="hidden text-[11px] font-medium text-[#D70015] bg-[#FFE5E5] px-3 py-2 rounded-[6px] border border-[#FFD0D0]"></div>
             </div>
 
-            <!-- Footer with Actions -->
-            <footer class="px-4 sm:px-6 py-3.5 sm:py-4 border-t border-[#E5E5EA] bg-[#FAFAFC] flex flex-wrap items-center justify-between gap-3">
-                <button type="button" onclick="closeTicketDetailsModal()" class="h-[32px] px-4 bg-[#E5E5EA] hover:bg-[#DCDCE0] text-[#3A3A3C] text-[12px] font-medium rounded-[7px] transition cursor-pointer">
-                    Cerrar
-                </button>
-                <div id="modalDetailActionContainer" class="flex flex-wrap items-center gap-2">
-                    <!-- Actions injected dynamically -->
+            <!-- Pestaña Conversación -->
+            <div id="tdPanelThread" role="tabpanel" aria-labelledby="tdTabThread" class="tdlg-thread" hidden>
+                <div id="tdWait" class="mwait" hidden>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2"></path></svg>
+                    <span id="tdWaitText" style="flex:1"></span>
                 </div>
+                <div id="tdMsgs" class="mlist" role="log" aria-label="Conversación del ticket" aria-live="polite"></div>
+                <div id="tdComposer" class="composer" data-mode="out" hidden>
+                    <div class="composer-top">
+                        <div role="radiogroup" aria-label="Tipo de mensaje" class="dtabs">
+                            <button type="button" role="radio" data-cmode="out" aria-checked="true" aria-selected="true">Responder al cliente</button>
+                            <button type="button" role="radio" data-cmode="note" aria-checked="false" aria-selected="false">Nota interna</button>
+                        </div>
+                        <span id="tdTo" class="composer-to"></span>
+                    </div>
+                    <label style="display:contents">
+                        <span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Mensaje</span>
+                        <textarea id="tdText" rows="3" maxlength="5000" placeholder="Escribe la respuesta al cliente…"></textarea>
+                    </label>
+                    <div id="tdFiles" class="dfiles" hidden></div>
+                    <div class="composer-tools">
+                        <span id="tdTpls" style="display:contents"></span>
+                        <span class="tdlg-sp"></span>
+                        <input id="tdFileInput" type="file" multiple hidden>
+                        <button type="button" id="tdAttach" class="tpl icon" aria-label="Adjuntar archivo" title="Adjuntar archivo">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11l-8.5 8.5a5 5 0 0 1-7-7L14 4a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L15 7"></path></svg>
+                        </button>
+                    </div>
+                </div>
+                <div id="tdNoWrite" class="nowrite" hidden></div>
+            </div>
+
+            <div id="modalDetailFeedback" role="alert" class="tdlg-msg hidden" data-tone="error"></div>
+
+            <footer class="tdlg-ft">
+                <button type="button" class="td-btn s" onclick="closeTicketDetailsModal()">Cerrar</button>
+                <span class="tdlg-sp"></span>
+                <div id="tdSendGroup" class="tdlg-acts" hidden>
+                    <button type="button" id="tdSendWait" class="td-btn s" title="Envía el correo y pasa el ticket a Espera de terceros" disabled>Enviar y esperar respuesta</button>
+                    <button type="button" id="tdSend" class="td-btn p" disabled>Enviar</button>
+                </div>
+                <div id="modalDetailActionContainer" class="tdlg-acts"></div>
             </footer>
         </section>
     </div>
@@ -994,127 +1030,94 @@
             if (!el) return;
 
             const code = el.dataset.ticketCode;
-            const subject = el.dataset.ticketSubject || 'Sin asunto';
-            const description = el.dataset.ticketDescription || 'Sin descripción registrada.';
-            const areaLabel = el.dataset.ticketAreaLabel || 'Operaciones IP';
-            const origin = el.dataset.ticketOrigin || 'Correo';
-            const sender = el.dataset.ticketSender || '';
-            const prioLabel = el.dataset.ticketPriorityLabel || 'S/P';
-            const prioDot = el.dataset.ticketPriorityDot || '#C7C7CC';
-            const prioBg = el.dataset.ticketPriorityBg || '#F2F2F7';
-            const prioText = el.dataset.ticketPriorityText || '#8E8E93';
-            const prioBorder = el.dataset.ticketPriorityBorder || '#E5E5EA';
-            const pts = el.dataset.ticketPts || '0';
-            const created = el.dataset.ticketCreated || 'Fecha no disponible';
             const status = el.dataset.ticketStatus || 'NUEVO';
             const queue = el.dataset.ticketQueue;
+            const prioCode = el.dataset.ticketPriorityCode || 'NONE';
+            const pts = el.dataset.ticketPts || '0';
+            const unassigned = queue === 'available';
 
             document.getElementById('modalDetailCode').textContent = code;
-            document.getElementById('modalDetailSubject').textContent = subject;
-            document.getElementById('modalDetailDescription').textContent = description;
-            document.getElementById('modalDetailCreated').textContent = created;
-            document.getElementById('modalDetailOrigin').textContent = origin;
-            document.getElementById('modalDetailPts').textContent = `${pts} pts complejidad`;
-            
-            const senderSec = document.getElementById('modalDetailSenderSection');
-            const senderVal = document.getElementById('modalDetailSender');
-            if (sender) {
-                senderVal.textContent = sender;
-                senderSec.classList.remove('hidden');
-            } else {
-                senderSec.classList.add('hidden');
-            }
+            document.getElementById('modalDetailSubject').textContent = el.dataset.ticketSubject || 'Sin asunto';
+            document.getElementById('modalDetailDescription').textContent = el.dataset.ticketDescription || 'Sin descripción registrada.';
+            document.getElementById('modalDetailArea').textContent = el.dataset.ticketAreaLabel || 'Operaciones IP';
+            document.getElementById('modalDetailAssigned').textContent = unassigned ? 'Sin asignar' : 'Ti';
+            document.getElementById('modalDetailSender').textContent = el.dataset.ticketSender || '—';
+            document.getElementById('modalDetailOrigin').textContent = el.dataset.ticketOrigin || 'Correo';
+            document.getElementById('modalDetailCreated').textContent = el.dataset.ticketCreated || 'Fecha no disponible';
+            document.getElementById('modalDetailPts').textContent = `${pts} pts`;
 
+            // Prioridad y estado con los colores del tema (claro u oscuro)
+            const PRIO = {
+                P1: ['P1', 'var(--red-bg)', 'var(--red-t)', '#EF4444'],
+                P2: ['P2', 'var(--orange-bg)', 'var(--orange-t)', '#F59E0B'],
+                P3: ['P3', 'var(--fill)', 'var(--t2)', '#94A3B8'],
+                NONE: ['Sin prioridad', 'var(--fill)', 'var(--t2)', 'transparent']
+            }[prioCode] || ['Sin prioridad', 'var(--fill)', 'var(--t2)', 'transparent'];
             const prioBadge = document.getElementById('modalDetailPriorityBadge');
-            prioBadge.style.backgroundColor = prioBg;
-            prioBadge.style.color = prioText;
-            prioBadge.style.borderColor = prioBorder;
-            prioBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full" style="background-color: ${prioDot};"></span><span>${prioLabel}</span>`;
+            prioBadge.style.background = PRIO[1];
+            prioBadge.style.color = PRIO[2];
+            prioBadge.textContent = '';
+            const dot = document.createElement('span');
+            dot.className = 'dot';
+            dot.style.background = PRIO[3];
+            if (PRIO[3] === 'transparent') dot.style.boxShadow = 'inset 0 0 0 1px var(--t3)';
+            prioBadge.append(dot, `${PRIO[0]} · ${pts} pts`);
 
-            const areaBadge = document.getElementById('modalDetailAreaBadge');
-            areaBadge.textContent = areaLabel;
-
+            const STATUS = {
+                NUEVO: unassigned ? ['Sin asignar', 'var(--fill)', 'var(--t2)'] : ['Asignado a ti · sin empezar', 'var(--purple-bg)', 'var(--purple-t)'],
+                EN_PROGRESO: ['En atención', 'var(--accent-bg)', 'var(--accent-t)'],
+                EN_PAUSA: ['En pausa', 'var(--orange-bg)', 'var(--orange-t)'],
+                EN_ESPERA_TERCEROS: ['Espera de terceros', 'var(--purple-bg)', 'var(--purple-t)'],
+                RESUELTO: ['Pendiente de cierre', 'var(--orange-bg)', 'var(--orange-t)'],
+                CERRADO: ['Cerrado', 'var(--green-bg)', 'var(--green-t)']
+            }[status] || [status, 'var(--fill)', 'var(--t2)'];
             const statusBadge = document.getElementById('modalDetailStatusBadge');
-            if (statusBadge) {
-                const statusStyles = {
-                    NUEVO: { label: 'Nuevo', bg: '#F2F2F7', text: '#1C1C1E', border: '#D1D1D6' },
-                    ASIGNADO: { label: 'Asignado', bg: '#DCEBFE', text: '#0062CC', border: '#B8D9FD' },
-                    EN_PROGRESO: { label: 'En Progreso', bg: '#DCEBFE', text: '#0062CC', border: '#B8D9FD' },
-                    EN_PAUSA: { label: 'En Pausa', bg: '#FFF4D6', text: '#B25E02', border: '#FFE6A6' },
-                    EN_ESPERA_TERCEROS: { label: 'Espera Terceros', bg: '#FFE8D6', text: '#C05621', border: '#FBD38D' },
-                    RESUELTO: { label: 'Resuelto', bg: '#E3F9E5', text: '#1B873F', border: '#A7E8B5' },
-                    CERRADO: { label: 'Cerrado', bg: '#E5E5EA', text: '#636366', border: '#D1D1D6' }
-                };
-                const style = statusStyles[status] || { label: status, bg: '#F2F2F7', text: '#636366', border: '#E5E5EA' };
-                statusBadge.textContent = style.label;
-                statusBadge.style.backgroundColor = style.bg;
-                statusBadge.style.color = style.text;
-                statusBadge.style.borderColor = style.border;
-            }
+            statusBadge.textContent = STATUS[0];
+            statusBadge.style.background = STATUS[1];
+            statusBadge.style.color = STATUS[2];
 
-            // Actions container inside modal
+            // Acciones del ticket (mismo manejador que en la lista: data-ticket-action)
             const actionContainer = document.getElementById('modalDetailActionContainer');
             actionContainer.innerHTML = '';
             const feedback = document.getElementById('modalDetailFeedback');
             feedback.textContent = '';
             feedback.classList.add('hidden');
 
+            const addAction = (label, cls, action, targetStatus) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = `td-btn ${cls}`;
+                btn.setAttribute('data-ticket-action', action);
+                btn.setAttribute('data-ticket-code', code);
+                if (targetStatus) btn.setAttribute('data-ticket-status', targetStatus);
+                const span = document.createElement('span');
+                span.className = 'figma-button__label';
+                span.textContent = label;
+                btn.appendChild(span);
+                actionContainer.appendChild(btn);
+            };
             if (queue === 'available' || (queue === 'assigned' && status === 'NUEVO')) {
-                const claimBtn = document.createElement('button');
-                claimBtn.type = 'button';
-                claimBtn.setAttribute('data-ticket-action', 'claim');
-                claimBtn.setAttribute('data-ticket-code', code);
-                claimBtn.className = 'figma-button !w-auto !h-[32px] !px-4 bg-[#007AFF] hover:bg-[#0062CC] text-white rounded-[7px] shadow-xs transition cursor-pointer';
-                claimBtn.innerHTML = '<span class="figma-button__label text-white text-[12px] font-medium">Tomar Incidencia</span>';
-                actionContainer.appendChild(claimBtn);
+                addAction(unassigned ? 'Tomar' : 'Empezar', 'p', 'claim');
             } else if (queue === 'assigned') {
-                const pauseBtn = document.createElement('button');
-                pauseBtn.type = 'button';
-                pauseBtn.setAttribute('data-ticket-action', 'status');
-                pauseBtn.setAttribute('data-ticket-status', 'EN_PAUSA');
-                pauseBtn.setAttribute('data-ticket-code', code);
-                pauseBtn.className = 'figma-button !w-auto !h-[32px] !px-3 bg-white border border-[#D1D1D6] hover:bg-[#F2F2F7] text-[#1C1C1E] rounded-[7px] shadow-sm transition cursor-pointer';
-                pauseBtn.innerHTML = '<span class="figma-button__label text-[#1C1C1E] text-[12px] font-medium">Pausar</span>';
-                actionContainer.appendChild(pauseBtn);
-
-                const resolveBtn = document.createElement('button');
-                resolveBtn.type = 'button';
-                resolveBtn.setAttribute('data-ticket-action', 'status');
-                resolveBtn.setAttribute('data-ticket-status', 'CERRADO');
-                resolveBtn.setAttribute('data-ticket-code', code);
-                resolveBtn.className = 'figma-button !w-auto !h-[32px] !px-3.5 bg-[#34C759] hover:bg-[#28A745] text-white rounded-[7px] shadow-xs transition cursor-pointer';
-                resolveBtn.innerHTML = '<span class="figma-button__label text-white text-[12px] font-medium">Resolver</span>';
-                actionContainer.appendChild(resolveBtn);
+                addAction('Pausar', 's', 'status', 'EN_PAUSA');
+                addAction('Resolver', 'g', 'status', 'CERRADO');
             } else if (queue === 'paused' || queue === 'waiting') {
-                const resumeBtn = document.createElement('button');
-                resumeBtn.type = 'button';
-                resumeBtn.setAttribute('data-ticket-action', 'status');
-                resumeBtn.setAttribute('data-ticket-status', 'EN_PROGRESO');
-                resumeBtn.setAttribute('data-ticket-code', code);
-                resumeBtn.className = 'figma-button !w-auto !h-[32px] !px-3 bg-[#007AFF] hover:bg-[#0062CC] text-white rounded-[7px] shadow-xs transition cursor-pointer';
-                resumeBtn.innerHTML = '<span class="figma-button__label text-white text-[12px] font-medium">Reanudar</span>';
-                actionContainer.appendChild(resumeBtn);
-
-                const resolveBtn = document.createElement('button');
-                resolveBtn.type = 'button';
-                resolveBtn.setAttribute('data-ticket-action', 'status');
-                resolveBtn.setAttribute('data-ticket-status', 'CERRADO');
-                resolveBtn.setAttribute('data-ticket-code', code);
-                resolveBtn.className = 'figma-button !w-auto !h-[32px] !px-3.5 bg-[#34C759] hover:bg-[#28A745] text-white rounded-[7px] shadow-xs transition cursor-pointer';
-                resolveBtn.innerHTML = '<span class="figma-button__label text-white text-[12px] font-medium">Resolver</span>';
-                actionContainer.appendChild(resolveBtn);
+                addAction('Reanudar', 'p', 'status', 'EN_PROGRESO');
+                addAction('Resolver', 'g', 'status', 'CERRADO');
             }
 
             const overlay = document.getElementById('ticketDetailsOverlay');
             overlay.classList.remove('hidden');
-            overlay.classList.add('flex');
+            if (window.TicketConversacion) window.TicketConversacion.abrir(code);
+            const closeBtn = overlay.querySelector('.tdlg-x');
+            if (closeBtn) closeBtn.focus();
         }
 
         function closeTicketDetailsModal() {
             const overlay = document.getElementById('ticketDetailsOverlay');
-            if (overlay) {
-                overlay.classList.remove('flex');
+            if (overlay && !overlay.classList.contains('hidden')) {
                 overlay.classList.add('hidden');
+                if (window.TicketConversacion) window.TicketConversacion.cerrar();
             }
         }
 
@@ -1125,7 +1128,8 @@
         }
 
         document.addEventListener('keydown', e => {
-            if (e.key === 'Escape') {
+            // Escape no descarta un mensaje a medio escribir
+            if (e.key === 'Escape' && !(e.target && e.target.id === 'tdText' && e.target.value.trim())) {
                 closeTicketDetailsModal();
             }
         });
