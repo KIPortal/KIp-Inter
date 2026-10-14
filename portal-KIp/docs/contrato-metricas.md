@@ -24,4 +24,4 @@ El traspaso **no reasigna**: guarda un lote aparte (`Traspaso` + `TraspasoTicket
 
 ## Distribución territorial (mapa del Dashboard)
 - `Ticket.estado_ve` (opcional, código ISO sin guion: `VEA`, `VEV`...) lo elige el coordinador al crear (`estadoVe`) o editar (`estado_ve`) el ticket.
-- `panel.mapa` (`buildTerritorialMap`): `estados[codigo] = { nombre, activos, cerradosHoy, porcentaje }`, `ranking` (7 con más activos), `totalActivos`, `sinEstado`, `resumen`. Los tickets sin estado no entran al mapa.
+- `panel.mapa` (`buildTerritorialMap`): `estados[codigo] = { nombre, activos, porcentaje }`, `ranking` (7 con más activos), `totalActivos`, `sinEstado`, `resumen`. Los tickets sin estado no entran al mapa.

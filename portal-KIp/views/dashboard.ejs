@@ -371,13 +371,13 @@
 				<div class="mapa-svgbox">
 					<svg viewBox="<%= mapaViewBox %>" role="img" aria-label="Mapa de Venezuela por estados, coloreado por tickets activos" stroke-linejoin="round">
 						<% Object.keys(mapaShapes).forEach(cod => { const e = mapa.estados[cod]; %>
-							<path d="<%= mapaShapes[cod] %>" class="mapa-estado n<%= nivelMapa(e.activos) %>" data-estado="<%= cod %>" data-nombre="<%= e.nombre %>" data-activos="<%= e.activos %>" data-cerrados="<%= e.cerradosHoy %>"></path>
+							<path d="<%= mapaShapes[cod] %>" class="mapa-estado n<%= nivelMapa(e.activos) %>" data-estado="<%= cod %>" data-nombre="<%= e.nombre %>" data-activos="<%= e.activos %>" data-pct="<%= e.porcentaje %>"></path>
 						<% }) %>
 					</svg>
 					<div class="mapa-tip" data-mapa-tip aria-live="polite">
 						<div class="mapa-tip-name"><span class="dot" data-tip-dot></span><span data-tip-nombre><%= foco ? foco.nombre : 'Sin datos' %></span></div>
 						<div class="mapa-tip-line">Tickets activos: <strong data-tip-activos><%= foco ? foco.activos : 0 %></strong></div>
-						<div class="mapa-tip-line"><span class="t-red">Abiertos <span data-tip-abiertos><%= foco ? foco.activos : 0 %></span></span> · <span class="t-green">Cerrados hoy <span data-tip-cerrados><%= foco ? foco.cerradosHoy : 0 %></span></span></div>
+						<div class="mapa-tip-line"><span data-tip-pct><%= foco ? foco.porcentaje : 0 %></span>% del total con estado</div>
 					</div>
 				</div>
 				<div class="mapa-side">

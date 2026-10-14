@@ -234,10 +234,7 @@
 			const activos = Number(path.getAttribute('data-activos'));
 			set('[data-tip-nombre]', path.getAttribute('data-nombre'));
 			set('[data-tip-activos]', activos);
-			set('[data-tip-abiertos]', activos);
-			set('[data-tip-cerrados]', path.getAttribute('data-cerrados'));
-			const dot = root.querySelector('[data-tip-dot]');
-			if (dot) dot.classList.toggle('ok', activos === 0);
+			set('[data-tip-pct]', path.getAttribute('data-pct'));
 		}
 		const leave = () => { paths.forEach(p => p.classList.remove('on')); rows.forEach(r => r.classList.remove('on')); if (fallback) show(null); };
 		paths.forEach(p => {

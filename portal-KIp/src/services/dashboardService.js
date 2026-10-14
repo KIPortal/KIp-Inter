@@ -114,19 +114,18 @@ function jornadaStatus(now) {
 }
 
 /**
- * Distribución territorial: tickets activos y cerrados hoy por estado de
- * Venezuela. Los tickets sin estado no entran al mapa (se cuentan aparte).
+ * Distribución territorial: cantidad de tickets activos por estado de
+ * Venezuela (para evaluar la carga por estado). Los tickets sin estado no entran al mapa (se cuentan aparte).
  * @returns {{ estados: object, ranking: Array, totalActivos: number, sinEstado: number, resumen: string }}
  */
-function buildTerritorialMap(activos, resueltosHoy) {
+function buildTerritorialMap(activos) {
     const estados = {};
-    for (const [codigo, nombre] of Object.entries(ESTADOS_VE)) estados[codigo] = { codigo, nombre, activos: 0, cerradosHoy: 0, porcentaje: 0 };
+    for (const [codigo, nombre] of Object.entries(ESTADOS_VE)) estados[codigo] = { codigo, nombre, activos: 0, porcentaje: 0 };
     let sinEstado = 0;
     for (const t of activos) {
         if (estados[t.estado_ve]) estados[t.estado_ve].activos += 1;
         else sinEstado += 1;
     }
-    for (const t of resueltosHoy) if (estados[t.estado_ve]) estados[t.estado_ve].cerradosHoy += 1;
     const totalActivos = Object.values(estados).reduce((a, e) => a + e.activos, 0);
     Object.values(estados).forEach(e => { e.porcentaje = totalActivos ? Math.round(e.activos / totalActivos * 100) : 0; });
     const ranking = Object.values(estados).filter(e => e.activos > 0)
@@ -341,7 +340,7 @@ function buildCoordinatorPanel({ tickets = [], operators = [], now = new Date(),
         turno: { jornada: jornadaStatus(now), grupos },
         flujo,
         ranking,
-        mapa: buildTerritorialMap(activos, resueltosHoy)
+        mapa: buildTerritorialMap(activos)
     };
 }
 

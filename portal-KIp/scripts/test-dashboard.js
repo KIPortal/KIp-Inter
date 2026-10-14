@@ -147,14 +147,13 @@ const tickets = [
         assert.ok(html.includes('aria-current="page"'));
     });
 
-    await t('Mapa: cuenta activos y cerrados hoy por estado y deja aparte los que no tienen estado', async () => {
+    await t('Mapa: cuenta tickets activos por estado y deja aparte los que no tienen estado', async () => {
         const { buildTerritorialMap } = require('../src/services/dashboardService');
         const act = [{ estado_ve: 'VEA' }, { estado_ve: 'VEA' }, { estado_ve: 'VEV' }, { estado_ve: null }, { estado_ve: 'XX' }];
-        const mapa = buildTerritorialMap(act, [{ estado_ve: 'VEA' }, { estado_ve: 'VEV' }, { estado_ve: null }]);
+        const mapa = buildTerritorialMap(act);
         assert.strictEqual(mapa.totalActivos, 3);
         assert.strictEqual(mapa.sinEstado, 2);
         assert.strictEqual(mapa.estados.VEA.activos, 2);
-        assert.strictEqual(mapa.estados.VEA.cerradosHoy, 1);
         assert.strictEqual(mapa.estados.VEA.porcentaje, 67);
         assert.deepStrictEqual(mapa.ranking.map(e => e.codigo), ['VEA', 'VEV']);
         assert.ok(mapa.resumen.includes('Distrito Capital 2'));
