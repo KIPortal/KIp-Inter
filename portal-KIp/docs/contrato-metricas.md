@@ -21,3 +21,7 @@ El traspaso **no reasigna**: guarda un lote aparte (`Traspaso` + `TraspasoTicket
 - **Vigencia:** se muestra hasta las 08:00 (Caracas) siguientes al envío, hasta que no queden pendientes o hasta que el coordinador lo marque como atendido.
 - Cada ticket queda en Auditoría con `TICKET_TRASPASADO_GUARDIA` y la nota; el atendido, con `TRASPASO_ATENDIDO`.
 - `POST /api/tickets/:code/close` acepta `{ motivo?: string (≤ 300) }`, que se guarda en Auditoría.
+
+## Distribución territorial (mapa del Dashboard)
+- `Ticket.estado_ve` (opcional, código ISO sin guion: `VEA`, `VEV`...) lo elige el coordinador al crear (`estadoVe`) o editar (`estado_ve`) el ticket.
+- `panel.mapa` (`buildTerritorialMap`): `estados[codigo] = { nombre, activos, cerradosHoy, porcentaje }`, `ranking` (7 con más activos), `totalActivos`, `sinEstado`, `resumen`. Los tickets sin estado no entran al mapa.

@@ -216,8 +216,49 @@
 		});
 	}
 
+	// Mapa de Venezuela: plegable; el estado bajo el cursor (o su fila del ranking) llena la tarjeta.
+	function initMapa() {
+		const root = document.querySelector('[data-mapa]');
+		if (!root) return;
+		const body = root.querySelector('#mapa-cuerpo');
+		const toggle = root.querySelector('[data-mapa-toggle]');
+		const paths = Array.from(root.querySelectorAll('[data-estado]'));
+		const rows = Array.from(root.querySelectorAll('[data-estado-btn]'));
+		const set = (sel, v) => { const n = root.querySelector(sel); if (n) n.textContent = v; };
+		const fallback = rows.length ? rows[0].getAttribute('data-estado-btn') : null;
+		function show(code) {
+			const path = paths.find(p => p.getAttribute('data-estado') === code);
+			paths.forEach(p => p.classList.toggle('on', p === path));
+			rows.forEach(r => r.classList.toggle('on', r.getAttribute('data-estado-btn') === code));
+			if (!path) return;
+			const activos = Number(path.getAttribute('data-activos'));
+			set('[data-tip-nombre]', path.getAttribute('data-nombre'));
+			set('[data-tip-activos]', activos);
+			set('[data-tip-abiertos]', activos);
+			set('[data-tip-cerrados]', path.getAttribute('data-cerrados'));
+			const dot = root.querySelector('[data-tip-dot]');
+			if (dot) dot.classList.toggle('ok', activos === 0);
+		}
+		const leave = () => { paths.forEach(p => p.classList.remove('on')); rows.forEach(r => r.classList.remove('on')); if (fallback) show(null); };
+		paths.forEach(p => {
+			p.addEventListener('mouseenter', () => show(p.getAttribute('data-estado')));
+			p.addEventListener('mouseleave', leave);
+		});
+		rows.forEach(r => {
+			r.addEventListener('mouseenter', () => show(r.getAttribute('data-estado-btn')));
+			r.addEventListener('mouseleave', leave);
+		});
+		if (toggle && body) toggle.addEventListener('click', () => {
+			const open = body.hidden;
+			body.hidden = !open;
+			toggle.setAttribute('aria-expanded', String(open));
+			toggle.textContent = open ? 'Ocultar mapa' : 'Ver mapa';
+		});
+	}
+
 	document.addEventListener('DOMContentLoaded', () => {
 		initAreas();
+		initMapa();
 		initFlow();
 		const refresh = document.querySelector('[data-refresh]');
 		if (refresh) refresh.addEventListener('click', () => window.location.reload());

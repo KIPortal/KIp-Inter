@@ -15,6 +15,7 @@ const {
 } = require('./metricsService');
 const { AREA_NAMES } = require('./periodReportService');
 const { activeAreas } = require('./areaCatalog');
+const { estadosVeLista } = require('./estadosVeService');
 const { agingTickets, formatAge } = require('./dashboardService');
 const { DEFAULT_RULES, overloadOptions } = require('./rulesService');
 const { normalizeOperator, buildSuggestions, eligibility } = require('./assignmentService');
@@ -113,6 +114,7 @@ function buildQueue({ tickets = [], operators = [], now = new Date(), rules = DE
             origen: ORIGIN_NAMES[t.origen_ingesta] || t.origen_ingesta || '',
             area: t.area_designada || 'GENERAL',
             areaNombre: AREA_NAMES[t.area_designada] || t.area_designada || 'General',
+            estadoVe: t.estado_ve || '',
             prioridad: priorityOf(t.puntos_complejidad),
             puntos: t.puntos_complejidad || 0,
             estado: t.estado_actual,
@@ -178,7 +180,7 @@ function buildQueue({ tickets = [], operators = [], now = new Date(), rules = DE
         enCola: enCola.size
     };
 
-    return { tickets: filas, operadores, areas, sugeridos: sug.porArea, otraArea: sug.otraArea, resumen, reglas: rules };
+    return { tickets: filas, operadores, areas, estadosVe: estadosVeLista(), sugeridos: sug.porArea, otraArea: sug.otraArea, resumen, reglas: rules };
 }
 
 module.exports = { buildQueue, buildHandoffView, handoffExpiry, priorityOf, daysAgo };

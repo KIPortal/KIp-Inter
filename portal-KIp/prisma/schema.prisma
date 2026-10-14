@@ -81,6 +81,7 @@ model Ticket {
   puntos_complejidad Int           @default(0) // Se asigna al cerrar el ticket
   origen_ingesta     OrigenIngesta @default(CORREO)
   area_designada     String        @default("GENERAL") @db.VarChar(40)
+  estado_ve          String?       @db.VarChar(3) // Estado de Venezuela (VEA, VEV...); ver estadosVeService
   area               Area          @relation(fields: [area_designada], references: [codigo])
   
   // Relación: Quién reportó o creó el ticket (Opcional, si viene de correo automático puede ser nulo)

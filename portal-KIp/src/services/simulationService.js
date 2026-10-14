@@ -62,6 +62,10 @@ function pick(rand, weighted) {
     return weighted[weighted.length - 1][0];
 }
 
+// Reparto geográfico de la demo (como el mapa del diseño): Caracas y el centro concentran la carga.
+const ESTADO_PESO = [['VEA', 9], ['VEV', 7], ['VEG', 6], ['VEF', 5], ['VEM', 5], ['VEK', 4], ['VED', 3], ['VEB', 3],
+    ['VEL', 2], ['VES', 2], ['VEN', 1], ['VEX', 1], [null, 2]];
+
 const emailDe = key => `${key}@${DOMINIO_DEMO}`;
 
 /**
@@ -75,6 +79,7 @@ const emailDe = key => `${key}@${DOMINIO_DEMO}`;
 function buildSimulation({ fecha, cantidad = 40, seed = 7, ahora = null, desde = 1 }) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha || '')) throw new Error('fecha inválida (AAAA-MM-DD)');
     const rand = rng(seed);
+    const randEstado = rng(seed + 1000); // aparte, para no alterar el resto de la simulación
     const dayStart = new Date(`${fecha}T00:00:00-04:00`).getTime();
     const limite = ahora ? new Date(ahora).getTime() : dayStart + 24 * 3600000;
     const min = 60000;
@@ -96,7 +101,7 @@ function buildSimulation({ fecha, cantidad = 40, seed = 7, ahora = null, desde =
         tickets.push({
             codigo: '',
             asunto: lista[Math.floor(rand() * lista.length)],
-            area, prioridad, puntos: PUNTOS[prioridad], creado
+            area, prioridad, puntos: PUNTOS[prioridad], creado, estadoVe: pick(randEstado, ESTADO_PESO)
         });
     }
     tickets.sort((a, b) => a.creado - b.creado).forEach((t, i) => { t.codigo = `${PREFIJO_CODIGO}${String(desde + i).padStart(3, '0')}`; });

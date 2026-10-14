@@ -1,6 +1,7 @@
 // Pruebas del Dashboard General (dashboardService) y de su vista. Sin base de datos.
 const assert = require('assert');
 const path = require('path');
+const { MAPA_VIEWBOX, SHAPES } = require('../src/services/mapaVenezuelaShapes');
 const ejs = require('ejs');
 const { buildCoordinatorPanel, agingTickets, jornadaStatus, formatAge } = require('../src/services/dashboardService');
 
@@ -144,6 +145,37 @@ const tickets = [
         assert.ok(html.includes('id="panel-flujo"'));
         assert.ok(!/\bSLA\b|\bDERS\b/.test(html));
         assert.ok(html.includes('aria-current="page"'));
+    });
+
+    await t('Mapa: cuenta activos y cerrados hoy por estado y deja aparte los que no tienen estado', async () => {
+        const { buildTerritorialMap } = require('../src/services/dashboardService');
+        const act = [{ estado_ve: 'VEA' }, { estado_ve: 'VEA' }, { estado_ve: 'VEV' }, { estado_ve: null }, { estado_ve: 'XX' }];
+        const mapa = buildTerritorialMap(act, [{ estado_ve: 'VEA' }, { estado_ve: 'VEV' }, { estado_ve: null }]);
+        assert.strictEqual(mapa.totalActivos, 3);
+        assert.strictEqual(mapa.sinEstado, 2);
+        assert.strictEqual(mapa.estados.VEA.activos, 2);
+        assert.strictEqual(mapa.estados.VEA.cerradosHoy, 1);
+        assert.strictEqual(mapa.estados.VEA.porcentaje, 67);
+        assert.deepStrictEqual(mapa.ranking.map(e => e.codigo), ['VEA', 'VEV']);
+        assert.ok(mapa.resumen.includes('Distrito Capital 2'));
+        assert.strictEqual(Object.keys(SHAPES).length, Object.keys(mapa.estados).length);
+    });
+
+    await t('Estado de Venezuela: valida el valor recibido (vacío = sin estado)', () => {
+        const { parseEstadoVe } = require('../src/services/estadosVeService');
+        assert.deepStrictEqual(parseEstadoVe('VEA'), { valor: 'VEA' });
+        assert.deepStrictEqual(parseEstadoVe(''), { valor: null });
+        assert.deepStrictEqual(parseEstadoVe(null), { valor: null });
+        assert.ok(parseEstadoVe('Caracas').error);
+    });
+
+    await t('Vista: dibuja el mapa con los estados y el ranking territorial', async () => {
+        const conMapa = buildCoordinatorPanel({ tickets: [{ codigo_incidencia: 'INC-1', estado_actual: 'NUEVO', area_designada: 'WAN', estado_ve: 'VEV', createdAt: NOW, updatedAt: NOW }], now: NOW });
+        const html = await ejs.renderFile(path.join(__dirname, '..', 'views', 'dashboard.ejs'), { panel: conMapa, mapaViewBox: MAPA_VIEWBOX, mapaShapes: SHAPES, currentUser: { nombre: 'Coord', rol: 'COORDINADOR' } });
+        assert.ok(html.includes('data-estado="VEV"'));
+        assert.strictEqual((html.match(/class="mapa-estado/g) || []).length, 25);
+        assert.ok(html.includes('data-estado-btn="VEV"'));
+        assert.ok(html.includes('Zulia'));
     });
 
     console.log(`\n   RESUMEN: ${passed}/${total} pruebas pasaron correctamente\n`);

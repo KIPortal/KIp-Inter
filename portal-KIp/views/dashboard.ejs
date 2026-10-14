@@ -354,6 +354,54 @@
 				<% } %>
 			</div>
 		</section>
+
+		<!-- Distribución territorial -->
+		<% const mapa = panel.mapa;
+		   const mapaShapes = locals.mapaShapes || {}, mapaViewBox = locals.mapaViewBox || '0 0 1000 877';
+		   const nivelMapa = n => n === 0 ? 0 : n <= 2 ? 1 : n <= 5 ? 2 : n <= 10 ? 3 : 4;
+		   const foco = mapa.ranking[0] || null; %>
+		<section class="glass" aria-labelledby="h-mapa" style="display:flex;flex-direction:column;gap:12px;padding:20px 24px;min-width:0" data-mapa>
+			<div class="card-head">
+				<h2 id="h-mapa">Distribución territorial</h2>
+				<span class="hint grow"><%= mapa.resumen %></span>
+				<span class="badge accent"><%= mapa.totalActivos %> <%= mapa.totalActivos === 1 ? 'activo' : 'activos' %> con estado</span>
+				<button type="button" class="pill pillbtn" data-mapa-toggle aria-expanded="false" aria-controls="mapa-cuerpo" style="height:30px;padding:0 14px;font-size:12px;font-weight:600">Ver mapa</button>
+			</div>
+			<div id="mapa-cuerpo" class="mapa-body" hidden>
+				<div class="mapa-svgbox">
+					<svg viewBox="<%= mapaViewBox %>" role="img" aria-label="Mapa de Venezuela por estados, coloreado por tickets activos" stroke-linejoin="round">
+						<% Object.keys(mapaShapes).forEach(cod => { const e = mapa.estados[cod]; %>
+							<path d="<%= mapaShapes[cod] %>" class="mapa-estado n<%= nivelMapa(e.activos) %>" data-estado="<%= cod %>" data-nombre="<%= e.nombre %>" data-activos="<%= e.activos %>" data-cerrados="<%= e.cerradosHoy %>"></path>
+						<% }) %>
+					</svg>
+					<div class="mapa-tip" data-mapa-tip aria-live="polite">
+						<div class="mapa-tip-name"><span class="dot" data-tip-dot></span><span data-tip-nombre><%= foco ? foco.nombre : 'Sin datos' %></span></div>
+						<div class="mapa-tip-line">Tickets activos: <strong data-tip-activos><%= foco ? foco.activos : 0 %></strong></div>
+						<div class="mapa-tip-line"><span class="t-red">Abiertos <span data-tip-abiertos><%= foco ? foco.activos : 0 %></span></span> · <span class="t-green">Cerrados hoy <span data-tip-cerrados><%= foco ? foco.cerradosHoy : 0 %></span></span></div>
+					</div>
+				</div>
+				<div class="mapa-side">
+					<div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;border-bottom:1px solid var(--sep)"><span class="kt">Estados con mayor carga</span><span class="t2" style="font-size:12px">Activos</span></div>
+					<% if (!mapa.ranking.length) { %>
+						<p class="empty" style="padding:8px 0">Ningún ticket activo tiene estado asignado. El estado se elige al crear o editar el ticket.</p>
+					<% } else { %>
+						<div style="display:flex;flex-direction:column;gap:2px">
+							<% mapa.ranking.forEach((e, i) => { %>
+								<button type="button" class="mapa-rank" data-estado-btn="<%= e.codigo %>">
+									<span class="rank-pos"><%= i + 1 %></span>
+									<span style="flex:1;text-align:left;font-weight:500"><%= e.nombre %></span>
+									<span style="font-weight:700;font-variant-numeric:tabular-nums"><%= e.activos %></span>
+									<span class="t2" style="width:34px;text-align:right;font-variant-numeric:tabular-nums"><%= e.porcentaje %>%</span>
+								</button>
+							<% }) %>
+						</div>
+					<% } %>
+					<% if (mapa.sinEstado) { %>
+						<p class="t2" style="font-size:12px;margin:0"><%= mapa.sinEstado %> <%= mapa.sinEstado === 1 ? 'ticket activo no tiene' : 'tickets activos no tienen' %> estado y no aparece<%= mapa.sinEstado === 1 ? '' : 'n' %> en el mapa.</p>
+					<% } %>
+				</div>
+			</div>
+		</section>
 	</main>
 </div>
 

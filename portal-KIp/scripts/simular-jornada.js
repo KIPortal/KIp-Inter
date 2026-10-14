@@ -54,7 +54,7 @@ const arg = (n, d) => { const a = process.argv.find(x => x.startsWith(`--${n}=`)
             data: {
                 codigo_incidencia: t.codigo, asunto: t.asunto, remitente: MARCA_REMITENTE,
                 descripcion: 'Ticket generado por la simulación de jornada',
-                estado_actual: t.estado, puntos_complejidad: t.puntos, area_designada: t.area,
+                estado_actual: t.estado, puntos_complejidad: t.puntos, area_designada: t.area, estado_ve: t.estadoVe ?? null,
                 origen_ingesta: 'CORREO', asignado_a_id: t.operadorKey ? ids[t.operadorKey] : null,
                 createdAt: t.creado, fecha_asignacion: t.asignado, resueltoEn: t.resuelto, fecha_cierre: t.cierre
             },

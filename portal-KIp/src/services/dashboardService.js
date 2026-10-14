@@ -19,6 +19,7 @@ const {
 const { AREA_NAMES } = require('./periodReportService');
 const { DEFAULT_RULES, ageLimitFor, overloadOptions } = require('./rulesService');
 const { buildSuggestions, normalizeOperator } = require('./assignmentService');
+const { ESTADOS_VE } = require('./estadosVeService');
 
 const MINUTE_MS = 60 * 1000;
 const HOUR_MS = 60 * MINUTE_MS;
@@ -110,6 +111,35 @@ function jornadaStatus(now) {
         detalle = `Faltan ${formatAge(fin - minutos)}`;
     }
     return { porcentaje, detalle, horario: '08:00 – 17:00', finDeSemana };
+}
+
+/**
+ * Distribución territorial: tickets activos y cerrados hoy por estado de
+ * Venezuela. Los tickets sin estado no entran al mapa (se cuentan aparte).
+ * @returns {{ estados: object, ranking: Array, totalActivos: number, sinEstado: number, resumen: string }}
+ */
+function buildTerritorialMap(activos, resueltosHoy) {
+    const estados = {};
+    for (const [codigo, nombre] of Object.entries(ESTADOS_VE)) estados[codigo] = { codigo, nombre, activos: 0, cerradosHoy: 0, porcentaje: 0 };
+    let sinEstado = 0;
+    for (const t of activos) {
+        if (estados[t.estado_ve]) estados[t.estado_ve].activos += 1;
+        else sinEstado += 1;
+    }
+    for (const t of resueltosHoy) if (estados[t.estado_ve]) estados[t.estado_ve].cerradosHoy += 1;
+    const totalActivos = Object.values(estados).reduce((a, e) => a + e.activos, 0);
+    Object.values(estados).forEach(e => { e.porcentaje = totalActivos ? Math.round(e.activos / totalActivos * 100) : 0; });
+    const ranking = Object.values(estados).filter(e => e.activos > 0)
+        .sort((a, b) => (b.activos - a.activos) || a.nombre.localeCompare(b.nombre, 'es'));
+    return {
+        estados,
+        ranking: ranking.slice(0, 7),
+        totalActivos,
+        sinEstado,
+        resumen: ranking.length
+            ? 'Más incidencias: ' + ranking.slice(0, 3).map(e => `${e.nombre} ${e.activos}`).join(' · ')
+            : 'Ningún ticket activo tiene estado asignado'
+    };
 }
 
 /**
@@ -310,8 +340,9 @@ function buildCoordinatorPanel({ tickets = [], operators = [], now = new Date(),
         alertas,
         turno: { jornada: jornadaStatus(now), grupos },
         flujo,
-        ranking
+        ranking,
+        mapa: buildTerritorialMap(activos, resueltosHoy)
     };
 }
 
-module.exports = { buildCoordinatorPanel, agingTickets, jornadaStatus, formatAge, AGE_LIMIT_MINUTES };
+module.exports = { buildCoordinatorPanel, buildTerritorialMap, agingTickets, jornadaStatus, formatAge, AGE_LIMIT_MINUTES };
