@@ -80,12 +80,12 @@ async function renderReportes(req, res) {
     try {
         const periodo = ['jornada', 'semana', 'mes', 'especifica'].includes(req.query.periodo) ? req.query.periodo : 'jornada';
         const query = { ...req.query, periodo: periodo === 'especifica' ? 'jornada' : periodo };
-        const [result, activos, config] = await Promise.all([
-            loadPeriodReport(query),
+        const result = await loadPeriodReport(query);
+        if (result.error) return res.redirect(302, '/reportes');
+        const [activos, config] = await Promise.all([
             prisma.ticket.count({ where: { estado_actual: { in: ACTIVE_STATES } } }),
             loadConfig(prisma)
         ]);
-        if (result.error) return res.redirect(302, '/reportes');
         const vista = buildReportView(result.report, {
             periodo: query.periodo,
             fecha: typeof req.query.fecha === 'string' && req.query.fecha ? req.query.fecha : null,
