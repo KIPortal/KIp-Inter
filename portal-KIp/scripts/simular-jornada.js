@@ -11,6 +11,7 @@
  */
 const prisma = require('../src/config/prisma');
 const { buildSimulation, buildDemo, MARCA_REMITENTE, PREFIJO_CODIGO } = require('../src/services/simulationService');
+const { getDayBounds } = require('../src/services/metricsService');
 const { getWeekStart } = require('../src/services/shiftService');
 
 const arg = (n, d) => { const a = process.argv.find(x => x.startsWith(`--${n}=`)); return a ? a.split('=')[1] : d; };
@@ -25,9 +26,9 @@ const arg = (n, d) => { const a = process.argv.find(x => x.startsWith(`--${n}=`)
     const existentes = await prisma.ticket.count({ where: { ...prisma.INCLUDE_DELETED, codigo_incidencia: { startsWith: PREFIJO_CODIGO } } });
     if (existentes) { console.error('Ya hay una simulación cargada. Ejecute primero: node scripts/limpiar-simulacion.js --confirmar'); process.exit(1); }
 
-    // Operadores demo (estado operativo, horario propio y guardia de esta semana)
+    // Operadores demo (estado operativo, horario propio y guardia de hoy)
     const ids = {};
-    const semana = getWeekStart(new Date());
+    const hoy = getDayBounds(new Date()).start;
     for (const o of sim.operadores) {
         const u = await prisma.user.upsert({
             where: { email: o.email },
@@ -40,9 +41,9 @@ const arg = (n, d) => { const a = process.argv.find(x => x.startsWith(`--${n}=`)
             await prisma.horarioOperador.upsert({ where: { userId: u.id }, create: { userId: u.id, ...h }, update: h });
         }
         if (o.guardia) {
-            await prisma.guardiaSemanal.upsert({
-                where: { userId_semana_inicio: { userId: u.id, semana_inicio: semana } },
-                create: { userId: u.id, semana_inicio: semana },
+            await prisma.guardiaDia.upsert({
+                where: { userId_fecha: { userId: u.id, fecha: hoy } },
+                create: { userId: u.id, fecha: hoy },
                 update: {}
             });
         }
@@ -82,7 +83,7 @@ const arg = (n, d) => { const a = process.argv.find(x => x.startsWith(`--${n}=`)
     }
 
     sim.dias.forEach(d => console.log(`Jornada ${d.fecha}: ${d.tickets.length} tickets.`));
-    console.log(`${sim.operadores.length} operadores demo (${sim.operadores.filter(o => o.guardia).length} de guardia esta semana)${sim.traspaso ? `, traspaso de anoche con ${sim.traspaso.codigos.length} pendientes` : ''}.`);
+    console.log(`${sim.operadores.length} operadores demo (${sim.operadores.filter(o => o.guardia).length} de guardia hoy)${sim.traspaso ? `, traspaso de anoche con ${sim.traspaso.codigos.length} pendientes` : ''}.`);
     console.log('Limpieza: node scripts/limpiar-simulacion.js --confirmar');
     await prisma.$disconnect();
 })().catch(e => { console.error(e); process.exit(1); });

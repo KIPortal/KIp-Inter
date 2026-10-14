@@ -1,11 +1,12 @@
 
 ## Turnos y guardias (`/api/turnos`, coordinador, jefe o gerente; el jefe solo su área)
 
-- `GET /api/turnos?semana=AAAA-MM-DD` → `{ semana, operadores: [{ id, nombre, area_designada, estado_operativo, horario:{dias,inicio,fin}, horarioPersonalizado, deGuardia, turno:{codigo,etiqueta,enTurno,deGuardia,disponible} }] }`.
-- `PUT /api/turnos/guardia` `{ semana?, operatorIds:["uuid", ...] }` → reemplaza la guardia de esa semana (lunes–domingo, Caracas).
+- `GET /api/turnos?semana=AAAA-MM-DD` → `{ semana, operadores: [{ id, nombre, area_designada, estado_operativo, horario:{dias,inicio,fin}, horarioPersonalizado, deGuardia (hoy), guardiaDias:["AAAA-MM-DD"] (de esa semana), turno:{codigo,etiqueta,enTurno,deGuardia,disponible} }] }`.
+- `PUT /api/turnos/guardia` `{ semana?, dias:{ "AAAA-MM-DD":["uuid", ...] } }` → reemplaza la guardia por día de esa semana (lunes–domingo, Caracas; fechas fuera de la semana = 400). Con `operatorIds:[...]` en vez de `dias` pone a esas personas los 7 días. El jefe solo reemplaza la de su área. Tabla `GuardiaDia` (`fecha` = 00:00 Caracas); `GuardiaSemanal` queda solo como histórico.
+- Gestión de Turno: `buildShiftBoard` recibe `guardiaPorDia` (Map fecha → Set de ids) y entrega `operadores[].guardiaDias`, `semana.dias[].guardias[{id,nombre,iniciales}]` y `semana.sinGuardia`.
 - `PUT /api/turnos/horario/:operatorId` `{ dias:[0-6], inicio:"HH:MM", fin:"HH:MM" }` (0 = domingo).
 - Códigos de `turno`: `EN_TURNO`, `DE_GUARDIA`, `EN_CASA_GUARDIA`, `FUERA_DE_TURNO`, `AUSENTE`. El dashboard entrega `operador.turno` y `operador.deGuardia`; el de guardia NO cuenta como disponible pero puede recibir tickets.
-- Guardia (confirmado): entre semana 17:00–24:00; fin de semana 08:00–24:00 desde casa.
+- Guardia (confirmado): por día; entre semana 17:00–24:00 en la oficina (unos 2 días por persona); fin de semana 08:00–24:00 desde casa. "De guardia" = tiene guardia hoy.
 
 ## Traspaso a guardia (Fase 3 del rediseño)
 

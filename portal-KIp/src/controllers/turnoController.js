@@ -2,8 +2,8 @@
 
 const prisma = require('../config/prisma');
 const { ATIENDE_WHERE, personaWhere, ticketWhere, areaScope } = require('../services/roleService');
-const { validateSchedule, getShiftStatus, getWeekStart, DEFAULT_SCHEDULE } = require('../services/shiftService');
-const { parseCaracasDate, ACTIVE_STATES } = require('../services/metricsService');
+const { validateSchedule, getShiftStatus, getWeekStart, DEFAULT_SCHEDULE, weekDates, validateGuardPlan } = require('../services/shiftService');
+const { parseCaracasDate, ACTIVE_STATES, getDayBounds } = require('../services/metricsService');
 const { buildShiftBoard } = require('../services/shiftBoardService');
 const { auditUserId } = require('../services/auditViewService');
 
@@ -25,20 +25,35 @@ function resolveWeek(semana) {
     return d ? getWeekStart(d) : null;
 }
 
-/** Carga horarios y guardias; tolera que las tablas aún no existan (migración pendiente). */
-async function loadShiftData(weekStart) {
+const DAY_MS = 24 * 3600 * 1000;
+
+/**
+ * Carga horarios y guardias; tolera que las tablas aún no existan (migración pendiente).
+ * - guardiaIds: quién está de guardia HOY (para el estado actual).
+ * - guardiaPorDia: fecha (AAAA-MM-DD) → ids de guardia, para la semana `weekStart`.
+ */
+async function loadShiftData(weekStart, now = new Date()) {
+    const vacio = { horarioPorUsuario: new Map(), guardiaIds: new Set(), guardiaPorDia: new Map(weekDates(weekStart).map(f => [f, new Set()])) };
     try {
+        const hoy = getDayBounds(now).start;
+        const finSemana = new Date(new Date(weekStart).getTime() + 7 * DAY_MS);
         const [horarios, guardias] = await Promise.all([
             prisma.horarioOperador.findMany(),
-            prisma.guardiaSemanal.findMany({ where: { semana_inicio: weekStart } })
+            prisma.guardiaDia.findMany({ where: { OR: [{ fecha: { gte: weekStart, lt: finSemana } }, { fecha: hoy }] } })
         ]);
+        const guardiaPorDia = vacio.guardiaPorDia;
+        guardias.forEach(g => {
+            const f = formatCaracasDate(g.fecha);
+            if (guardiaPorDia.has(f)) guardiaPorDia.get(f).add(g.userId);
+        });
         return {
             horarioPorUsuario: new Map(horarios.map(h => [h.userId, h])),
-            guardiaIds: new Set(guardias.map(g => g.userId))
+            guardiaIds: new Set(guardias.filter(g => new Date(g.fecha).getTime() === hoy.getTime()).map(g => g.userId)),
+            guardiaPorDia
         };
     } catch (error) {
         console.error('Turnos no disponibles (¿migración pendiente?):', error.message);
-        return { horarioPorUsuario: new Map(), guardiaIds: new Set() };
+        return vacio;
     }
 }
 
@@ -51,14 +66,15 @@ async function getTurnos(req, res) {
             select: { id: true, nombre: true, email: true, area_designada: true, estado_operativo: true },
             orderBy: { nombre: 'asc' }
         });
-        const { horarioPorUsuario, guardiaIds } = await loadShiftData(weekStart);
         const ahora = new Date();
+        const { horarioPorUsuario, guardiaIds, guardiaPorDia } = await loadShiftData(weekStart, ahora);
         const data = operadores.map(op => {
             const h = horarioPorUsuario.get(op.id);
             const horario = h ? { dias: h.dias, inicio: h.hora_inicio, fin: h.hora_fin } : DEFAULT_SCHEDULE;
             const deGuardia = guardiaIds.has(op.id);
             return {
                 ...op, horario, horarioPersonalizado: Boolean(h), deGuardia,
+                guardiaDias: [...guardiaPorDia].filter(([, ids]) => ids.has(op.id)).map(([f]) => f),
                 turno: getShiftStatus({ estadoOperativo: op.estado_operativo, horario, deGuardia }, ahora)
             };
         });
@@ -69,29 +85,39 @@ async function getTurnos(req, res) {
     }
 }
 
+// Guardia por día de una semana: { semana, dias: { 'AAAA-MM-DD': [ids] } }
+// (o { semana, operatorIds } para poner a esas personas los 7 días).
 async function setGuardia(req, res) {
     try {
         const weekStart = resolveWeek(req.body.semana);
         if (!weekStart) return res.status(400).json({ error: 'Fecha inválida (use AAAA-MM-DD)' });
-        const ids = req.body.operatorIds;
-        if (!Array.isArray(ids) || ids.some(id => typeof id !== 'string' || !id.trim())) {
-            return res.status(400).json({ error: 'operatorIds debe ser una lista de ids' });
-        }
-        const unique = [...new Set(ids)];
-        const validos = await prisma.user.findMany({ where: { id: { in: unique }, activo: true, ...ATIENDE_WHERE, ...personaWhere(req.user) }, select: { id: true, nombre: true } });
-        if (validos.length !== unique.length) {
-            return res.status(400).json({ error: areaScope(req.user) ? 'Solo puedes poner de guardia a personas de tu área' : 'Solo los operadores pueden estar de guardia' });
+        const fechas = weekDates(weekStart);
+        let dias = req.body.dias;
+        if (dias === undefined && Array.isArray(req.body.operatorIds)) dias = Object.fromEntries(fechas.map(f => [f, req.body.operatorIds]));
+        const { error, plan, ids } = validateGuardPlan(dias, weekStart);
+        if (error) return res.status(400).json({ error });
+
+        const validos = await prisma.user.findMany({ where: { id: { in: ids }, activo: true, ...ATIENDE_WHERE, ...personaWhere(req.user) }, select: { id: true, nombre: true } });
+        if (validos.length !== ids.length) {
+            return res.status(400).json({ error: areaScope(req.user) ? 'Solo puedes poner de guardia a personas de tu área' : 'Solo quien atiende tickets puede estar de guardia' });
         }
 
         // El jefe solo reemplaza la guardia de su área; las demás áreas quedan igual
         const deSuArea = areaScope(req.user) ? { user: { area_designada: areaScope(req.user) } } : {};
+        const finSemana = new Date(weekStart.getTime() + 7 * DAY_MS);
+        const filas = Object.entries(plan).flatMap(([f, lista]) => lista.map(userId => ({ userId, fecha: parseCaracasDate(f) })));
         await prisma.$transaction([
-            prisma.guardiaSemanal.deleteMany({ where: { semana_inicio: weekStart, ...deSuArea } }),
-            prisma.guardiaSemanal.createMany({ data: unique.map(userId => ({ userId, semana_inicio: weekStart })) })
+            prisma.guardiaDia.deleteMany({ where: { fecha: { gte: weekStart, lt: finSemana }, ...deSuArea } }),
+            prisma.guardiaDia.createMany({ data: filas, skipDuplicates: true })
         ]);
-        const nombres = validos.map(v => v.nombre || v.id).join(', ') || 'nadie';
-        await audit(req, 'GUARDIA_DEFINIDA', `Semana del ${formatWeek(weekStart)}: ${nombres}`);
-        return res.json({ ok: true, semana: weekStart.toISOString(), operatorIds: unique });
+        const nombre = new Map(validos.map(v => [v.id, v.nombre || v.id]));
+        const DIA = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+        const detalle = fechas.map(f => {
+            const dow = new Date(f + 'T12:00:00Z').getUTCDay();
+            return `${DIA[dow]} ${Number(f.slice(8))}: ${(plan[f] || []).map(id => nombre.get(id)).join(', ') || 'nadie'}`;
+        }).join('; ');
+        await audit(req, 'GUARDIA_DEFINIDA', `Semana del ${formatWeek(weekStart)}${areaScope(req.user) ? ' (' + areaScope(req.user) + ')' : ''}. ${detalle}`);
+        return res.json({ ok: true, semana: weekStart.toISOString(), dias: plan });
     } catch (error) {
         console.error('Error al definir guardia:', error);
         return res.status(500).json({ error: 'Error al definir la guardia' });
@@ -122,22 +148,20 @@ async function renderTurno(req, res) {
     try {
         const weekStart = resolveWeek(req.query.semana) || getWeekStart(new Date());
         const ahora = new Date();
-        const semanaActual = getWeekStart(ahora);
-        const [operadores, elegida, actual, activos] = await Promise.all([
+        const [operadores, guardias, activos] = await Promise.all([
             prisma.user.findMany({
                 where: { activo: true, ...ATIENDE_WHERE, ...personaWhere(req.user) },
                 select: { id: true, nombre: true, email: true, area_designada: true, estado_operativo: true },
                 orderBy: { nombre: 'asc' }
             }),
-            loadShiftData(weekStart),
-            loadShiftData(semanaActual),
+            loadShiftData(weekStart, ahora),
             prisma.ticket.count({ where: { estado_actual: { in: ACTIVE_STATES }, ...ticketWhere(req.user) } })
         ]);
         const tablero = buildShiftBoard({
             operators: operadores,
-            horarios: actual.horarioPorUsuario,
-            guardiaSemana: elegida.guardiaIds,
-            guardiaActual: actual.guardiaIds,
+            horarios: guardias.horarioPorUsuario,
+            guardiaPorDia: guardias.guardiaPorDia,
+            guardiaActual: guardias.guardiaIds,
             weekStart,
             now: ahora
         });

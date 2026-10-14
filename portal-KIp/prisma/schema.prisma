@@ -75,6 +75,7 @@ model User {
   auditorias        AuditLog[]
   horario           HorarioOperador?
   guardias          GuardiaSemanal[]
+  guardias_dia      GuardiaDia[]
   traspasos_creados Traspaso[]     @relation("TraspasosCreados")
   mensajes          Mensaje[]      @relation("MensajesAutor")
   
@@ -179,6 +180,20 @@ model HorarioOperador {
 
 // Rotación semanal de guardia: qué operadores están de guardia en cada semana (lunes a domingo, Caracas).
 // semana_inicio es el instante del lunes 00:00 de Caracas.
+// Guardia por día: quién está de guardia cada fecha (Caracas). Entre semana
+// 17:00–24:00 en la oficina; sábado y domingo 08:00–24:00 desde casa.
+model GuardiaDia {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fecha     DateTime // 00:00 de Caracas de ese día
+  createdAt DateTime @default(now())
+
+  @@unique([userId, fecha])
+  @@index([fecha])
+}
+
+// Histórico: la guardia por semana completa ya no se usa (se copió a GuardiaDia)
 model GuardiaSemanal {
   id            String   @id @default(uuid())
   userId        String

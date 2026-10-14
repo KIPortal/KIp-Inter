@@ -16,7 +16,7 @@ Portal de tickets y estadísticas del depto. **Operaciones IP** (Inter Telecomun
 - Contactos (`/contactos`): todos ven correo, teléfono/extensión (`User.telefono`) y estado de turno; cada quien edita su teléfono y el coordinador o gerente lo edita en Administración.
 - Sobrecarga: tickets activos > 1.5× el promedio del área (mínimo 3; ausentes excluidos; un solo operador = sin comparación).
 - Zona horaria Caracas (UTC-4). Semana lunes–domingo. Turno normal 8:00–17:00 (lun–vie por defecto, editable por operador).
-- Guardia (rota por semana, la define el coordinador): 17:00–24:00 entre semana; 08:00–24:00 en fin de semana desde casa. El de guardia aparece "De guardia", no "Disponible", pero puede recibir tickets. El traspaso a guardia exige nota (≥10 caracteres).
+- Guardia (por día, la define el coordinador, o el jefe para su área, en Gestión de Turno; tabla `GuardiaDia`; unos 2 días por persona entre semana más los fines de semana): 17:00–24:00 entre semana; 08:00–24:00 en fin de semana desde casa. El de guardia aparece "De guardia", no "Disponible", pero puede recibir tickets. El traspaso a guardia exige nota (≥10 caracteres).
 - Borrado lógico: eliminar = papelera (con motivo ≥3 caracteres) + auditoría. Los códigos INC-xxx nunca se reutilizan (`prisma.INCLUDE_DELETED`). Primer ticket: INC-001.
 
 ## Documentos (leer antes de tocar métricas o endpoints)
@@ -45,6 +45,6 @@ Scripts `scripts/test-*.js` con `assert`; en `package.json`: `test:metrics`, `te
 - Rediseño del login: sigue con el estilo anterior (Tailwind CDN). El panel del operador ya es el nuevo (Fase 9: `operatorPanelService`, `public/css/operador.css`, `public/js/operador.js`; detalle con pestañas en `ticket-detalle.css` + `ticket-conversacion.js`).
 - Entrega de avisos dentro del portal: la matriz se configura en Administración; la campana del operador hoy deduce sus avisos de las colas (Fase 10 la conecta).
 - Telefonía: el teléfono de cada persona ya está en Contactos; falta un número fijo de guardia, si se necesita.
-- Pendientes de Check.txt: guardia por día (2 días por persona + fines de semana) y subgrupos de área (FTTx: Soporte y Cabecera).
+- Pendiente de Check.txt: subgrupos de área (FTTx: Soporte y Cabecera).
 - "Tiempo en horario" usa una ventana fija lun–vie 8–17 (aún no usa horarios por operador).
 - Seguridad del login (ver `docs/pendientes.md`).

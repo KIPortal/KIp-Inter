@@ -1,4 +1,4 @@
-// Gestión de Turno: cambios sin guardar (horario, días y guardia), filtro por estado y guardado.
+// Gestión de Turno: cambios sin guardar (horario, días y guardia por día), filtro por estado y guardado.
 (function () {
 	'use strict';
 
@@ -18,7 +18,7 @@
 			inicio: row.querySelector('[data-from]').value,
 			fin: row.querySelector('[data-to]').value,
 			dias: Array.from(row.querySelectorAll('[data-day][aria-pressed=true]')).map(b => Number(b.dataset.day)).sort((a, b) => a - b),
-			guardia: row.querySelector('[data-guard]').checked
+			guardia: Array.from(row.querySelectorAll('[data-gdate][aria-pressed=true]')).map(b => b.dataset.gdate).sort()
 		};
 	}
 
@@ -32,8 +32,9 @@
 			if (s.inicio !== h.inicio || s.fin !== h.fin || !sameDays(s.dias, [...h.dias].sort((a, b) => a - b))) {
 				horarios.push({ id: o.id, nombre: o.nombre, dias: s.dias, inicio: s.inicio, fin: s.fin });
 			}
-			if (s.guardia !== o.guardia) guardia = true;
-			row.classList.toggle('changed', horarios.some(x => x.id === o.id) || s.guardia !== o.guardia);
+			const otraGuardia = !sameDays(s.guardia, [...o.guardiaDias].sort());
+			if (otraGuardia) guardia = true;
+			row.classList.toggle('changed', horarios.some(x => x.id === o.id) || otraGuardia);
 		});
 		return { horarios, guardia };
 	}
@@ -88,8 +89,7 @@
 				await put('/api/turnos/horario/' + encodeURIComponent(h.id), { dias: h.dias, inicio: h.inicio, fin: h.fin });
 			}
 			if (c.guardia) {
-				const ids = $$('[data-op]').filter(r => r.querySelector('[data-guard]').checked).map(r => r.dataset.op);
-				await put('/api/turnos/guardia', { semana: D.semana, operatorIds: ids });
+				await put('/api/turnos/guardia', { semana: D.semana, dias: guardPlan() });
 			}
 			try {
 				const n = c.horarios.length + (c.guardia ? 1 : 0);
@@ -119,13 +119,38 @@
 		if (empty) empty.hidden = visibles > 0;
 	}
 
-	function syncGuardLabels() {
-		$$('[data-op]').forEach(row => {
-			const on = row.querySelector('[data-guard]').checked;
-			const l = row.querySelector('[data-guard-label]');
-			l.textContent = on ? 'De guardia' : 'No';
-			l.classList.toggle('on', on);
+	// { 'AAAA-MM-DD': [ids] } según los botones de guardia marcados
+	function guardPlan() {
+		const plan = {};
+		D.fechas.forEach(f => { plan[f] = []; });
+		$$('[data-op]').forEach(row => rowState(row).guardia.forEach(f => { if (plan[f]) plan[f].push(row.dataset.op); }));
+		return plan;
+	}
+
+	// Tira de la semana: quién queda de guardia cada día (con lo que se ve en pantalla)
+	function syncGuardStrip() {
+		const plan = guardPlan();
+		let sin = 0;
+		D.fechas.forEach(f => {
+			const box = document.querySelector('[data-wday-guards="' + f + '"]');
+			if (!box) return;
+			box.replaceChildren();
+			plan[f].forEach(id => {
+				const o = ORIG[id];
+				const i = document.createElement('i');
+				i.title = o.nombre;
+				i.textContent = o.iniciales;
+				box.append(i);
+			});
+			if (!plan[f].length) {
+				sin++;
+				const em = document.createElement('em');
+				em.textContent = 'Sin guardia';
+				box.append(em);
+			}
 		});
+		const sum = $('[data-guard-summary]');
+		if (sum) sum.textContent = sin ? sin + (sin === 1 ? ' día' : ' días') + ' sin guardia' : 'Todos los días tienen guardia';
 	}
 
 	document.addEventListener('DOMContentLoaded', () => {
@@ -135,7 +160,11 @@
 				paintDirty();
 			}));
 			row.querySelectorAll('input[type=time]').forEach(i => i.addEventListener('input', paintDirty));
-			row.querySelector('[data-guard]').addEventListener('change', () => { syncGuardLabels(); paintDirty(); });
+			row.querySelectorAll('[data-gdate]').forEach(b => b.addEventListener('click', () => {
+				b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed') !== 'true'));
+				syncGuardStrip();
+				paintDirty();
+			}));
 		});
 		$$('[data-view]').forEach(t => t.addEventListener('click', () => setView(t.dataset.view)));
 		$('[data-discard]').addEventListener('click', () => { leaving = true; window.location.reload(); });
@@ -146,7 +175,6 @@
 			else leaving = true;
 		}));
 		window.addEventListener('beforeunload', e => { if (!leaving && paintDirty() > 0 && !$('[data-save]').disabled) { e.preventDefault(); e.returnValue = ''; } });
-		syncGuardLabels();
 		paintDirty();
 		try {
 			const t = JSON.parse(sessionStorage.getItem('kip.toast') || 'null');

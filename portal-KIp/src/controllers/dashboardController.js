@@ -65,7 +65,7 @@ async function loadOperatorsWithShift(ahora = new Date(), filtro = {}) {
             }
         },
         orderBy: { nombre: 'asc' }
-    }), loadShiftData(getWeekStart(ahora))]);
+    }), loadShiftData(getWeekStart(ahora), ahora)]);
     operadores.forEach(operador => {
         const h = horarioPorUsuario.get(operador.id);
         operador.deGuardia = guardiaIds.has(operador.id);
@@ -150,7 +150,7 @@ async function renderOperatorDashboard(req, res) {
                 orderBy: { resueltoEn: 'desc' }
             }),
             prisma.user.findUnique({ where: { id: user.id }, select: { estado_operativo: true } }),
-            loadShiftData(getWeekStart(ahora)),
+            loadShiftData(getWeekStart(ahora), ahora),
             loadConfig(prisma)
         ]);
 

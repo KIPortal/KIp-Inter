@@ -19,7 +19,8 @@ const prisma = require('../src/config/prisma');
     }
     const a = await prisma.auditLog.deleteMany({});
     const j = await prisma.adjunto.deleteMany({});
-    const g = await prisma.guardiaSemanal.deleteMany({});
+    const g = await prisma.guardiaDia.deleteMany({});
+    await prisma.guardiaSemanal.deleteMany({});
     const h = await prisma.horarioOperador.deleteMany({});
     const t = await prisma.ticket.deleteMany({});
     const u = await prisma.user.deleteMany({ where: { rol: 'OPERADOR' } });
