@@ -73,3 +73,7 @@ Campo `User.atiende_tickets` (migración `20261014180000_coordinador_atiende`), 
 - Tickets: `POST /api/tickets { subgrupoId? }`, `PATCH /api/tickets/:code { subgrupo_id }` (validados contra el área final). Al asignar, si el ticket no tiene subgrupo toma el del operador (misma área); si cambia de área, se quita.
 - `buildQueue`: `areas[].subgrupos[{id,nombre}]` (activos), `tickets[].subgrupo/subgrupoNombre`, `operadores[].subgrupo/subgrupoNombre`. El filtro Área acepta `AREA|subgrupo`.
 - Mi panel: con subgrupo, Entrantes = los de su subgrupo + los del área sin subgrupo (+ General).
+
+## Distribución territorial (mapa del Dashboard)
+- `Ticket.estado_ve` (opcional, código ISO sin guion: `VEA`, `VEV`...) lo elige el coordinador al crear (`estadoVe`) o editar (`estado_ve`) el ticket.
+- `panel.mapa` (`buildTerritorialMap`): `estados[codigo] = { nombre, activos, porcentaje }`, `ranking` (7 con más activos), `totalActivos`, `sinEstado`, `resumen`. Los tickets sin estado no entran al mapa.

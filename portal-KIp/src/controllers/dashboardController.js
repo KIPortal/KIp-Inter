@@ -8,6 +8,7 @@ const { buildOperatorPanel } = require('../services/operatorPanelService');
 const { ATIENDE_WHERE, atiendeTickets, ticketWhere, personaWhere } = require('../services/roleService');
 const { loadActiveHandoff } = require('./ticketController');
 const { AREA_NAMES } = require('../services/periodReportService');
+const { MAPA_VIEWBOX, SHAPES: MAPA_SHAPES } = require('../services/mapaVenezuelaShapes');
 const { loadConfig } = require('../services/configService');
 const { getNextTicketCode } = require('../services/ticketCodeService');
 
@@ -26,7 +27,7 @@ async function renderDashboard(req, res) {
             prisma.ticket.findMany({
                 where: ticketWhere(req.user),
                 select: {
-                    codigo_incidencia: true, estado_actual: true, area_designada: true, puntos_complejidad: true,
+                    codigo_incidencia: true, estado_actual: true, area_designada: true, estado_ve: true, puntos_complejidad: true,
                     asignado_a_id: true, createdAt: true, updatedAt: true, fecha_asignacion: true,
                     resueltoEn: true, fecha_cierre: true
                 }
@@ -35,7 +36,7 @@ async function renderDashboard(req, res) {
             loadConfig(prisma)
         ]);
         const panel = buildCoordinatorPanel({ tickets, operators: operadores, now: ahora, periodo: req.query.periodo, rules: config.reglas });
-        return res.render('dashboard', { titulo: 'Dashboard General', currentUser: req.user, panel });
+        return res.render('dashboard', { titulo: 'Dashboard General', currentUser: req.user, panel, mapaViewBox: MAPA_VIEWBOX, mapaShapes: MAPA_SHAPES });
     } catch (error) {
         console.error('Error al cargar dashboard:', error);
         return res.status(500).send('Error en el servidor');

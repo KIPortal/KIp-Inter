@@ -15,6 +15,7 @@ const {
 } = require('./metricsService');
 const { AREA_NAMES } = require('./periodReportService');
 const { activeAreas, allSubgrupos, subgrupoName } = require('./areaCatalog');
+const { estadosVeLista } = require('./estadosVeService');
 const { agingTickets, formatAge } = require('./dashboardService');
 const { DEFAULT_RULES, overloadOptions } = require('./rulesService');
 const { normalizeOperator, buildSuggestions, eligibility } = require('./assignmentService');
@@ -113,6 +114,7 @@ function buildQueue({ tickets = [], operators = [], now = new Date(), rules = DE
             origen: ORIGIN_NAMES[t.origen_ingesta] || t.origen_ingesta || '',
             area: t.area_designada || 'GENERAL',
             areaNombre: AREA_NAMES[t.area_designada] || t.area_designada || 'General',
+            estadoVe: t.estado_ve || '',
             subgrupo: t.subgrupo_id || '',
             subgrupoNombre: subgrupoName(t.subgrupo_id),
             prioridad: priorityOf(t.puntos_complejidad),
@@ -184,7 +186,7 @@ function buildQueue({ tickets = [], operators = [], now = new Date(), rules = DE
 
     // Cada área con sus subgrupos activos (para filtrar y elegir en los formularios)
     const conSubgrupos = areas.map(a => ({ ...a, subgrupos: allSubgrupos().filter(g => g.area === a.codigo && g.activo).map(g => ({ id: g.id, nombre: g.nombre })) }));
-    return { tickets: filas, operadores, areas: conSubgrupos, sugeridos: sug.porArea, otraArea: sug.otraArea, resumen, reglas: rules };
+    return { tickets: filas, operadores, areas: conSubgrupos, estadosVe: estadosVeLista(), sugeridos: sug.porArea, otraArea: sug.otraArea, resumen, reglas: rules };
 }
 
 module.exports = { buildQueue, buildHandoffView, handoffExpiry, priorityOf, daysAgo };

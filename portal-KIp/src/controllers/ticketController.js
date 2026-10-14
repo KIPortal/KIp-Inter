@@ -7,6 +7,7 @@ const { auditUserId } = require('../services/auditViewService');
 
 const PRIORITY_POINTS = { P1: 8, P2: 5, P3: 1 };
 const { isActiveArea, isValidSubgrupo, subgrupoName } = require('../services/areaCatalog');
+const { parseEstadoVe } = require('../services/estadosVeService');
 // Solo se puede elegir un área activa (las desactivadas conservan su historial)
 const VALID_AREAS = { has: isActiveArea };
 const VALID_ORIGINS = new Set(['CORREO', 'LLAMADA', 'JEFATURA', 'COORDINADOR']);
@@ -35,6 +36,8 @@ async function createTicket(req, res) {
     const descripcion = typeof body.descripcion === 'string' ? body.descripcion.trim() : '';
     const remitente = typeof body.remitente === 'string' ? body.remitente.trim() : '';
     const { areaDesignada, origenIngesta, prioridad } = body;
+    const estadoVe = parseEstadoVe(body.estadoVe);
+    if (estadoVe.error) return res.status(400).json({ success: false, error: estadoVe.error });
 
     if (!asunto) return res.status(400).json({ success: false, error: 'El asunto es obligatorio' });
     if (typeof body.descripcion !== 'undefined' && typeof body.descripcion !== 'string') {
@@ -67,6 +70,7 @@ async function createTicket(req, res) {
         estado_actual: 'NUEVO',
         puntos_complejidad: PRIORITY_POINTS[prioridad] || 0,
         area_designada: areaDesignada,
+        estado_ve: estadoVe.valor,
         subgrupo_id: subgrupoId,
         origen_ingesta: origenIngesta,
         ...(req.user?.id && !req.user.id.startsWith('temporary:') ? { creado_por_id: req.user.id } : {})
@@ -471,6 +475,11 @@ async function editTicket(req, res) {
             return res.status(400).json({ success: false, error: 'Área designada no válida' });
         }
         data.area_designada = body.area_designada;
+    }
+    if (body.estado_ve !== undefined) {
+        const estadoVe = parseEstadoVe(body.estado_ve);
+        if (estadoVe.error) return res.status(400).json({ success: false, error: estadoVe.error });
+        data.estado_ve = estadoVe.valor;
     }
     if (body.prioridad !== undefined) {
         if (body.prioridad === 'NONE') data.puntos_complejidad = 0;

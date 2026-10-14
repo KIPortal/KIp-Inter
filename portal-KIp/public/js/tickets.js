@@ -516,6 +516,8 @@
 		paint();
 		return box;
 	}
+	const estadoVeOpts = cur => [{ value: '', label: 'Sin estado', sel: !cur }].concat(D.estadosVe.map(e => ({ value: e.codigo, label: e.nombre, sel: e.codigo === cur })));
+	const estadoVeLabel = cod => { const e = D.estadosVe.find(x => x.codigo === cod); return e ? { label: e.nombre } : { label: 'Sin estado', muted: true }; };
 	const areaOpts = cur => D.areas.map(a => ({ value: a.codigo, label: a.nombre, sel: a.codigo === cur }));
 	// Campo Subgrupo: solo aparece si el área tiene subgrupos
 	function sgField(cls, getArea, get, set) {
@@ -535,14 +537,15 @@
 	}
 
 	function editView(t) {
-		const ed = { asunto: t.asunto, prioridad: t.prioridad, area: t.area, subgrupo: t.subgrupo || '' };
+		const ed = { asunto: t.asunto, prioridad: t.prioridad, area: t.area, subgrupo: t.subgrupo || '', estadoVe: t.estadoVe };
 		const input = h('input', { class: 'field', value: t.asunto, oninput: e => { ed.asunto = e.target.value; } });
 		const sgSlot = sgField('dsec', () => ed.area, () => ed.subgrupo, v => { ed.subgrupo = v; });
 		const body = h('div', { class: 'dp-body', style: 'gap:18px' },
 			h('label', { class: 'dsec' }, h('b', { text: 'Asunto' }), input),
 			h('div', { class: 'dsec' }, h('b', { text: 'Prioridad' }), prioSeg(() => ed.prioridad, k => { ed.prioridad = k; })),
 			h('div', { class: 'dsec' }, h('b', { text: 'Área' }), combo(() => ({ label: AREA_NAME[ed.area] }), () => areaOpts(ed.area), v => { if (v !== ed.area) ed.subgrupo = ''; ed.area = v; sgSlot.repaint(); })),
-			sgSlot);
+			sgSlot,
+			h('div', { class: 'dsec' }, h('b', { text: 'Estado (mapa del Dashboard)' }), combo(() => estadoVeLabel(ed.estadoVe), () => estadoVeOpts(ed.estadoVe), v => { ed.estadoVe = v; })));
 		const foot = h('div', { class: 'dp-foot' },
 			h('span', { class: 't3', style: 'font-size:12px', text: 'El cambio queda en Auditoría' }),
 			h('span', { class: 'grow' }),
@@ -554,6 +557,7 @@
 					if (ed.prioridad !== t.prioridad) cambios.prioridad = PR_API[ed.prioridad];
 					if (ed.area !== t.area) cambios.area_designada = ed.area;
 					if (ed.subgrupo !== (t.subgrupo || '')) cambios.subgrupo_id = ed.subgrupo || null;
+					if (ed.estadoVe !== t.estadoVe) cambios.estado_ve = ed.estadoVe || null;
 					if (!Object.keys(cambios).length) { openPanel(t.codigo); return; }
 					if (cambios.asunto === '') { toast('Falta el asunto', 'El asunto no puede quedar vacío', 'red'); return; }
 					api('PATCH', '/api/tickets/' + encodeURIComponent(t.codigo), cambios)
@@ -783,7 +787,7 @@
 
 	// ---------- Nuevo ticket ----------
 	function openNew() {
-		const N = { asunto: '', desc: '', origen: 'COORDINADOR', area: '', subgrupo: '', remitente: '', p: 'SP', op: '' };
+		const N = { asunto: '', desc: '', origen: 'COORDINADOR', area: '', subgrupo: '', remitente: '', p: 'SP', op: '', estadoVe: '' };
 		const sgSlot = sgField('fld', () => N.area, () => N.subgrupo, v => { N.subgrupo = v; });
 		const ov = dialog(940, []);
 		const box = ov.firstElementChild;
@@ -835,6 +839,8 @@
 					h('div', { class: 'fld' }, h('span', { class: 'flabel', text: 'Área' }),
 						combo(() => (N.area ? { label: AREA_NAME[N.area] } : { label: 'Elegir área', muted: true }), () => areaOpts(N.area), v => { N.area = v; N.op = ''; N.subgrupo = ''; sgSlot.repaint(); paintOp(); sync(); })),
 					sgSlot,
+					h('div', { class: 'fld' }, h('span', { class: 'flabel row' }, 'Estado', h('small', { text: 'Opcional' })),
+						combo(() => estadoVeLabel(N.estadoVe), () => estadoVeOpts(N.estadoVe), v => { N.estadoVe = v; })),
 					senderSlot,
 					h('div', { class: 'fld' }, h('span', { class: 'flabel', text: 'Fecha de creación' }), h('span', { class: 'field ro', text: 'Al crear (ahora)' })),
 					h('div', { class: 'fld' }, h('span', { class: 'flabel', text: 'Creado por' }),
@@ -848,7 +854,7 @@
 			try {
 				const res = await api('POST', '/api/tickets', {
 					asunto: N.asunto.trim(), descripcion: N.desc.trim(), areaDesignada: N.area, subgrupoId: N.subgrupo || undefined,
-					origenIngesta: N.origen, remitente: N.remitente.trim(), prioridad: PR_API[N.p]
+					origenIngesta: N.origen, remitente: N.remitente.trim(), prioridad: PR_API[N.p], estadoVe: N.estadoVe || null
 				});
 				const code = res.ticket.codigo_incidencia;
 				if (N.op) {

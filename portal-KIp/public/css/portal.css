@@ -977,3 +977,24 @@ form.search { margin: 0; }
 /* ---------- 13. Revisión final ---------- */
 .on-solid { color: #FFFFFF; } /* texto o ícono sobre --solid o los mosaicos de color */
 
+
+/* Dashboard: distribución territorial (mapa de Venezuela) */
+.mapa-body { display: flex; gap: 20px; flex-wrap: wrap; align-items: stretch; }
+.mapa-body[hidden] { display: none; }
+.mapa-svgbox { position: relative; flex: 3 1 320px; min-width: 0; border-radius: 12px; background: var(--well); box-shadow: inset 0 0 0 1px var(--sep); padding: 12px; display: flex; align-items: center; justify-content: center; }
+.mapa-svgbox svg { width: 100%; max-height: 360px; height: auto; }
+.mapa-side { flex: 2 1 220px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.mapa-estado { stroke: var(--map-line); stroke-width: 1.5; fill: var(--map-empty); transition: fill .15s; cursor: default; }
+.mapa-estado.n1 { fill: var(--accent-bg); }
+.mapa-estado.n2 { fill: #7DD3FC; }
+.mapa-estado.n3 { fill: #0EA5E9; }
+.mapa-estado.n4 { fill: #0284C7; }
+.mapa-estado.on { stroke: #0EA5E9; stroke-width: 3; fill: #0284C7; }
+.mapa-estado.on.n0 { fill: #C7C7CC; }
+.mapa-tip { position: absolute; top: 12px; left: 12px; padding: 8px 12px; border-radius: 10px; background: rgba(28, 28, 30, 0.92); color: #fff; font-size: 12px; pointer-events: none; }
+.mapa-tip-name { display: flex; align-items: center; gap: 6px; font-weight: 700; }
+.mapa-tip-name .dot { width: 8px; height: 8px; border-radius: 50%; background: #FF453A; }
+.mapa-tip-line { margin-top: 3px; color: #AEAEB2; }
+.mapa-tip-line strong { color: #fff; font-variant-numeric: tabular-nums; }
+.mapa-rank { display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 8px; border: 0; border-radius: 8px; background: transparent; font: inherit; font-size: 12px; color: var(--t1); cursor: default; }
+.mapa-rank.on { background: rgba(14, 165, 233, 0.1); }
