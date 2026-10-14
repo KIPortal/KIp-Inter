@@ -35,3 +35,16 @@ Tabla `Mensaje` (migración `20261014150000_conversacion_ticket`): `tipo` = `ENT
 - **Respuesta al cliente:** sale por Graph desde el buzón compartido con asunto `Re: [INC-xxx] …`, para que la respuesta del cliente vuelva al mismo ticket. Sin Graph configurado se guarda con `enviado: false` y la burbuja dice "Correo no enviado".
 - **Enviar y esperar respuesta:** solo desde `EN_PROGRESO` o `EN_PAUSA` (409 si no); pasa a `EN_ESPERA_TERCEROS` y audita `TICKET_EN_ESPERA`.
 - **Correo del cliente** con `INC-xxx` en el asunto: entra como `ENTRANTE`; si el ticket estaba en espera, vuelve a `EN_PROGRESO` y audita `TICKET_REANUDADO` ("Respondió el cliente").
+
+## Panel del operador (Fase 9, `GET /` con rol OPERADOR)
+
+Lo arma `src/services/operatorPanelService.js` (`buildOperatorPanel`); la vista `operator-dashboard.ejs` dibuja encabezado, tarjetas y traspaso, y `public/js/operador.js` la bandeja.
+
+- **Colas:** `entrantes` (NUEVO sin asignar de su área y de General), `asignados` (NUEVO asignado a él por el coordinador; "Empezar" usa `POST /api/tickets/:code/claim`), `atencion` (EN_PROGRESO), `espera` (EN_PAUSA y EN_ESPERA_TERCEROS), `resueltos` (RESUELTO/CERRADO con fin de trabajo hoy). Orden: P1 primero, luego el más antiguo.
+- **Columna de tiempo:** Esperando (desde la llegada), Asignado hace / En atención (desde `fecha_asignacion`), Detenido (desde `updatedAt`), Puntos (en resueltos).
+- **Alerta de antigüedad** en Entrantes con las reglas de Administración (`antiguedad.P1…SP`, se puede apagar).
+- **Tarjetas:** Mi turno (reloj de 12 h con el arco de la jornada o de la guardia), Pendientes (asignados / en atención / en espera), Resueltos hoy (pendientes de cierre / cerrados) y "puntos hoy" (suma de `puntos_complejidad` de los resueltos hoy). El operador no ve sobrecarga ni el promedio del área.
+- **Disponibilidad:** Disponible y Atendiendo (con un P1 en atención) son automáticos; Fuera de puesto (`EN_TERRENO`, el motivo y la hora de regreso quedan en el navegador y vuelve solo a Disponible) y Ausente (`AUSENTE`) usan `PATCH /api/operators/:id/status`.
+- **Pausar / Resolver:** `PATCH /api/tickets/:code/status` con `status` = `EN_PAUSA`, `EN_ESPERA_TERCEROS` (nuevo, desde EN_PROGRESO, audita `TICKET_EN_ESPERA`) o `RESUELTO`, y `nota` opcional (≤ 500) que va al detalle de la auditoría.
+- **Avisos (campana):** se deducen de las colas (P1 nuevo en su área, antigüedad superada, asignado por el coordinador). La matriz de avisos de Administración se conecta en la Fase 10.
+- **Pendientes del traspaso:** solo si está de guardia y hay un traspaso vigente.

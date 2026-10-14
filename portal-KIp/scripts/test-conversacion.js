@@ -251,7 +251,9 @@ function setup(ticket) {
 
     await t('Vista del operador: pestañas, conversación y estilos del tema', async () => {
         const file = path.join(__dirname, '..', 'views', 'operator-dashboard.ejs');
-        const html = ejs.render(fs.readFileSync(file, 'utf8'), { currentUser: OP, ticketsAvailable: [], ticketsAssigned: [], ticketsPaused: [], ticketsWaiting: [], ticketsResolved: [] }, { filename: file });
+        const { buildOperatorPanel } = require('../src/services/operatorPanelService');
+        const panel = buildOperatorPanel({ user: OP, now: NOW });
+        const html = ejs.render(fs.readFileSync(file, 'utf8'), { currentUser: OP, panel }, { filename: file });
         ['id="tdTabInfo"', 'id="tdTabThread"', 'id="tdMsgCount"', 'role="log"', 'id="tdSendWait"', 'Nota interna', '/css/ticket-detalle.css', '/js/ticket-conversacion.js', "localStorage.getItem('kip.theme')"]
             .forEach(s => assert(html.includes(s), 'falta ' + s));
         const css = fs.readFileSync(path.join(__dirname, '..', 'public', 'css', 'ticket-detalle.css'), 'utf8');

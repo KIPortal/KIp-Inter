@@ -1,8 +1,9 @@
 <%#
   Barra lateral del coordinador (IMPLEMENTACION.md §2.1, prototipo Main.dc.html).
   Uso: include('partials/sidebar', { currentUser, activo: 'dashboard', conteos: { tickets, enTurno, totalOperadores } })
-  activo: dashboard | tickets | turno | reportes | auditoria | admin
+  activo: dashboard | tickets | turno | reportes | auditoria | admin | panel (operador)
   conteos es opcional; si falta un dato, no se muestra.
+  Operador: conteos.misTickets (activos) y conteos.area (nombre del área, va bajo su nombre).
 %>
 <%
 	const usuario = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : {};
@@ -11,6 +12,7 @@
 	const nombre = usuario.nombre || 'Usuario';
 	const inicial = nombre.trim().charAt(0).toUpperCase() || '?';
 	const esCoordinador = usuario.rol === 'COORDINADOR';
+	const esOperador = usuario.rol === 'OPERADOR';
 	const tieneTurno = Number.isFinite(c.enTurno) && Number.isFinite(c.totalOperadores);
 
 	const iconos = {
@@ -20,6 +22,7 @@
 		reportes: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
 		auditoria: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
 		admin: '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>',
+		panel: '<rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/>',
 		tema: '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
 		salir: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>'
 	};
@@ -29,6 +32,9 @@
 		{ clave: 'dashboard', texto: 'Dashboard General', href: '/' },
 		{ clave: 'tickets', texto: 'Tickets', href: '/tickets#tickets', dato: Number.isFinite(c.tickets) ? String(c.tickets) : '' },
 		{ clave: 'turno', texto: 'Gestión de Turno', href: '/gestion-turno', dato: tieneTurno ? `${c.enTurno}/${c.totalOperadores}` : '', datoClase: 'ok' }
+	];
+	const operacion = [
+		{ clave: 'panel', texto: 'Mi panel', href: '/', dato: Number.isFinite(c.misTickets) ? String(c.misTickets) : '' }
 	];
 	const control = [
 		{ clave: 'reportes', texto: 'Reportes', href: '/reportes' },
@@ -63,13 +69,14 @@
 			<span class="sb-avatar" aria-hidden="true"><%= inicial %></span>
 			<span class="sb-txt">
 				<span class="sb-uname"><%= nombre %></span>
-				<% if (usuario.email) { %><span class="sb-mail"><%= usuario.email %></span><% } %>
+				<% if (esOperador && c.area) { %><span class="sb-mail"><%= c.area %></span><% } else if (usuario.email) { %><span class="sb-mail"><%= usuario.email %></span><% } %>
 			</span>
 		</div>
 	</div>
 
-	<span class="sb-sec">Coordinación</span>
-	<% coordinacion.forEach(item => { %>
+	<% const principal = esOperador ? operacion : coordinacion; %>
+	<span class="sb-sec"><%= esOperador ? 'Operación' : 'Coordinación' %></span>
+	<% principal.forEach(item => { %>
 		<a class="sideitem" href="<%= item.href %>" title="<%= item.texto %>"<% if (actual === item.clave) { %> aria-current="page"<% } %>>
 			<%- svg(item.clave) %>
 			<span class="sb-label"><%= item.texto %></span>

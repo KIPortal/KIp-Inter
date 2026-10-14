@@ -306,6 +306,7 @@ async function updateOperatorTicket(req, res, action) {
 
     const transitions = {
         pause: { from: ['EN_PROGRESO'], to: 'EN_PAUSA', error: 'Solo se puede pausar un ticket en progreso' },
+        wait: { from: ['EN_PROGRESO'], to: 'EN_ESPERA_TERCEROS', error: 'Solo se puede dejar en espera un ticket en progreso' },
         resume: { from: ['EN_PAUSA', 'EN_ESPERA_TERCEROS'], to: 'EN_PROGRESO', error: 'El ticket no está pausado ni en espera externa' },
         resolve: { from: ['EN_PROGRESO', 'EN_PAUSA', 'EN_ESPERA_TERCEROS'], to: 'RESUELTO', error: 'El ticket no se puede resolver desde su estado actual' }
     };
@@ -341,8 +342,10 @@ async function updateOperatorTicket(req, res, action) {
         if (result.count !== 1) {
             return res.status(409).json({ success: false, error: 'El ticket cambió antes de completar la acción' });
         }
-        const ACCION = { pause: 'TICKET_PAUSADO', resume: 'TICKET_REANUDADO', resolve: 'TICKET_RESUELTO' }[action];
-        if (ACCION) await logAudit(req, ACCION, ticket.id, `Estado: ${ticket.estado_actual} → ${transition.to}`);
+        const ACCION = { pause: 'TICKET_PAUSADO', wait: 'TICKET_EN_ESPERA', resume: 'TICKET_REANUDADO', resolve: 'TICKET_RESUELTO' }[action];
+        // Nota opcional del operador (motivo de la pausa o qué se hizo al resolver)
+        const nota = typeof req.body?.nota === 'string' ? req.body.nota.trim().slice(0, 500) : '';
+        if (ACCION) await logAudit(req, ACCION, ticket.id, `Estado: ${ticket.estado_actual} → ${transition.to}${nota ? '. Nota: ' + nota : ''}`);
         return await sendTicket(req, res, ticket.id);
     } catch (error) {
         console.error(`Error al ${action} ticket:`, error);
@@ -375,6 +378,7 @@ function updateOperatorStatus(req, res) {
         EN_PAUSA: 'pause',
         PAUSADO: 'pause',
         EN_ESPERA: 'pause',
+        EN_ESPERA_TERCEROS: 'wait',
         pausar: 'pause',
         EN_PROGRESO: 'resume',
         RESUELTO: 'resolve',
