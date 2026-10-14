@@ -60,11 +60,14 @@ function personaWhere(user) {
 
 /**
  * ¿Puede `actor` crear o editar a `objetivo` dándole el rol `rolNuevo`?
- * Solo el gerente toca a jefes y gerentes. Devuelve el motivo o null si puede.
+ * Solo el gerente toca a jefes y gerentes (salvo que aún no haya ninguno).
+ * Devuelve el motivo o null si puede.
  */
-function motivoNoGestionar(actor, objetivo, rolNuevo) {
+function motivoNoGestionar(actor, objetivo, rolNuevo, { hayGerente = true } = {}) {
     if (!puedeAdministrar(actor)) return 'Permisos insuficientes';
     if (actor.rol === 'GERENTE') return null;
+    // Mientras no haya un gerente activo, el coordinador puede nombrar al primero (y a los jefes)
+    if (!hayGerente) return null;
     if (rolNuevo && ROLES_ALTOS.includes(rolNuevo)) return 'Solo el gerente puede dar los roles Jefe y Gerente';
     if (objetivo && ROLES_ALTOS.includes(objetivo.rol)) return 'Solo el gerente puede editar a jefes y gerentes';
     return null;

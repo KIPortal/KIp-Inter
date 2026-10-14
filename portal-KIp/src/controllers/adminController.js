@@ -15,7 +15,14 @@ const { auditUserId } = require('../services/auditViewService');
 const { loadOperatorsWithShift } = require('./dashboardController');
 const { validateUser, describeUser, MIN_CLAVE } = require('../services/userAdminService');
 const { allAreas, refreshAreas, validateAreaName, allSubgrupos, isValidSubgrupo, subgrupoName } = require('../services/areaCatalog');
-const { SUPERVISORES, motivoNoGestionar } = require('../services/roleService');
+const { SUPERVISORES, ROLES_ALTOS, motivoNoGestionar } = require('../services/roleService');
+
+// ¿Hay algún gerente activo? Sin gerente, el coordinador puede nombrar al primero.
+// Solo se consulta cuando el cambio toca a jefes o gerentes.
+async function hayGerente(actor, ...roles) {
+    if (actor?.rol === 'GERENTE' || !roles.some(r => ROLES_ALTOS.includes(r))) return true;
+    return (await prisma.user.count({ where: { rol: 'GERENTE', activo: true } })) > 0;
+}
 
 const grupo = codigo => (codigo === 'EN_TURNO' ? 'turno' : (codigo === 'DE_GUARDIA' || codigo === 'EN_CASA_GUARDIA') ? 'guardia' : 'fuera');
 
@@ -66,6 +73,8 @@ async function renderAdmin(req, res) {
             desactivados: (desactivados || []).map(u => ({ id: u.id, nombre: u.nombre, email: u.email, rol: u.rol, area: u.area_designada, telefono: u.telefono || '' })),
             miId: req.user?.id || null,
             miRol: req.user?.rol || null,
+            // Sin gerente activo, el coordinador también puede dar los roles Jefe y Gerente
+            daRolesAltos: req.user?.rol === 'GERENTE' || !coordinadores.some(c => c.rol === 'GERENTE'),
             minClave: MIN_CLAVE,
             eventos: EVENTOS,
             destinatarios: DESTINATARIOS,
@@ -145,7 +154,7 @@ function motivoRolFinal(final) {
 async function createUser(req, res) {
     const { error, datos } = validateUser(req.body, { nuevo: true });
     if (error) return res.status(400).json({ success: false, error });
-    const prohibido = motivoNoGestionar(req.user, null, datos.rol);
+    const prohibido = motivoNoGestionar(req.user, null, datos.rol, { hayGerente: await hayGerente(req.user, datos.rol) });
     if (prohibido) return res.status(403).json({ success: false, error: prohibido });
     const motivo = motivoRolFinal(datos);
     if (motivo) return res.status(400).json({ success: false, error: motivo });
@@ -169,7 +178,7 @@ async function updateUser(req, res) {
     try {
         const antes = await prisma.user.findUnique({ where: { id }, select: { id: true, nombre: true, email: true, rol: true, area_designada: true, activo: true, atiende_tickets: true, telefono: true, subgrupo_id: true } });
         if (!antes) return res.status(404).json({ success: false, error: 'Usuario no encontrado' });
-        const prohibido = motivoNoGestionar(req.user, antes, datos.rol);
+        const prohibido = motivoNoGestionar(req.user, antes, datos.rol, { hayGerente: await hayGerente(req.user, datos.rol, antes.rol) });
         if (prohibido) return res.status(403).json({ success: false, error: prohibido });
         // Cambiar de área sin elegir subgrupo lo deja sin subgrupo
         if (datos.area_designada && datos.area_designada !== antes.area_designada && datos.subgrupo_id === undefined && antes.subgrupo_id) datos.subgrupo_id = null;

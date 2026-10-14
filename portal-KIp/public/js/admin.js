@@ -234,7 +234,7 @@
 	// Solo el gerente da (o quita) los roles Jefe y Gerente
 	const ROLES = [['OPERADOR', 'Operador'], ['COORDINADOR', 'Coordinador'], ['JEFE', 'Jefe de área'], ['GERENTE', 'Gerente']];
 	const ROLES_ALTOS = ['JEFE', 'GERENTE'];
-	const esGerente = D.miRol === 'GERENTE';
+	const esGerente = D.daRolesAltos === true || D.miRol === 'GERENTE'; // sin gerente activo, el coordinador nombra al primero
 	function genClave() {
 		const abc = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
 		const n = new Uint32Array(10);
@@ -342,7 +342,7 @@
 	}
 
 	// ---------- Áreas: crear, renombrar y activar/desactivar ----------
-	function openArea(codigo) {
+	function openArea(codigo, { subgrupo = false } = {}) {
 		const a = codigo ? D.areas.find(x => x.codigo === codigo) : null;
 		const M = { nombre: a ? a.nombre : '', activa: a ? a.activa : true };
 		const ov = h('div', { class: 'overlay', onclick: e => { if (e.target === ov) ov.remove(); } });
@@ -354,12 +354,13 @@
 		// Subgrupos del área (p. ej. FTTx: Soporte y Cabecera): renombrar, activar/desactivar y agregar
 		const SG = a ? (a.subgrupos || []).map(g => ({ id: g.id, nombre: g.nombre, activo: g.activo, antes: g })) : [];
 		const nuevoSg = { nombre: '' };
+		const nuevoIn = h('input', { class: 'field', maxlength: 60, placeholder: 'Nuevo subgrupo, ej. Soporte', 'aria-label': 'Nuevo subgrupo', oninput: e => { nuevoSg.nombre = e.target.value; } });
 		const sgBox = a && a.codigo !== 'GENERAL' ? h('div', { class: 'dsec' }, h('b', { text: 'Subgrupos (opcional)' }),
 			h('span', { class: 't3', style: 'font-size:12px', text: 'Equipos dentro del área. Cada persona y cada ticket puede tener uno; el operador ve los de su subgrupo y los del área sin subgrupo.' }),
 			SG.map(g => h('div', { style: 'display:flex;align-items:center;gap:10px' },
 				h('input', { class: 'field', value: g.nombre, maxlength: 60, 'aria-label': 'Nombre del subgrupo', style: 'flex:1', oninput: e => { g.nombre = e.target.value; } }),
 				sw(g.activo, e => { g.activo = !g.activo; e.currentTarget.setAttribute('aria-checked', String(g.activo)); }, 'Subgrupo activo: ' + g.nombre))),
-			h('input', { class: 'field', maxlength: 60, placeholder: 'Nuevo subgrupo, ej. Soporte', 'aria-label': 'Nuevo subgrupo', oninput: e => { nuevoSg.nombre = e.target.value; } })) : null;
+			nuevoIn) : null;
 		const send = async (method, url, body) => {
 			const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
 			let j = {};
@@ -405,7 +406,7 @@
 			}
 		});
 		document.body.append(ov);
-		setTimeout(() => nombre.focus(), 30);
+		setTimeout(() => (subgrupo && sgBox ? nuevoIn : nombre).focus(), 30);
 	}
 
 	// ---------- Secciones ----------
@@ -441,7 +442,7 @@
 		$('[data-discard]').addEventListener('click', () => { leaving = true; window.location.reload(); });
 		$$('[data-user-new]').forEach(b => b.addEventListener('click', () => openUser(null, b.dataset.userNew)));
 		$$('[data-user-edit]').forEach(b => b.addEventListener('click', () => openUser(b.dataset.userEdit)));
-		$$('[data-area-edit]').forEach(b => b.addEventListener('click', () => openArea(b.dataset.areaEdit)));
+		$$('[data-area-edit]').forEach(b => b.addEventListener('click', () => openArea(b.dataset.areaEdit, { subgrupo: b.hasAttribute('data-focus-subgrupo') })));
 		const nueva = $('[data-area-new]');
 		if (nueva) nueva.addEventListener('click', () => openArea(null));
 		document.addEventListener('keydown', e => { if (e.key === 'Escape') { const o = document.querySelector('.overlay'); if (o) o.remove(); } });

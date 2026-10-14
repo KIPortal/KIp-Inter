@@ -124,6 +124,6 @@
 </div>
 
 <script id="turno-data" type="application/json"><%- JSON.stringify(datos).replace(/</g, '\\u003c') %></script>
-<script src="/js/turno.js" defer></script>
+<script src="/js/turno.js?v=<%= locals.v || 1 %>" defer></script>
 </body>
 </html>

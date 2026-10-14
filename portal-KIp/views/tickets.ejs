@@ -130,6 +130,6 @@
 <div data-layer></div>
 
 <script id="tickets-data" type="application/json"><%- JSON.stringify(datos).replace(/</g, '\\u003c') %></script>
-<script src="/js/tickets.js" defer></script>
+<script src="/js/tickets.js?v=<%= locals.v || 1 %>" defer></script>
 </body>
 </html>

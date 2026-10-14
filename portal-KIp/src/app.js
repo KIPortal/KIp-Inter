@@ -29,6 +29,8 @@ if (!sessionSecret) {
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '..', 'views'));
+// Versión de los archivos estáticos: cambia en cada arranque para que el navegador no use JS/CSS viejos
+app.locals.v = Date.now().toString(36);
 app.use(express.static(path.join(__dirname, '..', 'public')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

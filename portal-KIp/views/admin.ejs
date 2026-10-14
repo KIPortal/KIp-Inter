@@ -15,7 +15,7 @@
 		.concat(coordinadores.map(c => ({ id: c.id, nombre: c.nombre, email: c.email, rol: c.rol || 'COORDINADOR', area: c.area_designada || 'GENERAL', atiende: c.atiende_tickets === true, telefono: c.telefono || '', subgrupo: c.subgrupo_id || '' })))
 		.map(u => Object.assign(u, { activo: true }))
 		.concat(desactivados.map(u => Object.assign({}, u, { activo: false })));
-	const datos = { config, eventos, destinatarios, limites, vistaPrevia, usuarios, areas: areas.map(a => ({ codigo: a.codigo, nombre: a.nombre, activa: a.activa !== false, operadores: a.operadores.length, subgrupos: a.subgrupos || [] })), miId, miRol, minClave };
+	const datos = { config, eventos, destinatarios, limites, vistaPrevia, usuarios, areas: areas.map(a => ({ codigo: a.codigo, nombre: a.nombre, activa: a.activa !== false, operadores: a.operadores.length, subgrupos: a.subgrupos || [] })), miId, miRol, daRolesAltos: locals.daRolesAltos === true || miRol === 'GERENTE', minClave };
 	const ini = n => String(n || '?').split(/\s+/).slice(0, 2).map(p => p[0]).join('').toUpperCase();
 	const lapiz = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>';
 	const SECS = [
@@ -89,6 +89,7 @@
 								<div data-area-panel="<%= a.codigo %>"<% if (a.codigo !== (conOps[0] || areas[0]).codigo) { %> hidden<% } %>>
 									<div style="display:flex;align-items:center;gap:10px;padding:16px 24px 12px"><span style="display:flex;flex-direction:column;flex:1"><b style="font-size:15px"><%= a.nombre %></b><span class="t2" style="font-size:12px"><%= a.operadores.length %> <%= a.operadores.length === 1 ? 'operador' : 'operadores' %> · <%= a.turno %> en turno<%= a.guardia ? ' · ' + a.guardia + ' de guardia' : '' %><% const sgs = (a.subgrupos || []).filter(g => g.activo); if (sgs.length) { %> · Subgrupos: <%= sgs.map(g => g.nombre).join(', ') %><% } %></span></span>
 										<button type="button" class="pill pillbtn plain" style="height:30px;padding:0 14px;font-size:12px" data-area-edit="<%= a.codigo %>">Editar área</button>
+										<% if (a.codigo !== 'GENERAL' && a.activa !== false) { %><button type="button" class="pill pillbtn plain" style="height:30px;padding:0 14px;font-size:12px" data-area-edit="<%= a.codigo %>" data-focus-subgrupo>＋ Subgrupo</button><% } %>
 										<% if (a.activa !== false) { %><button type="button" class="primary" style="height:30px;padding:0 14px;font-size:12px" data-user-new="<%= a.codigo %>">＋ Agregar operador</button><% } %></div>
 									<% if (!a.operadores.length) { %>
 										<p class="empty" style="padding:4px 24px 12px">Esta área no tiene operadores.</p>
@@ -125,7 +126,7 @@
 								</table>
 							</div>
 							<div data-area-panel="__coord" hidden>
-								<div style="display:flex;align-items:center;gap:10px;padding:16px 24px 12px"><span style="display:flex;flex-direction:column;flex:1"><b style="font-size:15px">Coordinación y jefaturas</b><span class="t2" style="font-size:12px">El coordinador y el gerente ven todas las áreas; el jefe, solo la suya<%= miRol === 'GERENTE' ? '' : '. Solo el gerente da los roles Jefe y Gerente' %></span></span>
+								<div style="display:flex;align-items:center;gap:10px;padding:16px 24px 12px"><span style="display:flex;flex-direction:column;flex:1"><b style="font-size:15px">Coordinación y jefaturas</b><span class="t2" style="font-size:12px">El coordinador y el gerente ven todas las áreas; el jefe, solo la suya<%= miRol === 'GERENTE' ? '' : (locals.daRolesAltos ? '. Aún no hay gerente: nombra al primero con “Editar” o “＋ Agregar”' : '. Solo el gerente da los roles Jefe y Gerente') %></span></span>
 									<button type="button" class="primary" style="height:30px;padding:0 14px;font-size:12px" data-user-new="__coord">＋ Agregar</button></div>
 								<table class="rank-table">
 									<thead><tr><th style="padding-left:24px">Persona</th><th style="width:180px">Rol</th><th style="width:56px;padding-right:24px"><span class="sr-only">Acciones</span></th></tr></thead>
@@ -154,6 +155,6 @@
 </div>
 
 <script id="admin-data" type="application/json"><%- JSON.stringify(datos).replace(/</g, '\\u003c') %></script>
-<script src="/js/admin.js" defer></script>
+<script src="/js/admin.js?v=<%= locals.v || 1 %>" defer></script>
 </body>
 </html>

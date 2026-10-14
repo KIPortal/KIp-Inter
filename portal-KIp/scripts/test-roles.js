@@ -92,9 +92,9 @@ const OP = { id: 'o1', rol: 'OPERADOR', area_designada: 'WAN' };
 
     await t('Administración: el coordinador no crea jefes; el gerente sí, y el jefe necesita su área', async () => {
         const ctrl = require('../src/controllers/adminController');
-        let creado = null;
+        let creado = null, gerentes = 1;
         await con({
-            user: { findUnique: async ({ where }) => (where.id === 'j1' ? { ...JEFE, email: 'j@x.com', activo: true } : null), create: async ({ data }) => { creado = data; return { id: 'n1', ...data }; } },
+            user: { count: async () => gerentes, findUnique: async ({ where }) => (where.id === 'j1' ? { ...JEFE, email: 'j@x.com', activo: true } : null), create: async ({ data }) => { creado = data; return { id: 'n1', ...data }; } },
             auditLog: { create: async () => ({}) }
         }, async () => {
             const nuevo = { nombre: 'Jefa Telefonía', email: 'jt@x.com', rol: 'JEFE', area: 'TELEFONIA', clave: 'abcd1234', telefono: '0212-555 1234 ext 12' };
@@ -115,6 +115,12 @@ const OP = { id: 'o1', rol: 'OPERADOR', area_designada: 'WAN' };
             r = mockRes();
             await ctrl.updateUser({ params: { id: 'j1' }, body: { nombre: 'Otro nombre' }, user: COORD }, r);
             assert.strictEqual(r.code, 403, 'el coordinador no edita a un jefe');
+            // Sin gerente activo, el coordinador nombra al primero
+            gerentes = 0;
+            r = mockRes();
+            await ctrl.createUser({ body: { ...nuevo, email: 'g2@x.com', rol: 'GERENTE', area: 'GENERAL' }, user: COORD }, r);
+            assert.strictEqual(r.code, 201, 'sin gerente, el coordinador nombra al primero');
+            assert.strictEqual(R.motivoNoGestionar(COORD, null, 'GERENTE', { hayGerente: false }), null);
         });
     });
 

@@ -21,10 +21,10 @@
 <html lang="es">
 <head>
 	<%- include('partials/head', { titulo: 'Mi panel' }) %>
-	<link href="/css/operador.css" rel="stylesheet">
-	<link href="/css/ticket-detalle.css" rel="stylesheet">
-	<script src="/js/ticket-conversacion.js" defer></script>
-	<script src="/js/operador.js" defer></script>
+	<link href="/css/operador.css?v=<%= locals.v || 1 %>" rel="stylesheet">
+	<link href="/css/ticket-detalle.css?v=<%= locals.v || 1 %>" rel="stylesheet">
+	<script src="/js/ticket-conversacion.js?v=<%= locals.v || 1 %>" defer></script>
+	<script src="/js/operador.js?v=<%= locals.v || 1 %>" defer></script>
 </head>
 <body>
 <div class="app op" id="op">
