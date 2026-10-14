@@ -9,7 +9,7 @@
  * Funciones puras: sin base de datos ni envío de correo.
  */
 const { UTC_OFFSET_HOURS } = require('./metricsService');
-const { atiendeTickets } = require('./roleService');
+const { atiendeTickets, esSupervisor, ticketEnAlcance } = require('./roleService');
 
 const MAX_TEXTO = 5000;
 const MAX_ADJUNTOS = 5;
@@ -106,7 +106,8 @@ function validarAdjuntos(files = [], tipo) {
 /** El operador ve el ticket si es suyo o si está sin tomar en su área (o en la general). */
 function puedeVer(ticket, user) {
     if (!ticket || !user) return false;
-    if (user.rol === 'COORDINADOR') return true;
+    // Coordinador y gerente ven todo; el jefe, los de su área (y los sin clasificar)
+    if (esSupervisor(user)) return ticketEnAlcance(user, ticket.area_designada);
     if (ticket.asignado_a_id === user.id) return true;
     const area = user.area_designada || 'GENERAL';
     return ticket.asignado_a_id == null && ticket.estado_actual === 'NUEVO'

@@ -231,7 +231,10 @@
 	}
 
 	// ---------- Usuarios: agregar y editar ----------
-	const ROLES = [['OPERADOR', 'Operador'], ['COORDINADOR', 'Coordinador']];
+	// Solo el gerente da (o quita) los roles Jefe y Gerente
+	const ROLES = [['OPERADOR', 'Operador'], ['COORDINADOR', 'Coordinador'], ['JEFE', 'Jefe de área'], ['GERENTE', 'Gerente']];
+	const ROLES_ALTOS = ['JEFE', 'GERENTE'];
+	const esGerente = D.miRol === 'GERENTE';
 	function genClave() {
 		const abc = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
 		const n = new Uint32Array(10);
@@ -247,13 +250,16 @@
 			area: u ? u.area : (areaInicial && areaInicial !== '__coord' ? areaInicial : 'GENERAL'),
 			clave: u ? '' : genClave(),
 			activo: u ? u.activo !== false : true,
-			atiende: u ? u.atiende === true : false
+			atiende: u ? u.atiende === true : false,
+			telefono: u ? u.telefono || '' : ''
 		};
+		const bloqueado = !!u && !esGerente && ROLES_ALTOS.includes(u.rol);
 		const ov = h('div', { class: 'overlay', onclick: e => { if (e.target === ov) ov.remove(); } });
 		const box = h('div', { class: 'dialog', role: 'dialog', 'aria-modal': 'true', style: 'width:520px' });
 		ov.append(box);
 		const err = h('div', { class: 'warnbox', hidden: true });
 		const ok = h('button', { type: 'button', class: 'primary', text: u ? 'Guardar' : 'Crear usuario' });
+		if (bloqueado) ok.disabled = true;
 		const input = (key, attrs) => h('input', Object.assign({ class: 'field', value: M[key], oninput: e => { M[key] = e.target.value; } }, attrs));
 		const claveIn = input('clave', { type: 'text', autocomplete: 'off', placeholder: u ? 'Déjala vacía para no cambiarla' : '', 'aria-label': 'Clave temporal', style: 'flex:1' });
 		const rolSeg = h('div', { class: 'seg', role: 'radiogroup', 'aria-label': 'Rol' });
@@ -265,16 +271,16 @@
 		const atiendeRow = h('div', { class: 'rule-row', style: 'min-height:40px;border:0' },
 			h('span', { class: 'lbl', style: 'flex:1' }, h('b', { text: 'También atiende tickets' }), h('span', { text: 'Puede tomarlos y trabajarlos en Mi panel; cuenta en la carga, los turnos y los reportes como un operador' })), atiendeSw);
 		const paintRol = () => {
-			rolSeg.replaceChildren(...ROLES.map(([v, l]) => h('button', {
-				type: 'button', role: 'radio', 'aria-checked': String(M.rol === v), disabled: esYo && M.rol !== v,
+			rolSeg.replaceChildren(...ROLES.filter(([v]) => esGerente || !ROLES_ALTOS.includes(v) || M.rol === v).map(([v, l]) => h('button', {
+				type: 'button', role: 'radio', 'aria-checked': String(M.rol === v), disabled: (esYo || bloqueado) && M.rol !== v,
 				onclick: () => { M.rol = v; paintRol(); }
 			}, h('span', { text: l }))));
-			atiendeRow.hidden = M.rol !== 'COORDINADOR';
-			areaRow.hidden = M.rol === 'COORDINADOR' && !M.atiende;
+			atiendeRow.hidden = M.rol !== 'COORDINADOR' && M.rol !== 'JEFE';
+			areaRow.hidden = M.rol === 'GERENTE' || (M.rol === 'COORDINADOR' && !M.atiende);
 		};
 		paintRol();
 		box.append(
-			h('div', { class: 'dlg-head' }, h('h2', { text: u ? 'Editar ' + u.nombre : (M.rol === 'COORDINADOR' ? 'Nuevo coordinador' : 'Nuevo operador') }),
+			h('div', { class: 'dlg-head' }, h('h2', { text: u ? 'Editar ' + u.nombre : (M.rol === 'OPERADOR' ? 'Nuevo operador' : 'Nueva persona en coordinación') }),
 				h('span', { text: u ? u.email : 'Podrá entrar al portal con su correo y la clave temporal' })),
 			h('div', { class: 'dlg-body', style: 'gap:14px' },
 				h('label', { class: 'dsec' }, h('b', { text: 'Nombre y apellido' }), input('nombre', { maxlength: 80, placeholder: 'Ej. Ana Pérez' })),
@@ -282,6 +288,9 @@
 				h('div', { class: 'dsec' }, h('b', { text: 'Rol' }), rolSeg, esYo ? h('span', { class: 't3', style: 'font-size:12px', text: 'No puedes cambiar tu propio rol' }) : null),
 				atiendeRow,
 				areaRow,
+				h('label', { class: 'dsec' }, h('b', { text: 'Teléfono o extensión (opcional)' }), input('telefono', { type: 'tel', maxlength: 40, placeholder: 'Ej. 0212-555 1234 ext 12' }),
+					h('span', { class: 't3', style: 'font-size:12px', text: 'Sale en Contactos para que el equipo sepa cómo ubicarlo' })),
+				bloqueado ? h('div', { class: 'warnbox', text: 'Solo el gerente puede editar a jefes y gerentes.' }) : null,
 				u && !esYo ? h('div', { class: 'rule-row', style: 'min-height:40px;border:0' }, h('span', { class: 'lbl', style: 'flex:1' }, h('b', { text: 'Usuario activo' }), h('span', { text: 'Desactivado no entra al portal ni recibe tickets; su historial se conserva' })), sw(M.activo, e => { M.activo = !M.activo; e.currentTarget.setAttribute('aria-checked', String(M.activo)); }, 'Usuario activo')) : null,
 				h('div', { class: 'dsec' }, h('b', { text: u ? 'Nueva clave temporal (opcional)' : 'Clave temporal' }),
 					h('div', { style: 'display:flex;gap:8px' }, claveIn,
@@ -291,10 +300,11 @@
 			h('div', { class: 'dlg-foot' }, h('span', { class: 'note', text: 'El cambio queda en Auditoría' }), h('span', { class: 'grow' }),
 				h('button', { type: 'button', class: 'pill pillbtn plain', text: 'Cancelar', onclick: () => ov.remove() }), ok));
 		ok.addEventListener('click', async () => {
-			const coordSolo = M.rol === 'COORDINADOR' && !M.atiende;
-			const body = { nombre: M.nombre, email: M.email, rol: M.rol, area: coordSolo ? 'GENERAL' : M.area, atiende: M.rol === 'COORDINADOR' && M.atiende };
+			const sinArea = M.rol === 'GERENTE' || (M.rol === 'COORDINADOR' && !M.atiende);
+			const puedeAtender = M.rol === 'COORDINADOR' || M.rol === 'JEFE';
+			const body = { nombre: M.nombre, email: M.email, rol: M.rol, area: sinArea ? 'GENERAL' : M.area, atiende: puedeAtender && M.atiende, telefono: M.telefono.trim() };
 			if (M.clave) body.clave = M.clave;
-			if (u) { body.activo = M.activo; Object.keys(body).forEach(k => { if (k !== 'clave' && body[k] === (k === 'activo' ? u.activo !== false : k === 'atiende' ? u.atiende === true : u[k])) delete body[k]; }); }
+			if (u) { body.activo = M.activo; Object.keys(body).forEach(k => { if (k !== 'clave' && body[k] === (k === 'activo' ? u.activo !== false : k === 'atiende' ? u.atiende === true : k === 'telefono' ? (u.telefono || '') : u[k])) delete body[k]; }); }
 			if (u && !Object.keys(body).length) { ov.remove(); return; }
 			ok.disabled = true;
 			try {

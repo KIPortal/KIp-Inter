@@ -5,7 +5,7 @@ const { loadShiftData } = require('./turnoController');
 const { buildCoordinatorPanel } = require('../services/dashboardService');
 const { buildQueue } = require('../services/ticketQueueService');
 const { buildOperatorPanel } = require('../services/operatorPanelService');
-const { ATIENDE_WHERE, atiendeTickets } = require('../services/roleService');
+const { ATIENDE_WHERE, atiendeTickets, ticketWhere, personaWhere } = require('../services/roleService');
 const { loadActiveHandoff } = require('./ticketController');
 const { AREA_NAMES } = require('../services/periodReportService');
 const { loadConfig } = require('../services/configService');
@@ -21,15 +21,17 @@ async function renderDashboard(req, res) {
     try {
         // Solo lo que usa el Dashboard nuevo, en paralelo (cada consulta va a Supabase)
         const ahora = new Date();
+        // El jefe de área solo ve su área (ticketWhere/personaWhere no limitan al coordinador ni al gerente)
         const [tickets, operadores, config] = await Promise.all([
             prisma.ticket.findMany({
+                where: ticketWhere(req.user),
                 select: {
                     codigo_incidencia: true, estado_actual: true, area_designada: true, puntos_complejidad: true,
                     asignado_a_id: true, createdAt: true, updatedAt: true, fecha_asignacion: true,
                     resueltoEn: true, fecha_cierre: true
                 }
             }),
-            loadOperatorsWithShift(ahora),
+            loadOperatorsWithShift(ahora, personaWhere(req.user)),
             loadConfig(prisma)
         ]);
         const panel = buildCoordinatorPanel({ tickets, operators: operadores, now: ahora, periodo: req.query.periodo, rules: config.reglas });
@@ -44,15 +46,16 @@ async function renderDashboard(req, res) {
  * Operadores con su carga activa y su estado de turno
  * (En turno / De guardia / Fuera de turno) en el instante `ahora`.
  */
-async function loadOperatorsWithShift(ahora = new Date()) {
+async function loadOperatorsWithShift(ahora = new Date(), filtro = {}) {
     const [operadores, { horarioPorUsuario, guardiaIds }] = await Promise.all([prisma.user.findMany({
-        where: { activo: true, ...ATIENDE_WHERE },
+        where: { activo: true, ...ATIENDE_WHERE, ...filtro },
         select: {
             id: true,
             email: true,
             nombre: true,
             rol: true,
             area_designada: true,
+            telefono: true,
             estado_operativo: true,
             tickets_asignados: {
                 // Carga activa completa: incluye recién asignados (NUEVO) y en pausa
@@ -82,6 +85,7 @@ async function renderTickets(req, res) {
         const ahora = new Date();
         const [tickets, operadores, enPapelera, traspaso, config, siguienteCodigo] = await Promise.all([
             prisma.ticket.findMany({
+                where: ticketWhere(req.user),
                 include: {
                     ...ticketRelations,
                     asignado_a: { select: { id: true, nombre: true } },
@@ -89,8 +93,8 @@ async function renderTickets(req, res) {
                 },
                 orderBy: { createdAt: 'desc' }
             }),
-            loadOperatorsWithShift(ahora),
-            prisma.ticket.count({ where: { eliminado_en: { not: null } } }),
+            loadOperatorsWithShift(ahora, personaWhere(req.user)),
+            prisma.ticket.count({ where: { eliminado_en: { not: null }, ...ticketWhere(req.user) } }),
             loadActiveHandoff(ahora),
             loadConfig(prisma),
             getNextTicketCode(prisma)

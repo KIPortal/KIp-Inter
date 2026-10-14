@@ -1,5 +1,5 @@
 
-## Turnos y guardias (`/api/turnos`, solo COORDINADOR)
+## Turnos y guardias (`/api/turnos`, coordinador, jefe o gerente; el jefe solo su área)
 
 - `GET /api/turnos?semana=AAAA-MM-DD` → `{ semana, operadores: [{ id, nombre, area_designada, estado_operativo, horario:{dias,inicio,fin}, horarioPersonalizado, deGuardia, turno:{codigo,etiqueta,enTurno,deGuardia,disponible} }] }`.
 - `PUT /api/turnos/guardia` `{ semana?, operatorIds:["uuid", ...] }` → reemplaza la guardia de esa semana (lunes–domingo, Caracas).
@@ -56,3 +56,11 @@ Campo `User.atiende_tickets` (migración `20261014180000_coordinador_atiende`), 
 - Puede usar las rutas del operador (`claim`, `status`, `pause`, `resume`, `resolve`, `mensajes`, `PATCH /api/operators/:id/status`) y tiene `GET /mi-panel` (el mismo panel del operador).
 - Toma tickets de cualquier área: botón **Tomar** en el detalle de Tickets (`POST /api/tickets/:code/claim`, queda EN_PROGRESO a su nombre).
 - Cuenta como operador en carga, sugerencias, Gestión de Turno y reportes; en Administración aparece en la lista de coordinadores.
+
+## Roles Jefe de área y Gerente, y Contactos
+
+- `roleService`: `esSupervisor` (COORDINADOR, JEFE, GERENTE), `puedeAdministrar` (COORDINADOR, GERENTE), `areaScope`/`areasVisibles` (el jefe: su área y GENERAL), `ticketWhere`, `personaWhere`, `motivoNoGestionar`.
+- Rutas: `/api/tickets` de coordinación usan `authorizeSupervisor` + `limitarAlArea` (`src/middlewares/areaScope.js`): para el jefe, el ticket (por código), el área enviada y el `operatorId` deben ser de su área (403 si no). `/api/turnos` y `/reportes/data|excel`: `authorizeSupervisor`. `/admin`, `/api/admin`, `/auditoria`: `authorizeAdmin`.
+- Jefe: Dashboard, Tickets (incluida la papelera), Gestión de Turno y Reportes filtran por su área; el reporte fuerza `area` a la suya. Al definir la guardia solo reemplaza la de su área.
+- Administración: `POST/PATCH /api/admin/usuarios` aceptan `rol` JEFE/GERENTE y `telefono` (texto ≤40, números, +, (), guiones, puntos, "ext"; vacío = sin teléfono). Solo el gerente da esos roles o edita a jefes y gerentes (403). El jefe necesita un área distinta de General (400).
+- Contactos: `GET /contactos` (cualquier usuario) dibuja `contactService.buildContacts` → `{ grupos[{codigo, nombre, personas[{id, nombre, iniciales, rol, rolTxt, email, telefono, tel, estado{etiqueta, grupo}|null, esYo}]}], total, sinTelefono, yo{telefono} }`. Gerencia primero, luego las áreas en su orden; dentro, jefe, coordinador y operador. `PATCH /api/contactos/yo { telefono }` guarda el propio teléfono y deja `USUARIO_EDITADO` en Auditoría.

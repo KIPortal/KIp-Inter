@@ -1,5 +1,5 @@
 const prisma = require('../config/prisma');
-const { ATIENDE_WHERE } = require('../services/roleService');
+const { ATIENDE_WHERE, areaScope, ticketWhere } = require('../services/roleService');
 const {
     ACTIVE_STATES,
     getPeriodBounds
@@ -49,9 +49,12 @@ async function loadPeriodReport(query) {
     return { report: buildPeriodReport({ tickets, operators, range, area }), range };
 }
 
+// El jefe de área solo ve el reporte de su área
+const consulta = req => (areaScope(req.user) ? { ...req.query, area: areaScope(req.user) } : req.query);
+
 async function getPeriodData(req, res) {
     try {
-        const result = await loadPeriodReport(req.query);
+        const result = await loadPeriodReport(consulta(req));
         if (result.error) return res.status(400).json({ success: false, error: result.error });
         return res.json({ success: true, ...result.report });
     } catch (error) {
@@ -62,7 +65,7 @@ async function getPeriodData(req, res) {
 
 async function downloadExcel(req, res) {
     try {
-        const result = await loadPeriodReport(req.query);
+        const result = await loadPeriodReport(consulta(req));
         if (result.error) return res.status(400).json({ success: false, error: result.error });
         const buffer = await buildWorkbook(result.report, { generadoPor: req.user?.nombre || req.user?.email || '' });
         const filename = `reporte-${result.range.periodo}-${result.range.desde}${result.range.desde === result.range.hasta ? '' : `_${result.range.hasta}`}.xlsx`;
@@ -80,20 +83,21 @@ async function renderReportes(req, res) {
     if (req.user?.rol === 'OPERADOR') return res.redirect(302, '/');
     try {
         const periodo = ['jornada', 'semana', 'mes', 'especifica'].includes(req.query.periodo) ? req.query.periodo : 'jornada';
-        const query = { ...req.query, periodo: periodo === 'especifica' ? 'jornada' : periodo };
+        const query = { ...consulta(req), periodo: periodo === 'especifica' ? 'jornada' : periodo };
         const result = await loadPeriodReport(query);
         if (result.error) return res.redirect(302, '/reportes');
         const [activos, config] = await Promise.all([
-            prisma.ticket.count({ where: { estado_actual: { in: ACTIVE_STATES } } }),
+            prisma.ticket.count({ where: { estado_actual: { in: ACTIVE_STATES }, ...ticketWhere(req.user) } }),
             loadConfig(prisma)
         ]);
         const vista = buildReportView(result.report, {
             periodo: query.periodo,
             fecha: typeof req.query.fecha === 'string' && req.query.fecha ? req.query.fecha : null,
-            area: typeof req.query.area === 'string' && req.query.area ? req.query.area : null,
+            area: typeof query.area === 'string' && query.area ? query.area : null,
             metas: config.reglas.metas
         });
-        return res.render('reportes', { titulo: 'Reportes', currentUser: req.user, vista, areasCatalogo: REPORT_AREAS.map(c => ({ codigo: c, nombre: AREA_NAMES[c] + (isActiveArea(c) ? '' : ' (desactivada)') })), activos });
+        const catalogo = areaScope(req.user) ? [areaScope(req.user)] : REPORT_AREAS;
+        return res.render('reportes', { titulo: 'Reportes', currentUser: req.user, vista, areasCatalogo: catalogo.map(c => ({ codigo: c, nombre: AREA_NAMES[c] + (isActiveArea(c) ? '' : ' (desactivada)') })), activos });
     } catch (error) {
         console.error('Error al cargar Reportes:', error);
         return res.status(500).send('Error en el servidor');

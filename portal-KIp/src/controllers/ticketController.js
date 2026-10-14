@@ -1,5 +1,5 @@
 const prisma = require('../config/prisma');
-const { ATIENDE_WHERE } = require('../services/roleService');
+const { ATIENDE_WHERE, esSupervisor, areasVisibles, ticketWhere } = require('../services/roleService');
 const { getWeekStart } = require('../services/shiftService');
 const { buildHandoffView } = require('../services/ticketQueueService');
 const { getNextTicketCode } = require('../services/ticketCodeService');
@@ -270,9 +270,9 @@ async function claimTicket(req, res) {
         }
 
         const operatorArea = req.user.area_designada || 'GENERAL';
-        // El coordinador ve todas las áreas: puede tomar cualquiera
-        const esCoordinador = req.user.rol === 'COORDINADOR';
-        if (!esCoordinador && ticket.area_designada !== 'GENERAL' && ticket.area_designada !== operatorArea) {
+        // El coordinador (y el gerente) ve todas las áreas: puede tomar cualquiera; el jefe, las de su área
+        const areas = esSupervisor(req.user) ? areasVisibles(req.user) : [...new Set([operatorArea, 'GENERAL'])];
+        if (areas && !areas.includes(ticket.area_designada)) {
             return res.status(403).json({ success: false, error: 'El ticket no pertenece a tu área' });
         }
 
@@ -284,7 +284,7 @@ async function claimTicket(req, res) {
                     { asignado_a_id: null },
                     { asignado_a_id: req.user.id }
                 ],
-                ...(esCoordinador ? {} : { area_designada: { in: [...new Set([operatorArea, 'GENERAL'])] } })
+                ...(areas ? { area_designada: { in: areas } } : {})
             },
             data: {
                 estado_actual: 'EN_PROGRESO',
@@ -699,7 +699,7 @@ async function getTicketHistory(req, res) {
 async function listTrash(req, res) {
     try {
         const tickets = await prisma.ticket.findMany({
-            where: { eliminado_en: { not: null } },
+            where: { eliminado_en: { not: null }, ...ticketWhere(req.user) },
             orderBy: { eliminado_en: 'desc' },
             take: 200,
             select: {

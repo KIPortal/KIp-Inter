@@ -1,0 +1,128 @@
+<%
+	// Contactos: cómo ubicar a cada persona del departamento.
+	// Solo dibuja lo que entrega contactService.buildContacts.
+	const v = vista;
+%>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+	<%- include('partials/head', { titulo: 'Contactos' }) %>
+	<style>
+		.ct-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; align-items: start; }
+		.ct-area { display: flex; flex-direction: column; padding: 14px 0 6px; min-width: 0; }
+		.ct-area h2 { margin: 0; padding: 0 18px 8px; font-size: 14px; font-weight: 700; display: flex; align-items: baseline; gap: 8px; }
+		.ct-area h2 span { font-size: 12px; font-weight: 500; color: var(--t2); }
+		.ct-p { display: flex; align-items: center; gap: 10px; padding: 9px 18px; border-top: 1px solid var(--sep2); min-width: 0; }
+		.ct-p .who { display: flex; flex-direction: column; align-items: flex-start; text-align: left; min-width: 0; flex: 1; }
+		.ct-p .who b { font-size: 13px; }
+		.ct-p .who .t2 { font-size: 12px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+		.ct-p .act { display: flex; gap: 6px; flex: none; }
+		.ct-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 30px; min-width: 30px; padding: 0 10px; border-radius: 999px; background: var(--control); box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.14); color: var(--t1); font-size: 12px; font-weight: 600; text-decoration: none; white-space: nowrap; }
+		.ct-btn:hover { background: var(--accent-bg); color: var(--accent-t); }
+		.ct-btn.off { color: var(--t3); box-shadow: none; background: transparent; cursor: default; }
+		.ct-me { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 18px; }
+		.ct-me .field { width: 220px; height: 34px; }
+		@media (max-width: 640px) {
+			.ct-grid { grid-template-columns: 1fr; }
+			.ct-p .act .lbl { display: none; }
+			.ct-btn { height: 40px; min-width: 40px; }
+			.ct-me .field { flex: 1; width: auto; }
+		}
+	</style>
+</head>
+<body>
+<div class="app">
+	<%- include('partials/sidebar', { currentUser, activo: 'contactos' }) %>
+
+	<main class="app-main">
+		<header class="toolbar">
+			<div style="display:flex;flex-direction:column;margin-right:6px">
+				<h1>Contactos</h1>
+				<span class="sub"><%= v.total %> personas<%= v.sinTelefono ? ' · ' + v.sinTelefono + ' sin teléfono' : '' %></span>
+			</div>
+			<span class="grow"></span>
+			<label class="pill search">
+				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+				<span class="sr-only">Buscar persona</span>
+				<input id="ctBuscar" type="search" placeholder="Nombre, área o rol" autocomplete="off">
+			</label>
+		</header>
+
+		<% if (v.yo) { %>
+		<section class="glass ct-me" aria-label="Tu teléfono">
+			<b style="font-size:13px">Tu teléfono o extensión</b>
+			<input class="field" id="ctTel" type="tel" maxlength="40" value="<%= v.yo.telefono %>" placeholder="Ej. 0212-555 1234 ext 12">
+			<button type="button" class="primary" id="ctGuardar" style="height:34px;padding:0 14px;font-size:12px">Guardar</button>
+			<span class="t2" id="ctMsg" style="font-size:12px">Así te ubica el equipo, sobre todo en la guardia.</span>
+		</section>
+		<% } %>
+
+		<div class="ct-grid" id="ctGrid">
+			<% v.grupos.forEach(g => { %>
+				<section class="glass ct-area" data-ct-area>
+					<h2><%= g.nombre %><span><%= g.personas.length %></span></h2>
+					<% g.personas.forEach(p => { %>
+						<div class="ct-p" data-ct-p="<%= (p.nombre + ' ' + g.nombre + ' ' + p.rolTxt + ' ' + p.email).toLowerCase() %>">
+							<span class="avatar"><%= p.iniciales %><% if (p.estado) { %><i class="st st-<%= p.estado.grupo %>"></i><% } %></span>
+							<span class="who">
+								<b><%= p.nombre %><%= p.esYo ? ' (tú)' : '' %></b>
+								<span class="t2"><%= p.rolTxt %><%= p.estado ? ' · ' + p.estado.etiqueta : '' %><%= p.telefono ? ' · ' + p.telefono : '' %></span>
+							</span>
+							<span class="act">
+								<% if (p.tel) { %>
+									<a class="ct-btn" href="<%= p.tel %>" title="Llamar a <%= p.nombre %> (<%= p.telefono %>)" aria-label="Llamar a <%= p.nombre %>">
+										<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg><span class="lbl">Llamar</span></a>
+								<% } else { %>
+									<span class="ct-btn off" title="<%= p.telefono ? 'Extensión interna' : 'Sin teléfono registrado' %>"><%= p.telefono || 'Sin teléfono' %></span>
+								<% } %>
+								<a class="ct-btn" href="mailto:<%= p.email %>" title="Escribir a <%= p.email %>" aria-label="Escribir a <%= p.nombre %>">
+									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></a>
+							</span>
+						</div>
+					<% }) %>
+				</section>
+			<% }) %>
+		</div>
+		<p class="empty" id="ctVacio" hidden>Nadie coincide con la búsqueda.</p>
+	</main>
+</div>
+<script>
+(function () {
+	'use strict';
+	const buscar = document.getElementById('ctBuscar');
+	buscar.addEventListener('input', () => {
+		const q = buscar.value.trim().toLowerCase();
+		let n = 0;
+		document.querySelectorAll('[data-ct-area]').forEach(sec => {
+			let vis = 0;
+			sec.querySelectorAll('[data-ct-p]').forEach(p => {
+				const ok = !q || p.getAttribute('data-ct-p').includes(q);
+				p.hidden = !ok;
+				if (ok) vis++;
+			});
+			sec.hidden = vis === 0;
+			n += vis;
+		});
+		document.getElementById('ctVacio').hidden = n > 0;
+	});
+	const guardar = document.getElementById('ctGuardar');
+	if (!guardar) return;
+	const msg = document.getElementById('ctMsg');
+	guardar.addEventListener('click', async () => {
+		guardar.disabled = true;
+		try {
+			const res = await fetch('/api/contactos/yo', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ telefono: document.getElementById('ctTel').value }) });
+			let j = {};
+			try { j = await res.json(); } catch (e) { /* sin cuerpo */ }
+			if (!res.ok || !j.success) throw new Error(j.error || 'Error ' + res.status);
+			window.location.reload();
+		} catch (e) {
+			msg.textContent = e.message;
+			msg.style.color = 'var(--c-red)';
+			guardar.disabled = false;
+		}
+	});
+})();
+</script>
+</body>
+</html>

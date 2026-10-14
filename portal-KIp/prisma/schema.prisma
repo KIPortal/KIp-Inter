@@ -17,6 +17,8 @@ datasource db {
 enum Rol {
   COORDINADOR
   OPERADOR
+  JEFE    // jefe de área: ve y gestiona solo su área
+  GERENTE // ve todas las áreas y administra usuarios, roles y áreas
 }
 
 enum EstadoOperativo {
@@ -64,7 +66,8 @@ model User {
   area             Area            @relation(fields: [area_designada], references: [codigo])
   activo           Boolean         @default(true) // desactivado: no entra ni recibe tickets; se conserva su historial
   estado_operativo EstadoOperativo @default(DISPONIBLE)
-  atiende_tickets  Boolean         @default(false) // coordinador que también toma y trabaja tickets (Mi panel)
+  atiende_tickets  Boolean         @default(false) // coordinador o jefe que también toma y trabaja tickets (Mi panel)
+  telefono         String?         @db.VarChar(40) // teléfono o extensión para Contactos
   tickets_resueltos Int            @default(0)
   
   tickets_creados   Ticket[] @relation("CreadorTicket")

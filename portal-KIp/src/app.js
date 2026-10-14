@@ -9,8 +9,9 @@ const reportRoutes = require('./routes/reportRoutes');
 const turnoRoutes = require('./routes/turnoRoutes');
 const auditRoutes = require('./routes/auditRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const contactRoutes = require('./routes/contactRoutes');
 const requireAuth = require('./middlewares/requireAuth');
-const authorizeRole = require('./middlewares/authorizeRole');
+const { authorizeAdmin } = require('./services/roleService');
 const emailIngestionService = require('./services/emailIngestionService');
 
 const app = express();
@@ -51,8 +52,10 @@ app.use('/api/tickets', ticketRoutes);
 app.use('/api/turnos', turnoRoutes);
 app.use('/reportes', reportRoutes);
 app.use('/reports', reportRoutes);
-app.use('/auditoria', requireAuth, authorizeRole('COORDINADOR'), auditRoutes);
-app.use('/admin', requireAuth, authorizeRole('COORDINADOR'), adminRoutes.page);
-app.use('/api/admin', requireAuth, authorizeRole('COORDINADOR'), adminRoutes.api);
+app.use('/contactos', contactRoutes);
+app.use('/api/contactos', contactRoutes);
+app.use('/auditoria', requireAuth, authorizeAdmin, auditRoutes);
+app.use('/admin', requireAuth, authorizeAdmin, adminRoutes.page);
+app.use('/api/admin', requireAuth, authorizeAdmin, adminRoutes.api);
 
 module.exports = app;

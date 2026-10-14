@@ -1,7 +1,7 @@
 'use strict';
 
 const prisma = require('../config/prisma');
-const { ATIENDE_WHERE } = require('../services/roleService');
+const { ATIENDE_WHERE, personaWhere, ticketWhere, areaScope } = require('../services/roleService');
 const { validateSchedule, getShiftStatus, getWeekStart, DEFAULT_SCHEDULE } = require('../services/shiftService');
 const { parseCaracasDate, ACTIVE_STATES } = require('../services/metricsService');
 const { buildShiftBoard } = require('../services/shiftBoardService');
@@ -47,7 +47,7 @@ async function getTurnos(req, res) {
         const weekStart = resolveWeek(req.query.semana);
         if (!weekStart) return res.status(400).json({ error: 'Fecha inválida (use AAAA-MM-DD)' });
         const operadores = await prisma.user.findMany({
-            where: { activo: true, ...ATIENDE_WHERE },
+            where: { activo: true, ...ATIENDE_WHERE, ...personaWhere(req.user) },
             select: { id: true, nombre: true, email: true, area_designada: true, estado_operativo: true },
             orderBy: { nombre: 'asc' }
         });
@@ -78,11 +78,15 @@ async function setGuardia(req, res) {
             return res.status(400).json({ error: 'operatorIds debe ser una lista de ids' });
         }
         const unique = [...new Set(ids)];
-        const validos = await prisma.user.findMany({ where: { id: { in: unique }, activo: true, ...ATIENDE_WHERE }, select: { id: true, nombre: true } });
-        if (validos.length !== unique.length) return res.status(400).json({ error: 'Solo los operadores pueden estar de guardia' });
+        const validos = await prisma.user.findMany({ where: { id: { in: unique }, activo: true, ...ATIENDE_WHERE, ...personaWhere(req.user) }, select: { id: true, nombre: true } });
+        if (validos.length !== unique.length) {
+            return res.status(400).json({ error: areaScope(req.user) ? 'Solo puedes poner de guardia a personas de tu área' : 'Solo los operadores pueden estar de guardia' });
+        }
 
+        // El jefe solo reemplaza la guardia de su área; las demás áreas quedan igual
+        const deSuArea = areaScope(req.user) ? { user: { area_designada: areaScope(req.user) } } : {};
         await prisma.$transaction([
-            prisma.guardiaSemanal.deleteMany({ where: { semana_inicio: weekStart } }),
+            prisma.guardiaSemanal.deleteMany({ where: { semana_inicio: weekStart, ...deSuArea } }),
             prisma.guardiaSemanal.createMany({ data: unique.map(userId => ({ userId, semana_inicio: weekStart })) })
         ]);
         const nombres = validos.map(v => v.nombre || v.id).join(', ') || 'nadie';
@@ -98,7 +102,7 @@ async function setHorario(req, res) {
     try {
         const operatorId = String(req.params.operatorId || '').trim();
         if (!operatorId) return res.status(400).json({ error: 'Operador inválido' });
-        const operador = await prisma.user.findFirst({ where: { id: operatorId, activo: true, ...ATIENDE_WHERE }, select: { id: true, nombre: true } });
+        const operador = await prisma.user.findFirst({ where: { id: operatorId, activo: true, ...ATIENDE_WHERE, ...personaWhere(req.user) }, select: { id: true, nombre: true } });
         if (!operador) return res.status(404).json({ error: 'Operador no encontrado' });
         const { error, horario } = validateSchedule(req.body);
         if (error) return res.status(400).json({ error });
@@ -121,13 +125,13 @@ async function renderTurno(req, res) {
         const semanaActual = getWeekStart(ahora);
         const [operadores, elegida, actual, activos] = await Promise.all([
             prisma.user.findMany({
-                where: { activo: true, ...ATIENDE_WHERE },
+                where: { activo: true, ...ATIENDE_WHERE, ...personaWhere(req.user) },
                 select: { id: true, nombre: true, email: true, area_designada: true, estado_operativo: true },
                 orderBy: { nombre: 'asc' }
             }),
             loadShiftData(weekStart),
             loadShiftData(semanaActual),
-            prisma.ticket.count({ where: { estado_actual: { in: ACTIVE_STATES } } })
+            prisma.ticket.count({ where: { estado_actual: { in: ACTIVE_STATES }, ...ticketWhere(req.user) } })
         ]);
         const tablero = buildShiftBoard({
             operators: operadores,

@@ -11,7 +11,9 @@
 
 const { AREA_NAMES, isActiveArea } = require('./areaCatalog');
 
-const ROLES = ['OPERADOR', 'COORDINADOR'];
+const ROLES = ['OPERADOR', 'COORDINADOR', 'JEFE', 'GERENTE'];
+const ROL = { OPERADOR: 'operador', COORDINADOR: 'coordinador', JEFE: 'jefe de área', GERENTE: 'gerente' };
+const TELEFONO_RE = /^[0-9+()\-.\s]*(?:(?:ext|x)\.?\s*[0-9]+)?$/i;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_CLAVE = 8;
 
@@ -50,6 +52,11 @@ function validateUser(input, { nuevo = false } = {}) {
         if (clave.length < MIN_CLAVE || clave.length > 72) return { error: `La clave temporal debe tener al menos ${MIN_CLAVE} caracteres` };
         datos.clave = clave;
     }
+    if (b.telefono !== undefined) {
+        const tel = validatePhone(b.telefono);
+        if (tel.error) return tel;
+        datos.telefono = tel.telefono;
+    }
     if (b.atiende !== undefined) {
         if (typeof b.atiende !== 'boolean') return { error: 'Valor de "atiende tickets" no válido' };
         datos.atiende_tickets = b.atiende;
@@ -62,9 +69,18 @@ function validateUser(input, { nuevo = false } = {}) {
     return { datos };
 }
 
+/** Teléfono o extensión: vacío = sin teléfono (null). */
+function validatePhone(v) {
+    if (v === null || v === undefined) return { telefono: null };
+    if (typeof v !== 'string') return { error: 'Teléfono no válido' };
+    const tel = v.trim().replace(/\s+/g, ' ');
+    if (!tel) return { telefono: null };
+    if (tel.length > 40 || !/[0-9]/.test(tel) || !TELEFONO_RE.test(tel)) return { error: 'Teléfono no válido: usa números, espacios, +, guiones o "ext"' };
+    return { telefono: tel };
+}
+
 /** Texto para Auditoría (sin la clave). */
 function describeUser(antes, datos) {
-    const ROL = { OPERADOR: 'operador', COORDINADOR: 'coordinador' };
     if (!antes) {
         return `${datos.nombre} (${datos.email}) · ${ROL[datos.rol]}${datos.atiende_tickets ? ' que atiende tickets' : ''} · ${AREA_NAMES[datos.area_designada] || datos.area_designada}`;
     }
@@ -77,10 +93,11 @@ function describeUser(antes, datos) {
     }
     if (datos.atiende_tickets === true && antes.atiende_tickets !== true) cambios.push('atiende tickets');
     if (datos.atiende_tickets === false && antes.atiende_tickets === true) cambios.push('ya no atiende tickets');
+    if (datos.telefono !== undefined && (datos.telefono || null) !== (antes.telefono || null)) cambios.push(datos.telefono ? `teléfono: ${datos.telefono}` : 'sin teléfono');
     if (datos.clave) cambios.push('clave temporal cambiada');
     if (datos.activo === false && antes.activo !== false) cambios.push('desactivado');
     if (datos.activo === true && antes.activo === false) cambios.push('reactivado');
     return `${antes.nombre}: ${cambios.join(', ') || 'sin cambios'}`;
 }
 
-module.exports = { validateUser, describeUser, ROLES, MIN_CLAVE };
+module.exports = { validateUser, validatePhone, describeUser, ROLES, ROL, MIN_CLAVE };

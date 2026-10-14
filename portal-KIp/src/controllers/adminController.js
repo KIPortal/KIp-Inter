@@ -2,7 +2,8 @@
 
 /**
  * Administración (IMPLEMENTACION.md §3.4): áreas y equipos (lectura), plantillas,
- * reglas de alerta y avisos. Solo para el rol COORDINADOR (se protege al montar).
+ * reglas de alerta y avisos. Para coordinador y gerente (se protege al montar);
+ * solo el gerente da o quita los roles Jefe y Gerente.
  */
 
 const prisma = require('../config/prisma');
@@ -14,6 +15,7 @@ const { auditUserId } = require('../services/auditViewService');
 const { loadOperatorsWithShift } = require('./dashboardController');
 const { validateUser, describeUser, MIN_CLAVE } = require('../services/userAdminService');
 const { allAreas, refreshAreas, validateAreaName } = require('../services/areaCatalog');
+const { SUPERVISORES, motivoNoGestionar } = require('../services/roleService');
 
 const grupo = codigo => (codigo === 'EN_TURNO' ? 'turno' : (codigo === 'DE_GUARDIA' || codigo === 'EN_CASA_GUARDIA') ? 'guardia' : 'fuera');
 
@@ -30,12 +32,13 @@ async function renderAdmin(req, res) {
         await refreshAreas(prisma, { force: true });
         const [config, operadores, tickets, coordinadores, desactivados] = await Promise.all([
             loadConfig(prisma), loadOperatorsWithShift(ahora), activeTickets(),
-            prisma.user.findMany({ where: { rol: 'COORDINADOR', activo: true }, select: { id: true, nombre: true, email: true, area_designada: true, atiende_tickets: true }, orderBy: { nombre: 'asc' } }),
-            prisma.user.findMany({ where: { activo: false }, select: { id: true, nombre: true, email: true, rol: true, area_designada: true }, orderBy: { nombre: 'asc' } })
+            prisma.user.findMany({ where: { rol: { in: SUPERVISORES }, activo: true }, select: { id: true, nombre: true, email: true, rol: true, area_designada: true, atiende_tickets: true, telefono: true }, orderBy: { nombre: 'asc' } }),
+            prisma.user.findMany({ where: { activo: false }, select: { id: true, nombre: true, email: true, rol: true, area_designada: true, telefono: true }, orderBy: { nombre: 'asc' } })
         ]);
         const areas = allAreas().map(({ codigo, activa }) => {
-            const ops = operadores.filter(o => o.rol !== 'COORDINADOR' && (o.area_designada || 'GENERAL') === codigo).map(o => ({
+            const ops = operadores.filter(o => o.rol === 'OPERADOR' && (o.area_designada || 'GENERAL') === codigo).map(o => ({
                 id: o.id,
+                telefono: o.telefono || '',
                 area: o.area_designada || 'GENERAL',
                 nombre: o.nombre,
                 email: o.email,
@@ -57,8 +60,9 @@ async function renderAdmin(req, res) {
             config,
             areas,
             coordinadores,
-            desactivados: (desactivados || []).map(u => ({ id: u.id, nombre: u.nombre, email: u.email, rol: u.rol, area: u.area_designada })),
+            desactivados: (desactivados || []).map(u => ({ id: u.id, nombre: u.nombre, email: u.email, rol: u.rol, area: u.area_designada, telefono: u.telefono || '' })),
             miId: req.user?.id || null,
+            miRol: req.user?.rol || null,
             minClave: MIN_CLAVE,
             eventos: EVENTOS,
             destinatarios: DESTINATARIOS,
@@ -125,12 +129,22 @@ const auditUser = async (req, accion, detalles) => {
         console.error('No se pudo registrar auditoría:', e.message);
     }
 };
-const publico = u => ({ id: u.id, nombre: u.nombre, email: u.email, rol: u.rol, area: u.area_designada, atiende: u.atiende_tickets === true });
+const publico = u => ({ id: u.id, nombre: u.nombre, email: u.email, rol: u.rol, area: u.area_designada, atiende: u.atiende_tickets === true, telefono: u.telefono || '' });
+
+/** Reglas que dependen del rol final del usuario (ya validado campo a campo). */
+function motivoRolFinal(final) {
+    if (final.rol === 'JEFE' && (final.area_designada || 'GENERAL') === 'GENERAL') return 'El jefe de área necesita su área: elige una distinta de General';
+    return null;
+}
 
 // Alta de usuario con clave temporal (se guarda sin cifrar hasta feat/seguridad-login)
 async function createUser(req, res) {
     const { error, datos } = validateUser(req.body, { nuevo: true });
     if (error) return res.status(400).json({ success: false, error });
+    const prohibido = motivoNoGestionar(req.user, null, datos.rol);
+    if (prohibido) return res.status(403).json({ success: false, error: prohibido });
+    const motivo = motivoRolFinal(datos);
+    if (motivo) return res.status(400).json({ success: false, error: motivo });
     try {
         if (await prisma.user.findUnique({ where: { email: datos.email }, select: { id: true } })) {
             return res.status(409).json({ success: false, error: 'Ya existe un usuario con ese correo' });
@@ -149,8 +163,12 @@ async function updateUser(req, res) {
     const { error, datos } = validateUser(req.body);
     if (error) return res.status(400).json({ success: false, error });
     try {
-        const antes = await prisma.user.findUnique({ where: { id }, select: { id: true, nombre: true, email: true, rol: true, area_designada: true, activo: true, atiende_tickets: true } });
+        const antes = await prisma.user.findUnique({ where: { id }, select: { id: true, nombre: true, email: true, rol: true, area_designada: true, activo: true, atiende_tickets: true, telefono: true } });
         if (!antes) return res.status(404).json({ success: false, error: 'Usuario no encontrado' });
+        const prohibido = motivoNoGestionar(req.user, antes, datos.rol);
+        if (prohibido) return res.status(403).json({ success: false, error: prohibido });
+        const motivo = motivoRolFinal({ ...antes, ...datos });
+        if (motivo) return res.status(400).json({ success: false, error: motivo });
         if (datos.rol && datos.rol !== antes.rol && id === req.user?.id) {
             return res.status(409).json({ success: false, error: 'No puedes cambiar tu propio rol' });
         }
@@ -165,7 +183,7 @@ async function updateUser(req, res) {
             const otro = await prisma.user.findUnique({ where: { email: datos.email }, select: { id: true } });
             if (otro && otro.id !== id) return res.status(409).json({ success: false, error: 'Ya existe un usuario con ese correo' });
         }
-        if (datos.rol === 'COORDINADOR' && antes.rol === 'OPERADOR') {
+        if (datos.rol && datos.rol !== 'OPERADOR' && antes.rol === 'OPERADOR') {
             const activos = await prisma.ticket.count({ where: { asignado_a_id: id, estado_actual: { in: ACTIVE_STATES } } });
             if (activos > 0) return res.status(409).json({ success: false, error: `Tiene ${activos} tickets activos asignados: reasígnalos antes de cambiarle el rol` });
         }

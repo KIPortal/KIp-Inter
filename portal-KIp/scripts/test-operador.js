@@ -237,7 +237,7 @@ const cola = (p, k) => p.colas.find(q => q.k === k);
         assert.strictEqual(atiendeTickets({ rol: 'OPERADOR' }), true);
         assert.strictEqual(atiendeTickets(coord), false);
         assert.strictEqual(atiendeTickets({ ...coord, atiende_tickets: true }), true);
-        assert.deepStrictEqual(ATIENDE_WHERE.OR, [{ rol: 'OPERADOR' }, { rol: 'COORDINADOR', atiende_tickets: true }]);
+        assert.deepStrictEqual(ATIENDE_WHERE.OR, [{ rol: 'OPERADOR' }, { rol: { in: ['COORDINADOR', 'JEFE'] }, atiende_tickets: true }]);
         let res = mockRes(), next = false;
         authorizeWorker({ user: coord }, res, () => { next = true; });
         assert.strictEqual(res.code, 403);

@@ -26,7 +26,8 @@
 		clock: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2', warn: 'M12 3l10 18H2zM12 10v4M12 17.5v.5',
 		user: 'M9 8a3 3 0 1 0 0-.01M3 19a6 6 0 0 1 12 0M18 8v6M15 11h6', bell: 'M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0',
 		down: 'M6 9l6 6 6-6', check: 'M5 13l4 4L19 7', moon: 'M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z',
-		out: 'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9'
+		out: 'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9',
+		phone: 'M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2'
 	};
 
 	// ---------- Utilidades ----------
@@ -315,13 +316,14 @@
 		wrap.append(btn);
 	}
 
-	// Menú del avatar (teléfono): sin barra lateral, aquí van Tema y Cerrar sesión
+	// Menú del avatar (teléfono): sin barra lateral, aquí van Contactos, Tema y Cerrar sesión
 	function bindMe() {
 		const btn = document.querySelector('[data-menu-me]');
 		if (!btn) return;
 		btn.addEventListener('click', e => {
 			e.stopPropagation();
 			const el = h('div', { class: 'mmenu me', role: 'menu' },
+				h('a', { class: 'mitem', role: 'menuitem', href: '/contactos' }, icon(GLYPH.phone, 14), h('span', { class: 'ml', text: 'Contactos' })),
 				h('button', { type: 'button', class: 'mitem', role: 'menuitem', onclick: () => {
 					const root = document.documentElement;
 					const tema = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';

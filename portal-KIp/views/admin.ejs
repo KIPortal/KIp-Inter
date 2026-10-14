@@ -8,11 +8,14 @@
 	const miId = locals.miId || null;
 	const desactivados = locals.desactivados || [];
 	const minClave = locals.minClave || 8;
-	const usuarios = areas.flatMap(a => a.operadores.map(o => ({ id: o.id, nombre: o.nombre, email: o.email, rol: 'OPERADOR', area: o.area })))
-		.concat(coordinadores.map(c => ({ id: c.id, nombre: c.nombre, email: c.email, rol: 'COORDINADOR', area: c.area_designada || 'GENERAL', atiende: c.atiende_tickets === true })))
+	const miRol = locals.miRol || null;
+	const ROL_TXT = { OPERADOR: 'Operador', COORDINADOR: 'Coordinador', JEFE: 'Jefe de área', GERENTE: 'Gerente' };
+	const nombreArea = c => (areas.find(a => a.codigo === c) || {}).nombre || c;
+	const usuarios = areas.flatMap(a => a.operadores.map(o => ({ id: o.id, nombre: o.nombre, email: o.email, rol: 'OPERADOR', area: o.area, telefono: o.telefono || '' })))
+		.concat(coordinadores.map(c => ({ id: c.id, nombre: c.nombre, email: c.email, rol: c.rol || 'COORDINADOR', area: c.area_designada || 'GENERAL', atiende: c.atiende_tickets === true, telefono: c.telefono || '' })))
 		.map(u => Object.assign(u, { activo: true }))
 		.concat(desactivados.map(u => Object.assign({}, u, { activo: false })));
-	const datos = { config, eventos, destinatarios, limites, vistaPrevia, usuarios, areas: areas.map(a => ({ codigo: a.codigo, nombre: a.nombre, activa: a.activa !== false, operadores: a.operadores.length })), miId, minClave };
+	const datos = { config, eventos, destinatarios, limites, vistaPrevia, usuarios, areas: areas.map(a => ({ codigo: a.codigo, nombre: a.nombre, activa: a.activa !== false, operadores: a.operadores.length })), miId, miRol, minClave };
 	const ini = n => String(n || '?').split(/\s+/).slice(0, 2).map(p => p[0]).join('').toUpperCase();
 	const lapiz = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>';
 	const SECS = [
@@ -58,7 +61,7 @@
 				<section class="glass" data-panel="areas" aria-labelledby="h-ar" style="display:flex;flex-direction:column;overflow:hidden">
 					<div class="card-head" style="padding:18px 24px 14px">
 						<h2 id="h-ar">Áreas y equipos</h2>
-						<span class="hint"><%= areas.length %> áreas · <%= totalOps %> operadores · <%= coordinadores.length %> coordinadores</span>
+						<span class="hint"><%= areas.length %> áreas · <%= totalOps %> operadores · <%= coordinadores.length %> en coordinación</span>
 						<span class="grow"></span>
 						<button type="button" class="pill pillbtn plain" style="height:30px;font-size:12px" data-area-new>＋ Nueva área</button>
 					</div>
@@ -77,8 +80,8 @@
 							</button>
 							<% } %>
 							<button type="button" role="option" data-area-pick="__coord" aria-selected="false">
-								<b>Coordinadores</b><span class="n"><%= coordinadores.length %></span>
-								<span class="meta"><span>Acceso completo al portal</span></span>
+								<b>Coordinación y jefaturas</b><span class="n"><%= coordinadores.length %></span>
+								<span class="meta"><span>Coordinadores, jefes y gerencia</span></span>
 							</button>
 						</div>
 						<div class="area-detail">
@@ -114,7 +117,7 @@
 										<% desactivados.forEach(u => { %>
 											<tr class="row">
 												<td style="padding-left:24px"><span style="display:flex;align-items:center;gap:10px"><span class="avatar sys"><%= ini(u.nombre) %></span><span style="display:flex;flex-direction:column"><b style="font-size:13px"><%= u.nombre %></b><span class="t2"><%= u.email %></span></span></span></td>
-												<td class="t2"><%= u.rol === 'COORDINADOR' ? 'Coordinador' : 'Operador' %></td>
+												<td class="t2"><%= ROL_TXT[u.rol] || u.rol %></td>
 												<td style="padding-right:24px;text-align:right"><button type="button" class="ico" data-user-edit="<%= u.id %>" title="Editar" aria-label="Editar <%= u.nombre %>"><%- lapiz %></button></td>
 											</tr>
 										<% }) %>
@@ -122,14 +125,15 @@
 								</table>
 							</div>
 							<div data-area-panel="__coord" hidden>
-								<div style="display:flex;align-items:center;gap:10px;padding:16px 24px 12px"><span style="display:flex;flex-direction:column;flex:1"><b style="font-size:15px">Coordinadores</b><span class="t2" style="font-size:12px">Cierran tickets, asignan y administran el portal</span></span>
-									<button type="button" class="primary" style="height:30px;padding:0 14px;font-size:12px" data-user-new="__coord">＋ Agregar coordinador</button></div>
+								<div style="display:flex;align-items:center;gap:10px;padding:16px 24px 12px"><span style="display:flex;flex-direction:column;flex:1"><b style="font-size:15px">Coordinación y jefaturas</b><span class="t2" style="font-size:12px">El coordinador y el gerente ven todas las áreas; el jefe, solo la suya<%= miRol === 'GERENTE' ? '' : '. Solo el gerente da los roles Jefe y Gerente' %></span></span>
+									<button type="button" class="primary" style="height:30px;padding:0 14px;font-size:12px" data-user-new="__coord">＋ Agregar</button></div>
 								<table class="rank-table">
-									<thead><tr><th style="padding-left:24px">Coordinador</th><th style="width:56px;padding-right:24px"><span class="sr-only">Acciones</span></th></tr></thead>
+									<thead><tr><th style="padding-left:24px">Persona</th><th style="width:180px">Rol</th><th style="width:56px;padding-right:24px"><span class="sr-only">Acciones</span></th></tr></thead>
 									<tbody>
 										<% coordinadores.forEach(c => { %>
 											<tr class="row">
 												<td style="padding-left:24px"><span style="display:flex;align-items:center;gap:10px"><span class="avatar"><%= ini(c.nombre) %></span><span style="display:flex;flex-direction:column"><b style="font-size:13px"><%= c.nombre %><%= c.id === miId ? ' (tú)' : '' %></b><span class="t2"><%= c.email %></span></span></span></td>
+												<td class="t2"><%= ROL_TXT[c.rol] || 'Coordinador' %><%= c.rol === 'JEFE' ? ' · ' + nombreArea(c.area_designada) : '' %></td>
 												<td style="padding-right:24px;text-align:right"><button type="button" class="ico" data-user-edit="<%= c.id %>" title="Editar" aria-label="Editar <%= c.nombre %>"><%- lapiz %></button></td>
 											</tr>
 										<% }) %>
