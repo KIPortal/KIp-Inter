@@ -6,9 +6,8 @@
 	const sem = tb.semana;
 	const eq = tb.equipo;
 	const DIAS_UI = [[1, 'L', 'Lunes'], [2, 'M', 'Martes'], [3, 'X', 'Miércoles'], [4, 'J', 'Jueves'], [5, 'V', 'Viernes'], [6, 'S', 'Sábado'], [0, 'D', 'Domingo']];
-	const guardias = tb.operadores.filter(o => o.guardia);
 	const corto = sem.esActual ? 'esta semana' : 'la semana ' + sem.etiqueta;
-	const datos = { semana: sem.inicio, operadores: tb.operadores.map(o => ({ id: o.id, nombre: o.nombre, horario: o.horario, guardia: o.guardia })) };
+	const datos = { semana: sem.inicio, fechas: sem.dias.map(d => d.fecha), operadores: tb.operadores.map(o => ({ id: o.id, nombre: o.nombre, iniciales: o.iniciales, horario: o.horario, guardiaDias: o.guardiaDias })) };
 %>
 <!DOCTYPE html>
 <html lang="es">
@@ -23,7 +22,7 @@
 		<header class="toolbar">
 			<div style="display:flex;flex-direction:column;margin-right:6px">
 				<h1>Gestión de Turno</h1>
-				<span class="sub">Turno 08:00–17:00 · guardia 17:00–24:00 entre semana y 08:00–24:00 fin de semana</span>
+				<span class="sub">Turno 08:00–17:00 · guardia por día: 17:00–24:00 entre semana y 08:00–24:00 fin de semana</span>
 			</div>
 			<span class="grow"></span>
 			<span class="dirty" data-dirty hidden><i></i><span data-dirty-label></span></span>
@@ -41,12 +40,12 @@
 			<% }) %>
 		</section>
 
-		<!-- Guardia semanal -->
+		<!-- Guardia por día -->
 		<section class="glass card" aria-labelledby="h-gw" style="padding:18px 24px 20px">
 			<div class="card-head">
 				<div style="display:flex;flex-direction:column;flex:1;min-width:220px">
-					<h2 id="h-gw">Guardia semanal</h2>
-					<span class="hint">Quien está de guardia aparece “De guardia”, no “Disponible”, y puede recibir tickets</span>
+					<h2 id="h-gw">Guardia por día</h2>
+					<span class="hint">Entre semana en la oficina (unos 2 días por persona); sábado y domingo desde casa. Quien está de guardia aparece “De guardia” y puede recibir tickets</span>
 				</div>
 				<% if (!sem.esActual) { %><a class="pill pillbtn plain" data-week-link href="/gestion-turno" style="height:32px;font-size:12px">Esta semana</a><% } %>
 				<div class="pill weeknav">
@@ -61,15 +60,16 @@
 						<span><b><%= d.nombre %></b><strong><%= d.numero %></strong></span>
 						<span class="hrs"><%= d.horas %></span>
 						<small><%= d.tipo %></small>
+						<span class="wguards" data-wday-guards="<%= d.fecha %>">
+							<% d.guardias.forEach(g => { %><i title="<%= g.nombre %>"><%= g.iniciales %></i><% }) %>
+							<% if (!d.guardias.length) { %><em>Sin guardia</em><% } %>
+						</span>
 					</div>
 				<% }) %>
 			</div>
 			<div class="guardpeople" data-guard-people>
-				<span class="lbl"><%= guardias.length ? 'De guardia ' + corto + ':' : 'Sin guardia definida para ' + corto %></span>
-				<% guardias.forEach(o => { %>
-					<span class="gchip"><i><%= o.iniciales %></i><%= o.nombre %><span class="t3"><%= o.areaNombre %></span></span>
-				<% }) %>
-				<% if (!guardias.length) { %><span class="t-orange" style="font-size:12px;font-weight:500">Marca la casilla de guardia de al menos un operador</span><% } %>
+				<span class="lbl" data-guard-summary><%= sem.sinGuardia ? sem.sinGuardia + (sem.sinGuardia === 1 ? ' día' : ' días') + ' de ' + corto + ' sin guardia' : 'Todos los días de ' + corto + ' tienen guardia' %></span>
+				<span class="t3" style="font-size:12px">Marca los días de cada persona en la columna Guardia</span>
 			</div>
 		</section>
 
@@ -78,7 +78,7 @@
 			<div class="card-head" style="padding:18px 24px 12px">
 				<div style="display:flex;flex-direction:column;flex:1;min-width:220px">
 					<h2 id="h-ops">Operadores</h2>
-					<span class="hint">Horario individual y guardia de <%= corto %></span>
+					<span class="hint">Horario individual y días de guardia de <%= corto %></span>
 				</div>
 				<div role="tablist" class="sm" aria-label="Mostrar">
 					<% [['todos', 'Todos', eq.total], ['turno', 'En turno', eq.turno], ['guardia', 'De guardia', eq.guardia], ['fuera', 'Fuera de turno', eq.fuera]].forEach(([k, l, n], i) => { %>
@@ -90,8 +90,8 @@
 				<p class="empty" style="padding:24px">Todavía no hay operadores registrados.</p>
 			<% } else { %>
 			<div class="scroll-x">
-				<div style="min-width:1040px;padding:0 16px 4px">
-					<div class="turno-grid turno-head"><span>Operador</span><span>Estado actual</span><span>Horario</span><span>Días</span><span style="text-align:right;white-space:nowrap">Guardia · <%= sem.esActual ? 'esta semana' : sem.etiqueta %></span></div>
+				<div style="min-width:1200px;padding:0 16px 4px">
+					<div class="turno-grid turno-head"><span>Operador</span><span>Estado actual</span><span>Horario</span><span>Días</span><span style="white-space:nowrap">Guardia · <%= sem.esActual ? 'esta semana' : sem.etiqueta %></span></div>
 					<% tb.areas.forEach(a => { const filas = tb.operadores.filter(o => o.area === a.codigo); %>
 						<div class="areabox" data-area-box>
 							<div class="area-hd"><i></i><b><%= a.nombre %></b><span data-area-meta><%= filas.length %> <%= filas.length === 1 ? 'operador' : 'operadores' %></span></div>
@@ -107,7 +107,9 @@
 									<span style="display:flex;gap:4px">
 										<% DIAS_UI.forEach(([n, l, full]) => { %><button type="button" class="day" data-day="<%= n %>" aria-pressed="<%= o.horario.dias.includes(n) %>" aria-label="<%= full %>" title="<%= full %>"><%= l %></button><% }) %>
 									</span>
-									<label class="guardbox"><span data-guard-label><%= o.guardia ? 'De guardia' : 'No' %></span><input type="checkbox" data-guard<%= o.guardia ? ' checked' : '' %> aria-label="De guardia <%= o.nombre %>"></label>
+									<span style="display:flex;gap:4px">
+										<% sem.dias.forEach((d, i) => { const on = o.guardiaDias.includes(d.fecha); %><button type="button" class="day gday" data-gdate="<%= d.fecha %>" aria-pressed="<%= on %>" aria-label="Guardia de <%= o.nombre %> el <%= d.nombre %> <%= d.numero %>" title="Guardia <%= d.nombre %> <%= d.numero %> · <%= d.horas %>"><%= 'LMXJVSD'[i] %></button><% }) %>
+									</span>
 								</div>
 							<% }) %>
 						</div>
@@ -122,6 +124,6 @@
 </div>
 
 <script id="turno-data" type="application/json"><%- JSON.stringify(datos).replace(/</g, '\\u003c') %></script>
-<script src="/js/turno.js" defer></script>
+<script src="/js/turno.js?v=<%= locals.v || 1 %>" defer></script>
 </body>
 </html>

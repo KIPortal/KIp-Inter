@@ -184,7 +184,7 @@
 </div>
 
 <script id="report-data-json" type="application/json"><%- JSON.stringify(datos).replace(/</g, '\\u003c') %></script>
-<script src="/js/menus.js" defer></script>
-<script src="/js/reportes.js" defer></script>
+<script src="/js/menus.js?v=<%= locals.v || 1 %>" defer></script>
+<script src="/js/reportes.js?v=<%= locals.v || 1 %>" defer></script>
 </body>
 </html>

@@ -11,9 +11,12 @@ Portal de tickets y estadísticas del depto. **Operaciones IP** (Inter Telecomun
 - Tiempo medido desde la llegada del ticket; se usa **promedio**, no mediana. No usar las palabras "SLA" ni "DERS".
 - Prioridad y puntos los fija el coordinador: P1=8, P2=5, P3=1, sin prioridad=0.
 - El operador resuelve (RESUELTO); el coordinador cierra (CERRADO).
+- Roles: OPERADOR, COORDINADOR (todas las áreas), JEFE (solo su área: Dashboard, Tickets, Turno y Reportes limitados; no entra a Administración ni Auditoría) y GERENTE (todas las áreas; administra usuarios, roles y áreas; es el único que da o quita los roles Jefe y Gerente; mientras no haya un gerente activo, el coordinador puede nombrar al primero). Usa `roleService` (`esSupervisor`, `puedeAdministrar`, `ticketWhere`, `personaWhere`, `authorizeSupervisor`, `authorizeAdmin`) y el middleware `limitarAlArea` en rutas de tickets; nunca `rol === 'COORDINADOR'` a secas para "quién coordina".
+- Un coordinador o jefe marcado "Atiende tickets" (`User.atiende_tickets`) también toma y trabaja casos (Mi panel) y cuenta como operador en carga, turnos y reportes. Usa `roleService` (`atiendeTickets`, `ATIENDE_WHERE`), nunca `rol: 'OPERADOR'` a secas para "quién atiende".
+- Contactos (`/contactos`): todos ven correo, teléfono/extensión (`User.telefono`) y estado de turno; cada quien edita su teléfono y el coordinador o gerente lo edita en Administración.
 - Sobrecarga: tickets activos > 1.5× el promedio del área (mínimo 3; ausentes excluidos; un solo operador = sin comparación).
 - Zona horaria Caracas (UTC-4). Semana lunes–domingo. Turno normal 8:00–17:00 (lun–vie por defecto, editable por operador).
-- Guardia (rota por semana, la define el coordinador): 17:00–24:00 entre semana; 08:00–24:00 en fin de semana desde casa. El de guardia aparece "De guardia", no "Disponible", pero puede recibir tickets. El traspaso a guardia exige nota (≥10 caracteres).
+- Guardia (por día, la define el coordinador, o el jefe para su área, en Gestión de Turno; tabla `GuardiaDia`; unos 2 días por persona entre semana más los fines de semana): 17:00–24:00 entre semana; 08:00–24:00 en fin de semana desde casa. El de guardia aparece "De guardia", no "Disponible", pero puede recibir tickets. El traspaso a guardia exige nota (≥10 caracteres).
 - Borrado lógico: eliminar = papelera (con motivo ≥3 caracteres) + auditoría. Los códigos INC-xxx nunca se reutilizan (`prisma.INCLUDE_DELETED`). Primer ticket: INC-001.
 
 ## Documentos (leer antes de tocar métricas o endpoints)
@@ -22,12 +25,13 @@ Portal de tickets y estadísticas del depto. **Operaciones IP** (Inter Telecomun
 - `portal-KIp/docs/pendientes.md` — pendientes (incluye la seguridad del login aplazada).
 
 ## Arquitectura
-- Lógica pura en `src/services/` (metricsService, periodReportService, excelExportService, shiftService, simulationService, dashboardService, ticketQueueService, assignmentService, rulesService, shiftBoardService, configService, auditViewService, reportViewService, userAdminService); controladores en `src/controllers/`; las vistas solo dibujan lo que entrega el controlador.
+- Lógica pura en `src/services/` (metricsService, periodReportService, excelExportService, shiftService, simulationService, dashboardService, ticketQueueService, assignmentService, rulesService, shiftBoardService, configService, auditViewService, reportViewService, userAdminService, conversationService, operatorPanelService, roleService, contactService); controladores en `src/controllers/`; las vistas solo dibujan lo que entrega el controlador.
 - Los ids de usuario son **UUID (texto)**, nunca números.
 - Las áreas son la tabla `Area` (ya no un enum): usa el catálogo vivo de `src/services/areaCatalog.js` (`AREA_NAMES`, `activeAreas()`, `isActiveArea()`), nunca listas fijas. Las áreas y los usuarios se desactivan, no se borran (`Area.activa`, `User.activo`).
+- Subgrupos de área (tabla `Subgrupo`, p. ej. FTTx: Soporte y Cabecera): se configuran en Administración > Editar área; `User.subgrupo_id` y `Ticket.subgrupo_id` son opcionales. El operador con subgrupo ve en Entrantes los de su subgrupo y los del área sin subgrupo; al asignar, un ticket sin subgrupo toma el del operador. Catálogo vivo en `areaCatalog` (`subgruposDe`, `isValidSubgrupo`, `subgrupoName`).
 
 ## Pruebas (sin framework, sin base de datos real)
-Scripts `scripts/test-*.js` con `assert`; en `package.json`: `test:metrics`, `test:tickets`, `test:period`, `test:shifts`, `test:simulation`, `test:dashboard`, `test:queue`, `test:assignment`, `test:turno`, `test:admin`, `test:audit`, `test:report-view`, `test:usuarios`, `test:areas` y `test:ui` (revisión transversal de las 6 pantallas). Corre todas antes de dar algo por terminado. Estas pruebas simulan Prisma: no prueban la base real.
+Scripts `scripts/test-*.js` con `assert`; en `package.json`: `test:metrics`, `test:tickets`, `test:period`, `test:shifts`, `test:simulation`, `test:dashboard`, `test:queue`, `test:assignment`, `test:turno`, `test:admin`, `test:audit`, `test:report-view`, `test:usuarios`, `test:areas`, `test:conversacion`, `test:operador`, `test:roles` y `test:ui` (revisión transversal de las 6 pantallas). Corre todas antes de dar algo por terminado. Estas pruebas simulan Prisma: no prueban la base real.
 
 ## Base de datos
 - Las migraciones están escritas a mano en `prisma/migrations/`; el usuario las aplica con `npx prisma migrate deploy` y luego `npx prisma generate`.
@@ -39,8 +43,8 @@ Scripts `scripts/test-*.js` con `assert`; en `package.json`: `test:metrics`, `te
 - Reparto: el backend/schema lo hace Claude; las vistas las hacía Antigravity (Gemini) y ahora se rediseñan con Claude Design y se implementan con Claude.
 
 ## Pendientes conocidos
-- Rediseño de la vista del operador (`operator-dashboard.ejs`) y del login: siguen con el estilo anterior (`figma-assets.css`, Tailwind CDN).
-- Entrega de avisos dentro del portal: la matriz se configura en Administración, falta mostrarlos.
-- Telefonía: dónde guardar el teléfono de guardia.
+- Rediseño del login: sigue con el estilo anterior (Tailwind CDN). El panel del operador ya es el nuevo (Fase 9: `operatorPanelService`, `public/css/operador.css`, `public/js/operador.js`; detalle con pestañas en `ticket-detalle.css` + `ticket-conversacion.js`).
+- Entrega de avisos dentro del portal: la matriz se configura en Administración; la campana del operador hoy deduce sus avisos de las colas (Fase 10 la conecta).
+- Telefonía: el teléfono de cada persona ya está en Contactos; falta un número fijo de guardia, si se necesita.
 - "Tiempo en horario" usa una ventana fija lun–vie 8–17 (aún no usa horarios por operador).
 - Seguridad del login (ver `docs/pendientes.md`).

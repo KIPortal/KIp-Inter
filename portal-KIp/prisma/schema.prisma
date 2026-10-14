@@ -17,6 +17,8 @@ datasource db {
 enum Rol {
   COORDINADOR
   OPERADOR
+  JEFE    // jefe de área: ve y gestiona solo su área
+  GERENTE // ve todas las áreas y administra usuarios, roles y áreas
 }
 
 enum EstadoOperativo {
@@ -41,6 +43,13 @@ enum EstadoTicket {
   CERRADO
 }
 
+// Conversación del ticket: correo del cliente, respuesta del operador o nota interna
+enum TipoMensaje {
+  ENTRANTE // Correo recibido del cliente
+  SALIENTE // Respuesta enviada al cliente
+  NOTA // Nota interna: solo la ve el equipo
+}
+
 // Las áreas viven en la tabla Area (antes eran el enum AreaDesignada)
 
 // ==========================================
@@ -55,8 +64,12 @@ model User {
   rol              Rol             @default(OPERADOR)
   area_designada   String          @default("GENERAL") @db.VarChar(40)
   area             Area            @relation(fields: [area_designada], references: [codigo])
+  subgrupo_id      String?         // subgrupo dentro de su área (p. ej. FTTx: Soporte o Cabecera)
+  subgrupo         Subgrupo?       @relation(fields: [subgrupo_id], references: [id], onDelete: SetNull)
   activo           Boolean         @default(true) // desactivado: no entra ni recibe tickets; se conserva su historial
   estado_operativo EstadoOperativo @default(DISPONIBLE)
+  atiende_tickets  Boolean         @default(false) // coordinador o jefe que también toma y trabaja tickets (Mi panel)
+  telefono         String?         @db.VarChar(40) // teléfono o extensión para Contactos
   tickets_resueltos Int            @default(0)
   
   tickets_creados   Ticket[] @relation("CreadorTicket")
@@ -64,7 +77,9 @@ model User {
   auditorias        AuditLog[]
   horario           HorarioOperador?
   guardias          GuardiaSemanal[]
+  guardias_dia      GuardiaDia[]
   traspasos_creados Traspaso[]     @relation("TraspasosCreados")
+  mensajes          Mensaje[]      @relation("MensajesAutor")
   
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -82,6 +97,8 @@ model Ticket {
   origen_ingesta     OrigenIngesta @default(CORREO)
   area_designada     String        @default("GENERAL") @db.VarChar(40)
   area               Area          @relation(fields: [area_designada], references: [codigo])
+  subgrupo_id        String?
+  subgrupo           Subgrupo?     @relation(fields: [subgrupo_id], references: [id], onDelete: SetNull)
   
   // Relación: Quién reportó o creó el ticket (Opcional, si viene de correo automático puede ser nulo)
   creado_por_id      String?
@@ -105,6 +122,7 @@ model Ticket {
   adjuntos           Adjunto[]
   auditorias         AuditLog[]
   traspasos          TraspasoTicket[]
+  mensajes           Mensaje[]
 }
 
 model Adjunto {
@@ -116,7 +134,29 @@ model Adjunto {
   peso            Int?
   ticketId        String
   ticket          Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  // Nulo: adjunto del correo que abrió el ticket. Con valor: adjunto de un mensaje de la conversación
+  mensajeId       String?
+  mensaje         Mensaje? @relation(fields: [mensajeId], references: [id], onDelete: Cascade)
   createdAt       DateTime @default(now())
+}
+
+// Mensajes de la conversación del ticket. El primer correo (el que abrió el ticket)
+// no se copia aquí: sale de Ticket.descripcion y Ticket.remitente.
+model Mensaje {
+  id         String      @id @default(uuid())
+  ticketId   String
+  ticket     Ticket      @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  tipo       TipoMensaje
+  texto      String      @db.Text
+  autor_id   String? // Operador que escribió (nulo en correos recibidos)
+  autor      User?       @relation("MensajesAutor", fields: [autor_id], references: [id], onDelete: SetNull)
+  de         String?     @db.VarChar(180) // Remitente del correo recibido
+  para       String?     @db.VarChar(180) // Destinatario de la respuesta
+  enviado    Boolean     @default(false) // SALIENTE: true si el correo salió por Graph
+  adjuntos   Adjunto[]
+  createdAt  DateTime    @default(now())
+
+  @@index([ticketId, createdAt])
 }
 
 // Registro de acciones (editar, eliminar, restaurar, cerrar, traspasar...)
@@ -144,6 +184,20 @@ model HorarioOperador {
 
 // Rotación semanal de guardia: qué operadores están de guardia en cada semana (lunes a domingo, Caracas).
 // semana_inicio es el instante del lunes 00:00 de Caracas.
+// Guardia por día: quién está de guardia cada fecha (Caracas). Entre semana
+// 17:00–24:00 en la oficina; sábado y domingo 08:00–24:00 desde casa.
+model GuardiaDia {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fecha     DateTime // 00:00 de Caracas de ese día
+  createdAt DateTime @default(now())
+
+  @@unique([userId, fecha])
+  @@index([fecha])
+}
+
+// Histórico: la guardia por semana completa ya no se usa (se copió a GuardiaDia)
 model GuardiaSemanal {
   id            String   @id @default(uuid())
   userId        String
@@ -199,4 +253,20 @@ model Area {
   createdAt DateTime @default(now())
   usuarios  User[]
   tickets   Ticket[]
+  subgrupos Subgrupo[]
+}
+
+// Subgrupo de un área (FTTx: Soporte y Cabecera). Se desactiva, no se borra.
+model Subgrupo {
+  id          String   @id @default(uuid())
+  area_codigo String   @db.VarChar(40)
+  area        Area     @relation(fields: [area_codigo], references: [codigo])
+  nombre      String   @db.VarChar(60)
+  activo      Boolean  @default(true)
+  orden       Int      @default(0)
+  createdAt   DateTime @default(now())
+  usuarios    User[]
+  tickets     Ticket[]
+
+  @@unique([area_codigo, nombre])
 }

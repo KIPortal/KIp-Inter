@@ -19,6 +19,7 @@ const ACCIONES = Object.freeze({
     TICKET_TOMADO: ['Tomó', 'azul'],
     TICKET_PAUSADO: ['Pausó', 'ambar'],
     TICKET_REANUDADO: ['Reanudó', 'azul'],
+    TICKET_EN_ESPERA: ['Dejó en espera', 'violeta'],
     TICKET_EDITADO: ['Editó', 'azul'],
     TICKET_ELIMINADO: ['Eliminó', 'rojo'],
     TICKET_RESTAURADO: ['Restauró', 'verde'],

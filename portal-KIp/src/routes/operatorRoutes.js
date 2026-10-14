@@ -1,11 +1,11 @@
 const express = require('express');
 const operatorController = require('../controllers/operatorController');
 const requireAuth = require('../middlewares/requireAuth');
-const authorizeRole = require('../middlewares/authorizeRole');
+const { authorizeWorker } = require('../services/roleService');
 
 const router = express.Router();
 
-router.use(requireAuth, authorizeRole('OPERADOR'));
+router.use(requireAuth, authorizeWorker);
 
 router.patch('/:operatorId/status', operatorController.updateStatus);
 

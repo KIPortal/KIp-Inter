@@ -1,9 +1,11 @@
 const prisma = require('../config/prisma');
-const { ACTIVE_STATES } = require('../services/metricsService');
+const { ACTIVE_STATES, getDayBounds } = require('../services/metricsService');
 const { getShiftStatus, getWeekStart } = require('../services/shiftService');
 const { loadShiftData } = require('./turnoController');
 const { buildCoordinatorPanel } = require('../services/dashboardService');
 const { buildQueue } = require('../services/ticketQueueService');
+const { buildOperatorPanel } = require('../services/operatorPanelService');
+const { ATIENDE_WHERE, atiendeTickets, ticketWhere, personaWhere } = require('../services/roleService');
 const { loadActiveHandoff } = require('./ticketController');
 const { AREA_NAMES } = require('../services/periodReportService');
 const { loadConfig } = require('../services/configService');
@@ -19,15 +21,17 @@ async function renderDashboard(req, res) {
     try {
         // Solo lo que usa el Dashboard nuevo, en paralelo (cada consulta va a Supabase)
         const ahora = new Date();
+        // El jefe de área solo ve su área (ticketWhere/personaWhere no limitan al coordinador ni al gerente)
         const [tickets, operadores, config] = await Promise.all([
             prisma.ticket.findMany({
+                where: ticketWhere(req.user),
                 select: {
                     codigo_incidencia: true, estado_actual: true, area_designada: true, puntos_complejidad: true,
                     asignado_a_id: true, createdAt: true, updatedAt: true, fecha_asignacion: true,
                     resueltoEn: true, fecha_cierre: true
                 }
             }),
-            loadOperatorsWithShift(ahora),
+            loadOperatorsWithShift(ahora, personaWhere(req.user)),
             loadConfig(prisma)
         ]);
         const panel = buildCoordinatorPanel({ tickets, operators: operadores, now: ahora, periodo: req.query.periodo, rules: config.reglas });
@@ -42,15 +46,17 @@ async function renderDashboard(req, res) {
  * Operadores con su carga activa y su estado de turno
  * (En turno / De guardia / Fuera de turno) en el instante `ahora`.
  */
-async function loadOperatorsWithShift(ahora = new Date()) {
+async function loadOperatorsWithShift(ahora = new Date(), filtro = {}) {
     const [operadores, { horarioPorUsuario, guardiaIds }] = await Promise.all([prisma.user.findMany({
-        where: { rol: 'OPERADOR', activo: true },
+        where: { activo: true, ...ATIENDE_WHERE, ...filtro },
         select: {
             id: true,
             email: true,
             nombre: true,
             rol: true,
             area_designada: true,
+            telefono: true,
+            subgrupo_id: true,
             estado_operativo: true,
             tickets_asignados: {
                 // Carga activa completa: incluye recién asignados (NUEVO) y en pausa
@@ -60,7 +66,7 @@ async function loadOperatorsWithShift(ahora = new Date()) {
             }
         },
         orderBy: { nombre: 'asc' }
-    }), loadShiftData(getWeekStart(ahora))]);
+    }), loadShiftData(getWeekStart(ahora), ahora)]);
     operadores.forEach(operador => {
         const h = horarioPorUsuario.get(operador.id);
         operador.deGuardia = guardiaIds.has(operador.id);
@@ -80,6 +86,7 @@ async function renderTickets(req, res) {
         const ahora = new Date();
         const [tickets, operadores, enPapelera, traspaso, config, siguienteCodigo] = await Promise.all([
             prisma.ticket.findMany({
+                where: ticketWhere(req.user),
                 include: {
                     ...ticketRelations,
                     asignado_a: { select: { id: true, nombre: true } },
@@ -87,8 +94,8 @@ async function renderTickets(req, res) {
                 },
                 orderBy: { createdAt: 'desc' }
             }),
-            loadOperatorsWithShift(ahora),
-            prisma.ticket.count({ where: { eliminado_en: { not: null } } }),
+            loadOperatorsWithShift(ahora, personaWhere(req.user)),
+            prisma.ticket.count({ where: { eliminado_en: { not: null }, ...ticketWhere(req.user) } }),
             loadActiveHandoff(ahora),
             loadConfig(prisma),
             getNextTicketCode(prisma)
@@ -116,52 +123,77 @@ async function renderTickets(req, res) {
 
 
 async function renderOperatorDashboard(req, res) {
-    const area = req.user.area_designada || 'GENERAL';
-    const availableAreas = [...new Set([area, 'GENERAL'])];
-    const orderBy = { createdAt: 'desc' };
-    const assignedToUser = { asignado_a_id: req.user.id };
+    try {
+        const ahora = new Date();
+        const user = req.user;
+        const area = user.area_designada || 'GENERAL';
+        const hoy = getDayBounds(ahora).start;
+        const detalle = ticketRelations;
 
-    const [ticketsAvailable, ticketsAssigned, ticketsPaused, ticketsWaiting, ticketsResolved] = await Promise.all([
-        prisma.ticket.findMany({
-            where: {
-                estado_actual: 'NUEVO',
-                asignado_a_id: null,
-                area_designada: { in: availableAreas }
-            },
-            include: ticketRelations,
-            orderBy
-        }),
-        prisma.ticket.findMany({
-            where: { ...assignedToUser, estado_actual: 'EN_PROGRESO' },
-            include: ticketRelations,
-            orderBy
-        }),
-        prisma.ticket.findMany({
-            where: { ...assignedToUser, estado_actual: 'EN_PAUSA' },
-            include: ticketRelations,
-            orderBy
-        }),
-        prisma.ticket.findMany({
-            where: { ...assignedToUser, estado_actual: 'EN_ESPERA_TERCEROS' },
-            include: ticketRelations,
-            orderBy
-        }),
-        prisma.ticket.findMany({
-            where: { ...assignedToUser, estado_actual: { in: ['RESUELTO', 'CERRADO'] } },
-            include: ticketRelations,
-            orderBy
-        })
-    ]);
+        const [entrantes, mios, resueltos, operador, { horarioPorUsuario, guardiaIds }, config] = await Promise.all([
+            prisma.ticket.findMany({
+                where: {
+                    estado_actual: 'NUEVO', asignado_a_id: null, area_designada: { in: [...new Set([area, 'GENERAL'])] },
+                    ...(user.subgrupo_id ? { OR: [{ subgrupo_id: null }, { subgrupo_id: user.subgrupo_id }] } : {})
+                },
+                include: detalle,
+                orderBy: { createdAt: 'asc' }
+            }),
+            prisma.ticket.findMany({
+                where: { asignado_a_id: user.id, estado_actual: { in: ACTIVE_STATES } },
+                include: detalle,
+                orderBy: { createdAt: 'asc' }
+            }),
+            prisma.ticket.findMany({
+                where: {
+                    asignado_a_id: user.id,
+                    estado_actual: { in: ['RESUELTO', 'CERRADO'] },
+                    OR: [{ resueltoEn: { gte: hoy } }, { resueltoEn: null, fecha_cierre: { gte: hoy } }]
+                },
+                include: detalle,
+                orderBy: { resueltoEn: 'desc' }
+            }),
+            prisma.user.findUnique({ where: { id: user.id }, select: { estado_operativo: true } }),
+            loadShiftData(getWeekStart(ahora), ahora),
+            loadConfig(prisma)
+        ]);
 
-    return res.render('operator-dashboard', {
-        titulo: 'NOC Portal - Sesión de Operador',
-        currentUser: req.user,
-        ticketsAvailable,
-        ticketsAssigned,
-        ticketsPaused,
-        ticketsWaiting,
-        ticketsResolved
-    });
+        const h = horarioPorUsuario.get(user.id);
+        const horario = h ? { dias: h.dias, inicio: h.hora_inicio, fin: h.hora_fin } : null;
+        const deGuardia = guardiaIds.has(user.id);
+        const estadoOperativo = operador?.estado_operativo || user.estado_operativo || 'DISPONIBLE';
+        const turno = getShiftStatus({ estadoOperativo, horario, deGuardia }, ahora);
+
+        // Pendientes del traspaso: solo los ve quien está de guardia
+        let traspaso = null;
+        let traspasoTickets = [];
+        if (deGuardia) {
+            traspaso = await loadActiveHandoff(ahora);
+            if (traspaso && traspaso.pendientes.length) {
+                traspasoTickets = await prisma.ticket.findMany({
+                    where: { codigo_incidencia: { in: traspaso.pendientes } },
+                    include: { asignado_a: { select: { id: true, nombre: true } } }
+                });
+            }
+        }
+
+        const panel = buildOperatorPanel({
+            user: { ...user, estado_operativo: estadoOperativo },
+            entrantes, mios, resueltos, turno, horario, deGuardia, traspaso, traspasoTickets,
+            rules: config.reglas, now: ahora
+        });
+        return res.render('operator-dashboard', { titulo: 'Mi panel', currentUser: req.user, panel });
+    } catch (error) {
+        console.error('Error al cargar el panel del operador:', error);
+        return res.status(500).send('Error en el servidor');
+    }
 }
 
-module.exports = { renderDashboard, renderTickets, loadOperatorsWithShift };
+// Mi panel del coordinador que también atiende tickets (el operador lo tiene en /)
+function renderMyPanel(req, res) {
+    if (req.user.rol === 'OPERADOR') return res.redirect(302, '/');
+    if (!atiendeTickets(req.user)) return res.redirect(302, '/tickets');
+    return renderOperatorDashboard(req, res);
+}
+
+module.exports = { renderDashboard, renderTickets, renderMyPanel, loadOperatorsWithShift };

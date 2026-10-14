@@ -1,7 +1,7 @@
 const express = require('express');
 const adminController = require('../controllers/adminController');
 
-// Página: /admin · API: /api/admin (ambas montadas con requireAuth + COORDINADOR en app.js)
+// Página: /admin · API: /api/admin (ambas montadas con requireAuth + authorizeAdmin en app.js)
 const page = express.Router();
 page.get('/', adminController.renderAdmin);
 
@@ -12,5 +12,7 @@ api.post('/usuarios', adminController.createUser);
 api.patch('/usuarios/:id', adminController.updateUser);
 api.post('/areas', adminController.createArea);
 api.patch('/areas/:codigo', adminController.updateArea);
+api.post('/areas/:codigo/subgrupos', adminController.createSubgrupo);
+api.patch('/subgrupos/:id', adminController.updateSubgrupo);
 
 module.exports = { page, api };

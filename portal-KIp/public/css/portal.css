@@ -864,7 +864,7 @@ input.field { height: 34px; }
 .guardpeople .lbl { font-size: 12px; font-weight: 600; color: var(--t2); margin-right: 4px; }
 .gchip { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px 0 3px; border-radius: 999px; background: var(--fill); box-shadow: inset 0 0 0 0.5px var(--sep); font-size: 12px; font-weight: 500; }
 .gchip i { width: 22px; height: 22px; border-radius: 50%; background: var(--purple-bg); color: var(--purple-t); font-size: 9px; font-weight: 700; font-style: normal; display: inline-flex; align-items: center; justify-content: center; }
-.turno-grid { display: grid; grid-template-columns: minmax(220px, 1fr) 130px 262px 236px 130px; column-gap: 16px; align-items: center; }
+.turno-grid { display: grid; grid-template-columns: minmax(220px, 1fr) 130px 262px 236px 236px; column-gap: 16px; align-items: center; }
 .turno-head { padding: 8px 32px; margin: 0 -16px 10px; font-size: 12px; font-weight: 600; color: var(--t2); border-top: 1px solid var(--sep); border-bottom: 1px solid var(--sep); }
 .area-hd { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-bottom: 1px solid var(--sep); background: var(--area-hd); color: var(--area-hd-t); }
 .area-hd i { width: 4px; height: 16px; border-radius: 2px; background: var(--solid); }
@@ -880,6 +880,10 @@ input.field { height: 34px; }
 .opstate.st-fuera { color: var(--t2); background: none; } .opstate.st-fuera i { background: var(--t3); }
 .day { background: transparent; color: var(--t3); box-shadow: inset 0 0 0 0.5px var(--sep); }
 .day[aria-pressed=true] { background: var(--accent-bg); color: var(--accent-t); box-shadow: inset 0 0 0 0.5px var(--accent-ring); }
+.day.gday[aria-pressed=true] { background: var(--purple-bg); color: var(--purple-t); box-shadow: inset 0 0 0 0.5px var(--c-violet); }
+.wguards { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 6px; min-height: 20px; }
+.wguards i { width: 20px; height: 20px; border-radius: 50%; background: var(--purple-bg); color: var(--purple-t); font-size: 8px; font-weight: 700; font-style: normal; display: inline-flex; align-items: center; justify-content: center; }
+.wguards em { font-size: 11px; font-style: normal; font-weight: 600; color: var(--orange-t, var(--c-amber)); }
 .guardbox { display: flex; align-items: center; justify-content: flex-end; gap: 8px; cursor: pointer; }
 .guardbox span { font-size: 12px; font-weight: 500; color: var(--t3); }
 .guardbox span.on { color: var(--purple-t); }
