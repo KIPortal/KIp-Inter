@@ -2,8 +2,8 @@ const prisma = require('../config/prisma');
 
 async function requireAuth(req, res, next) {
     if (req.session?.temporaryUser && process.env.NODE_ENV !== 'production') {
-        const { id, email, nombre, rol, area_designada } = req.session.temporaryUser;
-        req.user = { id, email, nombre, rol, area_designada: area_designada || 'GENERAL' };
+        const { id, email, nombre, rol, area_designada, atiende_tickets } = req.session.temporaryUser;
+        req.user = { id, email, nombre, rol, area_designada: area_designada || 'GENERAL', atiende_tickets: atiende_tickets === true };
         req.session.temporaryUser = req.user;
         return next();
     }
@@ -16,7 +16,7 @@ async function requireAuth(req, res, next) {
     try {
         const user = await prisma.user.findUnique({
             where: { id: userId },
-            select: { id: true, email: true, nombre: true, rol: true, area_designada: true, activo: true }
+            select: { id: true, email: true, nombre: true, rol: true, area_designada: true, activo: true, atiende_tickets: true, subgrupo_id: true }
         });
 
         // Usuario borrado o desactivado: se cierra su sesión

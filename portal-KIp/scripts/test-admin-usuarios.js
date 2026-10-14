@@ -46,25 +46,25 @@ const res = () => { const r = { code: 200 }; r.status = c => { r.code = c; retur
         prisma.user.findUnique = async () => null;
         prisma.user.create = async ({ data }) => { creado = data; return { id: 'n1', ...data }; };
         const r = res();
-        await ctrl.createUser({ body: { nombre: 'Ana Pérez', email: 'ana@x.com', rol: 'OPERADOR', area: 'WAN', clave: 'abcd1234' }, user: { id: 'c1' } }, r);
+        await ctrl.createUser({ body: { nombre: 'Ana Pérez', email: 'ana@x.com', rol: 'OPERADOR', area: 'WAN', clave: 'abcd1234' }, user: { id: 'c1', rol: 'COORDINADOR' } }, r);
         assert.strictEqual(r.code, 201);
         assert.strictEqual(creado.clave, 'abcd1234');
         assert.ok(!('clave' in r.body.usuario));
         assert.strictEqual(logs.pop().accion, 'USUARIO_CREADO');
         prisma.user.findUnique = async () => ({ id: 'otro' });
         const r2 = res();
-        await ctrl.createUser({ body: { nombre: 'Ana Pérez', email: 'ana@x.com', clave: 'abcd1234' }, user: { id: 'c1' } }, r2);
+        await ctrl.createUser({ body: { nombre: 'Ana Pérez', email: 'ana@x.com', clave: 'abcd1234' }, user: { id: 'c1', rol: 'COORDINADOR' } }, r2);
         assert.strictEqual(r2.code, 409);
     });
 
     await t('Editar: no cambia su propio rol; operador con activos no pasa a coordinador', async () => {
         prisma.user.findUnique = async ({ where }) => (where.id ? { id: where.id, nombre: 'Ana', email: 'ana@x.com', rol: where.id === 'c1' ? 'COORDINADOR' : 'OPERADOR', area_designada: 'WAN' } : null);
         const r = res();
-        await ctrl.updateUser({ params: { id: 'c1' }, body: { rol: 'OPERADOR' }, user: { id: 'c1' } }, r);
+        await ctrl.updateUser({ params: { id: 'c1' }, body: { rol: 'OPERADOR' }, user: { id: 'c1', rol: 'COORDINADOR' } }, r);
         assert.strictEqual(r.code, 409);
         prisma.ticket.count = async () => 2;
         const r2 = res();
-        await ctrl.updateUser({ params: { id: 'o1' }, body: { rol: 'COORDINADOR' }, user: { id: 'c1' } }, r2);
+        await ctrl.updateUser({ params: { id: 'o1' }, body: { rol: 'COORDINADOR' }, user: { id: 'c1', rol: 'COORDINADOR' } }, r2);
         assert.strictEqual(r2.code, 409);
         assert.ok(r2.body.error.includes('2 tickets activos'));
     });
@@ -73,7 +73,7 @@ const res = () => { const r = { code: 200 }; r.status = c => { r.code = c; retur
         let data;
         prisma.user.update = async args => { data = args.data; return { id: 'o1', nombre: 'Ana', email: 'ana@x.com', rol: 'OPERADOR', area_designada: 'TELEFONIA' }; };
         const r = res();
-        await ctrl.updateUser({ params: { id: 'o1' }, body: { area: 'TELEFONIA' }, user: { id: 'c1' } }, r);
+        await ctrl.updateUser({ params: { id: 'o1' }, body: { area: 'TELEFONIA' }, user: { id: 'c1', rol: 'COORDINADOR' } }, r);
         assert.strictEqual(r.code, 200);
         assert.deepStrictEqual(data, { area_designada: 'TELEFONIA' });
         assert.strictEqual(logs.pop().detalles, 'Ana: área: WAN → Telefonía');

@@ -231,7 +231,10 @@
 	}
 
 	// ---------- Usuarios: agregar y editar ----------
-	const ROLES = [['OPERADOR', 'Operador'], ['COORDINADOR', 'Coordinador']];
+	// Solo el gerente da (o quita) los roles Jefe y Gerente
+	const ROLES = [['OPERADOR', 'Operador'], ['COORDINADOR', 'Coordinador'], ['JEFE', 'Jefe de área'], ['GERENTE', 'Gerente']];
+	const ROLES_ALTOS = ['JEFE', 'GERENTE'];
+	const esGerente = D.daRolesAltos === true || D.miRol === 'GERENTE'; // sin gerente activo, el coordinador nombra al primero
 	function genClave() {
 		const abc = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
 		const n = new Uint32Array(10);
@@ -246,35 +249,61 @@
 			rol: u ? u.rol : (areaInicial === '__coord' ? 'COORDINADOR' : 'OPERADOR'),
 			area: u ? u.area : (areaInicial && areaInicial !== '__coord' ? areaInicial : 'GENERAL'),
 			clave: u ? '' : genClave(),
-			activo: u ? u.activo !== false : true
+			activo: u ? u.activo !== false : true,
+			atiende: u ? u.atiende === true : false,
+			telefono: u ? u.telefono || '' : '',
+			subgrupo: u ? u.subgrupo || '' : ''
 		};
+		const bloqueado = !!u && !esGerente && ROLES_ALTOS.includes(u.rol);
 		const ov = h('div', { class: 'overlay', onclick: e => { if (e.target === ov) ov.remove(); } });
 		const box = h('div', { class: 'dialog', role: 'dialog', 'aria-modal': 'true', style: 'width:520px' });
 		ov.append(box);
 		const err = h('div', { class: 'warnbox', hidden: true });
 		const ok = h('button', { type: 'button', class: 'primary', text: u ? 'Guardar' : 'Crear usuario' });
+		if (bloqueado) ok.disabled = true;
 		const input = (key, attrs) => h('input', Object.assign({ class: 'field', value: M[key], oninput: e => { M[key] = e.target.value; } }, attrs));
 		const claveIn = input('clave', { type: 'text', autocomplete: 'off', placeholder: u ? 'Déjala vacía para no cambiarla' : '', 'aria-label': 'Clave temporal', style: 'flex:1' });
 		const rolSeg = h('div', { class: 'seg', role: 'radiogroup', 'aria-label': 'Rol' });
-		const areaSel = h('select', { class: 'field', 'aria-label': 'Área', onchange: e => { M.area = e.target.value; } },
+		// Subgrupo dentro del área (solo si el área tiene subgrupos)
+		const sgSel = h('select', { class: 'field', 'aria-label': 'Subgrupo', onchange: e => { M.subgrupo = e.target.value; } });
+		const sgRow = h('label', { class: 'dsec' }, h('b', { text: 'Subgrupo' }), sgSel);
+		const paintSg = () => {
+			const area = D.areas.find(x => x.codigo === M.area);
+			const lista = ((area && area.subgrupos) || []).filter(g => g.activo || g.id === M.subgrupo);
+			sgSel.replaceChildren(h('option', { value: '', selected: !M.subgrupo, text: 'Sin subgrupo (ve todo el área)' }),
+				...lista.map(g => h('option', { value: g.id, selected: g.id === M.subgrupo, text: g.nombre + (g.activo ? '' : ' (desactivado)') })));
+			sgRow.hidden = areaRow.hidden || !lista.length;
+		};
+		const areaSel = h('select', { class: 'field', 'aria-label': 'Área', onchange: e => { M.area = e.target.value; M.subgrupo = ''; paintSg(); } },
 			D.areas.filter(a => a.activa || a.codigo === M.area).map(a => h('option', { value: a.codigo, selected: a.codigo === M.area, text: a.nombre + (a.activa ? '' : ' (desactivada)') })));
 		const areaRow = h('label', { class: 'dsec' }, h('b', { text: 'Área' }), areaSel);
+		// Coordinador que además toma y trabaja tickets: tiene Mi panel y entra en la carga
+		const atiendeSw = sw(M.atiende, e => { M.atiende = !M.atiende; e.currentTarget.setAttribute('aria-checked', String(M.atiende)); paintRol(); }, 'También atiende tickets');
+		const atiendeRow = h('div', { class: 'rule-row', style: 'min-height:40px;border:0' },
+			h('span', { class: 'lbl', style: 'flex:1' }, h('b', { text: 'También atiende tickets' }), h('span', { text: 'Puede tomarlos y trabajarlos en Mi panel; cuenta en la carga, los turnos y los reportes como un operador' })), atiendeSw);
 		const paintRol = () => {
-			rolSeg.replaceChildren(...ROLES.map(([v, l]) => h('button', {
-				type: 'button', role: 'radio', 'aria-checked': String(M.rol === v), disabled: esYo && M.rol !== v,
+			rolSeg.replaceChildren(...ROLES.filter(([v]) => esGerente || !ROLES_ALTOS.includes(v) || M.rol === v).map(([v, l]) => h('button', {
+				type: 'button', role: 'radio', 'aria-checked': String(M.rol === v), disabled: (esYo || bloqueado) && M.rol !== v,
 				onclick: () => { M.rol = v; paintRol(); }
 			}, h('span', { text: l }))));
-			areaRow.hidden = M.rol === 'COORDINADOR';
+			atiendeRow.hidden = M.rol !== 'COORDINADOR' && M.rol !== 'JEFE';
+			areaRow.hidden = M.rol === 'GERENTE' || (M.rol === 'COORDINADOR' && !M.atiende);
+			paintSg();
 		};
 		paintRol();
 		box.append(
-			h('div', { class: 'dlg-head' }, h('h2', { text: u ? 'Editar ' + u.nombre : (M.rol === 'COORDINADOR' ? 'Nuevo coordinador' : 'Nuevo operador') }),
+			h('div', { class: 'dlg-head' }, h('h2', { text: u ? 'Editar ' + u.nombre : (M.rol === 'OPERADOR' ? 'Nuevo operador' : 'Nueva persona en coordinación') }),
 				h('span', { text: u ? u.email : 'Podrá entrar al portal con su correo y la clave temporal' })),
 			h('div', { class: 'dlg-body', style: 'gap:14px' },
 				h('label', { class: 'dsec' }, h('b', { text: 'Nombre y apellido' }), input('nombre', { maxlength: 80, placeholder: 'Ej. Ana Pérez' })),
 				h('label', { class: 'dsec' }, h('b', { text: 'Correo' }), input('email', { type: 'email', maxlength: 120, placeholder: 'nombre@inter.com' })),
 				h('div', { class: 'dsec' }, h('b', { text: 'Rol' }), rolSeg, esYo ? h('span', { class: 't3', style: 'font-size:12px', text: 'No puedes cambiar tu propio rol' }) : null),
+				atiendeRow,
 				areaRow,
+				sgRow,
+				h('label', { class: 'dsec' }, h('b', { text: 'Teléfono o extensión (opcional)' }), input('telefono', { type: 'tel', maxlength: 40, placeholder: 'Ej. 0212-555 1234 ext 12' }),
+					h('span', { class: 't3', style: 'font-size:12px', text: 'Sale en Contactos para que el equipo sepa cómo ubicarlo' })),
+				bloqueado ? h('div', { class: 'warnbox', text: 'Solo el gerente puede editar a jefes y gerentes.' }) : null,
 				u && !esYo ? h('div', { class: 'rule-row', style: 'min-height:40px;border:0' }, h('span', { class: 'lbl', style: 'flex:1' }, h('b', { text: 'Usuario activo' }), h('span', { text: 'Desactivado no entra al portal ni recibe tickets; su historial se conserva' })), sw(M.activo, e => { M.activo = !M.activo; e.currentTarget.setAttribute('aria-checked', String(M.activo)); }, 'Usuario activo')) : null,
 				h('div', { class: 'dsec' }, h('b', { text: u ? 'Nueva clave temporal (opcional)' : 'Clave temporal' }),
 					h('div', { style: 'display:flex;gap:8px' }, claveIn,
@@ -284,9 +313,11 @@
 			h('div', { class: 'dlg-foot' }, h('span', { class: 'note', text: 'El cambio queda en Auditoría' }), h('span', { class: 'grow' }),
 				h('button', { type: 'button', class: 'pill pillbtn plain', text: 'Cancelar', onclick: () => ov.remove() }), ok));
 		ok.addEventListener('click', async () => {
-			const body = { nombre: M.nombre, email: M.email, rol: M.rol, area: M.rol === 'COORDINADOR' ? 'GENERAL' : M.area };
+			const sinArea = M.rol === 'GERENTE' || (M.rol === 'COORDINADOR' && !M.atiende);
+			const puedeAtender = M.rol === 'COORDINADOR' || M.rol === 'JEFE';
+			const body = { nombre: M.nombre, email: M.email, rol: M.rol, area: sinArea ? 'GENERAL' : M.area, atiende: puedeAtender && M.atiende, telefono: M.telefono.trim(), subgrupo: sgRow.hidden ? '' : M.subgrupo };
 			if (M.clave) body.clave = M.clave;
-			if (u) { body.activo = M.activo; Object.keys(body).forEach(k => { if (k !== 'clave' && body[k] === (k === 'activo' ? u.activo !== false : u[k])) delete body[k]; }); }
+			if (u) { body.activo = M.activo; Object.keys(body).forEach(k => { if (k !== 'clave' && body[k] === (k === 'activo' ? u.activo !== false : k === 'atiende' ? u.atiende === true : k === 'telefono' ? (u.telefono || '') : k === 'subgrupo' ? (u.subgrupo || '') : u[k])) delete body[k]; }); }
 			if (u && !Object.keys(body).length) { ov.remove(); return; }
 			ok.disabled = true;
 			try {
@@ -311,7 +342,7 @@
 	}
 
 	// ---------- Áreas: crear, renombrar y activar/desactivar ----------
-	function openArea(codigo) {
+	function openArea(codigo, { subgrupo = false } = {}) {
 		const a = codigo ? D.areas.find(x => x.codigo === codigo) : null;
 		const M = { nombre: a ? a.nombre : '', activa: a ? a.activa : true };
 		const ov = h('div', { class: 'overlay', onclick: e => { if (e.target === ov) ov.remove(); } });
@@ -320,6 +351,23 @@
 		const err = h('div', { class: 'warnbox', hidden: true });
 		const ok = h('button', { type: 'button', class: 'primary', text: a ? 'Guardar' : 'Crear área' });
 		const nombre = h('input', { class: 'field', value: M.nombre, maxlength: 60, placeholder: 'Ej. Centro de Datos', oninput: e => { M.nombre = e.target.value; } });
+		// Subgrupos del área (p. ej. FTTx: Soporte y Cabecera): renombrar, activar/desactivar y agregar
+		const SG = a ? (a.subgrupos || []).map(g => ({ id: g.id, nombre: g.nombre, activo: g.activo, antes: g })) : [];
+		const nuevoSg = { nombre: '' };
+		const nuevoIn = h('input', { class: 'field', maxlength: 60, placeholder: 'Nuevo subgrupo, ej. Soporte', 'aria-label': 'Nuevo subgrupo', oninput: e => { nuevoSg.nombre = e.target.value; } });
+		const sgBox = a && a.codigo !== 'GENERAL' ? h('div', { class: 'dsec' }, h('b', { text: 'Subgrupos (opcional)' }),
+			h('span', { class: 't3', style: 'font-size:12px', text: 'Equipos dentro del área. Cada persona y cada ticket puede tener uno; el operador ve los de su subgrupo y los del área sin subgrupo.' }),
+			SG.map(g => h('div', { style: 'display:flex;align-items:center;gap:10px' },
+				h('input', { class: 'field', value: g.nombre, maxlength: 60, 'aria-label': 'Nombre del subgrupo', style: 'flex:1', oninput: e => { g.nombre = e.target.value; } }),
+				sw(g.activo, e => { g.activo = !g.activo; e.currentTarget.setAttribute('aria-checked', String(g.activo)); }, 'Subgrupo activo: ' + g.nombre))),
+			nuevoIn) : null;
+		const send = async (method, url, body) => {
+			const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+			let j = {};
+			try { j = await res.json(); } catch (e) { /* sin cuerpo */ }
+			if (!res.ok || !j.success) throw new Error(j.error || 'Error ' + res.status);
+			return j;
+		};
 		box.append(
 			h('div', { class: 'dlg-head' }, h('h2', { text: a ? 'Editar área' : 'Nueva área' }), h('span', { text: a ? 'Código ' + a.codigo + ' · ' + a.operadores + ' operadores' : 'Aparecerá en tickets, turnos, reportes y en la ventana de asignar' })),
 			h('div', { class: 'dlg-body', style: 'gap:14px' },
@@ -327,6 +375,7 @@
 				a && a.codigo !== 'GENERAL' ? h('div', { class: 'rule-row', style: 'min-height:40px;border:0' },
 					h('span', { class: 'lbl', style: 'flex:1' }, h('b', { text: 'Área activa' }), h('span', { text: 'Desactivada no aparece para elegir; su historial se conserva. Debe quedar sin operadores ni tickets activos.' })),
 					sw(M.activa, e => { M.activa = !M.activa; e.currentTarget.setAttribute('aria-checked', String(M.activa)); }, 'Área activa')) : null,
+				sgBox,
 				err),
 			h('div', { class: 'dlg-foot' }, h('span', { class: 'note', text: 'El cambio queda en Auditoría' }), h('span', { class: 'grow' }),
 				h('button', { type: 'button', class: 'pill pillbtn plain', text: 'Cancelar', onclick: () => ov.remove() }), ok));
@@ -334,16 +383,20 @@
 			const body = {};
 			if (!a || M.nombre.trim() !== a.nombre) body.nombre = M.nombre;
 			if (a && M.activa !== a.activa) body.activa = M.activa;
-			if (a && !Object.keys(body).length) { ov.remove(); return; }
+			const sgCambios = SG.map(g => {
+				const c = {};
+				if (g.nombre.trim() !== g.antes.nombre) c.nombre = g.nombre;
+				if (g.activo !== g.antes.activo) c.activo = g.activo;
+				return [g.id, c];
+			}).filter(([, c]) => Object.keys(c).length);
+			if (a && !Object.keys(body).length && !sgCambios.length && !nuevoSg.nombre.trim()) { ov.remove(); return; }
 			ok.disabled = true;
 			try {
-				const res = await fetch(a ? '/api/admin/areas/' + encodeURIComponent(a.codigo) : '/api/admin/areas', {
-					method: a ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
-				});
 				let j = {};
-				try { j = await res.json(); } catch (e) { /* sin cuerpo */ }
-				if (!res.ok || !j.success) throw new Error(j.error || 'Error ' + res.status);
-				try { sessionStorage.setItem('kip.toast', JSON.stringify({ title: a ? 'Área actualizada' : 'Área creada', msg: (j.area && j.area.nombre) || '' })); } catch (e) { /* nada */ }
+				if (!a || Object.keys(body).length) j = await send(a ? 'PATCH' : 'POST', a ? '/api/admin/areas/' + encodeURIComponent(a.codigo) : '/api/admin/areas', body);
+				for (const [id, c] of sgCambios) await send('PATCH', '/api/admin/subgrupos/' + encodeURIComponent(id), c);
+				if (a && nuevoSg.nombre.trim()) await send('POST', '/api/admin/areas/' + encodeURIComponent(a.codigo) + '/subgrupos', { nombre: nuevoSg.nombre });
+				try { sessionStorage.setItem('kip.toast', JSON.stringify({ title: a ? 'Área actualizada' : 'Área creada', msg: (j.area && j.area.nombre) || (a && a.nombre) || '' })); } catch (e) { /* nada */ }
 				leaving = true;
 				window.location.reload();
 			} catch (e) {
@@ -353,7 +406,7 @@
 			}
 		});
 		document.body.append(ov);
-		setTimeout(() => nombre.focus(), 30);
+		setTimeout(() => (subgrupo && sgBox ? nuevoIn : nombre).focus(), 30);
 	}
 
 	// ---------- Secciones ----------
@@ -389,7 +442,7 @@
 		$('[data-discard]').addEventListener('click', () => { leaving = true; window.location.reload(); });
 		$$('[data-user-new]').forEach(b => b.addEventListener('click', () => openUser(null, b.dataset.userNew)));
 		$$('[data-user-edit]').forEach(b => b.addEventListener('click', () => openUser(b.dataset.userEdit)));
-		$$('[data-area-edit]').forEach(b => b.addEventListener('click', () => openArea(b.dataset.areaEdit)));
+		$$('[data-area-edit]').forEach(b => b.addEventListener('click', () => openArea(b.dataset.areaEdit, { subgrupo: b.hasAttribute('data-focus-subgrupo') })));
 		const nueva = $('[data-area-new]');
 		if (nueva) nueva.addEventListener('click', () => openArea(null));
 		document.addEventListener('keydown', e => { if (e.key === 'Escape') { const o = document.querySelector('.overlay'); if (o) o.remove(); } });

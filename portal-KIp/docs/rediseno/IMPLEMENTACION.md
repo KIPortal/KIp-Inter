@@ -15,6 +15,7 @@ Guía para pasar el diseño aprobado en el canvas a código usando **Claude Code
 | `Reportes.dc.html` | Reportes | `views/reports.ejs` |
 | `Auditoria.dc.html` | Auditoría | `views/audit.ejs` |
 | `Administracion.dc.html` | Administración (nueva) | `views/admin.ejs` + rutas nuevas |
+| `Operador.dc.html` / `OperadorMovil.dc.html` | Panel del operador (escritorio y teléfono) | `views/operator-dashboard.ejs`, `dashboardController.renderOperatorDashboard` |
 
 ---
 
@@ -24,22 +25,34 @@ Guía para pasar el diseño aprobado en el canvas a código usando **Claude Code
 
 **Tema:** `data-theme="light|dark"` en el contenedor raíz. Todo color sale de variables CSS; nunca se escribe un hex en línea para texto o superficies.
 
-| Token | Claro | Oscuro (equilibrado) | Uso |
+| Token | Claro | Oscuro (colores del sistema macOS) | Uso |
 |---|---|---|---|
-| `--t1` / `--t2` / `--t3` | `#1D1D1F` / `#556070` / `#7C7C82` | `rgba(255,255,255,.92)` / `rgba(235,235,245,.76)` / `rgba(235,235,245,.54)` | Texto principal, secundario y terciario |
-| `--accent-t` | `#0369A1` | `#7FB2E5` | Enlaces, acentos |
-| `--green-t` | `#15803D` | `#5DBB85` | En turno, resueltos |
-| `--orange-t` | `#B45309` | `#E0A458` | P2, sin asignar, 40–59 % |
-| `--red-t` | `#B91C1C` | `#E07A74` | P1, sobrecarga, cola de espera |
-| `--purple-t` | `#6D28D9` | `#B59AE6` | De guardia |
-| `--solid` | `#0284C7` | `#3A7FCC` | Botón principal, selección de menú |
-| `--*-bg` / `--*-ring` | tintes suaves | tintes al 14–22 % | Fondos de etiquetas y anillos |
+| `--t1` / `--t2` / `--t3` | `#1D1D1F` / `#556070` / `#7C7C82` | `rgba(255,255,255,.86)` / `rgba(255,255,255,.56)` / `rgba(255,255,255,.36)` | Texto principal, secundario y terciario |
+| `--accent-t` | `#0369A1` | `#409CFF` | Enlaces, acentos |
+| `--green-t` | `#15803D` | `#30D158` | En turno, resueltos |
+| `--orange-t` | `#B45309` | `#FF9F0A` | P2, sin asignar, 40–59 % |
+| `--red-t` | `#B91C1C` | `#FF6961` | P1, sobrecarga, cola de espera |
+| `--purple-t` | `#6D28D9` | `#DA8FFF` | De guardia |
+| `--solid` | `#0284C7` | `#0A84FF` | Botón principal, selección de menú |
+| `--*-bg` / `--*-ring` | tintes suaves | tintes al 16–20 % / 34–40 % | Fondos de etiquetas y anillos |
 | `--sep` / `--sep2` | `#E2E8F0` / `#F1F5F9` | blanco al 10 % / 6 % | Líneas |
-| `--well` / `--fill` / `--control` | | | Recuadros internos, controles |
-| `--track` / `--grid` | | | Fondo de barras y cuadrícula de gráficas |
+| `--well` / `--fill` / `--control` | | blanco al 5 % / 8 % / 10 % | Recuadros internos, controles |
+| `--track` / `--grid` | | blanco al 10 % | Fondo de barras y cuadrícula de gráficas |
 | `--dialog` / `--rim` | | | Ventanas y su borde |
 
-En oscuro, los íconos y gráficas a color llevan `filter: saturate(.75) brightness(.95)` para que no se vean eléctricos.
+**Colores de gráficas y estados (`--c-*`):** en claro se mantienen los actuales; en oscuro se usan los colores del sistema de macOS, **sin filtros** (ya no se aplica `saturate`):
+
+| Variable | Claro | Oscuro |
+|---|---|---|
+| `--c-blue` | `#0EA5E9` | `#0A84FF` |
+| `--c-green` | `#22C55E` | `#30D158` |
+| `--c-orange` | `#F59E0B` | `#FF9F0A` |
+| `--c-red` | `#EF4444` | `#FF453A` |
+| `--c-indigo` | `#8B5CF6` | `#5E5CE6` |
+| `--c-purple` | `#A855F7` | `#BF5AF2` |
+| `--c-gray` | `#94A3B8` | `#98989D` |
+
+En el código, barras, líneas, puntos e íconos usan estas variables; nada de hex en línea.
 
 **Fondo:** claro = gradiente "Ocean" (celestes suaves). Oscuro = Golden Gate (índigo y violeta, ver `bg` en cualquier prototipo).
 
@@ -47,7 +60,7 @@ En oscuro, los íconos y gráficas a color llevan `filter: saturate(.75) brightn
 
 | Material | Claro | Uso |
 |---|---|---|
-| `.glass` / `.bento` | blanco al 85 %, blur 24, radio 24 | Tarjetas y secciones |
+| `.glass` / `.bento` | blanco al 85 %, blur 24, radio 24. Oscuro: gris neutro translúcido ("Regular"), gradiente `rgba(66,66,76,.50)` → `rgba(32,32,38,.58)`, blur 40, borde de luz arriba | Tarjetas y secciones |
 | `.side` | blur 40, radio 18 | Barra lateral |
 | `.pill` | blanco al 72 %, borde fino, radio completo | Grupos de botones y buscador |
 | `.notif` | blur 30, radio 20 | Avisos y alertas |
@@ -142,6 +155,16 @@ Secciones con ícono a color al estilo de Ajustes de macOS:
 
 ---
 
+### 3.6 Panel del operador (`Operador.dc.html` escritorio, `OperadorMovil.dc.html` teléfono)
+Parte de `views/operator-dashboard.ejs` (colas y modal de detalle ya existentes) con el diseño nuevo.
+- **Encabezado:** saludo, área y turno. A la derecha: **puntos de hoy** (insignia dorada aparte), **campana de avisos** con contador (los avisos se abren en un menú, no ocupan la pantalla) y **disponibilidad** (Disponible y Atendiendo automáticos; Fuera de puesto con motivo y hora de regreso; Ausente avisa al coordinador).
+- **Primera fila, 3 tarjetas:** **Mi turno** (horario, "faltan…" y un reloj de 12 h en la esquina: arco de la jornada, agujas con la hora real y segundero que avanza cada segundo; respeta prefers-reduced-motion), **Pendientes** (total y barra dividida en Asignados / En atención / En espera) y **Resueltos hoy** (pendientes de cierre y cerrados). El operador **no** ve sobrecarga ni promedio del área.
+- **Bandeja a todo el ancho** con las colas a la izquierda: **Entrantes** (sin asignar de su área y de Operaciones IP; contador rojo si hay un P1), **Asignados a mí** (`NUEVO` con `asignado_a_id` = el operador; botón Empezar), **En atención** (Pausar / Resolver), **En espera** (En pausa y Espera de terceros; Reanudar / Resolver) y **Resueltos** (Pendiente de cierre / Cerrado, +puntos).
+- **Filas compactas:** pastilla de prioridad (P1/P2/P3/S/P), código + asunto en una línea, remitente o nota debajo; el tiempo lleva su título en la cabecera de la columna (Esperando, Asignado hace, En atención, Detenido, Puntos). Filtro por prioridad con conteos, **buscador** por código o asunto, lista con altura fija y cabecera fija, **20 por página** con "Mostrar 20 más". P1 primero, luego los más antiguos.
+- **Detalle antes de tomar:** al pulsar el asunto (o "Detalles" en Entrantes) se abre la ficha: prioridad y puntos, estado, área, asignado a, remitente, origen, hora de llegada, espera, descripción y adjuntos; al pie la acción que corresponda (Tomar, Empezar, Pausar/Resolver, Reanudar). En teléfono es una hoja desde abajo.
+- **De guardia:** recuadro "Pendientes del traspaso" (nota del coordinador y lista) arriba de la bandeja.
+- **Teléfono:** colas como chips horizontales, botones de 44 px, hojas desde abajo.
+
 ## 4. Reglas de negocio confirmadas
 
 - **Tiempo:** se mide desde la llegada del ticket y se muestra como promedio. Nunca usar "SLA" ni "DERS".
@@ -168,7 +191,7 @@ Lee docs/rediseno/IMPLEMENTACION.md y revisa views/, src/routes y src/controller
 
 **Fase 1 — Base visual compartida**
 ```
-Crea public/css/portal.css a partir de docs/rediseno/estilos-referencia.css: tokens claro/oscuro con la paleta oscura equilibrada, fondos, materiales (.glass, .bento, .pill, .side, .notif), controles (.popup, .combo, .mmenu/.mitem, .ico, .primary, .linkbtn, .field, .switch, .stepper), gráficas (.track, .bar-fill, .tick, .reveal) y animaciones con prefers-reduced-motion. Elimina reglas duplicadas. Carga IBM Plex Sans/Mono. Crea un partial views/partials/sidebar.ejs (sticky, minimizable con localStorage 'kip.sidebar', usuario arriba, secciones Coordinación y Control, título en cada enlace) y views/partials/head.ejs. Aplica data-theme según la preferencia guardada. No toques todavía el contenido de las pantallas.
+Crea public/css/portal.css a partir de docs/rediseno/estilos-referencia.css: tokens claro/oscuro con la paleta oscura de colores del sistema macOS (sección 1, variables --c-* para gráficas, sin filtros saturate), fondos, materiales (.glass, .bento, .pill, .side, .notif), controles (.popup, .combo, .mmenu/.mitem, .ico, .primary, .linkbtn, .field, .switch, .stepper), gráficas (.track, .bar-fill, .tick, .reveal) y animaciones con prefers-reduced-motion. Elimina reglas duplicadas. Carga IBM Plex Sans/Mono. Crea un partial views/partials/sidebar.ejs (sticky, minimizable con localStorage 'kip.sidebar', usuario arriba, secciones Coordinación y Control, título en cada enlace) y views/partials/head.ejs. Aplica data-theme según la preferencia guardada. No toques todavía el contenido de las pantallas.
 ```
 
 **Fase 2 — Dashboard General**
@@ -206,8 +229,13 @@ Actualiza views/reports.ejs y views/audit.ejs al estilo nuevo (Reportes.dc.html,
 Revisa todas las vistas en claro y oscuro: contraste de textos, que ningún color esté fijo en línea fuera de los tokens, alineación de la barra minimizada, que las ventanas quepan en 1366×768, navegación por teclado en menús y ventanas, y prefers-reduced-motion. Lista lo que encuentres antes de corregir.
 ```
 
+**Fase 9 — Panel del operador**
+```
+Rediseña views/operator-dashboard.ejs siguiendo docs/rediseno/prototipo/Operador.dc.html (y OperadorMovil.dc.html para teléfono) y la sección 3.6. En dashboardController.renderOperatorDashboard agrega la consulta de tickets NUEVO con asignado_a_id = req.user.id ("Asignados a mí"); hoy no se consultan. El botón Empezar usa el mismo claim (ya acepta tickets asignados a uno mismo). Reutiliza el modal ticketDetailsOverlay para la ficha de detalle con la acción dentro. Agrega búsqueda y paginado de 20 en el cliente, la campana de avisos y la insignia de puntos (P1=8, P2=5, P3=1). No muestres sobrecarga al operador. Corre los scripts/test-* al terminar.
+```
+
 ### Consejos para trabajar con Claude Code
 - Pide una fase por sesión y, al empezar, que lea este documento y el prototipo correspondiente.
 - Pide primero un plan corto ("muéstrame el plan antes de editar") en las fases que tocan Prisma o rutas.
 - Cuando algo no se vea como el canvas, pega una captura y nombra el componente de la sección 2 ("el menú .mmenu se ve…").
-- El operador (vista móvil) queda para después, con el mismo estilo.
+- El panel del operador tiene su propia fase (Fase 9) y su página "Operador" en el canvas.

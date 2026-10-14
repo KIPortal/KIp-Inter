@@ -66,17 +66,27 @@ const at = (iso, hhmm) => new Date(`${iso}T${hhmm}:00-04:00`);
     prisma.auditLog = { create: async ({ data }) => { audits.push(data); } };
     const user = { id: 'c1', rol: 'COORDINADOR' };
 
-    await t('setGuardia: reemplaza la guardia de la semana y audita', async () => {
+    await t('setGuardia: reemplaza la guardia por día de la semana y audita', async () => {
         let deleted, created;
         prisma.user.findMany = async () => [{ id: 'u1' }, { id: 'u2' }];
-        prisma.guardiaSemanal = { deleteMany: async a => { deleted = a; return a; }, createMany: async a => { created = a; return a; } };
+        prisma.guardiaDia = { deleteMany: async a => { deleted = a; return a; }, createMany: async a => { created = a; return a; } };
         prisma.$transaction = async ops => Promise.all(ops);
         const res = mockRes();
-        await ctrl.setGuardia({ body: { semana: '2026-10-14', operatorIds: ['u1', 'u2', 'u2'] }, user }, res);
+        await ctrl.setGuardia({ body: { semana: '2026-10-14', dias: { '2026-10-13': ['u1', 'u1'], '2026-10-15': ['u2'], '2026-10-17': ['u1', 'u2'] } }, user }, res);
         assert.strictEqual(res.code, 200);
-        assert.strictEqual(deleted.where.semana_inicio.toISOString(), '2026-10-12T04:00:00.000Z');
-        assert.strictEqual(created.data.length, 2);
+        assert.strictEqual(deleted.where.fecha.gte.toISOString(), '2026-10-12T04:00:00.000Z');
+        assert.strictEqual(deleted.where.fecha.lt.toISOString(), '2026-10-19T04:00:00.000Z');
+        assert.deepStrictEqual(created.data.map(d => [d.userId, d.fecha.toISOString()]), [
+            ['u1', '2026-10-13T04:00:00.000Z'], ['u2', '2026-10-15T04:00:00.000Z'], ['u1', '2026-10-17T04:00:00.000Z'], ['u2', '2026-10-17T04:00:00.000Z']
+        ]);
         assert.strictEqual(audits.pop().accion, 'GUARDIA_DEFINIDA');
+        // Lista simple de personas = los 7 días
+        prisma.user.findMany = async () => [{ id: 'u1' }];
+        await ctrl.setGuardia({ body: { semana: '2026-10-14', operatorIds: ['u1'] }, user }, mockRes());
+        assert.strictEqual(created.data.length, 7);
+        const fuera = mockRes();
+        await ctrl.setGuardia({ body: { semana: '2026-10-14', dias: { '2026-10-20': ['u1'] } }, user }, fuera);
+        assert.strictEqual(fuera.code, 400, 'fecha de otra semana');
     });
     await t('setGuardia: rechaza ids que no son operadores', async () => {
         prisma.user.findMany = async () => [{ id: 'u1' }];
@@ -102,11 +112,23 @@ const at = (iso, hhmm) => new Date(`${iso}T${hhmm}:00-04:00`);
         assert.strictEqual(up.create.hora_inicio, '09:00');
         assert.strictEqual(audits.pop().accion, 'HORARIO_EDITADO');
     });
+    await t('loadShiftData: de guardia hoy y por día de la semana', async () => {
+        const now = new Date('2026-10-14T16:00:00Z'); // miércoles
+        prisma.horarioOperador = { findMany: async () => [] };
+        prisma.guardiaDia = { findMany: async () => [
+            { userId: 'u1', fecha: new Date('2026-10-14T04:00:00Z') },
+            { userId: 'u2', fecha: new Date('2026-10-17T04:00:00Z') }
+        ] };
+        const d = await ctrl.loadShiftData(new Date('2026-10-12T04:00:00Z'), now);
+        assert.deepStrictEqual([...d.guardiaIds], ['u1'], 'solo hoy');
+        assert.deepStrictEqual([...d.guardiaPorDia.get('2026-10-17')], ['u2']);
+    });
     await t('loadShiftData tolera tablas inexistentes', async () => {
         prisma.horarioOperador = { findMany: async () => { throw new Error('no existe'); } };
-        prisma.guardiaSemanal = { findMany: async () => [] };
+        prisma.guardiaDia = { findMany: async () => [] };
         const d = await ctrl.loadShiftData(new Date());
         assert.strictEqual(d.guardiaIds.size, 0);
+        assert.strictEqual(d.guardiaPorDia.size, 7);
     });
 
     console.log(`\nResultado: ${passed}/${total}`);

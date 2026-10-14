@@ -39,7 +39,16 @@ function setAreas(list) {
 }
 setAreas(DEFAULT_AREAS.map(([codigo, nombre]) => ({ codigo, nombre, activa: true })));
 
-/** Recarga desde la tabla Area (con caché). Si la tabla no existe aún, deja el catálogo como está. */
+// Subgrupos de cada área (FTTx: Soporte y Cabecera): id → { id, area, nombre, activo }
+const SUBGRUPOS = new Map();
+
+/** Reemplaza los subgrupos: [{ id, area_codigo, nombre, activo }] en orden. */
+function setSubgrupos(list) {
+    SUBGRUPOS.clear();
+    list.forEach(g => SUBGRUPOS.set(g.id, { id: g.id, area: g.area_codigo, nombre: g.nombre, activo: g.activo !== false }));
+}
+
+/** Recarga desde las tablas Area y Subgrupo (con caché). Si una tabla no existe aún, deja lo que había. */
 async function refreshAreas(prisma, { force = false } = {}) {
     if (!force && Date.now() - cargadoEn < CACHE_MS) return;
     try {
@@ -50,7 +59,20 @@ async function refreshAreas(prisma, { force = false } = {}) {
         cargadoEn = Date.now(); // no reintentar en cada petición
         console.error('Áreas no disponibles (¿migración pendiente?):', error.message);
     }
+    try {
+        if (prisma.subgrupo) setSubgrupos(await prisma.subgrupo.findMany({ orderBy: [{ orden: 'asc' }, { nombre: 'asc' }] }));
+    } catch (error) {
+        console.error('Subgrupos no disponibles (¿migración pendiente?):', String(error.message).trim().split('\n').pop());
+    }
 }
+
+/** Subgrupos de un área (solo activos salvo que se pida todos). */
+const subgruposDe = (area, { todos = false } = {}) => [...SUBGRUPOS.values()].filter(g => g.area === area && (todos || g.activo));
+const subgrupoName = id => (id && SUBGRUPOS.has(id) ? SUBGRUPOS.get(id).nombre : '');
+/** ¿Se puede elegir este subgrupo para esa área? (activo y de esa área) */
+const isValidSubgrupo = (id, area) => SUBGRUPOS.has(id) && SUBGRUPOS.get(id).activo && SUBGRUPOS.get(id).area === area;
+/** Todos los subgrupos, para las vistas: [{ id, area, nombre, activo }] */
+const allSubgrupos = () => [...SUBGRUPOS.values()];
 
 const isActiveArea = codigo => ACTIVE.has(codigo);
 const areaName = codigo => AREA_NAMES[codigo] || codigo || 'General';
@@ -79,5 +101,6 @@ function validateAreaName(nombre) {
 module.exports = {
     validateAreaName,
     DEFAULT_AREAS, AREA_NAMES, AREAS, setAreas, refreshAreas,
-    isActiveArea, areaName, activeAreas, allAreas, codeFromName
+    isActiveArea, areaName, activeAreas, allAreas, codeFromName,
+    SUBGRUPOS, setSubgrupos, subgruposDe, subgrupoName, isValidSubgrupo, allSubgrupos
 };

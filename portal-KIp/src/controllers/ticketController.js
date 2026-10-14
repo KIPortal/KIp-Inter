@@ -1,11 +1,12 @@
 const prisma = require('../config/prisma');
+const { ATIENDE_WHERE, esSupervisor, areasVisibles, ticketWhere } = require('../services/roleService');
 const { getWeekStart } = require('../services/shiftService');
 const { buildHandoffView } = require('../services/ticketQueueService');
 const { getNextTicketCode } = require('../services/ticketCodeService');
 const { auditUserId } = require('../services/auditViewService');
 
 const PRIORITY_POINTS = { P1: 8, P2: 5, P3: 1 };
-const { isActiveArea } = require('../services/areaCatalog');
+const { isActiveArea, isValidSubgrupo, subgrupoName } = require('../services/areaCatalog');
 const { parseEstadoVe } = require('../services/estadosVeService');
 // Solo se puede elegir un área activa (las desactivadas conservan su historial)
 const VALID_AREAS = { has: isActiveArea };
@@ -21,8 +22,8 @@ function assignmentValidationError({ operatorId, areaDesignada, prioridad }) {
 
 async function isOperator(operatorId) {
     return prisma.user.findFirst({
-        where: { id: operatorId, rol: 'OPERADOR', activo: true },
-        select: { id: true, nombre: true }
+        where: { id: operatorId, activo: true, ...ATIENDE_WHERE },
+        select: { id: true, nombre: true, area_designada: true, subgrupo_id: true }
     });
 }
 
@@ -57,6 +58,10 @@ async function createTicket(req, res) {
     if (!VALID_PRIORITIES.has(prioridad)) {
         return res.status(400).json({ success: false, error: 'Prioridad no válida' });
     }
+    const subgrupoId = typeof body.subgrupoId === 'string' && body.subgrupoId.trim() ? body.subgrupoId.trim() : null;
+    if (subgrupoId && !isValidSubgrupo(subgrupoId, areaDesignada)) {
+        return res.status(400).json({ success: false, error: 'El subgrupo no es de esa área o está desactivado' });
+    }
 
     const data = {
         asunto,
@@ -66,6 +71,7 @@ async function createTicket(req, res) {
         puntos_complejidad: PRIORITY_POINTS[prioridad] || 0,
         area_designada: areaDesignada,
         estado_ve: estadoVe.valor,
+        subgrupo_id: subgrupoId,
         origen_ingesta: origenIngesta,
         ...(req.user?.id && !req.user.id.startsWith('temporary:') ? { creado_por_id: req.user.id } : {})
     };
@@ -102,7 +108,7 @@ async function assignTicket(req, res) {
             isOperator(operatorId),
             prisma.ticket.findUnique({
                 where: { codigo_incidencia: ticketCode },
-                select: { id: true, estado_actual: true, asignado_a_id: true, asignado_a: { select: { nombre: true } } }
+                select: { id: true, estado_actual: true, asignado_a_id: true, area_designada: true, subgrupo_id: true, asignado_a: { select: { nombre: true } } }
             })
         ]);
         if (!operador) {
@@ -120,6 +126,11 @@ async function assignTicket(req, res) {
         };
         if (areaDesignada) dataToUpdate.area_designada = areaDesignada;
         if (prioridad) dataToUpdate.puntos_complejidad = PRIORITY_POINTS[prioridad];
+        // Subgrupo: se va si el ticket cambia de área; si no tiene, toma el de quien lo recibe (misma área)
+        const areaFinal = areaDesignada || existingTicket.area_designada;
+        let subgrupo = existingTicket.subgrupo_id && isValidSubgrupo(existingTicket.subgrupo_id, areaFinal) ? existingTicket.subgrupo_id : null;
+        if (!subgrupo && operador.subgrupo_id && operador.area_designada === areaFinal) subgrupo = operador.subgrupo_id;
+        if (subgrupo !== (existingTicket.subgrupo_id || null)) dataToUpdate.subgrupo_id = subgrupo;
 
         // Un solo viaje: el filtro de estado evita reasignar si lo resolvieron entretanto (P2025)
         const ticket = await prisma.ticket.update({
@@ -273,7 +284,9 @@ async function claimTicket(req, res) {
         }
 
         const operatorArea = req.user.area_designada || 'GENERAL';
-        if (ticket.area_designada !== 'GENERAL' && ticket.area_designada !== operatorArea) {
+        // El coordinador (y el gerente) ve todas las áreas: puede tomar cualquiera; el jefe, las de su área
+        const areas = esSupervisor(req.user) ? areasVisibles(req.user) : [...new Set([operatorArea, 'GENERAL'])];
+        if (areas && !areas.includes(ticket.area_designada)) {
             return res.status(403).json({ success: false, error: 'El ticket no pertenece a tu área' });
         }
 
@@ -285,7 +298,7 @@ async function claimTicket(req, res) {
                     { asignado_a_id: null },
                     { asignado_a_id: req.user.id }
                 ],
-                area_designada: { in: [...new Set([operatorArea, 'GENERAL'])] }
+                ...(areas ? { area_designada: { in: areas } } : {})
             },
             data: {
                 estado_actual: 'EN_PROGRESO',
@@ -310,6 +323,7 @@ async function updateOperatorTicket(req, res, action) {
 
     const transitions = {
         pause: { from: ['EN_PROGRESO'], to: 'EN_PAUSA', error: 'Solo se puede pausar un ticket en progreso' },
+        wait: { from: ['EN_PROGRESO'], to: 'EN_ESPERA_TERCEROS', error: 'Solo se puede dejar en espera un ticket en progreso' },
         resume: { from: ['EN_PAUSA', 'EN_ESPERA_TERCEROS'], to: 'EN_PROGRESO', error: 'El ticket no está pausado ni en espera externa' },
         resolve: { from: ['EN_PROGRESO', 'EN_PAUSA', 'EN_ESPERA_TERCEROS'], to: 'RESUELTO', error: 'El ticket no se puede resolver desde su estado actual' }
     };
@@ -345,8 +359,10 @@ async function updateOperatorTicket(req, res, action) {
         if (result.count !== 1) {
             return res.status(409).json({ success: false, error: 'El ticket cambió antes de completar la acción' });
         }
-        const ACCION = { pause: 'TICKET_PAUSADO', resume: 'TICKET_REANUDADO', resolve: 'TICKET_RESUELTO' }[action];
-        if (ACCION) await logAudit(req, ACCION, ticket.id, `Estado: ${ticket.estado_actual} → ${transition.to}`);
+        const ACCION = { pause: 'TICKET_PAUSADO', wait: 'TICKET_EN_ESPERA', resume: 'TICKET_REANUDADO', resolve: 'TICKET_RESUELTO' }[action];
+        // Nota opcional del operador (motivo de la pausa o qué se hizo al resolver)
+        const nota = typeof req.body?.nota === 'string' ? req.body.nota.trim().slice(0, 500) : '';
+        if (ACCION) await logAudit(req, ACCION, ticket.id, `Estado: ${ticket.estado_actual} → ${transition.to}${nota ? '. Nota: ' + nota : ''}`);
         return await sendTicket(req, res, ticket.id);
     } catch (error) {
         console.error(`Error al ${action} ticket:`, error);
@@ -379,6 +395,7 @@ function updateOperatorStatus(req, res) {
         EN_PAUSA: 'pause',
         PAUSADO: 'pause',
         EN_ESPERA: 'pause',
+        EN_ESPERA_TERCEROS: 'wait',
         pausar: 'pause',
         EN_PROGRESO: 'resume',
         RESUELTO: 'resolve',
@@ -469,6 +486,10 @@ async function editTicket(req, res) {
         else if (Object.hasOwn(PRIORITY_POINTS, body.prioridad)) data.puntos_complejidad = PRIORITY_POINTS[body.prioridad];
         else return res.status(400).json({ success: false, error: 'Prioridad no válida' });
     }
+    if (body.subgrupo_id !== undefined) {
+        if (body.subgrupo_id !== null && typeof body.subgrupo_id !== 'string') return res.status(400).json({ success: false, error: 'Subgrupo no válido' });
+        data.subgrupo_id = (body.subgrupo_id || '').trim() || null;
+    }
     if (Object.keys(data).length === 0) {
         return res.status(400).json({ success: false, error: 'No hay campos para actualizar' });
     }
@@ -479,6 +500,15 @@ async function editTicket(req, res) {
             include: { asignado_a: { select: { id: true, nombre: true, area_designada: true } } }
         });
         if (!ticket || ticket.eliminado_en) return res.status(404).json({ success: false, error: 'Ticket no encontrado' });
+
+        // Subgrupo: debe ser del área final; si el área cambia y no se eligió otro, se quita
+        const areaFinal = data.area_designada || ticket.area_designada;
+        if (data.subgrupo_id === undefined && ticket.subgrupo_id && data.area_designada && data.area_designada !== ticket.area_designada) data.subgrupo_id = null;
+        if (data.subgrupo_id && !isValidSubgrupo(data.subgrupo_id, areaFinal)) {
+            return res.status(400).json({ success: false, error: 'El subgrupo no es de esa área o está desactivado' });
+        }
+        if (data.subgrupo_id !== undefined && data.subgrupo_id === (ticket.subgrupo_id || null)) delete data.subgrupo_id;
+        if (Object.keys(data).length === 0) return await sendTicket(req, res, ticket.id);
 
         // Cambiar el área de un ticket ya asignado a otra área requiere confirmación explícita
         const areaChanged = data.area_designada && data.area_designada !== ticket.area_designada;
@@ -492,6 +522,7 @@ async function editTicket(req, res) {
         }
 
         const cambios = Object.keys(data).map(campo => {
+            if (campo === 'subgrupo_id') return `subgrupo: ${subgrupoName(ticket.subgrupo_id) || '-'} → ${subgrupoName(data.subgrupo_id) || '-'}`;
             const antes = ticket[campo];
             return `${campo}: ${antes === null || antes === undefined ? '-' : String(antes).slice(0, 80)} → ${data[campo] === null ? '-' : String(data[campo]).slice(0, 80)}`;
         });
@@ -701,7 +732,7 @@ async function getTicketHistory(req, res) {
 async function listTrash(req, res) {
     try {
         const tickets = await prisma.ticket.findMany({
-            where: { eliminado_en: { not: null } },
+            where: { eliminado_en: { not: null }, ...ticketWhere(req.user) },
             orderBy: { eliminado_en: 'desc' },
             take: 200,
             select: {

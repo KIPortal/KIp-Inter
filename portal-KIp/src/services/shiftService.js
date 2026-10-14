@@ -5,13 +5,14 @@
  *
  * - Turno normal: por defecto lunes a viernes de 8:00 a 17:00 (Caracas); cada
  *   operador puede tener su propio horario.
- * - Guardia: la define el coordinador por semana (lunes a domingo). El operador
+ * - Guardia: la define el coordinador por día (unos 2 días por persona entre
+ *   semana, en la oficina, más los fines de semana desde casa). El operador
  *   de guardia NO aparece como "Disponible" en la jornada normal: aparece como
  *   "De guardia" (o "En casa de guardia" los fines de semana, que trabaja remoto).
  *   Puede recibir tickets igualmente.
  */
 
-const { UTC_OFFSET_HOURS, getPeriodBounds } = require('./metricsService');
+const { UTC_OFFSET_HOURS, getPeriodBounds, formatCaracasDate } = require('./metricsService');
 
 const HOUR_MS = 3600000;
 
@@ -69,7 +70,7 @@ const within = (minutes, win) => minutes >= toMinutes(win.inicio) && minutes < t
  * @param {object} p
  * @param {string} p.estadoOperativo  DISPONIBLE | EN_TERRENO | AUSENTE (lo marca el propio operador)
  * @param {object} [p.horario]        { dias, inicio, fin }; por defecto lunes a viernes 8-17
- * @param {boolean} [p.deGuardia]     ¿está de guardia esta semana?
+ * @param {boolean} [p.deGuardia]     ¿está de guardia hoy?
  * @returns {{ codigo, etiqueta, enTurno, deGuardia, disponible }}
  */
 function getShiftStatus({ estadoOperativo, horario, deGuardia = false }, now = new Date()) {
@@ -93,7 +94,30 @@ function getShiftStatus({ estadoOperativo, horario, deGuardia = false }, now = n
     return out('FUERA_DE_TURNO');
 }
 
+/** Fechas (AAAA-MM-DD, Caracas) de los 7 días de la semana que empieza en `weekStart`. */
+function weekDates(weekStart) {
+    return Array.from({ length: 7 }, (_, i) => formatCaracasDate(new Date(new Date(weekStart).getTime() + i * 24 * HOUR_MS)));
+}
+
+/**
+ * Plan de guardia de una semana: { 'AAAA-MM-DD': [ids] } solo con fechas de esa semana.
+ * Los días que no vienen quedan sin guardia.
+ * @returns {{ error: string } | { plan: Object<string, string[]>, ids: string[] }}
+ */
+function validateGuardPlan(dias, weekStart) {
+    if (!dias || typeof dias !== 'object' || Array.isArray(dias)) return { error: 'Falta la guardia de cada día' };
+    const fechas = weekDates(weekStart);
+    const plan = {};
+    for (const [fecha, lista] of Object.entries(dias)) {
+        if (!fechas.includes(fecha)) return { error: `La fecha ${fecha} no es de esa semana` };
+        if (!Array.isArray(lista) || lista.some(id => typeof id !== 'string' || !id.trim())) return { error: 'Cada día debe ser una lista de ids' };
+        const unicos = [...new Set(lista.map(id => id.trim()))];
+        if (unicos.length) plan[fecha] = unicos;
+    }
+    return { plan, ids: [...new Set(Object.values(plan).flat())] };
+}
+
 module.exports = {
     DEFAULT_SCHEDULE, GUARDIA_WEEKDAY, GUARDIA_WEEKEND, STATUS,
-    validateSchedule, getShiftStatus, getWeekStart, caracasClock
+    validateSchedule, getShiftStatus, getWeekStart, caracasClock, weekDates, validateGuardPlan
 };

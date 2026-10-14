@@ -22,7 +22,7 @@ const horarios = new Map([['b', { dias: [1, 2, 3, 4, 5], hora_inicio: '13:00', h
 (async () => {
     console.log('\n=== PRUEBAS: GESTIÓN DE TURNO ===\n');
     const semana = getWeekStart(NOW);
-    const tb = buildShiftBoard({ operators, horarios, guardiaSemana: new Set(['c']), guardiaActual: new Set(['c']), weekStart: semana, now: NOW });
+    const tb = buildShiftBoard({ operators, horarios, guardiaPorDia: new Map([['2026-10-13', new Set(['c'])], ['2026-10-14', new Set(['c', 'a'])]]), guardiaActual: new Set(['c']), weekStart: semana, now: NOW });
     const op = id => tb.operadores.find(o => o.id === id);
 
     await t('Estado actual: en turno, fuera por horario propio, de guardia y ausente', () => {
@@ -57,23 +57,27 @@ const horarios = new Map([['b', { dias: [1, 2, 3, 4, 5], hora_inicio: '13:00', h
     });
 
     await t('Guardia de otra semana: casillas de esa semana, estado con la guardia de hoy', () => {
-        const otra = buildShiftBoard({ operators, horarios, guardiaSemana: new Set(['a']), guardiaActual: new Set(['c']), weekStart: getWeekStart(at('10:00', '2026-10-20')), now: NOW });
-        assert.strictEqual(otra.operadores.find(o => o.id === 'a').guardia, true);
+        const otra = buildShiftBoard({ operators, horarios, guardiaPorDia: new Map([['2026-10-24', new Set(['a'])]]), guardiaActual: new Set(['c']), weekStart: getWeekStart(at('10:00', '2026-10-20')), now: NOW });
+        assert.deepStrictEqual(otra.operadores.find(o => o.id === 'a').guardiaDias, ['2026-10-24']);
+        assert.deepStrictEqual(otra.semana.dias[5].guardias.map(g => g.id), ['a']);
+        assert.strictEqual(otra.semana.sinGuardia, 6);
         assert.strictEqual(otra.operadores.find(o => o.id === 'a').estado.grupo, 'turno');
         assert.strictEqual(otra.semana.esActual, false);
     });
 
     await t('Vista: tablero, días L–D, casilla de guardia y datos seguros', async () => {
         const html = await ejs.renderFile(path.join(__dirname, '..', 'views', 'turno.ejs'), { tablero: tb, activos: 3, currentUser: { nombre: 'Coord', rol: 'COORDINADOR' } });
-        assert.ok(html.includes('Guardia semanal'));
-        assert.ok(html.includes('De guardia esta semana:'));
+        assert.ok(html.includes('Guardia por día'));
+        assert.ok(html.includes('5 días de esta semana sin guardia'));
+        assert.ok(html.includes('data-gdate="2026-10-14" aria-pressed="true" aria-label="Guardia de Carla Díaz'), 'botón de guardia por día');
+        assert.ok(/data-wday-guards="2026-10-14">\s*<i title="Ana Pérez">AP<\/i><i title="Carla Díaz">CD<\/i>/.test(html), 'la tira muestra quién está cada día');
         assert.strictEqual((html.match(/data-op="/g) || []).length, 4);
         assert.ok(html.includes('data-day="0" aria-pressed="false"'), 'domingo apagado por defecto');
         assert.ok(/title="Gestión de Turno" aria-current="page"/.test(html));
         const vacio = buildShiftBoard({ weekStart: semana, now: NOW });
         const html2 = await ejs.renderFile(path.join(__dirname, '..', 'views', 'turno.ejs'), { tablero: vacio, activos: 0, currentUser: { nombre: 'Coord', rol: 'COORDINADOR' } });
         assert.ok(html2.includes('Todavía no hay operadores'));
-        assert.ok(html2.includes('Marca la casilla de guardia'));
+        assert.ok(html2.includes('7 días de esta semana sin guardia'));
     });
 
     await t('Controlador: /gestion-turno renderiza la semana pedida y redirige al operador', async () => {
@@ -82,7 +86,7 @@ const horarios = new Map([['b', { dias: [1, 2, 3, 4, 5], hora_inicio: '13:00', h
         prisma.ticket.count = async () => 5;
         const pedidas = [];
         prisma.horarioOperador = { findMany: async () => [] };
-        prisma.guardiaSemanal = { findMany: async ({ where }) => { pedidas.push(where.semana_inicio.toISOString()); return []; } };
+        prisma.guardiaDia = { findMany: async ({ where }) => { pedidas.push(where.OR[0].fecha.gte.toISOString()); return []; } };
         let vista, data;
         await ctrl.renderTurno({ user: { rol: 'COORDINADOR' }, query: { semana: '2026-10-21' } }, { render: (v, d) => { vista = v; data = d; }, status: () => ({ send() {} }) });
         assert.strictEqual(vista, 'turno');
@@ -100,10 +104,10 @@ const horarios = new Map([['b', { dias: [1, 2, 3, 4, 5], hora_inicio: '13:00', h
         prisma.auditLog = { create: async ({ data }) => { logs.push(data); } };
         prisma.user.findMany = async () => [{ id: 'a', nombre: 'Ana Pérez' }];
         prisma.$transaction = async () => [];
-        prisma.guardiaSemanal = { deleteMany: () => ({}), createMany: () => ({}) };
+        prisma.guardiaDia = { deleteMany: () => ({}), createMany: () => ({}) };
         const res = { status() { return this; }, json(b) { this.body = b; return this; } };
-        await ctrl.setGuardia({ body: { semana: '2026-10-13', operatorIds: ['a'] }, user: { id: 'u' } }, res);
-        assert.strictEqual(logs[0].detalles, 'Semana del 2026-10-12: Ana Pérez');
+        await ctrl.setGuardia({ body: { semana: '2026-10-13', dias: { '2026-10-13': ['a'], '2026-10-18': ['a'] } }, user: { id: 'u' } }, res);
+        assert.strictEqual(logs[0].detalles, 'Semana del 2026-10-12. Lun 12: nadie; Mar 13: Ana Pérez; Mié 14: nadie; Jue 15: nadie; Vie 16: nadie; Sáb 17: nadie; Dom 18: Ana Pérez');
         prisma.user.findFirst = async () => ({ id: 'a', nombre: 'Ana Pérez' });
         prisma.horarioOperador = { upsert: async () => ({}) };
         await ctrl.setHorario({ params: { operatorId: 'a' }, body: { dias: [1, 3, 5], inicio: '09:00', fin: '18:00' }, user: { id: 'u' } }, res);

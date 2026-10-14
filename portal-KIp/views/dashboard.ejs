@@ -406,6 +406,6 @@
 </div>
 
 <script id="panel-flujo" type="application/json"><%- JSON.stringify(panel.flujo).replace(/</g, '\\u003c') %></script>
-<script src="/js/dashboard.js" defer></script>
+<script src="/js/dashboard.js?v=<%= locals.v || 1 %>" defer></script>
 </body>
 </html>

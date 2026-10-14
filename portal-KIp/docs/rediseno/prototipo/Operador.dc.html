@@ -1,0 +1,848 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Mi panel</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=Instrument+Sans:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0;background:#F1F5F9}
+a{color:#0369A1;text-decoration:none}a:hover{color:#075985}
+.glass{background:rgba(255,255,255,0.85);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);border-radius:24px;box-shadow:0 0 0 0.5px rgba(15,23,42,0.05),0 4px 12px rgba(0,0,0,0.03)}
+.pill{background:rgba(255,255,255,0.72);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%);box-shadow:1.25px 0 0 -0.75px #D0D0D0,-1.25px 0 0 -0.75px #D0D0D0,0 0 0 0.5px #E2E8F0,inset 0 1px 0 rgba(255,255,255,0.95),0 8px 15px rgba(0,0,0,0.03);border-radius:1000px}
+.side{background:rgba(241,245,249,0.9);-webkit-backdrop-filter:blur(40px) saturate(150%);backdrop-filter:blur(40px) saturate(150%);box-shadow:0 0 0 0.5px rgba(15,23,42,0.08),inset 0 1px 0 rgba(255,255,255,0.8),0 10px 30px rgba(15,23,42,0.06);border-radius:18px}
+.sideitem:hover{background:rgba(15,23,42,0.05)}
+.pillbtn:hover{background:rgba(255,255,255,0.95)}
+.primary{background:#0284C7}.primary:hover{background:#0369A1}
+.popup{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 8px 0 12px;border:0;border-radius:8px;background:var(--control);box-shadow:0 0 0 0.5px rgba(0,0,0,0.12),0 1px 2px rgba(0,0,0,0.06);font:inherit;font-size:12px;color:var(--t1);cursor:pointer}
+.ico{width:28px;height:28px;border:0;border-radius:8px;background:transparent;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:var(--t2)}
+.ico:hover{background:rgba(15,23,42,0.06);color:var(--t1)}
+.row:hover td{background:rgba(14,165,233,0.04)}
+.stat{display:flex;flex-direction:column;gap:2px;padding:0 20px;border-left:1px solid var(--sep)}
+.stat:first-child{border-left:0;padding-left:0}
+.kv{font-family:inherit;font-weight:600;color:var(--t1);letter-spacing:-0.02em;font-variant-numeric:tabular-nums}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(14,165,233,0.3)}
+[data-theme=dark] .chip{background:rgba(10,132,255,0.18);box-shadow:inset 0 0 0 1px rgba(64,156,255,0.35);color:#64B5FF}
+[data-theme=dark] .sideitem:hover,[data-theme=dark] .pillbtn:hover,[data-theme=dark] .ico:hover{background:rgba(255,255,255,0.08)}
+[data-theme=dark] .stat{border-color:rgba(255,255,255,0.10)}
+/* Texto: Primary / Secondary / Tertiary */
+[data-theme=dark] [style*="color: #0F172A"],[data-theme=dark] [style*="color: #1E293B"],[data-theme=dark] [style*="color: #1D1D1F"],[data-theme=dark] [style*="color: #1A1A1A"],[data-theme=dark] [style*="color: #1C1C1E"],[data-theme=dark] [style*="color: #334155"]{color:rgba(255,255,255,0.92)!important}
+[data-theme=dark] [style*="color: #64748B"],[data-theme=dark] [style*="color: #475569"]{color:rgba(235,235,245,0.60)!important}
+[data-theme=dark] [style*="color: #94A3B8"],[data-theme=dark] [style*="color: #8E8E93"]{color:rgba(235,235,245,0.32)!important}
+/* Colores de sistema (oscuro) */
+[data-theme=dark] [style*="color: #0369A1"],[data-theme=dark] [style*="color: #0284C7"]{color:#64B5FF!important}
+[data-theme=dark] [style*="color: #15803D"],[data-theme=dark] [style*="color: #047857"]{color:#30D158!important}
+[data-theme=dark] [style*="color: #B45309"],[data-theme=dark] [style*="color: #C2410C"]{color:#FF9F0A!important}
+[data-theme=dark] [style*="color: #B91C1C"]{color:#FF6961!important}
+[data-theme=dark] [style*="color: #6D28D9"]{color:#BF5AF2!important}
+[data-theme=dark] [fill="#0F172A"]{fill:rgba(255,255,255,0.92)}
+[data-theme=dark] svg [stroke="#1A1A1A"]{stroke:rgba(255,255,255,0.85)}
+[data-theme=dark] svg[stroke="#1A1A1A"]{stroke:rgba(255,255,255,0.85)}
+/* Separadores y superficies */
+[data-theme=dark] [style*="solid var(--sep)"],[data-theme=dark] [style*="solid #F1F5F9"],[data-theme=dark] [style*="solid #CBD5E1"]{border-color:rgba(255,255,255,0.08)!important}
+[data-theme=dark] [style*="background: #CBD5E1"],[data-theme=dark] [style*="background: #D9D9D9"]{background:rgba(255,255,255,0.14)!important}
+[data-theme=dark] [style*="background: #F0FDF4"],[data-theme=dark] [style*="background: #ECFDF5"]{background:rgba(48,209,88,0.16)!important;box-shadow:none!important}
+[data-theme=dark] [style*="background: #FFFBEB"]{background:rgba(255,159,10,0.16)!important;box-shadow:none!important}
+[data-theme=dark] [style*="background: #FEF2F2"]{background:rgba(255,69,58,0.18)!important;box-shadow:none!important}
+[data-theme=dark] [style*="background: #F0F9FF"],[data-theme=dark] [style*="background: #E0F2FE"]{background:rgba(10,132,255,0.20)!important;box-shadow:none!important}
+[data-theme=dark] [style*="background: #F8FAFC"],[data-theme=dark] [style*="background: #F1F5F9"],[data-theme=dark] [style*="background: rgba(255,255,255,0.6)"],[data-theme=dark] [style*="background: rgba(255,255,255,0.7)"],[data-theme=dark] [style*="background: rgba(255,255,255,0.45)"]{background:rgba(255,255,255,0.05)!important;box-shadow:inset 0 0 0 0.5px rgba(255,255,255,0.10)!important}
+[data-theme=dark] [style*="background: #FFFFFF"]:not(.knob){background:rgba(255,255,255,0.10)!important;color:rgba(255,255,255,0.92)!important}
+[data-theme=dark] [style*="background: #E6E6E6"]{background:rgba(255,255,255,0.18)!important}
+[data-theme=dark] [style*="background: #0284C7"]{background:#0A84FF!important}
+[data-theme=dark] [style*="linear-gradient(#E2E8F0 1px"]{background-image:linear-gradient(rgba(255,255,255,0.08) 1px,transparent 1px)!important}
+[data-theme=dark] [style*="linear-gradient(90deg, #E2E8F0 1px"]{background-image:linear-gradient(90deg,rgba(255,255,255,0.08) 1px,transparent 1px)!important}
+[data-theme=dark] [role=tab][aria-selected=true]{background:rgba(255,255,255,0.16)!important;color:rgba(255,255,255,0.95)!important;box-shadow:inset 0 0 0 0.5px rgba(255,255,255,0.12)!important}
+[data-theme=dark] [role=tablist]{background:rgba(0,0,0,0.25)!important;border-color:rgba(255,255,255,0.06)!important}
+[data-theme=dark] input{color:rgba(255,255,255,0.92)!important}
+[data-theme=dark] input::placeholder{color:rgba(235,235,245,0.32)}
+[data-theme=dark] .row:hover td,[data-theme=dark] .rowbtn:hover td,[data-theme=dark] .oprow:hover{background:rgba(255,255,255,0.04)!important}
+
+/* ---------- Tokens de tema ---------- */
+[data-theme=light]{--t1:#1D1D1F;--t2:#556070;--t3:#7C7C82;--accent-t:#0369A1;--green-t:#15803D;--orange-t:#B45309;--red-t:#B91C1C;--purple-t:#6D28D9;--sep:#E2E8F0;--sep2:#F1F5F9;--green-bg:#ECFDF5;--orange-bg:#FFFBEB;--red-bg:#FEF2F2;--accent-bg:#E0F2FE;--accent-ring:#BAE6FD;--green-ring:#BBF7D0;--orange-ring:#FDE68A;--red-ring:#FECACA;--fill:#F8FAFC;--control:#FFFFFF;--seg-on:#FFFFFF;--seg-sel:#E6E6E6;--solid:#0284C7;--map-empty:rgba(229,229,234,0.7);--map-line:#FFFFFF;--glyph:#1A1A1A;--well:rgba(255,255,255,0.6)}
+[data-theme=dark]{--t1:rgba(255,255,255,0.92);--t2:rgba(235,235,245,0.76);--t3:rgba(235,235,245,0.54);--accent-t:#64B5FF;--green-t:#30D158;--orange-t:#FF9F0A;--red-t:#FF6961;--purple-t:#BF5AF2;--sep:rgba(255,255,255,0.10);--sep2:rgba(255,255,255,0.06);--green-bg:rgba(48,209,88,0.16);--orange-bg:rgba(255,159,10,0.16);--red-bg:rgba(255,69,58,0.18);--accent-bg:rgba(10,132,255,0.24);--accent-ring:rgba(64,156,255,0.38);--green-ring:rgba(48,209,88,0.32);--orange-ring:rgba(255,159,10,0.32);--red-ring:rgba(255,69,58,0.32);--fill:rgba(255,255,255,0.05);--control:rgba(255,255,255,0.10);--seg-on:rgba(255,255,255,0.18);--seg-sel:rgba(255,255,255,0.18);--solid:#0A84FF;--map-empty:rgba(255,255,255,0.08);--map-line:rgba(13,12,33,0.85);--glyph:rgba(255,255,255,0.85);--well:rgba(255,255,255,0.06)}
+[data-theme]{color:var(--t1);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+[data-theme] h1,[data-theme] h2,[data-theme] h3,[data-theme] h4,[data-theme] h5,[data-theme] h6,[data-theme] th,[data-theme] td{color:inherit}
+[data-theme=dark] .popup,[data-theme=dark] .field{background:var(--control)}
+
+/* ---------- Modo oscuro · macOS 27 Golden Gate ---------- */
+/* Materiales: Ultra Thick (sidebar), Regular (tarjetas), Thin (controles); texto Primary/Secondary/Tertiary */
+[data-theme=dark]{color-scheme:dark}
+[data-theme=dark] .glass,[data-theme=dark] .bento{background:rgba(38,37,58,0.62);-webkit-backdrop-filter:blur(30px) saturate(160%);backdrop-filter:blur(30px) saturate(160%);box-shadow:0 0 0 0.5px rgba(255,255,255,0.10),inset 0 1px 0 rgba(255,255,255,0.06),0 12px 32px rgba(5,4,20,0.40)}
+[data-theme=dark] .glass:hover,[data-theme=dark] .bento:hover{box-shadow:0 0 0 0.5px rgba(255,255,255,0.14),inset 0 1px 0 rgba(255,255,255,0.08),0 16px 40px rgba(5,4,20,0.5)}
+[data-theme=dark] .side{background:rgba(30,29,40,0.86);box-shadow:0 0 0 0.5px rgba(255,255,255,0.10),inset 0 1px 0 rgba(255,255,255,0.05),0 12px 36px rgba(5,4,20,0.45)}
+[data-theme=dark] .notif{background:linear-gradient(180deg,rgba(64,63,74,0.72),rgba(30,30,36,0.72));box-shadow:1.25px 0 0 -0.75px rgba(255,255,255,0.22),-1.25px 0 0 -0.75px rgba(255,255,255,0.22),0 0 0 0.5px rgba(255,255,255,0.14),0 8px 48px rgba(0,0,0,0.45)}
+[data-theme=dark] .pill{background:rgba(60,59,74,0.55);box-shadow:1.25px 0 0 -0.75px rgba(255,255,255,0.18),-1.25px 0 0 -0.75px rgba(255,255,255,0.18),0 0 0 0.5px rgba(255,255,255,0.10),inset 0 1px 0 rgba(255,255,255,0.06),0 8px 15px rgba(0,0,0,0.2)}
+[data-theme=dark] .popup,[data-theme=dark] .field{background:rgba(255,255,255,0.08);box-shadow:0 0 0 0.5px rgba(255,255,255,0.14);color:rgba(255,255,255,0.92)}
+[data-theme=dark] .primary{background:#0A84FF}
+[data-theme=dark] .primary:hover{background:#409CFF}
+[data-theme=dark] .bt,[data-theme=dark] .kv{color:rgba(255,255,255,0.92)}
+[data-theme=dark] .chip{background:rgba(10,132,255,0.18);box-shadow:inset 0 0 0 1px rgba(64,156,255,0.35);color:#64B5FF}
+[data-theme=dark] .sideitem:hover,[data-theme=dark] .pillbtn:hover,[data-theme=dark] .ico:hover{background:rgba(255,255,255,0.08)}
+[data-theme=dark] .stat{border-color:rgba(255,255,255,0.10)}
+[data-theme=dark] [fill="#0F172A"]{fill:rgba(255,255,255,0.92)}
+[data-theme=dark] svg [stroke="#1A1A1A"]{stroke:rgba(255,255,255,0.85)}
+[data-theme=dark] svg[stroke="#1A1A1A"]{stroke:rgba(255,255,255,0.85)}
+[data-theme=dark] [role=tab][aria-selected=true]{background:rgba(255,255,255,0.16)!important;color:rgba(255,255,255,0.95)!important;box-shadow:inset 0 0 0 0.5px rgba(255,255,255,0.12)!important}
+[data-theme=dark] [role=tablist]{background:rgba(0,0,0,0.25)!important;border-color:rgba(255,255,255,0.06)!important}
+[data-theme=dark] input{color:rgba(255,255,255,0.92)!important}
+[data-theme=dark] input::placeholder{color:rgba(235,235,245,0.32)}
+[data-theme=dark] .row:hover td,[data-theme=dark] .rowbtn:hover td,[data-theme=dark] .oprow:hover{background:rgba(255,255,255,0.04)!important}
+[data-theme=dark] [stroke="#1A1A1A"],[data-theme=dark] [stroke="#727272"]{stroke:rgba(255,255,255,0.85)}
+[data-theme=dark] [stroke="#64748B"]{stroke:rgba(235,235,245,0.76)}
+[data-theme=dark] [fill="#0F172A"]{fill:rgba(255,255,255,0.92)}
+.notif{display:flex;align-items:flex-start;gap:10px;padding:12px 14px 12px 12px;border-radius:20px;background:rgba(255,255,255,0.80);-webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);box-shadow:1.25px 0 0 -0.75px #DBDBDB,-1.25px 0 0 -0.75px #DBDBDB,0 0 0 0.5px #DBDBDB,inset 0 1px 0 rgba(255,255,255,0.9),0 8px 32px rgba(0,0,0,0.14)}
+@keyframes toastIn{from{opacity:0;transform:translateX(40px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes sheetIn{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+[data-theme=light]{--dialog:rgba(250,250,252,0.90);--rim:#DBDBDB}
+[data-theme=dark]{--dialog:rgba(44,43,58,0.88);--rim:rgba(255,255,255,0.16)}
+button[disabled]{cursor:default!important}
+.opt:hover{background:var(--accent-bg)}
+.tpl{height:26px;padding:0 10px;border:0;border-radius:999px;background:var(--fill);box-shadow:inset 0 0 0 0.5px var(--sep);font:inherit;font-size:12px;color:var(--t1);cursor:pointer}
+.tpl:hover{background:var(--accent-bg);color:var(--accent-t)}
+.field{width:100%;box-sizing:border-box;border:0;border-radius:10px;background:var(--control);box-shadow:0 0 0 0.5px rgba(0,0,0,0.14),inset 0 1px 2px rgba(0,0,0,0.04);font:inherit;font-size:13px;color:var(--t1);padding:8px 10px;outline:none;resize:vertical}
+.field:focus{box-shadow:0 0 0 3px rgba(14,165,233,0.3)}
+.linkbtn{border:0;background:transparent;padding:0;font:inherit;color:var(--accent-t);cursor:pointer}
+.linkbtn:hover{text-decoration:underline}
+.dangerbtn{background:#DC2626}.dangerbtn:hover{background:#B91C1C}
+[data-theme=dark] .dangerbtn{background:#FF453A}
+.subj{display:block;border:0;background:transparent;padding:0;font:inherit;color:inherit;text-align:left;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.subj:hover{color:var(--accent-t)}
+.ico.danger:hover{background:var(--red-bg);color:var(--red-t)}
+/* Menú desplegable estilo macOS */
+.combo{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;height:34px;padding:0 7px 0 12px;border:0;border-radius:8px;background:var(--control);box-shadow:0 0 0 0.5px rgba(0,0,0,0.16),0 1px 2px rgba(0,0,0,0.05);font:inherit;font-size:13px;color:var(--t1);text-align:left;cursor:pointer;box-sizing:border-box}
+.combo:hover{background:var(--fill)}
+.combo[aria-expanded=true]{box-shadow:0 0 0 3px rgba(0,122,255,0.25),0 0 0 0.5px rgba(0,122,255,0.6)}
+.combo-c{width:20px;height:20px;flex:none;border-radius:6px;background:var(--sep2);color:var(--t2);display:inline-flex;align-items:center;justify-content:center}
+.mmenu{position:absolute;z-index:70;max-height:280px;overflow:auto;padding:5px;box-sizing:border-box;border-radius:10px;background:rgba(255,255,255,0.94);-webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);box-shadow:0 0 0 0.5px rgba(0,0,0,0.20),0 10px 25px rgba(0,0,0,0.14);display:flex;flex-direction:column;gap:1px;animation:menuIn .12s ease-out;text-align:left}
+[data-theme=dark] .mmenu{background:rgba(44,43,56,0.94);box-shadow:0 0 0 0.5px rgba(255,255,255,0.16),0 14px 34px rgba(0,0,0,0.5)}
+.mitem{display:flex;align-items:center;gap:8px;width:100%;min-height:26px;padding:0 8px 0 10px;border:0;border-radius:6px;background:transparent;font:inherit;font-size:13px;font-weight:500;color:var(--t1);text-align:left;cursor:pointer;white-space:nowrap;flex:none}
+.mitem .ml{overflow:hidden;text-overflow:ellipsis}
+.mitem .mh{margin-left:auto;padding-left:12px;font-size:12px;font-weight:400;color:var(--t3);font-variant-numeric:tabular-nums}
+.mitem .mk{width:12px;flex:none;display:inline-flex;justify-content:flex-end}
+.mitem .mdot{width:7px;height:7px;border-radius:50%;flex:none;box-shadow:inset 0 0 0 0.5px rgba(0,0,0,0.12)}
+.mitem:hover,.mitem[data-sel=true]{background:#007AFF;color:#FFFFFF}
+.mitem:hover .mh,.mitem[data-sel=true] .mh{color:rgba(255,255,255,0.82)}
+.mmenu:hover .mitem[data-sel=true]:not(:hover){background:transparent;color:var(--t1)}
+.mmenu:hover .mitem[data-sel=true]:not(:hover) .mh{color:var(--t3)}
+[data-theme=dark] .mitem:hover,[data-theme=dark] .mitem[data-sel=true]{background:#0A84FF}
+.mbadge{flex:none;padding:1px 7px;border-radius:999px;font-size:11px;font-weight:600;line-height:16px}
+.mitem:hover .mbadge,.mitem[data-sel=true] .mbadge{background:rgba(255,255,255,0.24)!important;color:#FFFFFF!important}
+.mmenu:hover .mitem[data-sel=true]:not(:hover) .mbadge{background:var(--fill)!important;color:var(--t1)!important}
+.mitem[disabled]{opacity:.4;cursor:default;background:transparent!important;color:var(--t1)!important}
+@keyframes menuIn{from{opacity:0;transform:translateY(-4px) scale(.99)}to{opacity:1;transform:none}}
+.flabel{font-size:12px;font-weight:700;color:var(--t2)}
+@keyframes drawerIn{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+/* Sidebar fijo: siempre visible al bajar la página; su contenido se desplaza si no cabe */
+@media (min-width: 900px){nav.side{position:sticky!important;top:10px;align-self:flex-start!important;height:calc(100vh - 20px)!important;min-height:0!important;overflow-y:auto;scrollbar-width:thin}}
+/* Sidebar minimizable y animado */
+nav.side{overflow-x:hidden;transition:flex-basis .38s cubic-bezier(.22,1,.36,1),max-width .38s cubic-bezier(.22,1,.36,1),padding .38s cubic-bezier(.22,1,.36,1);animation:sideIn .55s cubic-bezier(.22,1,.36,1) both}
+nav.side a{white-space:nowrap;overflow:hidden;transition:background .2s ease,box-shadow .2s ease,padding .38s cubic-bezier(.22,1,.36,1),gap .38s cubic-bezier(.22,1,.36,1)}
+nav.side a svg{flex:none;transition:transform .2s ease}
+nav.side a:hover svg{transform:scale(1.1)}
+nav.side a>span{transition:opacity .2s ease}
+nav.side>span{max-height:40px;overflow:hidden;white-space:nowrap;transition:opacity .2s ease,max-height .35s ease,padding .35s ease}
+nav.side .sb-brand,nav.side .sb-txt{max-width:200px;overflow:hidden;white-space:nowrap;transition:opacity .2s ease,max-width .38s cubic-bezier(.22,1,.36,1)}
+nav.side>div:first-child button svg{transition:transform .38s cubic-bezier(.22,1,.36,1)}
+nav.side[data-collapsed=true]{flex:0 0 64px!important;max-width:64px!important;padding-left:8px!important;padding-right:8px!important}
+nav.side[data-collapsed=true]>span{opacity:0;max-height:0;padding-top:0!important;padding-bottom:0!important}
+nav.side[data-collapsed=true] .sb-brand,nav.side[data-collapsed=true] .sb-txt{opacity:0;max-width:0}
+nav.side[data-collapsed=true] a>span{opacity:0}
+nav.side[data-collapsed=true] a{padding-left:16px!important;padding-right:0!important;height:36px!important;gap:40px!important}
+nav.side[data-collapsed=true]>div:first-child{justify-content:center!important;padding:2px 0 12px!important}
+nav.side[data-collapsed=true]>div:first-child button svg{transform:scaleX(-1)}
+nav.side[data-collapsed=true] .sb-top{align-items:center}
+nav.side[data-collapsed=true] .sb-top>div{padding:0!important}
+@keyframes sideIn{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){nav.side,nav.side *{transition:none!important;animation:none!important}}
+/* Notificaciones animadas: entrada con rebote, ícono que aparece, barra de tiempo y salida suave */
+.notif[role=status]{animation:nIn .55s cubic-bezier(.34,1.4,.64,1) both,nOut .35s ease 3.6s forwards}
+.notif[role=status]>span:first-child{animation:nIcon .45s cubic-bezier(.34,1.56,.64,1) .18s both}
+.notif[role=status]::after{content:'';position:absolute;left:18px;right:18px;bottom:5px;height:2px;border-radius:2px;background:currentColor;opacity:.18;transform-origin:left;animation:nBar 3.6s linear both}
+.alert-row{animation:nRow .5s cubic-bezier(.22,1,.36,1) both}
+@keyframes nIn{from{opacity:0;transform:translateX(48px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes nOut{to{opacity:0;transform:translateX(24px) scale(.98);pointer-events:none}}
+@keyframes nIcon{from{opacity:0;transform:scale(.3) rotate(-20deg)}to{opacity:1;transform:none}}
+@keyframes nBar{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+@keyframes nRow{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){.notif[role=status],.notif[role=status]>span:first-child,.notif[role=status]::after,.alert-row{animation:none!important}}
+/* ---------- Paleta oscura equilibrada: tonos menos saturados para que no se vean eléctricos ---------- */
+[data-theme=light]{--area-hd:#64B5FF;--area-hd-t:#0B2E4F}
+[data-theme=dark]{--accent-t:#7FB2E5;--green-t:#5DBB85;--orange-t:#E0A458;--red-t:#E07A74;--purple-t:#B59AE6;--solid:#3A7FCC;--accent-bg:rgba(58,127,204,0.22);--accent-ring:rgba(127,178,229,0.32);--green-bg:rgba(93,187,133,0.14);--green-ring:rgba(93,187,133,0.28);--orange-bg:rgba(224,164,88,0.14);--orange-ring:rgba(224,164,88,0.28);--red-bg:rgba(224,122,116,0.15);--red-ring:rgba(224,122,116,0.30);--area-hd:rgba(58,127,204,0.24);--area-hd-t:rgba(255,255,255,0.92)}
+[data-theme=dark] .primary{background:#3A7FCC}
+[data-theme=dark] .primary:hover{background:#4A8DD8}
+[data-theme=dark] .mitem:hover,[data-theme=dark] .mitem[data-sel=true]{background:#3A7FCC}
+[data-theme=dark] .bar-fill,[data-theme=dark] .mdot,[data-theme=dark] svg.reveal,[data-theme=dark] .ring-draw{filter:saturate(.72) brightness(.92)}
+[data-theme=dark] .notif[role=status]>span:first-child{filter:saturate(.75) brightness(.92)}
+/* Barra minimizada: íconos, avatar y botón en el mismo eje */
+nav.side[data-collapsed=true] a{justify-content:center!important;padding:0!important;gap:0!important;font-size:0!important}
+nav.side a{transition:background .2s ease,box-shadow .2s ease,padding .38s cubic-bezier(.22,1,.36,1),gap .38s cubic-bezier(.22,1,.36,1),font-size .2s ease}
+nav.side[data-collapsed=true] .sb-top>div{gap:0!important;justify-content:center!important}
+/* Barra minimizada: cada opción es una caja fija centrada (con o sin conteo) */
+nav.side[data-collapsed=true] a{width:40px!important;margin-left:auto!important;margin-right:auto!important;box-sizing:border-box;padding:0!important;gap:0!important;justify-content:center!important;font-size:0!important}
+nav.side[data-collapsed=true] a>span{display:none!important}
+nav.side[data-collapsed=true] .sb-top>div:first-child{width:40px;margin:0 auto}
+/* Paleta oscura también en íconos y gráficas */
+[data-theme=dark] svg{filter:saturate(.75) brightness(.95)}
+[data-theme=dark] svg svg,[data-theme=dark] svg .ring-draw{filter:none}
+[data-theme=dark] .alert-row>span:first-child{filter:saturate(.72) brightness(.92)}
+/* Pantalla del operador */
+.qnav{flex:0 0 236px;display:flex;flex-direction:column;gap:2px;padding:14px 10px;border-right:1px solid var(--sep);background:var(--well);box-sizing:border-box}
+.qnav-h{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;padding:4px 8px 8px}
+.qitem{display:flex;align-items:center;gap:10px;width:100%;padding:8px;border:0;border-radius:10px;background:transparent;font:inherit;color:var(--t1);text-align:left;cursor:pointer;transition:background .15s ease,box-shadow .15s ease}
+.qitem:hover{background:var(--fill)}
+.qitem[data-on=true]{background:var(--control);box-shadow:0 1px 2px rgba(0,0,0,.06),inset 0 0 0 .5px var(--sep)}
+.qic{width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex:none}
+.ql{display:flex;flex-direction:column;flex:1;min-width:0}
+.qt{font-size:13px;font-weight:600;white-space:nowrap}
+.qs{font-size:11px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qn{min-width:22px;height:20px;padding:0 6px;box-sizing:border-box;border-radius:999px;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
+.qmain{flex:1 1 380px;min-width:0;display:flex;flex-direction:column}
+.qmain .trow{animation:qIn .35s cubic-bezier(.2,.8,.2,1) both}
+@keyframes qIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.tag{display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:600;white-space:nowrap}
+[data-device=phone] .qnav{flex:1 1 100%;flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--sep);padding:10px;gap:6px}
+[data-device=phone] .qnav-h,[data-device=phone] .qs{display:none}
+[data-device=phone] .qitem{width:auto;flex:none;padding:6px 10px 6px 6px}
+@media (prefers-reduced-motion: reduce){.qmain .trow{animation:none}}
+.track{position:relative;height:8px;border-radius:999px;background:rgba(0,0,0,0.07)}
+[data-theme=dark] .track{background:rgba(255,255,255,0.10)}
+.bar-fill{display:block;height:100%;border-radius:999px;transform-origin:left center;animation:growX .9s cubic-bezier(.22,1,.36,1) both;transition:width .5s cubic-bezier(.22,1,.36,1)}
+.tick{position:absolute;top:-3px;bottom:-3px;width:2px;margin-left:-1px;border-radius:1px;background:var(--t3);opacity:.6}
+@keyframes growX{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@media (prefers-reduced-motion: reduce){.bar-fill{animation:none}}
+.kgrid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.7fr) repeat(3,minmax(0,.75fr));gap:12px}
+.kcard{padding:16px 18px;display:flex;flex-direction:column;gap:8px;min-width:0;box-sizing:border-box;animation:qIn .4s cubic-bezier(.2,.8,.2,1) both}
+.khd{display:flex;align-items:center;gap:8px;min-height:22px}
+.klab{font-size:12px;font-weight:600;color:var(--t2);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kico{width:22px;height:22px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex:none}
+.kbig{font-size:26px;line-height:30px;font-weight:700;letter-spacing:-0.02em;font-variant-numeric:tabular-nums}
+.ksub{font-size:12px;color:var(--t2)}
+@media (max-width:1180px){.kgrid{grid-template-columns:repeat(6,minmax(0,1fr))}.kc-turno{grid-column:span 2}.kc-carga{grid-column:span 4}.kc-s{grid-column:span 2}}
+[data-device=phone] .kgrid{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+[data-device=phone] .kc-turno,[data-device=phone] .kc-carga{grid-column:1/-1}
+[data-device=phone] .kc-s{grid-column:auto}
+[data-device=phone] .kcard{padding:12px 14px}
+[data-device=phone] .kc-s .ksub{display:none}
+@media (prefers-reduced-motion: reduce){.kcard{animation:none}}
+.tlink{display:block;border:0;background:none;padding:0;font:inherit;font-size:13px;font-weight:500;color:var(--t1);text-align:left;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.tlink:hover{color:var(--accent-t);text-decoration:underline}
+.dgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 18px}
+.dfield{display:flex;flex-direction:column;gap:2px;min-width:0}
+.dfield>span:first-child{font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.04em}
+.dfield>span:last-child{font-size:13px;overflow-wrap:anywhere}
+.dfile{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:8px;background:var(--fill);box-shadow:inset 0 0 0 .5px var(--sep);font-size:12px}
+[data-device=phone] .dgrid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.qlist{display:flex;flex-direction:column;max-height:560px;overflow-y:auto;overscroll-behavior:contain}
+.qhead{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:14px;padding:7px 14px;background:var(--dialog);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border-bottom:1px solid var(--sep2);font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.04em}
+.ppill{width:34px;height:22px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex:none;font-variant-numeric:tabular-nums}
+.qsearch{display:flex;align-items:center;gap:6px;height:30px;padding:0 10px;border-radius:9px;background:var(--fill);box-shadow:inset 0 0 0 .5px var(--sep);flex:0 1 220px;min-width:140px}
+.qsearch input{border:0;background:transparent;font:inherit;font-size:12px;color:var(--t1);outline:none;width:100%;min-width:0}
+.qmore{display:flex;align-items:center;justify-content:center;gap:10px;padding:10px 14px;border-top:1px solid var(--sep2);font-size:12px;color:var(--t2)}
+[data-device=phone] .qhead{display:none}
+[data-device=phone] .qlist{max-height:none}
+[data-device=phone] .qsearch{flex:1 1 100%}
+.obox{border:1px solid;border-radius:14px;overflow:hidden;background:var(--well)}
+.trow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:10px 14px;border-top:1px solid var(--sep2)}
+.qrow{border-top:0;border-radius:12px;box-shadow:inset 0 0 0 0.5px var(--sep);padding:10px 12px}
+.btn-p,.btn-s,.btn-g{height:30px;padding:0 14px;border:0;border-radius:999px;font:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:filter .15s ease,transform .1s ease}
+.btn-p:active,.btn-s:active,.btn-g:active{transform:scale(.97)}
+.btn-p{background:linear-gradient(180deg,rgba(255,255,255,0.18),rgba(255,255,255,0) 60%),var(--solid);color:#FFFFFF;box-shadow:inset 0 1px 0 rgba(255,255,255,0.35),inset 0 0 0 0.5px rgba(255,255,255,0.18),0 1px 3px rgba(0,0,0,0.18)}
+.btn-s{background:var(--control);color:var(--t1);box-shadow:0 0 0 0.5px rgba(0,0,0,0.14),0 1px 2px rgba(0,0,0,0.05)}
+.btn-g{background:var(--green-bg);color:var(--green-t);box-shadow:inset 0 0 0 0.5px var(--green-ring)}
+.btn-p:hover,.btn-s:hover,.btn-g:hover{filter:brightness(1.05)}
+[data-device=phone] .btn-p,[data-device=phone] .btn-s,[data-device=phone] .btn-g{height:44px;padding:0 18px;font-size:14px}
+[data-device=phone] .trow{padding:12px}
+[data-device=phone] .trow>div:last-child{width:100%;justify-content:stretch}
+[data-device=phone] .trow>div:last-child>button{flex:1}
+[data-device=phone] section.glass{border-radius:18px}
+[data-device=phone] .popup{height:36px}
+/* Tema oscuro · colores del sistema de macOS (labels, rellenos y gráficas) */
+[data-theme=dark]{--t1:rgba(255,255,255,0.86);--t2:rgba(255,255,255,0.56);--t3:rgba(255,255,255,0.36);--accent-t:#409CFF;--green-t:#30D158;--orange-t:#FF9F0A;--red-t:#FF6961;--purple-t:#DA8FFF;--solid:#0A84FF;--accent-bg:rgba(10,132,255,0.20);--accent-ring:rgba(64,156,255,0.40);--green-bg:rgba(48,209,88,0.16);--green-ring:rgba(48,209,88,0.34);--orange-bg:rgba(255,159,10,0.16);--orange-ring:rgba(255,159,10,0.34);--red-bg:rgba(255,69,58,0.17);--red-ring:rgba(255,69,58,0.36);--fill:rgba(255,255,255,0.08);--control:rgba(255,255,255,0.10);--well:rgba(255,255,255,0.05);--track:rgba(255,255,255,0.10);--seg-on:rgba(255,255,255,0.16);--sep:rgba(255,255,255,0.10);--sep2:rgba(255,255,255,0.06);--area-hd:rgba(10,132,255,0.22);--area-hd-t:rgba(255,255,255,0.92)}
+[data-theme=dark] svg,[data-theme=dark] .bar-fill,[data-theme=dark] .mdot,[data-theme=dark] svg.reveal,[data-theme=dark] .ring-draw,[data-theme=dark] .alert-row>span:first-child,[data-theme=dark] .notif[role=status]>span:first-child{filter:none}
+[data-theme=dark] .track{background:rgba(255,255,255,0.10)}
+[data-theme=dark] [fill="#0EA5E9" i]{fill:#0A84FF}[data-theme=dark] [stroke="#0EA5E9" i]{stroke:#0A84FF}[data-theme=dark] [stop-color="#0EA5E9" i]{stop-color:#0A84FF}[data-theme=dark] [style*="background: #0EA5E9" i]{background:#0A84FF !important}[data-theme=dark] [style*="background-color: #0EA5E9" i]{background-color:#0A84FF !important}[data-theme=dark] [style*=" color: #0EA5E9" i],[data-theme=dark] [style^="color: #0EA5E9" i]{color:#0A84FF !important}
+[data-theme=dark] [fill="#22C55E" i]{fill:#30D158}[data-theme=dark] [stroke="#22C55E" i]{stroke:#30D158}[data-theme=dark] [stop-color="#22C55E" i]{stop-color:#30D158}[data-theme=dark] [style*="background: #22C55E" i]{background:#30D158 !important}[data-theme=dark] [style*="background-color: #22C55E" i]{background-color:#30D158 !important}[data-theme=dark] [style*=" color: #22C55E" i],[data-theme=dark] [style^="color: #22C55E" i]{color:#30D158 !important}
+[data-theme=dark] [fill="#34C759" i]{fill:#30D158}[data-theme=dark] [stroke="#34C759" i]{stroke:#30D158}[data-theme=dark] [stop-color="#34C759" i]{stop-color:#30D158}[data-theme=dark] [style*="background: #34C759" i]{background:#30D158 !important}[data-theme=dark] [style*="background-color: #34C759" i]{background-color:#30D158 !important}[data-theme=dark] [style*=" color: #34C759" i],[data-theme=dark] [style^="color: #34C759" i]{color:#30D158 !important}
+[data-theme=dark] [fill="#F59E0B" i]{fill:#FF9F0A}[data-theme=dark] [stroke="#F59E0B" i]{stroke:#FF9F0A}[data-theme=dark] [stop-color="#F59E0B" i]{stop-color:#FF9F0A}[data-theme=dark] [style*="background: #F59E0B" i]{background:#FF9F0A !important}[data-theme=dark] [style*="background-color: #F59E0B" i]{background-color:#FF9F0A !important}[data-theme=dark] [style*=" color: #F59E0B" i],[data-theme=dark] [style^="color: #F59E0B" i]{color:#FF9F0A !important}
+[data-theme=dark] [fill="#EF4444" i]{fill:#FF453A}[data-theme=dark] [stroke="#EF4444" i]{stroke:#FF453A}[data-theme=dark] [stop-color="#EF4444" i]{stop-color:#FF453A}[data-theme=dark] [style*="background: #EF4444" i]{background:#FF453A !important}[data-theme=dark] [style*="background-color: #EF4444" i]{background-color:#FF453A !important}[data-theme=dark] [style*=" color: #EF4444" i],[data-theme=dark] [style^="color: #EF4444" i]{color:#FF453A !important}
+[data-theme=dark] [fill="#8B5CF6" i]{fill:#5E5CE6}[data-theme=dark] [stroke="#8B5CF6" i]{stroke:#5E5CE6}[data-theme=dark] [stop-color="#8B5CF6" i]{stop-color:#5E5CE6}[data-theme=dark] [style*="background: #8B5CF6" i]{background:#5E5CE6 !important}[data-theme=dark] [style*="background-color: #8B5CF6" i]{background-color:#5E5CE6 !important}[data-theme=dark] [style*=" color: #8B5CF6" i],[data-theme=dark] [style^="color: #8B5CF6" i]{color:#5E5CE6 !important}
+[data-theme=dark] [fill="#A855F7" i]{fill:#BF5AF2}[data-theme=dark] [stroke="#A855F7" i]{stroke:#BF5AF2}[data-theme=dark] [stop-color="#A855F7" i]{stop-color:#BF5AF2}[data-theme=dark] [style*="background: #A855F7" i]{background:#BF5AF2 !important}[data-theme=dark] [style*="background-color: #A855F7" i]{background-color:#BF5AF2 !important}[data-theme=dark] [style*=" color: #A855F7" i],[data-theme=dark] [style^="color: #A855F7" i]{color:#BF5AF2 !important}
+[data-theme=dark] [fill="#94A3B8" i]{fill:#98989D}[data-theme=dark] [stroke="#94A3B8" i]{stroke:#98989D}[data-theme=dark] [stop-color="#94A3B8" i]{stop-color:#98989D}[data-theme=dark] [style*="background: #94A3B8" i]{background:#98989D !important}[data-theme=dark] [style*="background-color: #94A3B8" i]{background-color:#98989D !important}[data-theme=dark] [style*=" color: #94A3B8" i],[data-theme=dark] [style^="color: #94A3B8" i]{color:#98989D !important}
+[data-theme=dark] [fill="#64748B" i]{fill:#8E8E93}[data-theme=dark] [stroke="#64748B" i]{stroke:#8E8E93}[data-theme=dark] [stop-color="#64748B" i]{stop-color:#8E8E93}[data-theme=dark] [style*="background: #64748B" i]{background:#8E8E93 !important}[data-theme=dark] [style*="background-color: #64748B" i]{background-color:#8E8E93 !important}[data-theme=dark] [style*=" color: #64748B" i],[data-theme=dark] [style^="color: #64748B" i]{color:#8E8E93 !important}
+[data-theme=dark] .glass,[data-theme=dark] .bento{background:linear-gradient(165deg,rgba(66,66,76,0.50),rgba(32,32,38,0.58));-webkit-backdrop-filter:blur(40px) saturate(150%);backdrop-filter:blur(40px) saturate(150%);box-shadow:0 0 0 0.5px rgba(255,255,255,0.12),inset 0 1px 0 rgba(255,255,255,0.08),0 14px 36px rgba(0,0,0,0.34)}
+[data-theme=dark] .glass:hover,[data-theme=dark] .bento:hover{box-shadow:0 0 0 0.5px rgba(255,255,255,0.16),inset 0 1px 0 rgba(255,255,255,0.10),0 18px 44px rgba(0,0,0,0.40)}
+[data-theme=dark]{--dialog:rgba(42,42,48,0.92)}
+.kgrid{grid-template-columns:minmax(0,1.25fr) minmax(0,1.5fr) minmax(0,1fr)}
+@media (max-width:1180px){.kgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.kc-turno{grid-column:1/-1}.kc-carga,.kc-res{grid-column:auto}}
+[data-device=phone] .kgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+[data-device=phone] .kc-turno{grid-column:1/-1}
+[data-device=phone] .kc-carga,[data-device=phone] .kc-res{grid-column:auto}
+.ptsbadge{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 12px 0 6px;border-radius:999px;background:linear-gradient(135deg,rgba(255,204,0,0.22),rgba(255,149,0,0.16));box-shadow:inset 0 0 0 0.5px rgba(255,159,10,0.45),inset 0 1px 0 rgba(255,255,255,0.35);font-size:12px;color:var(--t2);white-space:nowrap}
+.ptsbadge .pi{width:22px;height:22px;border-radius:50%;background:linear-gradient(180deg,#FFD60A,#FF9F0A);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 1px 0 rgba(255,255,255,0.5)}
+.ptsbadge strong{font-size:15px;color:var(--t1);font-variant-numeric:tabular-nums}
+.bellb{position:relative;width:34px;height:32px;padding:0;justify-content:center}
+.bellb .bn{position:absolute;top:-5px;right:-5px;min-width:17px;height:17px;padding:0 4px;box-sizing:border-box;border-radius:999px;background:#FF3B30;color:#FFFFFF;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px var(--dialog)}
+.qlist{max-height:680px}
+.qmain .tlink{font-size:14px}
+
+[data-theme=light]{--clk-face:rgba(255,255,255,0.9);--clk-face-solid:#FFFFFF;--clk-rim:rgba(0,0,0,0.10);--clk-track:rgba(0,0,0,0.07);--track:rgba(0,0,0,0.07)}
+[data-theme=dark]{--clk-face:rgba(255,255,255,0.05);--clk-face-solid:#2A2A30;--clk-rim:rgba(255,255,255,0.12);--clk-track:rgba(255,255,255,0.10)}
+.clk{filter:drop-shadow(0 2px 6px rgba(0,0,0,0.10))}
+.clk .hand{transform-origin:39px 39px;transform-box:view-box;transition:transform .5s cubic-bezier(.3,1.5,.5,1)}
+.clk .hand-s{transition:transform .25s cubic-bezier(.4,2.2,.6,1)}
+.clk-arc{animation:clkDraw 1.2s cubic-bezier(.22,1,.36,1) both}
+.clk-done{animation-delay:.15s}
+@keyframes clkDraw{from{stroke-dasharray:0 189}}
+@media (prefers-reduced-motion: reduce){.clk .hand,.clk-arc{transition:none;animation:none}}
+</style>
+</helmet>
+<div data-theme="{{theme}}" data-device="{{device}}" onClick="{{closeMenu}}" style="min-height: 100vh; background: {{bg}}; color: var(--t1); font-family: {{font}}; font-size: 13px; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px; padding: {{rootPad}}; box-sizing: border-box">
+
+<!-- Sidebar (solo escritorio) -->
+<sc-if value="{{desk}}" hint-placeholder-val="{{ true }}">
+<nav class="side" data-collapsed="{{sb.c}}" aria-label="Navegación principal" style="flex: 1 1 220px; max-width: 232px; align-self: stretch; padding: 12px 10px 10px; box-sizing: border-box; display: flex; flex-direction: column; gap: 1px; min-height: calc(100vh - 20px)">
+<div style="display: flex; align-items: center; justify-content: space-between; padding: 2px 2px 14px 8px">
+<div class="sb-brand" style="display: flex; align-items: center; gap: 8px"><span style="font-size: 16px; font-weight: 800; letter-spacing: -0.5px; color: #0284C7">inter</span><span style="width: 1px; height: 14px; background: var(--sep)"></span><span style="font-size: 13px; font-weight: 600">Operaciones IP</span></div>
+<button class="pill pillbtn" onClick="{{sb.toggle}}" aria-label="{{sb.label}}" title="{{sb.label}}" style="cursor: pointer; width: 30px; height: 30px; border: 0; display: flex; align-items: center; justify-content: center; padding: 0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="3"></rect><path d="M9 4.5v15"></path></svg></button>
+</div>
+<div class="sb-top" style="display: flex; flex-direction: column; gap: 10px; padding: 0 0 14px; margin-bottom: 8px; border-bottom: 1px solid var(--sep)">
+<div style="display: flex; align-items: center; gap: 8px; padding: 2px 6px 0">
+<span style="width: 28px; height: 28px; border-radius: 50%; background: var(--solid); color: #FFFFFF; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center">F2</span>
+<div class="sb-txt" style="display: flex; flex-direction: column; line-height: 1.3; min-width: 0"><span style="font-size: 12px; font-weight: 600">Enza</span><span style="font-size: 12px; color: var(--t2)">Redes FTTH / OLT</span></div>
+</div>
+</div>
+<span style="font-size: 12px; font-weight: 600; color: var(--t2); padding: 0 8px 4px">Operación</span>
+<a title="Mi panel" href="#" aria-current="page" style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; border-radius: 8px; background: var(--accent-bg); color: var(--accent-t); font-size: 13px; font-weight: 600; box-shadow: inset 0 0 0 0.5px var(--accent-ring)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="2"></rect><rect x="14" y="3" width="7" height="5" rx="2"></rect><rect x="14" y="12" width="7" height="9" rx="2"></rect><rect x="3" y="16" width="7" height="5" rx="2"></rect></svg><span style="flex: 1">Mi panel</span><span style="font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums">{{mine.n}}</span></a>
+<a class="sideitem" title="Bitácora" href="#" style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; border-radius: 8px; color: var(--t1); font-size: 13px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0078F0" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 4h11l3 3v13H5z"></path><path d="M9 10h6M9 14h6M9 18h3"></path></svg>Bitácora</a>
+</nav>
+</sc-if>
+
+<!-- Main -->
+<div style="flex: 999 1 320px; min-width: 0; display: flex; flex-direction: column; gap: {{gap}}; padding: {{mainPad}}; box-sizing: border-box">
+
+<!-- Encabezado -->
+<header style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-height: 44px">
+<sc-if value="{{phone}}" hint-placeholder-val="{{ false }}"><span style="width: 36px; height: 36px; border-radius: 50%; background: var(--solid); color: #FFFFFF; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex: none">F2</span></sc-if>
+<div style="display: flex; flex-direction: column; margin-right: 6px; flex: 1; min-width: 0">
+<h1 style="margin: 0; font-size: {{h1}}; line-height: 1.2; font-weight: 700; letter-spacing: -0.02em">{{greet}}</h1>
+<span style="font-size: 12px; color: var(--t2)">Redes FTTH / OLT · {{shift.short}}</span>
+</div>
+<span class="ptsbadge" title="Puntos sumados hoy por tickets resueltos"><span class="pi"><svg width="12" height="12" viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true"><path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"></path></svg></span><strong>{{pts.v}}</strong>puntos hoy</span>
+<span style="position: relative; display: inline-flex">
+<button class="popup bellb" onClick="{{bell.toggle}}" aria-haspopup="dialog" aria-expanded="{{bell.open}}" aria-label="Avisos, {{bell.n}} nuevos"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0"></path></svg><sc-if value="{{bell.has}}" hint-placeholder-val="{{ true }}"><span class="bn">{{bell.n}}</span></sc-if></button>
+<sc-if value="{{bell.open}}" hint-placeholder-val="{{ false }}">
+<div role="dialog" aria-label="Avisos" class="mmenu" style="top: 40px; right: 0; width: 340px; max-width: calc(100vw - 32px); padding: 10px 12px 6px">
+<div style="display: flex; align-items: baseline; gap: 8px; padding: 2px 2px 6px"><span style="font-size: 13px; font-weight: 700; flex: 1">Avisos</span><span style="font-size: 11px; color: var(--t3)">Dentro del portal</span></div>
+<sc-for list="{{notes}}" as="a" hint-placeholder-count="3">
+<div class="alert-row" style="animation-delay: calc({{$index}} * 70ms); display: flex; align-items: flex-start; gap: 10px; padding: 9px 2px; border-top: 1px solid var(--sep2)">
+<span style="width: 26px; height: 26px; border-radius: 8px; background: {{a.icon}}; display: flex; align-items: center; justify-content: center; flex: none"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{a.glyph}}"></path></svg></span>
+<div style="display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0"><div style="display: flex; align-items: baseline; gap: 8px"><span style="flex: 1; font-size: 13px; font-weight: 600">{{a.title}}</span><span style="font-size: 11px; color: var(--t3); white-space: nowrap">{{a.time}}</span></div><span style="font-size: 12px; color: var(--t2)">{{a.detail}}</span></div>
+</div>
+</sc-for>
+</div>
+</sc-if>
+</span>
+<span style="position: relative; display: inline-flex">
+<button class="popup" onClick="{{avail.toggle}}" aria-haspopup="listbox" aria-expanded="{{avail.open}}" style="height: 32px"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{avail.dot}}"></span><span style="font-weight: 600">{{avail.value}}</span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--t2)"><path d="M6 9l6 6 6-6"></path></svg></button>
+<sc-if value="{{avail.open}}" hint-placeholder-val="{{ false }}">
+<div role="listbox" class="mmenu" style="top: 38px; right: 0; min-width: 260px">
+<sc-for list="{{avail.opts}}" as="o" hint-placeholder-count="4">
+<button type="button" role="option" class="mitem" aria-selected="{{o.sel}}" data-sel="{{o.sel}}" disabled="{{o.dis}}" onClick="{{o.pick}}"><sc-if value="{{o.hasDot}}" hint-placeholder-val="{{ false }}"><span class="mdot" style="background: {{o.dot}}"></span></sc-if><span class="ml">{{o.label}}</span><span class="mh">{{o.hint}}</span><span class="mk"><sc-if value="{{o.sel}}" hint-placeholder-val="{{ false }}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"></path></svg></sc-if></span></button>
+</sc-for>
+</div>
+</sc-if>
+</span>
+</header>
+
+<!-- Turno + mi carga: tarjetas -->
+<section aria-label="Mi turno y mi carga" class="kgrid">
+<div class="glass kcard kc-turno" style="flex-direction: row; align-items: center; gap: 14px">
+<div style="display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 0">
+<div class="khd"><span class="klab" style="flex: none">Mi turno</span><span class="tag" style="background: {{shift.chipBg}}; color: {{shift.c}}">{{shift.state}}</span></div>
+<span class="kbig" style="font-size: 22px">{{shift.hours}}</span>
+<span class="ksub">{{shift.left}}</span>
+</div>
+<svg class="clk" width="80" height="80" viewBox="0 0 78 78" role="img" aria-label="{{clk.aria}}" style="flex: none">
+<circle cx="39" cy="39" r="35.5" fill="var(--clk-face)" stroke="var(--clk-rim)" stroke-width="0.75"></circle>
+<circle cx="39" cy="39" r="30" fill="none" stroke="var(--clk-track)" stroke-width="5"></circle>
+<circle class="clk-arc" cx="39" cy="39" r="30" fill="none" stroke="{{shift.bar}}" stroke-opacity="0.30" stroke-width="5" stroke-linecap="round" stroke-dasharray="{{clk.shiftDash}}" transform="rotate({{clk.rot}} 39 39)"></circle>
+<circle class="clk-arc clk-done" cx="39" cy="39" r="30" fill="none" stroke="{{shift.bar}}" stroke-width="5" stroke-linecap="round" stroke-dasharray="{{clk.doneDash}}" transform="rotate({{clk.rot}} 39 39)"></circle>
+<path d="M39.0 15.0L39.0 18.5M51.0 18.2L50.0 19.9M59.8 27.0L58.1 28.0M63.0 39.0L59.5 39.0M59.8 51.0L58.1 50.0M51.0 59.8L50.0 58.1M39.0 63.0L39.0 59.5M27.0 59.8L28.0 58.1M18.2 51.0L19.9 50.0M15.0 39.0L18.5 39.0M18.2 27.0L19.9 28.0M27.0 18.2L28.0 19.9" stroke="var(--t3)" stroke-width="1.3" stroke-linecap="round"></path>
+<g class="hand" style="transform: rotate({{clk.hD}}deg)"><line x1="39" y1="42" x2="39" y2="26" stroke="var(--t1)" stroke-width="2.8" stroke-linecap="round"></line></g>
+<g class="hand" style="transform: rotate({{clk.mD}}deg)"><line x1="39" y1="42" x2="39" y2="18" stroke="var(--t1)" stroke-width="1.8" stroke-linecap="round"></line></g>
+<sc-if value="{{clk.live}}" hint-placeholder-val="{{ true }}"><g class="hand hand-s" style="transform: rotate({{clk.sD}}deg)"><line x1="39" y1="45" x2="39" y2="16" stroke="#FF9F0A" stroke-width="1" stroke-linecap="round"></line></g></sc-if>
+<circle cx="39" cy="39" r="2.6" fill="{{shift.bar}}" stroke="var(--clk-face-solid)" stroke-width="1"></circle>
+</svg>
+</div>
+<div class="glass kcard kc-carga">
+<div class="khd"><span class="kico" style="background: #0A84FF"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"></path></svg></span><span class="klab">Pendientes</span></div>
+<div style="display: flex; align-items: baseline; gap: 6px"><span class="kbig">{{mix.n}}</span><span class="ksub">tickets por atender</span></div>
+<div role="img" aria-label="{{mix.aria}}" style="display: flex; gap: 3px; height: 10px">
+<sc-for list="{{mix.segs}}" as="g" hint-placeholder-count="3"><span class="bar-fill" style="flex: {{g.n}} 1 0; min-width: 6px; height: 10px; border-radius: 4px; background: {{g.color}}"></span></sc-for>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 4px 14px">
+<sc-for list="{{mix.segs}}" as="g" hint-placeholder-count="3"><span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--t2)"><span style="width: 8px; height: 8px; border-radius: 3px; background: {{g.color}}"></span>{{g.label}}<strong style="color: var(--t1); font-variant-numeric: tabular-nums">{{g.n}}</strong></span></sc-for>
+</div>
+</div>
+<div class="glass kcard kc-res">
+<div class="khd"><span class="kico" style="background: #30D158"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L19 7"></path></svg></span><span class="klab">Resueltos hoy</span></div>
+<div style="display: flex; align-items: baseline; gap: 6px"><span class="kbig" style="color: var(--green-t)">{{res.n}}</span><span class="ksub">tickets</span></div>
+<div style="display: flex; flex-direction: column; gap: 3px">
+<span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--t2)"><span style="width: 8px; height: 8px; border-radius: 3px; background: #FF9F0A"></span>Pendientes de cierre<strong style="margin-left: auto; color: var(--t1); font-variant-numeric: tabular-nums">{{res.open}}</strong></span>
+<span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--t2)"><span style="width: 8px; height: 8px; border-radius: 3px; background: #30D158"></span>Cerrados<strong style="margin-left: auto; color: var(--t1); font-variant-numeric: tabular-nums">{{res.closed}}</strong></span>
+</div>
+</div>
+</section>
+
+<!-- Pendientes del traspaso (solo de guardia) -->
+<sc-if value="{{show.hand}}" hint-placeholder-val="{{ false }}">
+<section class="glass" aria-labelledby="h-hand" style="padding: {{cardPad}}; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: center; gap: 10px"><span style="width: 28px; height: 28px; border-radius: 8px; background: #8B5CF6; display: flex; align-items: center; justify-content: center; flex: none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"></path></svg></span><h2 id="h-hand" style="margin: 0; font-size: 15px; font-weight: 600; flex: 1">Pendientes del traspaso</h2><span style="font-size: 12px; color: var(--t2)">hoy 17:00</span></div>
+<div style="padding: 10px 12px; border-radius: 12px; background: rgba(139,92,246,0.10); box-shadow: inset 0 0 0 0.5px rgba(139,92,246,0.3); font-size: 13px; line-height: 18px">“{{hand.note}}”<span style="display: block; margin-top: 4px; font-size: 12px; color: var(--t2)">Nota del coordinador</span></div>
+<sc-for list="{{hand.rows}}" as="t" hint-placeholder-count="3">
+<div class="trow" style="padding: 8px 0; border-top: 1px solid var(--sep2)">
+<div style="display: flex; flex-direction: column; gap: 2px; flex: 1 1 160px; min-width: 0"><span style="display: flex; gap: 8px; align-items: center"><span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 12px; font-weight: 600; color: var(--accent-t)">{{t.code}}</span><span style="font-size: 12px; font-weight: 600; color: {{t.pText}}">{{t.p}}</span><span style="font-size: 12px; color: {{t.opC}}">{{t.op}}</span></span><span style="font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{t.subject}}</span></div>
+<sc-if value="{{t.canTake}}" hint-placeholder-val="{{ true }}"><button class="btn-p" onClick="{{t.take}}">Tomar</button></sc-if>
+</div>
+</sc-for>
+</section>
+</sc-if>
+
+<!-- Bandeja: las colas del panel anterior, con el diseño actual -->
+<div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+<section class="glass" aria-labelledby="h-cola" style="flex: 1 1 100%; min-width: 0; padding: 0; display: flex; flex-wrap: wrap; overflow: hidden">
+<nav class="qnav" aria-label="Colas de tickets">
+<span class="qnav-h">Mis colas</span>
+<sc-for list="{{qnav}}" as="q" hint-placeholder-count="5">
+<button class="qitem" data-on="{{q.on}}" aria-current="{{q.on}}" onClick="{{q.go}}"><span class="qic" style="background: {{q.color}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{q.glyph}}"></path></svg></span><span class="ql"><span class="qt">{{q.label}}</span><span class="qs">{{q.hint}}</span></span><span class="qn" style="background: {{q.nBg}}; color: {{q.nC}}">{{q.n}}</span></button>
+</sc-for>
+</nav>
+<div class="qmain">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: {{cardPad}}; padding-bottom: 12px; border-bottom: 1px solid var(--sep2)">
+<div style="display: flex; flex-direction: column; gap: 1px; flex: 1 1 220px; min-width: 0"><h2 id="h-cola" style="margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -0.01em">{{cur.title}}</h2><span style="font-size: 12px; color: var(--t2)">{{cur.desc}}</span></div>
+<label class="qsearch"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true" style="color: var(--t3); flex: none"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg><input type="search" placeholder="Buscar código o asunto" aria-label="Buscar en esta cola" value="{{cur.qs}}" onInput="{{cur.setQs}}"></label>
+<div role="tablist" aria-label="Filtrar por prioridad" style="display: inline-flex; padding: 3px; border-radius: 10px; background: var(--fill); box-shadow: inset 0 0 0 0.5px var(--sep)">
+<sc-for list="{{pf}}" as="f" hint-placeholder-count="5"><button role="tab" aria-selected="{{f.sel}}" onClick="{{f.go}}" style="height: 26px; padding: 0 10px; border: 0; border-radius: 7px; background: {{f.bg}}; box-shadow: {{f.sh}}; font: inherit; font-size: 12px; font-weight: {{f.w}}; color: {{f.c}}; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap"><sc-if value="{{f.hasDot}}" hint-placeholder-val="{{ true }}"><span style="width: 6px; height: 6px; border-radius: 2px; background: {{f.dot}}"></span></sc-if>{{f.label}}<span style="font-size: 11px; color: var(--t3); font-variant-numeric: tabular-nums">{{f.n}}</span></button></sc-for>
+</div>
+</div>
+<div class="qlist">
+<sc-if value="{{cur.hasRows}}" hint-placeholder-val="{{ true }}"><div class="qhead" aria-hidden="true"><span style="width: 34px">Prio.</span><span style="flex: 1">Ticket</span><span style="width: 84px; text-align: right">{{cur.timeH}}</span><span style="width: 158px"></span></div></sc-if>
+<sc-for list="{{cur.rows}}" as="t" hint-placeholder-count="3">
+<div class="trow" style="background: {{t.bg}}; padding-top: 9px; padding-bottom: 9px; animation-delay: calc({{t.d}} * 30ms)">
+<span class="ppill" title="{{t.p}}" style="background: {{t.pBg}}; color: {{t.pText}}; box-shadow: {{t.pRing}}">{{t.pShort}}</span>
+<div style="display: flex; flex-direction: column; gap: 2px; flex: 1 1 240px; min-width: 0">
+<span style="display: flex; align-items: baseline; gap: 8px; min-width: 0"><span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 12px; font-weight: 600; color: var(--accent-t); flex: none">{{t.code}}</span><button type="button" class="tlink" onClick="{{t.open}}" title="Ver detalles de {{t.code}}">{{t.subject}}</button></span>
+<span style="display: flex; align-items: center; gap: 6px; min-width: 0"><sc-if value="{{t.hasTag}}" hint-placeholder-val="{{ false }}"><span class="tag" style="height: 18px; background: {{t.tagBg}}; color: {{t.tagC}}">{{t.tag}}</span></sc-if><sc-if value="{{t.hasArea}}" hint-placeholder-val="{{ false }}"><span class="tag" style="height: 18px; background: var(--fill); color: var(--t2); box-shadow: inset 0 0 0 0.5px var(--sep)">{{t.area}}</span></sc-if><span style="font-size: 12px; color: {{t.metaC}}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{t.meta}}</span></span>
+</div>
+<span style="width: 84px; text-align: right; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; color: {{t.timeC}}; white-space: nowrap">{{t.time}}</span>
+<div style="display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; width: 158px">
+<sc-for list="{{t.acts}}" as="a" hint-placeholder-count="2"><button class="{{a.cls}}" onClick="{{a.go}}">{{a.label}}</button></sc-for>
+</div>
+</div>
+</sc-for>
+<sc-if value="{{cur.hasMore}}" hint-placeholder-val="{{ false }}"><div class="qmore"><span>Mostrando {{cur.shown}} de {{cur.total}}</span><button class="btn-s" onClick="{{cur.more}}">Mostrar {{cur.step}} más</button></div></sc-if>
+<sc-if value="{{cur.empty}}" hint-placeholder-val="{{ false }}"><div style="padding: 40px 20px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center"><span class="qic" style="width: 36px; height: 36px; border-radius: 11px; background: {{cur.color}}; opacity: .85"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{cur.glyph}}"></path></svg></span><span style="font-size: 13px; font-weight: 600">{{cur.emptyT}}</span><span style="font-size: 12px; color: var(--t2)">{{cur.emptyS}}</span></div></sc-if>
+</div>
+</div>
+</section>
+</div>
+
+<!-- Detalle del ticket (se puede ver antes de tomarlo) -->
+<sc-if value="{{det.open}}" hint-placeholder-val="{{ false }}">
+<div style="position: fixed; inset: 0; z-index: 45; display: flex; align-items: {{det.align}}; justify-content: center; padding: {{det.pad}}; background: rgba(10,10,30,0.28); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); animation: fadeIn .18s ease">
+<div role="dialog" aria-modal="true" aria-labelledby="det-title" style="width: 620px; max-width: 100%; max-height: {{det.maxH}}; overflow-y: auto; border-radius: {{det.radius}}; background: var(--dialog); -webkit-backdrop-filter: blur(40px) saturate(180%); backdrop-filter: blur(40px) saturate(180%); box-shadow: 0 0 0 0.5px var(--rim), 0 24px 64px rgba(0,0,0,0.30); animation: sheetIn .28s cubic-bezier(0.19,1,0.22,1); display: flex; flex-direction: column">
+<div style="padding: 18px 22px 12px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid var(--sep2)">
+<div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
+<span style="font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 13px; font-weight: 600; color: var(--accent-t)">{{det.code}}</span>
+<span class="tag" style="background: {{det.pBg}}; color: {{det.pText}}"><span style="width: 6px; height: 6px; border-radius: 2px; background: {{det.pDot}}; margin-right: 5px"></span>{{det.p}} · {{det.pts}}</span>
+<span class="tag" style="background: {{det.stBg}}; color: {{det.stC}}">{{det.state}}</span>
+<span style="flex: 1"></span>
+<button type="button" onClick="{{det.close}}" aria-label="Cerrar detalle" style="width: 30px; height: 30px; border: 0; border-radius: 50%; background: var(--fill); color: var(--t2); cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+</div>
+<h2 id="det-title" style="margin: 0; font-size: 18px; line-height: 24px; font-weight: 700; letter-spacing: -0.01em">{{det.subject}}</h2>
+<sc-if value="{{det.hasAlert}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; font-weight: 600; color: var(--red-t)">{{det.alert}}</span></sc-if>
+</div>
+<div style="padding: 16px 22px; display: flex; flex-direction: column; gap: 16px">
+<div class="dgrid">
+<sc-for list="{{det.fields}}" as="f" hint-placeholder-count="6"><div class="dfield"><span>{{f.k}}</span><span>{{f.v}}</span></div></sc-for>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 11px; font-weight: 600; color: var(--t3); text-transform: uppercase; letter-spacing: .04em">Descripción</span>
+<div style="padding: 12px 14px; border-radius: 12px; background: var(--well); box-shadow: inset 0 0 0 1px var(--sep2); font-size: 13px; line-height: 20px; white-space: pre-wrap">{{det.desc}}</div>
+</div>
+<sc-if value="{{det.hasFiles}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 11px; font-weight: 600; color: var(--t3); text-transform: uppercase; letter-spacing: .04em">Adjuntos</span>
+<div style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{det.files}}" as="a" hint-placeholder-count="2"><span class="dfile"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--t2)"><path d="M21 11l-8.5 8.5a5 5 0 0 1-7-7L14 4a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L15 7"></path></svg>{{a.name}}</span></sc-for></div>
+</div>
+</sc-if>
+</div>
+<div style="padding: 12px 22px 18px; display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; border-top: 1px solid var(--sep2)">
+<button class="btn-s" onClick="{{det.close}}">Cerrar</button>
+<sc-for list="{{det.acts}}" as="a" hint-placeholder-count="1"><button class="{{a.cls}}" onClick="{{a.go}}">{{a.label}}</button></sc-for>
+</div>
+</div>
+</div>
+</sc-if>
+
+<!-- Hoja: Pausar / Resolver -->
+<sc-if value="{{sheet.open}}" hint-placeholder-val="{{ false }}">
+<div style="position: fixed; inset: 0; z-index: 50; display: flex; align-items: {{sheet.align}}; justify-content: center; padding: {{sheet.pad}}; background: rgba(10,10,30,0.28); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); animation: fadeIn .18s ease">
+<div role="dialog" aria-modal="true" aria-labelledby="sh-title" style="width: 440px; max-width: 100%; border-radius: {{sheet.radius}}; background: var(--dialog); -webkit-backdrop-filter: blur(40px) saturate(180%); backdrop-filter: blur(40px) saturate(180%); box-shadow: 0 0 0 0.5px var(--rim), 0 24px 64px rgba(0,0,0,0.30); animation: sheetIn .28s cubic-bezier(0.19,1,0.22,1); display: flex; flex-direction: column">
+<div style="padding: 20px 22px 4px; display: flex; flex-direction: column; gap: 2px"><h2 id="sh-title" style="margin: 0; font-size: 17px; font-weight: 700">{{sheet.title}}</h2><span style="font-size: 13px; color: var(--t2)">{{sheet.subject}}</span></div>
+<div style="padding: 12px 22px; display: flex; flex-direction: column; gap: 10px">
+<sc-if value="{{sheet.isPause}}" hint-placeholder-val="{{ true }}">
+<div role="radiogroup" aria-label="Tipo de pausa" style="display: flex; padding: 3px; border-radius: 10px; background: rgba(0,0,0,0.06); box-shadow: inset 0 0 0 0.5px var(--sep)">
+<sc-for list="{{sheet.kinds}}" as="k" hint-placeholder-count="2"><button role="radio" aria-checked="{{k.sel}}" onClick="{{k.pick}}" style="flex: 1; height: 36px; border: 0; border-radius: 8px; background: {{k.bg}}; box-shadow: {{k.sh}}; font: inherit; font-size: 13px; font-weight: {{k.w}}; color: {{k.c}}; cursor: pointer">{{k.label}}</button></sc-for>
+</div>
+</sc-if>
+<sc-if value="{{sheet.isAway}}" hint-placeholder-val="{{ false }}">
+<span class="flabel">Motivo</span>
+<div role="radiogroup" aria-label="Motivo" style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{sheet.motivos}}" as="k" hint-placeholder-count="4"><button role="radio" onClick="{{k.pick}}" style="height: 34px; padding: 0 14px; border: 0; border-radius: 999px; background: {{k.bg}}; box-shadow: {{k.sh}}; font: inherit; font-size: 13px; font-weight: {{k.w}}; color: {{k.c}}; cursor: pointer">{{k.label}}</button></sc-for></div>
+<label style="display: flex; align-items: center; gap: 10px; margin-top: 4px"><span class="flabel" style="flex: 1">Vuelvo a las</span><input class="field" type="time" value="{{sheet.until}}" onChange="{{sheet.setUntil}}" style="width: 130px; height: 36px"></label>
+</sc-if>
+<sc-if value="{{sheet.hasText}}" hint-placeholder-val="{{ true }}">
+<span class="flabel">{{sheet.label}}</span>
+<textarea class="field" rows="3" value="{{sheet.txt}}" onChange="{{sheet.setTxt}}" placeholder="{{sheet.ph}}"></textarea>
+</sc-if>
+</div>
+<div style="display: flex; align-items: center; gap: 8px; padding: 12px 22px 20px; border-top: 1px solid var(--sep)">
+<span style="flex: 1"></span>
+<button class="pill pillbtn" onClick="{{sheet.cancel}}" style="height: 40px; padding: 0 18px; border: 0; font: inherit; font-size: 14px; font-weight: 600; color: var(--t1); cursor: pointer">Cancelar</button>
+<button class="primary" onClick="{{sheet.ok}}" style="height: 40px; padding: 0 20px; border: 0; border-radius: 999px; color: #FFFFFF; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer">{{sheet.okLabel}}</button>
+</div>
+</div>
+</div>
+</sc-if>
+
+<!-- Aviso flotante -->
+<sc-if value="{{toast.show}}" hint-placeholder-val="{{ false }}">
+<div role="status" aria-live="polite" class="notif" style="position: fixed; top: 18px; right: {{toast.right}}; left: {{toast.left}}; z-index: 60; width: {{toast.w}}; box-sizing: border-box">
+<span style="width: 34px; height: 34px; border-radius: 50%; background: {{toast.iconBg}}; display: flex; align-items: center; justify-content: center; flex: none"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{toast.glyph}}"></path></svg></span>
+<div style="display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0"><span style="font-size: 13px; font-weight: 700">{{toast.title}}</span><span style="font-size: 13px">{{toast.msg}}</span></div>
+<span style="font-size: 11px; color: var(--t3)">Ahora</span>
+</div>
+</sc-if>
+
+</div>
+</div>
+</x-dc>
+
+<script type="text/x-dc" data-dc-script data-props="{&quot;fuente&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;IBM Plex Sans&quot;,&quot;Instrument Sans&quot;,&quot;Sistema (SF Pro)&quot;],&quot;default&quot;:&quot;IBM Plex Sans&quot;},&quot;tema&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Claro&quot;,&quot;Oscuro&quot;,&quot;Sistema&quot;],&quot;default&quot;:&quot;Claro&quot;},&quot;dispositivo&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Escritorio&quot;,&quot;Teléfono&quot;],&quot;default&quot;:&quot;Escritorio&quot;},&quot;turno&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;En turno&quot;,&quot;De guardia&quot;],&quot;default&quot;:&quot;En turno&quot;},&quot;reloj&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;En vivo&quot;,&quot;Fijo&quot;],&quot;default&quot;:&quot;En vivo&quot;},&quot;volumen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Normal&quot;,&quot;Muchos tickets&quot;],&quot;default&quot;:&quot;Normal&quot;},&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1100}}">
+class Component extends DCLogic {
+  renderVals() {
+    const FONTS = {
+      'IBM Plex Sans': "'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif",
+      'Instrument Sans': "'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif",
+      'Sistema (SF Pro)': "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif"
+    };
+    const font = FONTS[this.props.fuente ?? 'IBM Plex Sans'] || FONTS['IBM Plex Sans'];
+    const mode = this.props.tema ?? 'Claro';
+    let isDark = mode === 'Oscuro';
+    if (mode === 'Sistema') { try { isDark = window.matchMedia('(prefers-color-scheme: dark)').matches; } catch (e) {} }
+    const theme = isDark ? 'dark' : 'light';
+    const bg = isDark ? 'radial-gradient(1200px 700px at 78% -12%, rgba(132,120,255,0.38), transparent 60%), radial-gradient(900px 650px at -5% 105%, rgba(88,80,190,0.45), transparent 62%), linear-gradient(135deg, #0D0C21 0%, #1C1A40 40%, #2B2860 70%, #121128 100%)' : 'radial-gradient(900px 500px at 85% -10%, rgba(56,189,248,0.22), transparent 60%), radial-gradient(700px 500px at 10% 110%, rgba(99,102,241,0.12), transparent 60%), linear-gradient(135deg, var(--sep2) 0%, #EFF6FF 50%, var(--accent-bg) 100%)';
+    const S = this.state || {};
+    const set = (o) => this.setState(o);
+    const stop = (e) => { if (e && e.stopPropagation) e.stopPropagation(); };
+    const phone = (this.props.dispositivo ?? 'Escritorio') === 'Teléfono';
+    const guard = (this.props.turno ?? 'En turno') === 'De guardia';
+
+    // Barra lateral minimizable (igual que en las pantallas del coordinador)
+    const sbStored = (() => { try { return localStorage.getItem('kip.sidebar') === 'min'; } catch (e) { return false; } })();
+    const sbMin = S.sbMin !== undefined ? S.sbMin : sbStored;
+    const sb = { c: sbMin ? 'true' : 'false', label: sbMin ? 'Mostrar barra lateral' : 'Minimizar barra lateral', toggle: (e) => { stop(e); const nv = !sbMin; try { localStorage.setItem('kip.sidebar', nv ? 'min' : 'full'); } catch (err) {} set({ sbMin: nv }); } };
+
+    const PR = { P1: ['P1 Crítica', 'var(--red-t)', '#EF4444', 8], P2: ['P2 Media', 'var(--orange-t)', '#F59E0B', 5], P3: ['P3 Baja', 'var(--t2)', '#94A3B8', 1], SP: ['Sin prioridad', 'var(--t3)', 'transparent', 0] };
+    const TH = { P1: 60, P2: 120, P3: 240, SP: 30 };
+    const fmt = (m) => m < 60 ? m + ' min' : Math.floor(m / 60) + ' h ' + String(m % 60).padStart(2, '0');
+    const thTxt = (m) => m < 60 ? m + ' min' : m / 60 + ' h';
+
+    // Mis tickets: [código, asunto, prioridad, estado, minutos, nota]
+    // estado: nuevo (asignado por el coordinador, sin empezar) · progreso · pausa · espera · resuelto (pendiente de cierre) · cerrado
+    const MY_AREA = 'Redes FTTH / OLT';
+    const MINE0 = [
+      ['SIM-055', 'Migración de VLAN de cliente corporativo', 'P2', 'nuevo', 12, 'Asignado por Coordinador Demo'],
+      ['SIM-052', 'Cliente sin servicio en Los Ruices', 'P3', 'nuevo', 33, 'Asignado por Coordinador Demo'],
+      ['SIM-044', 'Degradación en nodo FTTH', 'P2', 'progreso', 47, ''],
+      ['SIM-049', 'Atenuación alta en puerto PON 3', 'P3', 'progreso', 21, ''],
+      ['SIM-038', 'Reemplazo de splitter en Chacao', 'P3', 'pausa', 140, 'Espera ventana del cliente'],
+      ['SIM-030', 'Corte de fibra en El Hatillo', 'P2', 'espera', 210, 'Proveedor de fusión en sitio'],
+      ['SIM-027', 'Reinicio masivo de ONT', 'P2', 'resuelto', 0, 'Resuelto 10:15'],
+      ['SIM-025', 'Cambio de puerto en OLT Chacao', 'P3', 'cerrado', 0, 'Resuelto 09:40 · cerrado 10:02'],
+      ['SIM-021', 'Ajuste de VLAN de gestión', 'P3', 'cerrado', 0, 'Resuelto 08:55 · cerrado 09:20']
+    ];
+    // Entrantes (sin asignar) de mi área y de Operaciones IP (general): [código, asunto, prioridad, minutos, área, remitente]
+    const QUEUE0 = [
+      ['SIM-053', 'OLT con alarma de temperatura', 'P1', 25, MY_AREA, 'monitoreo@inter.com.ve'],
+      ['SIM-054', 'Solicitud de revisión de potencia', 'SP', 34, MY_AREA, 'soporte@cliente-norte.com'],
+      ['SIM-051', 'Cliente reporta intermitencia', 'P3', 18, MY_AREA, 'atencion@inter.com.ve'],
+      ['SIM-056', 'Consulta de enrutamiento interno', 'P3', 9, 'Operaciones IP', 'jefatura.ip@inter.com.ve']
+    ];
+    // Vista previa con mucho volumen (tweak "volumen")
+    if ((this.props.volumen ?? 'Normal') === 'Muchos tickets') {
+      const SUB = ['Cliente sin servicio', 'Intermitencia en enlace', 'Atenuación alta en PON', 'ONT sin sincronizar', 'Revisión de potencia', 'Cambio de puerto en OLT', 'Lentitud en sede', 'Alarma de puerto caído'];
+      const ZON = ['Chacao', 'Los Ruices', 'El Hatillo', 'La Urbina', 'Baruta', 'Catia', 'Petare', 'Altamira'];
+      const PP = ['P3', 'P2', 'P3', 'SP', 'P3', 'P2', 'P3', 'P1', 'P3', 'P2'];
+      for (let i = 0; i < 44; i++) QUEUE0.push(['SIM-' + (200 + i), SUB[i % 8] + ' en ' + ZON[(i * 3) % 8], PP[i % 10], 3 + i * 4, i % 9 === 4 ? 'Operaciones IP' : MY_AREA, ['atencion@inter.com.ve', 'monitoreo@inter.com.ve', 'soporte@cliente-norte.com'][i % 3]]);
+      for (let i = 0; i < 14; i++) MINE0.push(['SIM-' + (160 + i), SUB[(i + 2) % 8] + ' en ' + ZON[i % 8], PP[(i + 1) % 10] === 'SP' ? 'P3' : PP[(i + 1) % 10], i % 3 ? 'cerrado' : 'resuelto', 0, 'Resuelto ' + (8 + Math.floor(i / 3)) + ':' + String((i * 13) % 60).padStart(2, '0')]);
+    }
+    const st = S.st || {};      // cambios de estado de mis tickets
+    const notes = S.notes || {};
+    const taken = S.taken || []; // códigos tomados de la cola
+    const mineAll = MINE0.map((t) => ({ code: t[0], subject: t[1], p: t[2], st: st[t[0]] || t[3], age: t[4], note: notes[t[0]] !== undefined ? notes[t[0]] : t[5] }))
+      .concat(QUEUE0.filter((q) => taken.includes(q[0])).map((q) => ({ code: q[0], subject: q[1], p: q[2], st: st[q[0]] || 'progreso', age: 0, note: notes[q[0]] || 'Tomado ahora' })));
+    const active = mineAll.filter((t) => t.st !== 'resuelto' && t.st !== 'cerrado');
+    const resolved = mineAll.filter((t) => t.st === 'resuelto' || t.st === 'cerrado');
+    const flash = (toast) => {
+      if (this._tt) clearTimeout(this._tt);
+      if (this._t0) clearTimeout(this._t0);
+      set({ toast: null });
+      this._t0 = setTimeout(() => this.setState({ toast }), 30);
+      this._tt = setTimeout(() => this.setState({ toast: null }), 4000);
+    };
+    const openSheet = (kind, t) => set({ sheet: { kind, code: t.code, subject: t.subject, pk: 'pausa' }, stxt: '' });
+    const resume = (t) => { set({ st: { ...st, [t.code]: 'progreso' }, notes: { ...notes, [t.code]: 'Reanudado ahora' } }); flash({ title: 'Ticket reanudado', msg: t.code + ' vuelve a En progreso', iconBg: '#0A84FF', glyph: 'M8 5v14l11-7z' }); };
+
+    // Mi carga frente al promedio del área (regla: sobrecarga > 1,5 × promedio, mínimo 3)
+    const AVG = 4.8, LIM = Math.max(3, 1.5 * AVG), SCALE = 10;
+    const n = active.length;
+    const over = n >= 3 && n > LIM;
+    const dec = (x) => (Math.round(x * 10) / 10).toString().replace('.', ',');
+    const load = {
+      n, avg: dec(AVG), lim: dec(LIM), w: Math.min(n / SCALE * 100, 100) + '%', avgL: AVG / SCALE * 100 + '%', limL: LIM / SCALE * 100 + '%',
+      fill: over ? '#EF4444' : n > AVG ? '#F59E0B' : '#0EA5E9',
+      c: over ? 'var(--red-t)' : n > AVG ? 'var(--orange-t)' : 'var(--t1)',
+      chip: over ? 'Sobrecarga' : n > AVG ? 'Sobre el promedio' : 'Carga normal',
+      chipBg: over ? 'var(--red-bg)' : n > AVG ? 'var(--orange-bg)' : 'var(--green-bg)'
+    };
+    if (!over && n <= AVG) load.c = 'var(--green-t)';
+    const ptsToday = resolved.reduce((s, t) => s + PR[t.p][3], 0);
+    const waitN = active.filter((t) => t.st === 'pausa' || t.st === 'espera').length;
+    const pendClose = resolved.filter((t) => t.st === 'resuelto').length;
+    const stats = [
+      { label: 'En espera', v: String(waitN), c: 'var(--t1)', sub: 'En pausa o con terceros', ic: '#F59E0B', glyph: 'M9 6v12M15 6v12' },
+      { label: 'Resueltos hoy', v: String(resolved.length), c: 'var(--green-t)', sub: pendClose ? pendClose + ' pendientes de cierre' : 'Todos cerrados', ic: '#22C55E', glyph: 'M5 12l5 5L19 7' },
+      { label: 'Puntos hoy', v: String(ptsToday), c: 'var(--accent-t)', sub: 'TOTAL', ic: '#0A84FF', glyph: 'M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z' }
+    ];
+
+    // Turno
+    const shift = guard ? {
+      state: 'De guardia', short: 'De guardia 17:00–24:00', hours: '17:00 – 24:00', pct: '28%', left: 'Desde casa · faltan 5 h 02 min',
+      c: 'var(--purple-t)', chipBg: 'rgba(139,92,246,0.14)', bar: '#8B5CF6', tile: '#8B5CF6', glyph: 'M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z'
+    } : {
+      state: 'En turno', short: 'En turno 08:00–17:00', hours: '08:00 – 17:00', pct: '48%', left: 'Faltan 4 h 40 min de jornada',
+      c: 'var(--green-t)', chipBg: 'var(--green-bg)', bar: '#22C55E', tile: '#22C55E', glyph: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2'
+    };
+
+    // Reloj del turno (esfera de 12 h): arco de la jornada y agujas. "En vivo" usa la hora real y se mueve cada segundo
+    const live = (this.props.reloj ?? 'En vivo') === 'En vivo';
+    const nowD = new Date();
+    const localSec = live ? (nowD.getTime() / 1000) - nowD.getTimezoneOffset() * 60 : (guard ? 18 * 3600 + 58 * 60 : 12 * 3600 + 20 * 60);
+    const daySec = ((Math.floor(localSec) % 86400) + 86400) % 86400;
+    const nowMin = Math.floor(daySec / 60);
+    if (live && !this._clkT) this._clkT = setInterval(() => this.setState({ tick: Date.now() }), 1000);
+    if (!live && this._clkT) { clearInterval(this._clkT); this._clkT = null; }
+    const clkMode = live ? 'live' : 'fixed';
+    if (this._t0mode !== clkMode) { this._t0mode = clkMode; this._t0 = Math.floor(localSec); }
+    const t0 = this._t0, rel = Math.floor(localSec) - t0;
+    const sStart = guard ? 17 * 60 : 8 * 60, sEnd = guard ? 24 * 60 : 17 * 60;
+    const CIRC = 2 * Math.PI * 30, toLen = (min) => (min / 720) * CIRC;
+    const hh = (m) => String(Math.floor(m / 60) % 24).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+    const dur = (m) => m < 60 ? m + ' min' : Math.floor(m / 60) + ' h ' + String(m % 60).padStart(2, '0') + ' min';
+    const clk = {
+      live, rot: ((sStart / 60) % 12) * 30 - 90,
+      shiftDash: toLen(sEnd - sStart).toFixed(1) + ' ' + CIRC.toFixed(1),
+      doneDash: toLen(Math.min(sEnd - sStart, Math.max(0, nowMin - sStart))).toFixed(1) + ' ' + CIRC.toFixed(1),
+      // ángulos acumulados: la aguja nunca gira hacia atrás al pasar por las 12
+      hD: (((t0 % 43200) + rel) / 120).toFixed(2), mD: (((t0 % 3600) + rel) / 10).toFixed(1), sD: ((t0 % 60) + rel) * 6,
+      aria: 'Son las ' + hh(nowMin) + ', turno de ' + hh(sStart) + ' a ' + hh(sEnd)
+    };
+    shift.left = nowMin < sStart ? 'Empieza en ' + dur(sStart - nowMin) : nowMin >= sEnd ? 'Jornada terminada' : (guard ? 'Desde casa · faltan ' : 'Faltan ') + dur(sEnd - nowMin);
+    // Mi carga: solo cómo se reparten mis tickets activos (sin comparar con el área)
+    const MIXC = [['Asignados', ['nuevo'], '#8B5CF6'], ['En atención', ['progreso'], '#0A84FF'], ['En espera', ['pausa', 'espera'], '#FF9F0A']];
+    const segs = MIXC.map(([label, sts, color]) => ({ label, color, n: active.filter((t) => sts.includes(t.st)).length })).filter((g) => g.n > 0);
+    const mix = { n: active.length, segs, aria: segs.map((g) => g.n + ' ' + g.label.toLowerCase()).join(', ') };
+
+    // Disponibilidad: Disponible y Atendiendo son automáticos; Fuera de puesto y Ausente los marca el operador
+    const manual = S.avail || null; // null | { kind: 'away', motivo, until } | { kind: 'ausente' }
+    const busy = active.some((t) => t.p === 'P1' && t.st === 'progreso');
+    const autoState = busy ? 'Atendiendo' : 'Disponible';
+    const AVD = { Disponible: '#22C55E', Atendiendo: '#0EA5E9', 'Fuera de puesto': '#F59E0B', Ausente: '#94A3B8' };
+    const curName = manual ? (manual.kind === 'away' ? 'Fuera de puesto' : 'Ausente') : autoState;
+    const menuOpen = S.menu === 'avail';
+    const mk = (label, hint, sel, dis, pick) => ({ label, hint, dot: AVD[label], hasDot: true, sel, dis, badge: '', hasBadge: false, bBg: '', bC: '', pick: (e) => { stop(e); if (!dis) pick(); } });
+    const avail = {
+      value: curName + (manual && manual.kind === 'away' ? ' · vuelve ' + manual.until : ''),
+      dot: AVD[curName], open: menuOpen,
+      toggle: (e) => { stop(e); set({ menu: menuOpen ? '' : 'avail' }); },
+      opts: [
+        mk('Disponible', 'Automático', !manual && autoState === 'Disponible', busy && !manual, () => { set({ avail: null, menu: '' }); flash({ title: 'Disponible', msg: 'Vuelves a recibir sugerencias de tickets', iconBg: '#34C759', glyph: 'M5 12l5 5L19 7' }); }),
+        mk('Atendiendo', 'Automático con un P1', !manual && busy, true, () => {}),
+        mk('Fuera de puesto', manual && manual.kind === 'away' ? manual.motivo : 'Motivo y hora de regreso', !!(manual && manual.kind === 'away'), false, () => set({ menu: '', sheet: { kind: 'away', motivo: (manual && manual.motivo) || 'Almuerzo', until: (manual && manual.until) || '13:00' } })),
+        mk('Ausente', 'Se avisa al coordinador', !!(manual && manual.kind === 'ausente'), false, () => { set({ avail: { kind: 'ausente' }, menu: '' }); flash({ title: 'Ausente', msg: active.length ? 'Se avisó al coordinador: tienes ' + active.length + ' tickets activos' : 'No recibirás tickets', iconBg: '#8E8E93', glyph: 'M6 6l12 12M18 6L6 18' }); })
+      ]
+    };
+
+    // Detalle de cada ticket: [remitente, nombre, origen, descripción, adjuntos]
+    const DET = {
+      'SIM-053': ['monitoreo@inter.com.ve', 'Sistema de monitoreo', 'Correo', 'La OLT OLT-CCS-ESTE-02 reporta 68 °C en la tarjeta de control desde las 11:50.\nAfecta 3 puertos PON (412 clientes). Revisar ventilación del gabinete.', ['alarma-olt.png', 'log-temperatura.txt']],
+      'SIM-054': ['soporte@cliente-norte.com', 'Cliente Norte C.A.', 'Correo', 'Buenos días. Solicitamos revisar los niveles de potencia de nuestra sede en La Urbina; notamos lentitud desde ayer en la tarde.', []],
+      'SIM-051': ['atencion@inter.com.ve', 'Atención al cliente', 'Correo', 'Cliente residencial reporta intermitencia cada 10–15 minutos desde la mañana. La ONT parpadea en rojo (LOS).', ['foto-ont.jpg']],
+      'SIM-056': ['jefatura.ip@inter.com.ve', 'Jefatura Operaciones IP', 'Correo', 'Validar la ruta estática hacia la red de gestión 10.20.0.0/16 después del cambio de ayer.', []],
+      'SIM-055': ['coordinador@inter.com.ve', 'Coordinador Demo', 'Creado por el coordinador', 'Migrar la VLAN 310 del cliente corporativo a la nueva troncal antes de las 15:00. Coordinar la ventana con el cliente.', ['plan-migracion.pdf']],
+      'SIM-052': ['atencion@inter.com.ve', 'Atención al cliente', 'Correo', 'Cliente en Los Ruices sin servicio desde las 11:40. Ya reinició la ONT y sigue sin luz de PON.', []]
+    };
+    const clock = (ago) => { const m = 12 * 60 + 20 - ago; return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
+    // Bandeja: colas como en el panel anterior (Entrantes · Asignados a mí · En atención · En espera · Resueltos)
+    const order = (a, b) => ((b.p === 'P1') - (a.p === 'P1')) || (b.age - a.age);
+    const take = (code) => { set({ taken: taken.concat([code]) }); flash({ title: 'Ticket tomado', msg: code + ' pasó a En atención', iconBg: '#34C759', glyph: 'M5 12l5 5L19 7' }); };
+    const start = (t) => { set({ st: { ...st, [t.code]: 'progreso' }, notes: { ...notes, [t.code]: 'Empezado ahora' } }); flash({ title: 'Ticket en atención', msg: t.code + ' pasó a En atención', iconBg: '#0A84FF', glyph: 'M8 5v14l11-7z' }); };
+    const entr = QUEUE0.filter((q) => !taken.includes(q[0])).map((q) => ({ code: q[0], subject: q[1], p: q[2], age: q[3], area: q[4], from: q[5], st: 'entrante' }));
+    const Q = [
+      { k: 'entrantes', label: 'Entrantes', hint: 'Sin asignar en mi área', title: 'Entrantes de mi área', desc: 'Tickets sin asignar de ' + MY_AREA + ' y de Operaciones IP · P1 primero', color: '#64748B', glyph: 'M4 13h4l2 3h4l2-3h4M6 5h12l2 8v6H4v-6z', list: entr, emptyT: 'No hay tickets entrantes', emptyS: 'Cuando llegue un correo para tu área aparecerá aquí' },
+      { k: 'asignados', label: 'Asignados a mí', hint: 'Por el coordinador, sin empezar', title: 'Asignados a mí', desc: 'El coordinador te los asignó. Empiézalos para pasarlos a En atención', color: '#8B5CF6', glyph: 'M9 8a3 3 0 1 0 0-.01M3 19a6 6 0 0 1 12 0M18 8v6M15 11h6', list: mineAll.filter((t) => t.st === 'nuevo'), emptyT: 'Nada asignado por empezar', emptyS: 'Lo que te asigne el coordinador aparecerá aquí' },
+      { k: 'atencion', label: 'En atención', hint: 'Trabajando ahora', title: 'En atención', desc: 'Tickets que estás trabajando', color: '#0A84FF', glyph: 'M8 5v14l11-7z', list: mineAll.filter((t) => t.st === 'progreso'), emptyT: 'No tienes tickets en atención', emptyS: 'Toma uno de Entrantes o empieza uno asignado' },
+      { k: 'espera', label: 'En espera', hint: 'Pausa o terceros', title: 'En espera para continuar', desc: 'En pausa o esperando a terceros. Reanúdalos cuando puedas seguir', color: '#F59E0B', glyph: 'M9 6v12M15 6v12', list: mineAll.filter((t) => t.st === 'pausa' || t.st === 'espera'), emptyT: 'Nada en espera', emptyS: 'Los tickets que pauses aparecerán aquí' },
+      { k: 'resueltos', label: 'Resueltos', hint: 'Hoy · cierre del coordinador', title: 'Resueltos hoy', desc: 'Los cierra el coordinador después de revisarlos', color: '#22C55E', glyph: 'M5 12l5 5L19 7', list: resolved, emptyT: 'Aún no hay resueltos hoy', emptyS: 'Lo que resuelvas suma puntos según su prioridad' }
+    ];
+    const qKey = S.q || (Q[1].list.length ? 'asignados' : 'atencion');
+    const curQ = Q.find((q) => q.k === qKey) || Q[2];
+    const hasP1In = (q) => q.list.some((t) => t.p === 'P1');
+    const qnav = Q.map((q) => {
+      const on = q.k === curQ.k, n = q.list.length, hot = q.k === 'entrantes' && hasP1In(q);
+      return { label: q.label, hint: q.hint, color: q.color, glyph: q.glyph, on, n, go: () => set({ q: q.k, pf: 'all', qs: '', lim: STEP }),
+        nBg: hot ? '#EF4444' : on ? q.color : 'var(--fill)', nC: hot || on ? '#FFFFFF' : 'var(--t2)' };
+    });
+    const pfKey = S.pf || 'all';
+    const pf = [['all', 'Todas'], ['P1', 'P1'], ['P2', 'P2'], ['P3', 'P3'], ['SP', 'Sin prioridad']].map(([k, label]) => {
+      const on = pfKey === k;
+      return { label, n: k === 'all' ? curQ.list.length : curQ.list.filter((t) => t.p === k).length, hasDot: k !== 'all', dot: k === 'all' ? '' : (PR[k][2] === 'transparent' ? 'var(--sep)' : PR[k][2]), sel: on, go: () => set({ pf: k, lim: STEP }),
+        bg: on ? 'var(--seg-on)' : 'transparent', sh: on ? '0 1px 2px rgba(0,0,0,0.10)' : 'none', w: on ? 600 : 500, c: on ? 'var(--t1)' : 'var(--t2)' };
+    });
+    const TAG = { pausa: ['En pausa', 'var(--orange-bg)', 'var(--orange-t)'], espera: ['Espera de terceros', 'rgba(139,92,246,0.12)', 'var(--purple-t)'], resuelto: ['Pendiente de cierre', 'var(--orange-bg)', 'var(--orange-t)'], cerrado: ['Cerrado', 'var(--green-bg)', 'var(--green-t)'] };
+    const row = (t) => {
+      const P = PR[t.p], tag = TAG[t.st];
+      const PB = { P1: ['var(--red-bg)', 'none'], P2: ['var(--orange-bg)', 'none'], P3: ['var(--fill)', 'none'], SP: ['transparent', 'inset 0 0 0 1px var(--sep)'] }[t.p];
+      const base = { code: t.code, subject: t.subject, p: P[0], pText: P[1], pDot: P[2] === 'transparent' ? 'var(--sep)' : P[2], pts: P[3] + ' pts', pShort: t.p === 'SP' ? 'S/P' : t.p, pBg: PB[0], pRing: PB[1],
+        hasTag: !!tag, tag: tag ? tag[0] : '', tagBg: tag ? tag[1] : '', tagC: tag ? tag[2] : '', hasArea: false, area: '', bg: 'transparent', metaC: 'var(--t2)', meta: t.note || '', open: () => set({ det: t.code }) };
+      if (t.st === 'entrante') {
+        const noPrio = t.p === 'SP' && t.age > TH.SP, late = t.age > TH[t.p], alert = noPrio || late;
+        return { ...base, hasArea: t.area !== MY_AREA, area: t.area + ' · general', meta: alert ? (noPrio ? 'Sin prioridad más de ' + thTxt(TH.SP) : 'Sin asignar más de ' + thTxt(TH[t.p])) : 'De ' + t.from,
+          metaC: alert ? 'var(--red-t)' : 'var(--t2)', time: fmt(t.age), timeL: 'esperando', timeC: alert ? 'var(--red-t)' : 'var(--t1)', bg: t.p === 'P1' ? 'rgba(239,68,68,0.06)' : 'transparent',
+          acts: [{ label: 'Detalles', cls: 'btn-s', go: () => set({ det: t.code }) }, { label: 'Tomar', cls: 'btn-p', go: () => take(t.code) }] };
+      }
+      if (t.st === 'nuevo') return { ...base, time: fmt(t.age), timeL: 'asignado hace', timeC: 'var(--t1)', bg: 'rgba(139,92,246,0.05)', acts: [{ label: 'Empezar', cls: 'btn-p', go: () => start(t) }] };
+      if (t.st === 'progreso') return { ...base, meta: t.note || '', time: t.age ? fmt(t.age) : 'Ahora', timeL: 'en atención', timeC: 'var(--t1)', acts: [{ label: 'Pausar', cls: 'btn-s', go: () => openSheet('pause', t) }, { label: 'Resolver', cls: 'btn-g', go: () => openSheet('resolve', t) }] };
+      if (t.st === 'pausa' || t.st === 'espera') return { ...base, time: t.age ? fmt(t.age) : 'Ahora', timeL: 'detenido', timeC: 'var(--t1)', acts: [{ label: 'Reanudar', cls: 'btn-p', go: () => resume(t) }, { label: 'Resolver', cls: 'btn-g', go: () => openSheet('resolve', t) }] };
+      return { ...base, time: '+' + P[3], timeC: 'var(--green-t)', acts: [] };
+    };
+    const qs = (S.qs || '').trim().toLowerCase();
+    const STEP = 20, lim = S.lim || STEP;
+    const allRows = (curQ.k === 'resueltos' ? curQ.list.slice() : curQ.list.slice().sort(order))
+      .filter((t) => pfKey === 'all' || t.p === pfKey)
+      .filter((t) => !qs || (t.code + ' ' + t.subject).toLowerCase().includes(qs));
+    const curRows = allRows.slice(0, lim).map(row).map((r, i) => ({ ...r, d: Math.min(i, 12) }));
+    const TH_H = { entrantes: 'Esperando', asignados: 'Asignado hace', atencion: 'En atención', espera: 'Detenido', resueltos: 'Puntos' };
+    const cur = { title: curQ.title, desc: curQ.desc, color: curQ.color, glyph: curQ.glyph, rows: curRows, empty: curRows.length === 0, hasRows: curRows.length > 0, timeH: TH_H[curQ.k],
+      qs: S.qs || '', setQs: (e) => set({ qs: e.target.value, lim: STEP }),
+      hasMore: allRows.length > curRows.length, shown: curRows.length, total: allRows.length, step: Math.min(STEP, allRows.length - curRows.length), more: () => set({ lim: lim + STEP }),
+      emptyT: curQ.list.length ? (qs ? 'Nada coincide con “' + (S.qs || '').trim() + '”' : 'Sin tickets con esa prioridad') : curQ.emptyT, emptyS: curQ.list.length ? 'Cambia la búsqueda o el filtro para ver el resto' : curQ.emptyS };
+
+    // Ficha de detalle: mismo ticket, mismas acciones (Tomar, Empezar, Pausar…)
+    let det = { open: false };
+    const dT = S.det ? (entr.find((t) => t.code === S.det) || mineAll.find((t) => t.code === S.det)) : null;
+    if (dT) {
+      const r = row(dT), D = DET[dT.code] || ['noc@inter.com.ve', 'NOC', 'Correo', 'Sin descripción adicional.', []];
+      const isEntr = dT.st === 'entrante';
+      const ST = { entrante: ['Sin asignar', 'var(--fill)', 'var(--t2)'], nuevo: ['Asignado a ti · sin empezar', 'rgba(139,92,246,0.12)', 'var(--purple-t)'], progreso: ['En atención', 'var(--accent-bg)', 'var(--accent-t)'], pausa: ['En pausa', 'var(--orange-bg)', 'var(--orange-t)'], espera: ['Espera de terceros', 'rgba(139,92,246,0.12)', 'var(--purple-t)'], resuelto: ['Pendiente de cierre', 'var(--orange-bg)', 'var(--orange-t)'], cerrado: ['Cerrado', 'var(--green-bg)', 'var(--green-t)'] }[dT.st];
+      det = {
+        open: true, code: dT.code, subject: dT.subject, p: r.p, pts: r.pts, pText: r.pText, pDot: r.pDot, pBg: 'var(--fill)',
+        state: ST[0], stBg: ST[1], stC: ST[2], hasAlert: isEntr && r.metaC === 'var(--red-t)', alert: isEntr ? r.meta : '',
+        fields: [
+          { k: 'Área', v: dT.area || MY_AREA }, { k: 'Asignado a', v: isEntr ? 'Sin asignar' : 'Ti (Demo FTTH 2)' },
+          { k: 'Remitente', v: D[1] + ' · ' + D[0] }, { k: 'Origen', v: D[2] },
+          { k: 'Recibido', v: dT.age ? 'Hoy ' + clock(dT.age + (isEntr ? 0 : 10)) : 'Hoy' }, { k: isEntr ? 'Esperando' : 'Tiempo', v: dT.age ? fmt(dT.age) : '—' }
+        ],
+        desc: D[3], files: D[4].map((name) => ({ name })), hasFiles: D[4].length > 0,
+        acts: r.acts.filter((a) => a.label !== 'Detalles').map((a) => ({ label: a.label, cls: a.cls, go: () => { set({ det: null }); a.go(); } })),
+        close: () => set({ det: null }),
+        align: phone ? 'flex-end' : 'center', pad: phone ? '0' : '24px', radius: phone ? '22px 22px 0 0' : '24px', maxH: phone ? '88vh' : 'calc(100vh - 48px)'
+      };
+    }
+
+    // Pendientes del traspaso (lista aparte para la guardia; no cambia el operador)
+    const handTaken = S.handTaken || [];
+    const hand = {
+      note: 'Quedan P1 abiertos, revisar primero. Esperando respuesta de proveedor en SIM-035.',
+      rows: [['INC-004', 'Problema con Fortinet en la sede de Barquisimeto', 'P1', ''], ['SIM-046', 'OLT sin respuesta en Caracas Este', 'P1', 'Demo FTTH 1'], ['SIM-050', 'Caída de enlace WAN en Valencia', 'P2', ''], ['SIM-035', 'Renovación de certificado SSL con proveedor', 'P3', 'Demo Operaciones 2']]
+        .map((h) => ({ code: h[0], subject: h[1], p: h[2], pText: PR[h[2]][1], op: handTaken.includes(h[0]) ? 'Tomado por ti' : (h[3] || 'Sin asignar'), opC: handTaken.includes(h[0]) ? 'var(--green-t)' : (h[3] ? 'var(--t2)' : 'var(--orange-t)'), canTake: !h[3] && !handTaken.includes(h[0]), take: () => { set({ handTaken: handTaken.concat([h[0]]) }); flash({ title: 'Ticket tomado', msg: h[0] + ' quedó a tu nombre', iconBg: '#34C759', glyph: 'M5 12l5 5L19 7' }); } }))
+    };
+
+    const notesList = [
+      { title: 'P1 nuevo en tu área', detail: 'SIM-053 · OLT con alarma de temperatura', time: 'hace 25 min', icon: '#EF4444', glyph: 'M12 3l10 18H2zM12 10v4M12 17.5v.5' },
+      { title: 'Antigüedad superada', detail: 'SIM-054 lleva más de 30 min sin prioridad', time: 'hace 4 min', icon: '#F59E0B', glyph: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2' },
+      { title: 'Asignado por el coordinador', detail: 'SIM-052 · Cliente sin servicio en Los Ruices', time: 'hace 33 min', icon: '#0A84FF', glyph: 'M9 8a3 3 0 1 0 0-.01M3 19a6 6 0 0 1 12 0M18 8v6M15 11h6' }
+    ];
+
+    // Hoja Pausar / Resolver
+    let sheet = { open: false, kinds: [], motivos: [] };
+    if (S.sheet && S.sheet.kind === 'away') {
+      const sh = S.sheet;
+      const MOT = ['Almuerzo', 'Reunión', 'En otra área del edificio', 'En sitio'];
+      sheet = {
+        open: true, isAway: true, isPause: false, hasText: false, title: 'Fuera de puesto', subject: 'Mientras tanto no se te sugieren tickets. Vuelves a Disponible a la hora indicada.',
+        kinds: [], motivos: MOT.map((m) => { const on = sh.motivo === m; return { label: m, pick: () => set({ sheet: { ...sh, motivo: m } }), bg: on ? 'var(--accent-bg)' : 'var(--fill)', sh: on ? 'inset 0 0 0 1px var(--accent-ring)' : 'inset 0 0 0 0.5px var(--sep)', c: on ? 'var(--accent-t)' : 'var(--t1)', w: on ? 600 : 500 }; }),
+        until: sh.until, setUntil: (e) => set({ sheet: { ...sh, until: e.target.value } }),
+        okLabel: 'Marcar fuera de puesto', align: phone ? 'flex-end' : 'center', pad: phone ? '0' : '24px', radius: phone ? '22px 22px 0 0' : '24px',
+        cancel: () => set({ sheet: null }),
+        ok: () => { set({ sheet: null, avail: { kind: 'away', motivo: sh.motivo, until: sh.until } }); flash({ title: 'Fuera de puesto', msg: sh.motivo + ' · vuelves a las ' + sh.until, iconBg: '#FF9F0A', glyph: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2' }); }
+      };
+    } else if (S.sheet) {
+      const sh = S.sheet, txt = S.stxt || '';
+      const isPause = sh.kind === 'pause';
+      const seg = (val, label) => { const on = sh.pk === val; return { label, sel: on, pick: () => set({ sheet: { ...sh, pk: val } }), bg: on ? 'var(--seg-on)' : 'transparent', sh: on ? '0 1px 2px rgba(0,0,0,0.10), inset 0 0 0 0.5px var(--sep)' : 'none', w: on ? 600 : 500, c: on ? 'var(--t1)' : 'var(--t2)' }; };
+      sheet = {
+        open: true, isPause, isAway: false, hasText: true, motivos: [], title: (isPause ? 'Pausar ' : 'Resolver ') + sh.code, subject: sh.subject,
+        kinds: [seg('pausa', 'En pausa'), seg('espera', 'En espera de terceros')],
+        label: isPause ? 'Motivo (opcional)' : 'Qué se hizo (opcional)', ph: isPause ? 'Por ejemplo: esperando ventana del cliente' : 'Por ejemplo: se reemplazó el splitter',
+        txt, setTxt: (e) => set({ stxt: e.target.value }), okLabel: isPause ? 'Pausar' : 'Marcar como resuelto',
+        align: phone ? 'flex-end' : 'center', pad: phone ? '0' : '24px', radius: phone ? '22px 22px 0 0' : '24px',
+        cancel: () => set({ sheet: null, stxt: '' }),
+        ok: () => {
+          const note = txt.trim();
+          if (isPause) {
+            set({ sheet: null, stxt: '', st: { ...st, [sh.code]: sh.pk }, notes: { ...notes, [sh.code]: note || (sh.pk === 'pausa' ? 'En pausa' : 'En espera de terceros') } });
+            flash({ title: sh.pk === 'pausa' ? 'Ticket en pausa' : 'En espera de terceros', msg: sh.code + (note ? ' · ' + note : ''), iconBg: '#FF9F0A', glyph: 'M9 6v12M15 6v12' });
+          } else {
+            set({ sheet: null, stxt: '', st: { ...st, [sh.code]: 'resuelto' }, notes: { ...notes, [sh.code]: 'Resuelto ahora' } });
+            flash({ title: 'Marcado como resuelto', msg: sh.code + ' queda pendiente de cierre del coordinador', iconBg: '#34C759', glyph: 'M5 12l5 5L19 7' });
+          }
+        }
+      };
+    }
+
+    const show = { hand: guard, notes: true };
+
+    const resClosed = resolved.filter((t) => t.st === 'cerrado').length;
+    const res = { n: resolved.length, open: resolved.length - resClosed, closed: resClosed };
+    const pts = { v: String(ptsToday) };
+    const bellOpen = S.menu === 'notes';
+    const bell = { n: notesList.length, has: notesList.length > 0, open: bellOpen, toggle: (e) => { stop(e); set({ menu: bellOpen ? '' : 'notes' }); } };
+    const toast = S.toast ? { show: true, ...S.toast, right: phone ? '12px' : '22px', left: phone ? '12px' : 'auto', w: phone ? 'auto' : '344px' } : { show: false };
+    return {
+      font, theme, bg, sb, device: phone ? 'phone' : 'desk', desk: !phone, phone,
+      rootPad: phone ? '0' : '10px', mainPad: phone ? '14px 14px 28px' : '2px 8px 32px 6px', gap: phone ? '12px' : '16px', cardPad: phone ? '14px' : '18px 22px', h1: phone ? '18px' : '20px',
+      clk, mix, res, pts, bell, greet: 'Buenos dia, Enza ', shift, load, stats, avail, qnav, cur, pf, det, hand, notes: notesList, sheet, show, toast,
+      closeMenu: () => { if (this.state && this.state.menu) set({ menu: '' }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

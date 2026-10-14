@@ -14,7 +14,7 @@ const {
     computeOverload
 } = require('./metricsService');
 const { AREA_NAMES } = require('./periodReportService');
-const { activeAreas } = require('./areaCatalog');
+const { activeAreas, allSubgrupos, subgrupoName } = require('./areaCatalog');
 const { estadosVeLista } = require('./estadosVeService');
 const { agingTickets, formatAge } = require('./dashboardService');
 const { DEFAULT_RULES, overloadOptions } = require('./rulesService');
@@ -115,6 +115,8 @@ function buildQueue({ tickets = [], operators = [], now = new Date(), rules = DE
             area: t.area_designada || 'GENERAL',
             areaNombre: AREA_NAMES[t.area_designada] || t.area_designada || 'General',
             estadoVe: t.estado_ve || '',
+            subgrupo: t.subgrupo_id || '',
+            subgrupoNombre: subgrupoName(t.subgrupo_id),
             prioridad: priorityOf(t.puntos_complejidad),
             puntos: t.puntos_complejidad || 0,
             estado: t.estado_actual,
@@ -148,6 +150,8 @@ function buildQueue({ tickets = [], operators = [], now = new Date(), rules = DE
             iniciales: initials(o.nombre),
             area: o.area_designada || 'GENERAL',
             areaNombre: AREA_NAMES[o.area_designada] || o.area_designada || 'General',
+            subgrupo: o.subgrupo_id || '',
+            subgrupoNombre: subgrupoName(o.subgrupo_id),
             estado: { grupo: shiftGroup(o.turno), etiqueta: o.turno?.etiqueta || 'Fuera de turno' },
             carga: carga.get(o.id) || 0,
             sobrecarga: Boolean(ov.sobrecarga),
@@ -180,7 +184,9 @@ function buildQueue({ tickets = [], operators = [], now = new Date(), rules = DE
         enCola: enCola.size
     };
 
-    return { tickets: filas, operadores, areas, estadosVe: estadosVeLista(), sugeridos: sug.porArea, otraArea: sug.otraArea, resumen, reglas: rules };
+    // Cada área con sus subgrupos activos (para filtrar y elegir en los formularios)
+    const conSubgrupos = areas.map(a => ({ ...a, subgrupos: allSubgrupos().filter(g => g.area === a.codigo && g.activo).map(g => ({ id: g.id, nombre: g.nombre })) }));
+    return { tickets: filas, operadores, areas: conSubgrupos, estadosVe: estadosVeLista(), sugeridos: sug.porArea, otraArea: sug.otraArea, resumen, reglas: rules };
 }
 
 module.exports = { buildQueue, buildHandoffView, handoffExpiry, priorityOf, daysAgo };

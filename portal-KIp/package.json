@@ -25,7 +25,10 @@
     "test:usuarios": "node scripts/test-admin-usuarios.js",
     "test:areas": "node scripts/test-areas.js",
     "test:ui": "node scripts/test-ui.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test:conversacion": "node scripts/test-conversacion.js",
+    "test:operador": "node scripts/test-operador.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:roles": "node scripts/test-roles.js"
   },
   "keywords": [],
   "author": "",

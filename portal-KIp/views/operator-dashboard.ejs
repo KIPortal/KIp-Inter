@@ -1,1300 +1,213 @@
 <%
-    const operator = typeof currentUser !== 'undefined' && currentUser ? currentUser : {};
-    const availableTickets = typeof ticketsAvailable !== 'undefined' && Array.isArray(ticketsAvailable) ? ticketsAvailable : [];
-    const assignedTickets = typeof ticketsAssigned !== 'undefined' && Array.isArray(ticketsAssigned) ? ticketsAssigned : [];
-    const pausedTickets = typeof ticketsPaused !== 'undefined' && Array.isArray(ticketsPaused) ? ticketsPaused : [];
-    const waitingTickets = typeof ticketsWaiting !== 'undefined' && Array.isArray(ticketsWaiting) ? ticketsWaiting : [];
-    const resolvedTickets = typeof ticketsResolved !== 'undefined' && Array.isArray(ticketsResolved) ? ticketsResolved : [];
-    
-    const areaLabels = {
-        GENERAL: 'Operaciones IP',
-        REDES_FTTH: 'Redes FTTH / OLT',
-        TRAFICO_INALAMBRICO: 'Tráfico inalámbrico',
-        WAN: 'WAN',
-        GRANDES_CLIENTES: 'Grandes clientes',
-        SEGURIDAD: 'Seguridad',
-        TELEFONIA: 'Telefonía'
-    };
-
-    const originLabels = {
-        CORREO: 'Correo electrónico',
-        LLAMADA: 'Llamada telefónica',
-        JEFATURA: 'Instrucción de jefatura',
-        COORDINADOR: 'Asignación de coordinador'
-    };
-
-    const operatorName = operator.nombre || 'Operador';
-    const operatorInitials = operatorName.trim().split(/\s+/).slice(0, 2).map(part => part[0]).join('').toUpperCase();
-    const operatorArea = areaLabels[operator.area_designada] || operator.area_designada || 'Área no asignada';
-
-    const formatDate = value => {
-        if (!value) return 'Fecha no disponible';
-        const date = new Date(value);
-        return Number.isNaN(date.getTime()) ? 'Fecha no disponible' : new Intl.DateTimeFormat('es', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
-    };
-
-    const getPriorityInfo = points => {
-        const pts = points || 0;
-        if (pts >= 8) {
-            return { code: 'P1', label: 'P1 (Crítica)', shortLabel: 'P1', dot: '#FF3B30', bg: '#FFE5E5', text: '#D70015', border: '#FFD0D0', pts };
-        } else if (pts >= 5) {
-            return { code: 'P2', label: 'P2 (Media)', shortLabel: 'P2', dot: '#FFBD2E', bg: '#FFF4D6', text: '#B25E02', border: '#FFE6A6', pts };
-        } else if (pts >= 1) {
-            return { code: 'P3', label: 'P3 (Baja)', shortLabel: 'P3', dot: '#8E8E93', bg: '#F2F2F7', text: '#1C1C1E', border: '#D1D1D6', pts };
-        } else {
-            return { code: 'NONE', label: 'S/P (Sin Prioridad)', shortLabel: 'S/P', dot: '#C7C7CC', bg: '#F2F2F7', text: '#8E8E93', border: '#E5E5EA', pts: 0 };
-        }
-    };
-
-    // Calculate unique areas present in availableTickets for area filter tabs/chips
-    const availableAreaCounts = {};
-    availableTickets.forEach(t => {
-        const a = t.area_designada || 'GENERAL';
-        availableAreaCounts[a] = (availableAreaCounts[a] || 0) + 1;
-    });
-    const uniqueAvailableAreas = Object.keys(availableAreaCounts);
-
-    const queues = [
-        { id: 'available', title: 'Disponibles', description: 'Incidencias listas para tomar', tickets: availableTickets, tone: 'emerald', dateField: 'createdAt' },
-        { id: 'assigned', title: 'En progreso', description: 'Trabajo activo asignado a ti', tickets: assignedTickets, tone: 'blue', dateField: 'fecha_asignacion' },
-        { id: 'paused', title: 'Pausados', description: 'Incidencias en pausa', tickets: pausedTickets, tone: 'amber', dateField: 'fecha_asignacion' },
-        { id: 'waiting', title: 'Espera de terceros', description: 'Pendientes de respuesta externa', tickets: waitingTickets, tone: 'orange', dateField: 'fecha_asignacion' },
-        { id: 'resolved', title: 'Resueltos', description: 'Incidencias cerradas', tickets: resolvedTickets, tone: 'slate', dateField: 'fecha_cierre' }
-    ];
+	// Panel del operador (Fase 9, prototipo Operador.dc.html). El servidor dibuja
+	// el encabezado, las tarjetas y el traspaso; public/js/operador.js dibuja la
+	// bandeja (colas, búsqueda, filtro, paginación), los menús y las hojas.
+	const p = panel;
+	const t = p.turno;
+	const TONO = { green: ['var(--green-bg)', 'var(--green-t)', '#22C55E'], purple: ['var(--purple-bg)', 'var(--purple-t)', '#8B5CF6'], gray: ['var(--fill)', 'var(--t2)', '#94A3B8'] }[t.tono];
+	const CIRC = 2 * Math.PI * 30;
+	const toLen = m => (Math.min(720, Math.max(0, m)) / 720) * CIRC;
+	const ahoraMin = Math.floor(((Date.now() / 1000 - 4 * 3600) % 86400 + 86400) % 86400 / 60);
+	const clk = {
+		rot: ((t.inicio / 60) % 12) * 30 - 90,
+		shift: toLen(t.fin - t.inicio).toFixed(1) + ' ' + CIRC.toFixed(1),
+		done: toLen(Math.min(t.fin - t.inicio, ahoraMin - t.inicio)).toFixed(1) + ' ' + CIRC.toFixed(1)
+	};
+	const activos = p.mezcla.total;
+	const datos = { panel: p, usuario: { id: currentUser.id } };
+	const PR = { P1: 'var(--red-t)', P2: 'var(--orange-t)', P3: 'var(--t2)', SP: 'var(--t3)' };
 %>
 <!DOCTYPE html>
-<html class="h-full bg-[#E8E8ED]" lang="es">
-
+<html lang="es">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#E8E8ED">
-    <title><%= typeof titulo !== 'undefined' ? titulo : 'Operaciones · Portal NOC' %></title>
-    <!-- Tailwind CSS v3 with Plugins -->
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <link href="/css/figma-assets.css" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['-apple-system', 'BlinkMacSystemFont', 'Inter', 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', 'sans-serif'],
-                        mono: ['SF Mono', 'JetBrains Mono', 'Menlo', 'Monaco', 'Courier New', 'monospace']
-                    },
-                    colors: {
-                        mac: {
-                            bg: '#F5F5F7', window: '#FFFFFF', sidebar: '#EBEBF0', accent: '#007AFF', accentHover: '#0062CC',
-                            subtle: '#8E8E93', border: '#E5E5EA', borderLight: '#F2F2F7', headerBorder: '#D1D1D6',
-                            selected: '#DCEBFE', selectedText: '#0062CC', dangerLight: '#FFE5E5', dangerText: '#D70015',
-                            successLight: '#E3F9E5', successText: '#1B873F', warningLight: '#FFF4D6', warningText: '#B25E02'
-                        }
-                    }
-                }
-            }
-        };
-    </script>
-    <style>
-        html,
-        body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            user-select: none;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: rgba(0, 0, 0, 0.15);
-            border-radius: 9999px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(0, 0, 0, 0.28);
-        }
-
-        .num-tabular {
-            font-variant-numeric: tabular-nums;
-        }
-
-        .finder-th+.finder-th {
-            border-left: 1px solid #E5E5EA;
-        }
-
-        .priority-badge {
-            background-color: var(--prio-bg, #F2F2F7);
-            color: var(--prio-txt, #8E8E93);
-            border-color: var(--prio-border, #E5E5EA);
-        }
-
-        .macos-focus-ring {
-            box-shadow: 0 0 0 3px rgba(0, 136, 255, 0.35);
-            border-color: #389BFF !important;
-        }
-
-        /* Responsive view toggling */
-        @media (min-width: 768px) {
-            .queue-view-table .queue-table-container { display: block !important; }
-            .queue-view-table .queue-grid-container { display: none !important; }
-
-            .queue-view-grid .queue-table-container { display: none !important; }
-            .queue-view-grid .queue-grid-container { display: grid !important; }
-        }
-
-        @media (max-width: 767px) {
-            /* On small screens, cards view is active by default to prevent horizontal overflow */
-            .queue-table-container { display: none !important; }
-            .queue-grid-container {
-                display: grid !important;
-                grid-template-columns: repeat(1, minmax(0, 1fr));
-            }
-        }
-    </style>
+	<%- include('partials/head', { titulo: 'Mi panel' }) %>
+	<link href="/css/operador.css?v=<%= locals.v || 1 %>" rel="stylesheet">
+	<link href="/css/ticket-detalle.css?v=<%= locals.v || 1 %>" rel="stylesheet">
+	<script src="/js/ticket-conversacion.js?v=<%= locals.v || 1 %>" defer></script>
+	<script src="/js/operador.js?v=<%= locals.v || 1 %>" defer></script>
 </head>
+<body>
+<div class="app op" id="op">
+	<%- include('partials/sidebar', { currentUser, activo: 'panel', conteos: { misTickets: activos, area: p.usuario.areaNombre } }) %>
 
-<body class="h-dvh w-full min-w-0 bg-[#F5F5F7] overflow-hidden flex flex-col font-sans text-[13px] text-[#1C1C1E] m-0 p-0 antialiased">
+	<main class="app-main">
+		<header class="op-head">
+			<span class="popwrap">
+				<button type="button" class="op-avatar" data-menu-me aria-haspopup="menu" aria-expanded="false" aria-label="Menú de <%= p.usuario.nombre %>"><%= p.usuario.iniciales %></button>
+			</span>
+			<div class="who">
+				<h1><%= p.saludo %></h1>
+				<span class="sub"><%= p.usuario.areaNombre %> · <%= t.corto %></span>
+			</div>
+			<span class="ptsbadge" title="Puntos sumados hoy por tickets resueltos">
+				<span class="pi"><svg width="12" height="12" viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true"><path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/></svg></span>
+				<strong><%= p.puntosHoy %></strong>puntos hoy
+			</span>
+			<span class="popwrap" id="opBell"></span>
+			<span class="popwrap" id="opAvail"></span>
+		</header>
 
-    <!-- macOS Full Application Viewport -->
-    <div class="relative w-full h-full flex flex-col overflow-hidden bg-white select-none">
+		<section aria-label="Mi turno y mi carga" class="kgrid">
+			<div class="glass kcard kc-turno">
+				<div>
+					<div class="khd"><span class="klab">Mi turno</span><span class="tag" style="background: <%= TONO[0] %>; color: <%= TONO[1] %>"><%= t.estado %></span></div>
+					<span class="kbig sm"><%= t.horas %></span>
+					<span class="ksub" id="opShiftLeft"><%= t.resto %></span>
+				</div>
+				<svg class="clk" id="opClock" width="80" height="80" viewBox="0 0 78 78" role="img" aria-label="Turno de <%= t.horas %>" data-inicio="<%= t.inicio %>" data-fin="<%= t.fin %>">
+					<circle cx="39" cy="39" r="35.5" fill="var(--clk-face)" stroke="var(--clk-rim)" stroke-width="0.75"/>
+					<circle cx="39" cy="39" r="30" fill="none" stroke="var(--clk-track)" stroke-width="5"/>
+					<circle class="clk-arc" cx="39" cy="39" r="30" fill="none" stroke="<%= TONO[2] %>" stroke-opacity="0.30" stroke-width="5" stroke-linecap="round" stroke-dasharray="<%= clk.shift %>" transform="rotate(<%= clk.rot %> 39 39)"/>
+					<circle class="clk-arc clk-done" data-clk-done cx="39" cy="39" r="30" fill="none" stroke="<%= TONO[2] %>" stroke-width="5" stroke-linecap="round" stroke-dasharray="<%= clk.done %>" transform="rotate(<%= clk.rot %> 39 39)"/>
+					<path d="M39.0 15.0L39.0 18.5M51.0 18.2L50.0 19.9M59.8 27.0L58.1 28.0M63.0 39.0L59.5 39.0M59.8 51.0L58.1 50.0M51.0 59.8L50.0 58.1M39.0 63.0L39.0 59.5M27.0 59.8L28.0 58.1M18.2 51.0L19.9 50.0M15.0 39.0L18.5 39.0M18.2 27.0L19.9 28.0M27.0 18.2L28.0 19.9" stroke="var(--t3)" stroke-width="1.3" stroke-linecap="round"/>
+					<g class="hand" data-hand="h"><line x1="39" y1="42" x2="39" y2="26" stroke="var(--t1)" stroke-width="2.8" stroke-linecap="round"/></g>
+					<g class="hand" data-hand="m"><line x1="39" y1="42" x2="39" y2="18" stroke="var(--t1)" stroke-width="1.8" stroke-linecap="round"/></g>
+					<g class="hand hand-s" data-hand="s"><line x1="39" y1="45" x2="39" y2="16" stroke="#FF9F0A" stroke-width="1" stroke-linecap="round"/></g>
+					<circle cx="39" cy="39" r="2.6" fill="<%= TONO[2] %>" stroke="var(--clk-face-solid)" stroke-width="1"/>
+				</svg>
+			</div>
+			<div class="glass kcard kc-carga">
+				<div class="khd"><span class="kico" style="background: #0A84FF"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span><span class="klab">Pendientes</span></div>
+				<div class="kline"><span class="kbig"><%= activos %></span><span class="ksub"><%= activos === 1 ? 'ticket por atender' : 'tickets por atender' %></span></div>
+				<div class="mixbar" role="img" aria-label="<%= p.mezcla.segs.length ? p.mezcla.segs.map(g => g.n + ' ' + g.label.toLowerCase()).join(', ') : 'Sin tickets pendientes' %>">
+					<% if (p.mezcla.segs.length) { p.mezcla.segs.forEach(g => { %><span class="bar-fill" style="flex: <%= g.n %> 1 0; background: <%= g.color %>"></span><% }) } else { %><span class="empty"></span><% } %>
+				</div>
+				<div class="legend">
+					<% p.mezcla.segs.forEach(g => { %><span><i style="background: <%= g.color %>"></i><%= g.label %><strong><%= g.n %></strong></span><% }) %>
+					<% if (!p.mezcla.segs.length) { %><span>Nada pendiente por ahora</span><% } %>
+				</div>
+			</div>
+			<div class="glass kcard kc-res">
+				<div class="khd"><span class="kico" style="background: #30D158"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L19 7"/></svg></span><span class="klab">Resueltos hoy</span></div>
+				<div class="kline"><span class="kbig" style="color: var(--green-t)"><%= p.resueltos.n %></span><span class="ksub"><%= p.resueltos.n === 1 ? 'ticket' : 'tickets' %></span></div>
+				<div class="reslist">
+					<span><i style="background: #FF9F0A"></i>Pendientes de cierre<strong><%= p.resueltos.abiertos %></strong></span>
+					<span><i style="background: #30D158"></i>Cerrados<strong><%= p.resueltos.cerrados %></strong></span>
+				</div>
+			</div>
+		</section>
 
-        <!-- BEGIN: macOS Unified Titlebar & Toolbar -->
-        <header class="h-[56px] bg-white border-b border-[#E5E5EA] px-2 sm:px-4 flex items-center justify-between gap-2 select-none z-20 flex-shrink-0">
-            <div class="flex items-center gap-3">
-                <div class="flex items-center gap-3">
-                    <img alt="Logo Inter" class="h-[28px] w-auto object-contain"
-                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuAtCf1kyA5Xv3ji8h2EifMIzU5ZiU3r5XlzhgnLFSjZns31wuEmyWwyxb7Ibp30TQgk1BU7IO9qFU5Ri9xtP1U6XPsTT3Ew2iMHnDiOmn4Y-IT_Fy4lZdLyfTzEBMnrxeUJ-S7GYU870d6-54QeqaoelnE_92ZTd36r0rRy5wwIyJJcT881mYSiNC15GTzaM5v_ZLKyzhMIEo-MMFCaNtJqZCR6YOc7FYA8AUcQvEfl_R03WH_n6yHU3a8zKevr3gppvw">
-                    <div class="h-5 w-[1px] bg-[#D1D1D6]"></div>
-                    <span class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">Operaciones IP</span>
+		<% if (p.traspaso && p.traspaso.filas.length) { %>
+		<section class="glass handoff" aria-labelledby="h-hand">
+			<div class="handoff-hd">
+				<span class="kico" style="width: 28px; height: 28px; border-radius: 8px; background: #8B5CF6"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></span>
+				<h2 id="h-hand">Pendientes del traspaso</h2>
+				<span><%= p.traspaso.hora %></span>
+			</div>
+			<div class="handoff-note">“<%= p.traspaso.nota %>”<small>Nota de <%= p.traspaso.autor %></small></div>
+			<% p.traspaso.filas.forEach(f => { %>
+			<div class="trow">
+				<div class="tmain" style="flex: 1 1 160px">
+					<span><span class="tcode"><%= f.code %></span><span style="font-size: 12px; font-weight: 600; color: <%= PR[f.p] %>"><%= f.p === 'SP' ? 'Sin prioridad' : f.p %></span><span class="tmeta" style="color: var(--<%= f.opTono === 'green' ? 'green-t' : f.opTono === 'orange' ? 'orange-t' : 't2' %>)"><%= f.op %></span></span>
+					<button type="button" class="tlink" data-open="<%= f.code %>" style="font-size: 13px"><%= f.subject %></button>
+				</div>
+				<% if (f.puedeTomar) { %><div class="tacts" style="width: auto"><button type="button" class="btn-p" data-act="claim" data-code="<%= f.code %>">Tomar</button></div><% } %>
+			</div>
+			<% }) %>
+		</section>
+		<% } %>
+
+		<section class="glass bandeja" aria-labelledby="h-cola" id="opBandeja">
+			<nav class="qnav" aria-label="Colas de tickets" id="opQnav"><span class="qnav-h">Mis colas</span></nav>
+			<div class="qmain">
+				<div class="qbar">
+					<div class="qtitle"><h2 id="h-cola">Cargando…</h2><span id="opQdesc"></span></div>
+					<label class="qsearch"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true" style="flex: none"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input type="search" id="opSearch" placeholder="Buscar código o asunto" aria-label="Buscar en esta cola" autocomplete="off"></label>
+					<div class="pfilter" role="tablist" aria-label="Filtrar por prioridad" id="opPf"></div>
+				</div>
+				<div class="qlist" id="opList"></div>
+			</div>
+		</section>
+	</main>
+</div>
+
+    <!-- BEGIN: Ticket Details Modal (rediseño: pestañas Detalle y Conversación) -->
+    <div id="ticketDetailsOverlay" class="tdlg-overlay hidden" onclick="handleTicketDetailsBackdrop(event)">
+        <section id="ticketDetailsCard" class="tdlg" role="dialog" aria-modal="true" aria-labelledby="modalDetailSubject">
+            <header class="tdlg-hd">
+                <div class="tdlg-row">
+                    <span id="modalDetailCode" class="tdlg-code"></span>
+                    <span id="modalDetailPriorityBadge" class="tdlg-tag"></span>
+                    <span id="modalDetailStatusBadge" class="tdlg-tag"></span>
+                    <span class="tdlg-sp"></span>
+                    <button type="button" class="tdlg-x" onclick="closeTicketDetailsModal()" aria-label="Cerrar detalle">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+                    </button>
                 </div>
-            </div>
-
-            <div class="flex items-center gap-3">
-                <!-- Manual refresh button -->
-                <button id="manualRefreshBtn" type="button" onclick="manualRefresh()" title="Actualizar datos ahora" class="w-7 h-7 rounded-[7px] bg-[#F5F5F7] hover:bg-[#EBEBF0] text-[#636366] hover:text-[#1C1C1E] border border-[#D1D1D6] flex items-center justify-center transition cursor-pointer">
-                    <svg id="refreshIcon" class="w-3.5 h-3.5 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                    </svg>
-                </button>
-
-                <div class="figma-toolbars-search__search !w-auto relative hidden sm:flex bg-[#F5F5F7] border border-[#D1D1D6] rounded-[7px] transition focus-within:bg-white focus-within:border-[#007AFF]">
-                    <div class="figma-toolbars-search__liquid-glass absolute inset-0 pointer-events-none"></div>
-                    <svg class="figma-toolbars-search__symbol w-3.5 h-3.5 text-[#8E8E93] flex-shrink-0 pointer-events-none" fill="none"
-                        stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <line x1="21" x2="16.65" y1="21" y2="16.65"></line>
-                    </svg>
-                    <input
-                        id="globalSearchInput"
-                        oninput="onSearchInput(this.value)"
-                        class="figma-toolbars-search__search-label !w-[110px] sm:!w-[150px] bg-transparent text-[11px] text-[#1C1C1E] placeholder-[#8E8E93] focus:outline-none border-none p-0"
-                        placeholder="Buscar..." type="text">
-                    <span class="flex-shrink-0 px-1 py-0.5 text-[9px] font-mono text-[#8E8E93] bg-white border border-[#D1D1D6] rounded pointer-events-none font-medium relative z-10">⌘K</span>
+                <h2 id="modalDetailSubject" class="tdlg-title"></h2>
+                <div role="tablist" aria-label="Secciones del ticket" class="dtabs">
+                    <button type="button" role="tab" id="tdTabInfo" aria-controls="tdPanelInfo" aria-selected="true">Detalle</button>
+                    <button type="button" role="tab" id="tdTabThread" aria-controls="tdPanelThread" aria-selected="false" tabindex="-1">Conversación<span class="dn" id="tdMsgCount" aria-label="mensajes">…</span></button>
                 </div>
-                <div class="h-5 w-[1px] bg-[#D1D1D6] mx-0.5 hidden sm:block"></div>
-                <details class="relative group select-none z-50">
-                    <summary class="list-none flex items-center gap-2 px-2 py-1 rounded-[8px] hover:bg-[#F2F2F7] transition cursor-pointer border border-transparent hover:border-[#D1D1D6]">
-                        <div class="w-7 h-7 rounded-full bg-[#007AFF] text-white flex items-center justify-center font-mono font-semibold text-[11px]">
-                            <%= operatorInitials || 'OP' %>
-                        </div>
-                        <div class="hidden sm:flex flex-col text-left">
-                            <span class="text-[11px] font-medium text-[#1C1C1E] leading-tight"><%= operatorName %></span>
-                            <span class="text-[9px] font-mono font-bold text-[#34C759] tracking-wider leading-tight">● <%= operatorArea %></span>
-                        </div>
-                    </summary>
-                    <div class="absolute right-0 top-[100%] mt-1 w-[160px] bg-white rounded-[8px] border border-[#D1D1D6] shadow-[0_4px_14px_rgba(0,0,0,0.1)] p-1 z-50 text-[12px]">
-                        <div class="px-2 py-1.5 border-b border-[#F2F2F7] mb-1 sm:hidden">
-                            <p class="text-[11px] font-semibold text-[#1C1C1E] truncate"><%= operatorName %></p>
-                            <p class="text-[9px] text-[#8E8E93] truncate"><%= operatorArea %></p>
-                        </div>
-                        <form action="/auth/logout" method="POST" class="m-0">
-                            <button type="submit" class="w-full text-left px-2 py-1.5 rounded-[5px] text-[#1C1C1E] hover:bg-[#007AFF] hover:text-white font-medium transition cursor-pointer flex items-center gap-2">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                                <span>Cerrar Sesión</span>
-                            </button>
-                        </form>
-                    </div>
-                </details>
-            </div>
-        </header>
-
-        <!-- Main Body Workspace -->
-        <div class="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0 bg-[#F5F5F7]">
-
-            <!-- BEGIN: Finder-style macOS Sidebar -->
-            <aside class="w-full md:w-[220px] lg:w-[240px] flex-shrink-0 bg-[#EBEBF0]/95 border-b md:border-b-0 md:border-r border-[#D8D8DC] flex flex-col justify-between select-none py-2 md:py-3 px-2 sm:px-3 overflow-x-auto md:overflow-y-auto">
-                <div class="space-y-3">
-                    <div class="hidden md:block px-2.5 pb-1 text-[10px] font-bold text-[#8E8E93] uppercase tracking-wider">
-                        Gestión de Incidencias
-                    </div>
-                    <nav id="sidebar-nav" aria-label="Colas de tickets" class="flex md:flex-col gap-1 overflow-x-auto md:overflow-visible pb-1 md:pb-0">
-                        <a href="#default" class="tab-link flex items-center justify-between px-2.5 py-1.5 rounded-[6px] bg-white text-[#007AFF] shadow-[0_1px_3px_rgba(0,0,0,0.06)] font-semibold border border-black/5 text-[12px] transition cursor-pointer whitespace-nowrap">
-                            <div class="flex items-center gap-2">
-                                <svg class="w-4 h-4 text-[#007AFF]" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M19.5 21a3 3 0 0 0 3-3v-4.5a3 3 0 0 0-3-3h-15a3 3 0 0 0-3 3V18a3 3 0 0 0 3 3h15ZM1.5 10.5V6a3 3 0 0 1 3-3h15a3 3 0 0 1 3 3v4.5"></path>
-                                </svg>
-                                <span>Inicio</span>
-                            </div>
-                            <span class="tab-badge font-mono text-[9px] bg-[#007AFF]/15 text-[#0062CC] px-1.5 py-0.5 rounded font-bold">
-                                <%= availableTickets.length + assignedTickets.length %>
-                            </span>
-                        </a>
-                        <a href="#available" class="tab-link flex items-center justify-between px-2.5 py-1.5 rounded-[6px] text-[#3A3A3C] hover:bg-black/5 text-[12px] font-medium transition cursor-pointer whitespace-nowrap">
-                            <div class="flex items-center gap-2">
-                                <span class="w-2 h-2 rounded-full bg-[#34C759]"></span>
-                                <span>Disponibles</span>
-                            </div>
-                            <span class="tab-badge font-mono text-[9px] bg-black/5 text-[#8E8E93] px-1.5 py-0.5 rounded font-bold">
-                                <%= availableTickets.length %>
-                            </span>
-                        </a>
-                        <a href="#assigned" class="tab-link flex items-center justify-between px-2.5 py-1.5 rounded-[6px] text-[#3A3A3C] hover:bg-black/5 text-[12px] font-medium transition cursor-pointer whitespace-nowrap">
-                            <div class="flex items-center gap-2">
-                                <span class="w-2 h-2 rounded-full bg-[#007AFF]"></span>
-                                <span>En progreso</span>
-                            </div>
-                            <span class="tab-badge font-mono text-[9px] bg-black/5 text-[#8E8E93] px-1.5 py-0.5 rounded font-bold">
-                                <%= assignedTickets.length %>
-                            </span>
-                        </a>
-                        <a href="#paused" class="tab-link flex items-center justify-between px-2.5 py-1.5 rounded-[6px] text-[#3A3A3C] hover:bg-black/5 text-[12px] font-medium transition cursor-pointer whitespace-nowrap">
-                            <div class="flex items-center gap-2">
-                                <span class="w-2 h-2 rounded-full bg-[#FF9500]"></span>
-                                <span>Pausados</span>
-                            </div>
-                            <span class="tab-badge font-mono text-[9px] bg-black/5 text-[#8E8E93] px-1.5 py-0.5 rounded font-bold">
-                                <%= pausedTickets.length %>
-                            </span>
-                        </a>
-                        <a href="#waiting" class="tab-link flex items-center justify-between px-2.5 py-1.5 rounded-[6px] text-[#3A3A3C] hover:bg-black/5 text-[12px] font-medium transition cursor-pointer whitespace-nowrap">
-                            <div class="flex items-center gap-2">
-                                <span class="w-2 h-2 rounded-full bg-[#FF9500]"></span>
-                                <span>Espera terceros</span>
-                            </div>
-                            <span class="tab-badge font-mono text-[9px] bg-black/5 text-[#8E8E93] px-1.5 py-0.5 rounded font-bold">
-                                <%= waitingTickets.length %>
-                            </span>
-                        </a>
-                        <a href="#resolved" class="tab-link flex items-center justify-between px-2.5 py-1.5 rounded-[6px] text-[#3A3A3C] hover:bg-black/5 text-[12px] font-medium transition cursor-pointer whitespace-nowrap">
-                            <div class="flex items-center gap-2">
-                                <span class="w-2 h-2 rounded-full bg-[#8E8E93]"></span>
-                                <span>Resueltos</span>
-                            </div>
-                            <span class="tab-badge font-mono text-[9px] bg-black/5 text-[#8E8E93] px-1.5 py-0.5 rounded font-bold">
-                                <%= resolvedTickets.length %>
-                            </span>
-                        </a>
-                    </nav>
-                </div>
-
-                <!-- Sidebar Bottom Footer -->
-                <div class="hidden md:block mt-4 p-2.5 rounded-[8px] bg-white/70 border border-black/5 shadow-sm space-y-1">
-                    <div class="flex items-center justify-between text-[11px]">
-                        <span class="flex items-center gap-1.5 font-medium text-[#1C1C1E]">
-                            <span class="w-2 h-2 rounded-full bg-[#34C759]"></span>Servidor NOC
-                        </span>
-                        <span class="font-mono text-[10px] text-[#34C759] font-bold">18ms</span>
-                    </div>
-                    <div class="flex items-center justify-between text-[10px] text-[#8E8E93] font-mono">
-                        <span>Área</span>
-                        <span class="text-[#3A3A3C] truncate max-w-[110px]"><%= operatorArea %></span>
-                    </div>
-                    <div class="flex items-center justify-between text-[10px] text-[#8E8E93] font-mono">
-                        <span>Auditoría</span>
-                        <span class="text-[#34C759] font-medium">Activa</span>
-                    </div>
-                </div>
-            </aside>
-            <!-- END: Sidebar -->
-
-            <!-- BEGIN: Content Main Area -->
-            <main class="flex-1 flex flex-col min-w-0 overflow-y-auto p-2.5 sm:p-4 gap-3 bg-[#F5F5F7]">
-
-                <!-- BEGIN: KPI Cards / macOS Widget Panels -->
-                <section aria-label="Indicadores operativos" class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 flex-shrink-0">
-                    <!-- Card 1: Disponibles -->
-                    <a href="#available" class="bg-white border border-[#E5E5EA] rounded-[12px] p-3.5 sm:p-4 flex flex-col justify-between shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-[0_2px_6px_rgba(0,0,0,0.06)] hover:border-[#D1D1D6] transition cursor-pointer group">
-                        <div class="flex items-start justify-between">
-                            <span class="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wider leading-tight group-hover:text-[#1C1C1E] transition">DISPONIBLES</span>
-                            <span class="w-1.5 h-1.5 rounded-full bg-[#34C759] mt-0.5"></span>
-                        </div>
-                        <div class="mt-2 text-[28px] sm:text-[32px] font-semibold font-mono text-[#1C1C1E] tracking-tight num-tabular leading-none">
-                            <%= availableTickets.length %>
-                        </div>
-                    </a>
-
-                    <!-- Card 2: En progreso -->
-                    <a href="#assigned" class="bg-white border border-[#E5E5EA] rounded-[12px] p-3.5 sm:p-4 flex flex-col justify-between shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-[0_2px_6px_rgba(0,0,0,0.06)] hover:border-[#D1D1D6] transition cursor-pointer group">
-                        <div class="flex items-start justify-between">
-                            <span class="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wider leading-tight group-hover:text-[#1C1C1E] transition">EN PROGRESO</span>
-                            <span class="w-1.5 h-1.5 rounded-full bg-[#007AFF] mt-0.5"></span>
-                        </div>
-                        <div class="mt-2 text-[28px] sm:text-[32px] font-semibold font-mono text-[#1C1C1E] tracking-tight num-tabular leading-none">
-                            <%= assignedTickets.length %>
-                        </div>
-                    </a>
-
-                    <!-- Card 3: Pausados / Espera -->
-                    <a href="#paused-waiting" class="bg-white border border-[#E5E5EA] rounded-[12px] p-3.5 sm:p-4 flex flex-col justify-between shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-[0_2px_6px_rgba(0,0,0,0.06)] hover:border-[#D1D1D6] transition cursor-pointer group">
-                        <div class="flex items-start justify-between">
-                            <span class="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wider leading-tight group-hover:text-[#1C1C1E] transition">PAUSADOS / ESPERA</span>
-                            <span class="w-1.5 h-1.5 rounded-full bg-[#FF9500] mt-0.5"></span>
-                        </div>
-                        <div class="mt-2 text-[28px] sm:text-[32px] font-semibold font-mono text-[#1C1C1E] tracking-tight num-tabular leading-none">
-                            <%= pausedTickets.length + waitingTickets.length %>
-                        </div>
-                    </a>
-
-                    <!-- Card 4: Resueltos -->
-                    <a href="#resolved" class="bg-white border border-[#E5E5EA] rounded-[12px] p-3.5 sm:p-4 flex flex-col justify-between shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-[0_2px_6px_rgba(0,0,0,0.06)] hover:border-[#D1D1D6] transition cursor-pointer group">
-                        <div class="flex items-start justify-between">
-                            <span class="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wider leading-tight group-hover:text-[#1C1C1E] transition">RESUELTOS</span>
-                            <span class="w-1.5 h-1.5 rounded-full bg-[#8E8E93] mt-0.5"></span>
-                        </div>
-                        <div class="mt-2 text-[28px] sm:text-[32px] font-semibold font-mono text-[#1C1C1E] tracking-tight num-tabular leading-none">
-                            <%= resolvedTickets.length %>
-                        </div>
-                    </a>
-                </section>
-                <!-- END: KPI Cards -->
-
-                <!-- Global Toolbar macOS 27 Style -->
-                <div class="figma-toolbar flex flex-wrap items-center justify-between gap-2 rounded-[10px] border border-[#E5E5EA] bg-white px-3.5 py-2 shadow-[0_1px_3px_rgba(0,0,0,0.03)] flex-shrink-0">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <span class="text-[12px] font-semibold text-[#1C1C1E]">Filtros Rápidos</span>
-                        <div class="h-4 w-[1px] bg-[#D1D1D6] mx-1"></div>
-                        <div class="flex flex-wrap items-center gap-1.5">
-                            <button type="button" onclick="filterByPriorityLocal('ALL')" id="filterBtnAll" class="px-2.5 py-1 rounded-[6px] bg-[#007AFF] text-white text-[11px] font-medium shadow-sm transition cursor-pointer">
-                                Todas
-                            </button>
-                            <button type="button" onclick="filterByPriorityLocal('HIGH')" id="filterBtnHigh" class="px-2.5 py-1 rounded-[6px] bg-[#F5F5F7] hover:bg-[#EBEBF0] text-[#1C1C1E] border border-black/5 text-[11px] font-medium transition cursor-pointer">
-                                Alta Carga 
-                            </button>
-                            <button type="button" onclick="filterByPriorityLocal('P1')" id="filterBtnP1" class="px-2 py-1 rounded-[6px] bg-[#F5F5F7] hover:bg-[#EBEBF0] text-[#1C1C1E] border border-black/5 text-[11px] font-medium transition cursor-pointer flex items-center gap-1">
-                                <span class="w-1.5 h-1.5 rounded-full bg-[#FF3B30]"></span>
-                                <span>P1</span>
-                            </button>
-                            <button type="button" onclick="filterByPriorityLocal('P2')" id="filterBtnP2" class="px-2 py-1 rounded-[6px] bg-[#F5F5F7] hover:bg-[#EBEBF0] text-[#1C1C1E] border border-black/5 text-[11px] font-medium transition cursor-pointer flex items-center gap-1">
-                                <span class="w-1.5 h-1.5 rounded-full bg-[#FFBD2E]"></span>
-                                <span>P2</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-[11px] text-[#8E8E93] hidden sm:inline">Vista:</span>
-                        <!-- Segmented Control macOS style -->
-                        <div class="bg-[#EBEBF0] p-0.5 rounded-[7px] inline-flex font-medium text-[11px]">
-                            <button id="viewModeTableBtn" type="button" onclick="setViewMode('table')" class="px-2.5 py-1 rounded-[5px] bg-white shadow-sm text-[#1C1C1E] font-medium transition cursor-pointer flex items-center gap-1.5" title="Vista en tabla">
-                                <svg class="w-3.5 h-3.5 text-[#1C1C1E]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
-                                <span>Filas</span>
-                            </button>
-                            <button id="viewModeGridBtn" type="button" onclick="setViewMode('grid')" class="px-2.5 py-1 rounded-[5px] text-[#8E8E93] hover:text-[#1C1C1E] transition cursor-pointer flex items-center gap-1.5" title="Vista en tarjetas">
-                                <svg class="w-3.5 h-3.5 text-[#8E8E93]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-                                <span>Tarjetas</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Main Queues Container -->
-                <div id="queues-container" class="queue-view-table flex flex-col gap-4 pb-6">
-                <% queues.forEach(function(queue) { 
-                    const isDefaultVisible = queue.id === 'available' || queue.id === 'assigned';
-                %>
-                    <section id="<%= queue.id %>" aria-labelledby="heading-<%= queue.id %>" class="queue-section <%= isDefaultVisible ? 'flex' : 'hidden' %> flex-col overflow-hidden rounded-[12px] border border-[#E5E5EA] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
-                        <header class="flex items-center justify-between border-b border-[#E5E5EA] bg-[#F9F9FA] px-4 py-3">
-                            <div class="flex items-center gap-2.5">
-                                <h2 id="heading-<%= queue.id %>" class="text-[13px] font-semibold text-[#1C1C1E]"><%= queue.title %></h2>
-                                <span class="rounded-full bg-black/5 px-2 py-0.5 text-[10px] font-mono font-semibold text-[#636366]"><%= queue.tickets.length %></span>
-                            </div>
-                            <span class="text-[11px] text-[#8E8E93] hidden sm:inline"><%= queue.description %></span>
-                        </header>
-
-                        <!-- Available Queue: Sub-bar dividing available tickets by area -->
-                        <% if (queue.id === 'available' && uniqueAvailableAreas.length > 0) { %>
-                            <div class="px-4 py-2 bg-[#F6F6F8] border-b border-[#E5E5EA] flex flex-wrap items-center gap-2">
-                                <span class="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wider">Dividir por área:</span>
-                                <div class="flex flex-wrap items-center gap-1.5" id="availableAreaChips">
-                                    <button type="button" onclick="filterAvailableByArea('ALL', this)" class="area-chip active-area-chip px-2.5 py-1 rounded-[6px] bg-[#007AFF] text-white text-[11px] font-medium shadow-sm transition cursor-pointer">
-                                        Todas (<%= availableTickets.length %>)
-                                    </button>
-                                    <% uniqueAvailableAreas.forEach(function(areaKey) { %>
-                                        <button type="button" onclick="filterAvailableByArea('<%= areaKey %>', this)" class="area-chip px-2.5 py-1 rounded-[6px] bg-[#F5F5F7] hover:bg-[#EBEBF0] text-[#1C1C1E] border border-black/5 text-[11px] font-medium transition cursor-pointer">
-                                            <%= areaLabels[areaKey] || areaKey %> (<%= availableAreaCounts[areaKey] %>)
-                                        </button>
-                                    <% }); %>
-                                </div>
-                            </div>
-                        <% } %>
-
-                        <% if (queue.tickets.length) { %>
-                            <!-- Table View (macOS Finder style): Shown on desktop, hidden on small screens -->
-                            <div class="queue-table-container overflow-x-auto hidden md:block">
-                                <table class="w-full text-left border-collapse table-fixed min-w-[720px] text-[12px]">
-                                    <thead class="sticky top-0 bg-[#F9F9FA] text-[11px] font-semibold text-[#636366] border-b border-[#E5E5EA] z-10 shadow-sm">
-                                        <tr>
-                                            <th class="finder-th py-2.5 px-4 w-[110px]">ID / Puntos</th>
-                                            <th class="finder-th py-2.5 px-4">Asunto</th>
-                                            <th class="finder-th py-2.5 px-3 w-[150px]">Área</th>
-                                            <th class="finder-th py-2.5 px-3 w-[130px]">Fecha</th>
-                                            <th class="finder-th py-2.5 px-4 w-[160px] text-right">Acción</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-[#EBEBF0] text-[12px] bg-white">
-                                        <% queue.tickets.forEach(function(ticket) { 
-                                            const prioInfo = getPriorityInfo(ticket.puntos_complejidad);
-                                            const safeSubject = ticket.asunto || 'Sin asunto';
-                                            const safeDesc = ticket.descripcion || '';
-                                            const safeSender = ticket.remitente || (ticket.creado_por ? ticket.creado_por.nombre + ' <' + ticket.creado_por.email + '>' : '');
-                                            const ticketDate = queue.id === 'resolved' 
-                                                ? (ticket.fecha_cierre || ticket.resueltoEn || ticket.createdAt) 
-                                                : (ticket[queue.dateField] || ticket.createdAt);
-                                        %>
-                                            <tr data-ticket-row 
-                                                data-ticket-code="<%= ticket.codigo_incidencia %>"
-                                                data-ticket-subject="<%= safeSubject %>"
-                                                data-ticket-description="<%= safeDesc %>"
-                                                data-ticket-area="<%= ticket.area_designada || 'GENERAL' %>"
-                                                data-ticket-area-label="<%= areaLabels[ticket.area_designada] || ticket.area_designada || 'Área no asignada' %>"
-                                                data-ticket-origin="<%= originLabels[ticket.origen_ingesta] || ticket.origen_ingesta || 'Correo' %>"
-                                                data-ticket-sender="<%= safeSender %>"
-                                                data-ticket-priority-code="<%= prioInfo.code %>"
-                                                data-ticket-priority-label="<%= prioInfo.label %>"
-                                                data-ticket-priority-dot="<%= prioInfo.dot %>"
-                                                data-ticket-priority-bg="<%= prioInfo.bg %>"
-                                                data-ticket-priority-text="<%= prioInfo.text %>"
-                                                data-ticket-priority-border="<%= prioInfo.border %>"
-                                                data-ticket-pts="<%= ticket.puntos_complejidad || 0 %>"
-                                                data-ticket-created="<%= formatDate(ticket.createdAt) %>"
-                                                data-ticket-status="<%= ticket.estado_actual || 'NUEVO' %>"
-                                                data-ticket-queue="<%= queue.id %>"
-                                                class="group hover:bg-[#F9FAFB] transition-colors">
-                                                <td class="finder-th py-3 px-4 font-mono text-[11.5px] font-semibold text-[#007AFF]">
-                                                    <button type="button" onclick="openTicketDetails('<%= ticket.codigo_incidencia %>')" class="ticket-code-btn font-mono text-[11.5px] font-semibold text-[#007AFF] hover:underline cursor-pointer flex items-center gap-1 text-left" title="Ver detalles del ticket">
-                                                        <span><%= ticket.codigo_incidencia %></span>
-                                                        <svg class="w-3 h-3 text-[#007AFF]/70" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                                                    </button>
-                                                    <div class="mt-1 flex items-center gap-1.5">
-                                                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-[4px] text-[10px] font-mono font-medium border" style="background-color: <%= prioInfo.bg %>; color: <%= prioInfo.text %>; border-color: <%= prioInfo.border %>;">
-                                                            <span class="w-1.5 h-1.5 rounded-full" style="background-color: <%= prioInfo.dot %>;"></span>
-                                                            <%= prioInfo.shortLabel %>
-                                                        </span>
-                                                        <span class="pts-indicator font-mono text-[9.5px] font-normal text-[#8E8E93]"><%= ticket.puntos_complejidad || 0 %> pts</span>
-                                                    </div>
-                                                </td>
-                                                <td class="finder-th py-3 px-4">
-                                                    <div class="font-medium text-[#1C1C1E] line-clamp-2 leading-snug break-words"><%= ticket.asunto || 'Sin asunto' %></div>
-                                                    <% if (ticket.descripcion) { %>
-                                                        <p class="text-[11px] text-[#8E8E93] line-clamp-1 mt-0.5 break-words"><%= ticket.descripcion %></p>
-                                                    <% } %>
-                                                    <div data-ticket-feedback role="alert" class="mt-1 hidden text-[10px] font-medium text-[#D70015] bg-[#FFE5E5] px-1.5 py-0.5 rounded border border-[#FFD0D0]"></div>
-                                                </td>
-                                                <td class="finder-th py-3 px-3">
-                                                    <span class="inline-flex rounded-[5px] bg-[#F2F2F7] border border-[#E5E5EA] px-2 py-0.5 text-[10px] font-medium text-[#48484A]">
-                                                        <%= areaLabels[ticket.area_designada] || ticket.area_designada || 'Área no asignada' %>
-                                                    </span>
-                                                </td>
-                                                <td class="finder-th py-3 px-3 text-[11px] text-[#8E8E93] whitespace-nowrap">
-                                                    <%= formatDate(ticketDate) %>
-                                                </td>
-                                                <td class="finder-th py-3 px-4 text-right">
-                                                    <div class="flex items-center justify-end gap-1.5">
-                                                        <!-- View Details Button -->
-                                                        <button type="button" onclick="openTicketDetails('<%= ticket.codigo_incidencia %>')" class="figma-button !w-auto !h-[26px] !px-2 bg-white border border-[#D1D1D6] hover:bg-[#F2F2F7] text-[#1C1C1E] rounded-[6px] shadow-sm transition cursor-pointer" title="Ver detalles antes de tomar">
-                                                            <span class="figma-button__label text-[#1C1C1E] !text-[11px] font-medium flex items-center gap-1">
-                                                                <svg class="w-3 h-3 text-[#636366]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                                                                <span>Detalles</span>
-                                                            </span>
-                                                        </button>
-
-                                                    <% if (queue.id === 'available') { %>
-                                                        <button type="button" data-ticket-action="claim" data-ticket-code="<%= ticket.codigo_incidencia %>" class="figma-button !w-auto !h-[26px] !px-3 bg-[#007AFF] hover:bg-[#0062CC] text-white rounded-[6px] shadow-xs transition disabled:opacity-50 cursor-pointer">
-                                                            <span class="figma-button__label text-white !text-[11px] font-medium">Tomar</span>
-                                                        </button>
-                                                    <% } else if (queue.id === 'assigned') { %>
-                                                        <% if (ticket.estado_actual === 'NUEVO') { %>
-                                                            <button type="button" data-ticket-action="claim" data-ticket-code="<%= ticket.codigo_incidencia %>" class="figma-button !w-auto !h-[26px] !px-3 bg-[#007AFF] hover:bg-[#0062CC] text-white rounded-[6px] shadow-xs transition disabled:opacity-50 cursor-pointer">
-                                                                <span class="figma-button__label text-white !text-[11px] font-medium">Tomar</span>
-                                                            </button>
-                                                        <% } else { %>
-                                                            <button type="button" data-ticket-action="status" data-ticket-status="EN_PAUSA" data-ticket-code="<%= ticket.codigo_incidencia %>" class="figma-button !w-auto !h-[26px] !px-2.5 bg-white border border-[#D1D1D6] hover:bg-[#F2F2F7] text-[#1C1C1E] rounded-[6px] shadow-sm transition disabled:opacity-50 cursor-pointer">
-                                                                <span class="figma-button__label text-[#1C1C1E] !text-[11px] font-medium">Pausar</span>
-                                                            </button>
-                                                            <button type="button" data-ticket-action="status" data-ticket-status="CERRADO" data-ticket-code="<%= ticket.codigo_incidencia %>" class="figma-button !w-auto !h-[26px] !px-2.5 bg-[#34C759] hover:bg-[#28A745] text-white rounded-[6px] shadow-xs transition disabled:opacity-50 cursor-pointer">
-                                                                <span class="figma-button__label text-white !text-[11px] font-medium">Resolver</span>
-                                                            </button>
-                                                        <% } %>
-                                                    <% } else if (queue.id === 'paused' || queue.id === 'waiting') { %>
-                                                        <button type="button" data-ticket-action="status" data-ticket-status="EN_PROGRESO" data-ticket-code="<%= ticket.codigo_incidencia %>" class="figma-button !w-auto !h-[26px] !px-2.5 bg-[#007AFF] hover:bg-[#0062CC] text-white rounded-[6px] shadow-xs transition disabled:opacity-50 cursor-pointer">
-                                                            <span class="figma-button__label text-white !text-[11px] font-medium">Reanudar</span>
-                                                        </button>
-                                                        <button type="button" data-ticket-action="status" data-ticket-status="CERRADO" data-ticket-code="<%= ticket.codigo_incidencia %>" class="figma-button !w-auto !h-[26px] !px-2.5 bg-[#34C759] hover:bg-[#28A745] text-white rounded-[6px] shadow-xs transition disabled:opacity-50 cursor-pointer">
-                                                            <span class="figma-button__label text-white !text-[11px] font-medium">Resolver</span>
-                                                        </button>
-                                                    <% } %>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        <% }); %>
-                                        <tr data-filter-empty class="hidden">
-                                            <td colspan="5" class="py-8 text-center text-[#8E8E93] text-[12px]">
-                                                No hay tickets que coincidan con los filtros aplicados
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <!-- Cards/Casillas Grid View: Dynamically reorganizing across screen sizes -->
-                            <div class="queue-grid-container grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 p-3.5 md:hidden">
-                                <% queue.tickets.forEach(function(ticket) { 
-                                    const prioInfo = getPriorityInfo(ticket.puntos_complejidad);
-                                    const safeSubject = ticket.asunto || 'Sin asunto';
-                                    const safeDesc = ticket.descripcion || '';
-                                    const safeSender = ticket.remitente || (ticket.creado_por ? ticket.creado_por.nombre + ' <' + ticket.creado_por.email + '>' : '');
-                                    const ticketDate = queue.id === 'resolved' 
-                                        ? (ticket.fecha_cierre || ticket.resueltoEn || ticket.createdAt) 
-                                        : (ticket[queue.dateField] || ticket.createdAt);
-                                %>
-                                    <article data-ticket-row 
-                                        data-ticket-code="<%= ticket.codigo_incidencia %>"
-                                        data-ticket-subject="<%= safeSubject %>"
-                                        data-ticket-description="<%= safeDesc %>"
-                                        data-ticket-area="<%= ticket.area_designada || 'GENERAL' %>"
-                                        data-ticket-area-label="<%= areaLabels[ticket.area_designada] || ticket.area_designada || 'Área no asignada' %>"
-                                        data-ticket-origin="<%= originLabels[ticket.origen_ingesta] || ticket.origen_ingesta || 'Correo' %>"
-                                        data-ticket-sender="<%= safeSender %>"
-                                        data-ticket-priority-code="<%= prioInfo.code %>"
-                                        data-ticket-priority-label="<%= prioInfo.label %>"
-                                        data-ticket-priority-dot="<%= prioInfo.dot %>"
-                                        data-ticket-priority-bg="<%= prioInfo.bg %>"
-                                        data-ticket-priority-text="<%= prioInfo.text %>"
-                                        data-ticket-priority-border="<%= prioInfo.border %>"
-                                        data-ticket-pts="<%= ticket.puntos_complejidad || 0 %>"
-                                        data-ticket-created="<%= formatDate(ticket.createdAt) %>"
-                                        data-ticket-status="<%= ticket.estado_actual || 'NUEVO' %>"
-                                        data-ticket-queue="<%= queue.id %>"
-                                        class="bg-white border border-[#E5E5EA] rounded-[10px] p-3.5 flex flex-col justify-between shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.05)] hover:border-[#D1D1D6] transition">
-                                        <div>
-                                            <div class="flex items-center justify-between gap-2 mb-2">
-                                                <button type="button" onclick="openTicketDetails('<%= ticket.codigo_incidencia %>')" class="ticket-code-btn font-mono text-[12px] font-semibold text-[#007AFF] hover:underline cursor-pointer flex items-center gap-1 text-left" title="Ver detalles">
-                                                    <span><%= ticket.codigo_incidencia %></span>
-                                                    <svg class="w-3 h-3 text-[#007AFF]/70" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                                                </button>
-                                                <div class="flex items-center gap-1.5">
-                                                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-[4px] text-[10px] font-mono font-medium border" style="background-color: <%= prioInfo.bg %>; color: <%= prioInfo.text %>; border-color: <%= prioInfo.border %>;">
-                                                        <span class="w-1.5 h-1.5 rounded-full" style="background-color: <%= prioInfo.dot %>;"></span>
-                                                        <%= prioInfo.shortLabel %>
-                                                    </span>
-                                                    <span class="pts-indicator inline-flex items-center font-mono text-[10px] px-1.5 py-0.5 rounded bg-[#F2F2F7] text-[#8E8E93] border border-[#E5E5EA]">
-                                                        <%= ticket.puntos_complejidad || 0 %> pts
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <h3 class="text-[12px] font-medium text-[#1C1C1E] line-clamp-2 leading-snug break-words break-all hover:text-[#007AFF] cursor-pointer" onclick="openTicketDetails('<%= ticket.codigo_incidencia %>')"><%= ticket.asunto || 'Sin asunto' %></h3>
-                                            <% if (ticket.descripcion) { %>
-                                                <p class="text-[11px] text-[#8E8E93] line-clamp-2 mt-1 break-words"><%= ticket.descripcion %></p>
-                                            <% } %>
-                                            <div data-ticket-feedback role="alert" class="mt-1.5 hidden text-[10px] font-medium text-[#D70015] bg-[#FFE5E5] px-2 py-1 rounded-[5px] border border-[#FFD0D0]"></div>
-                                            <div class="mt-2.5 flex flex-wrap items-center justify-between gap-1.5 text-[11px]">
-                                                <span class="inline-flex rounded-[5px] bg-[#F2F2F7] border border-[#E5E5EA] px-2 py-0.5 text-[10px] font-medium text-[#48484A]">
-                                                    <%= areaLabels[ticket.area_designada] || ticket.area_designada || 'Área no asignada' %>
-                                                </span>
-                                                <span class="text-[10px] text-[#8E8E93] whitespace-nowrap">
-                                                    <%= formatDate(ticketDate) %>
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div class="mt-3 pt-2.5 border-t border-[#F2F2F7] flex flex-wrap items-center justify-between gap-1.5">
-                                            <button type="button" onclick="openTicketDetails('<%= ticket.codigo_incidencia %>')" class="figma-button !w-auto !h-[26px] !px-2 bg-white border border-[#D1D1D6] hover:bg-[#F2F2F7] text-[#1C1C1E] rounded-[6px] shadow-sm transition cursor-pointer text-[11px]">
-                                                <span class="figma-button__label text-[#1C1C1E] !text-[11px] font-medium flex items-center gap-1">
-                                                    <svg class="w-3 h-3 text-[#636366]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                                                    <span>Detalles</span>
-                                                </span>
-                                            </button>
-
-                                        <% if (queue.id === 'available') { %>
-                                            <button type="button" data-ticket-action="claim" data-ticket-code="<%= ticket.codigo_incidencia %>" class="figma-button !w-auto !h-[26px] !px-3 bg-[#007AFF] hover:bg-[#0062CC] text-white rounded-[6px] shadow-xs transition disabled:opacity-50 cursor-pointer">
-                                                <span class="figma-button__label text-white !text-[11px] font-medium">Tomar</span>
-                                            </button>
-                                        <% } else if (queue.id === 'assigned') { %>
-                                            <% if (ticket.estado_actual === 'NUEVO') { %>
-                                                <button type="button" data-ticket-action="claim" data-ticket-code="<%= ticket.codigo_incidencia %>" class="figma-button !w-auto !h-[26px] !px-3 bg-[#007AFF] hover:bg-[#0062CC] text-white rounded-[6px] shadow-xs transition disabled:opacity-50 cursor-pointer">
-                                                    <span class="figma-button__label text-white !text-[11px] font-medium">Tomar</span>
-                                                </button>
-                                            <% } else { %>
-                                                <div class="flex flex-wrap items-center gap-1">
-                                                    <button type="button" data-ticket-action="status" data-ticket-status="EN_PAUSA" data-ticket-code="<%= ticket.codigo_incidencia %>" class="figma-button !w-auto !h-[26px] !px-2 bg-white border border-[#D1D1D6] hover:bg-[#F2F2F7] text-[#1C1C1E] rounded-[6px] shadow-sm transition disabled:opacity-50 cursor-pointer">
-                                                        <span class="figma-button__label text-[#1C1C1E] !text-[11px] font-medium">Pausar</span>
-                                                    </button>
-                                                    <button type="button" data-ticket-action="status" data-ticket-status="CERRADO" data-ticket-code="<%= ticket.codigo_incidencia %>" class="figma-button !w-auto !h-[26px] !px-2.5 bg-[#34C759] hover:bg-[#28A745] text-white rounded-[6px] shadow-xs transition disabled:opacity-50 cursor-pointer">
-                                                        <span class="figma-button__label text-white !text-[11px] font-medium">Resolver</span>
-                                                    </button>
-                                                </div>
-                                            <% } %>
-                                        <% } else if (queue.id === 'paused' || queue.id === 'waiting') { %>
-                                            <div class="flex flex-wrap items-center gap-1">
-                                                <button type="button" data-ticket-action="status" data-ticket-status="EN_PROGRESO" data-ticket-code="<%= ticket.codigo_incidencia %>" class="figma-button !w-auto !h-[26px] !px-2 bg-[#007AFF] hover:bg-[#0062CC] text-white rounded-[6px] shadow-xs transition disabled:opacity-50 cursor-pointer">
-                                                    <span class="figma-button__label text-white !text-[11px] font-medium">Reanudar</span>
-                                                </button>
-                                                <button type="button" data-ticket-action="status" data-ticket-status="CERRADO" data-ticket-code="<%= ticket.codigo_incidencia %>" class="figma-button !w-auto !h-[26px] !px-2.5 bg-[#34C759] hover:bg-[#28A745] text-white rounded-[6px] shadow-xs transition disabled:opacity-50 cursor-pointer">
-                                                    <span class="figma-button__label text-white !text-[11px] font-medium">Resolver</span>
-                                                </button>
-                                            </div>
-                                        <% } %>
-                                        </div>
-                                    </article>
-                                <% }); %>
-                                <div data-filter-empty-grid class="hidden col-span-full py-8 text-center text-[#8E8E93] text-[12px]">
-                                    No hay tickets que coincidan con los filtros aplicados
-                                </div>
-                            </div>
-                        <% } else { %>
-                            <div class="px-5 py-12 text-center">
-                                <div class="inline-flex items-center justify-center w-9 h-9 rounded-full bg-[#F2F2F7] text-[#8E8E93] mb-2">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
-                                </div>
-                                <p class="text-[12px] font-medium text-[#1C1C1E]">No hay tickets en esta cola</p>
-                                <p class="text-[11px] text-[#8E8E93] mt-0.5"><%= queue.description %></p>
-                            </div>
-                        <% } %>
-                    </section>
-                <% }); %>
-                </div>
-            </main>
-        </div>
-    </div>
-
-    <!-- BEGIN: Ticket Details Modal (macOS Liquid Glass Style) -->
-    <div id="ticketDetailsOverlay" class="fixed inset-0 bg-black/35 backdrop-blur-[3px] z-[60] items-center justify-center p-4 hidden" onclick="handleTicketDetailsBackdrop(event)">
-        <section id="ticketDetailsCard" role="dialog" aria-modal="true" aria-labelledby="modalDetailCode" class="w-[620px] max-w-[calc(100vw-2rem)] max-h-[calc(100vh-2rem)] bg-white rounded-[20px] border border-[#E5E5EA] shadow-[0_24px_60px_rgba(0,0,0,0.18)] flex flex-col overflow-hidden">
-            <!-- Header -->
-            <header class="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-[#E5E5EA] flex items-center justify-between gap-3 bg-[#FAFAFC]">
-                <div class="flex flex-wrap items-center gap-2 sm:gap-3">
-                    <span id="modalDetailCode" class="font-mono text-[14px] font-bold text-[#007AFF]"></span>
-                    <span id="modalDetailPriorityBadge" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-[4px] text-[10px] font-mono font-medium border"></span>
-                    <span id="modalDetailAreaBadge" class="inline-flex items-center rounded-[5px] bg-[#F2F2F7] border border-[#E5E5EA] px-2 py-0.5 text-[10px] font-medium text-[#48484A]"></span>
-                    <span id="modalDetailStatusBadge" class="inline-flex items-center rounded-[5px] border px-2 py-0.5 text-[10px] font-medium"></span>
-                </div>
-                <button type="button" onclick="closeTicketDetailsModal()" aria-label="Cerrar detalles" class="w-8 h-8 shrink-0 flex items-center justify-center rounded-[8px] text-[#8E8E93] hover:bg-[#F2F2F7] hover:text-[#1C1C1E] transition cursor-pointer">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"></path></svg>
-                </button>
             </header>
 
-            <!-- Body -->
-            <div class="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-4 text-[12px]">
-                <div>
-                    <span class="text-[10px] font-bold uppercase text-[#8E8E93] tracking-wider">Asunto</span>
-                    <h3 id="modalDetailSubject" class="text-[15px] font-semibold text-[#1C1C1E] mt-1 break-words"></h3>
+            <!-- Pestaña Detalle -->
+            <div id="tdPanelInfo" role="tabpanel" aria-labelledby="tdTabInfo" class="tdlg-body">
+                <div class="dgrid">
+                    <div class="dfield"><span>Área</span><span id="modalDetailArea"></span></div>
+                    <div class="dfield"><span>Asignado a</span><span id="modalDetailAssigned"></span></div>
+                    <div class="dfield"><span>Remitente</span><span id="modalDetailSender"></span></div>
+                    <div class="dfield"><span>Origen</span><span id="modalDetailOrigin"></span></div>
+                    <div class="dfield"><span>Recibido</span><span id="modalDetailCreated"></span></div>
+                    <div class="dfield"><span>Puntos</span><span id="modalDetailPts"></span></div>
                 </div>
-
-                <!-- Metadata 2x2 grid -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div class="rounded-[8px] bg-[#F9F9FA] border border-[#E5E5EA] px-3.5 py-2.5">
-                        <div class="text-[10px] font-bold uppercase text-[#8E8E93]">Fecha de creación</div>
-                        <div id="modalDetailCreated" class="mt-1 font-mono text-[11.5px] text-[#1C1C1E]"></div>
-                    </div>
-                    <div class="rounded-[8px] bg-[#F9F9FA] border border-[#E5E5EA] px-3.5 py-2.5">
-                        <div class="text-[10px] font-bold uppercase text-[#8E8E93]">Origen de ingesta</div>
-                        <div id="modalDetailOrigin" class="mt-1 text-[11.5px] text-[#1C1C1E]"></div>
-                    </div>
-                    <div id="modalDetailSenderSection" class="rounded-[8px] bg-[#F9F9FA] border border-[#E5E5EA] px-3.5 py-2.5 sm:col-span-2">
-                        <div class="text-[10px] font-bold uppercase text-[#8E8E93]">Remitente</div>
-                        <div id="modalDetailSender" class="mt-1 text-[11.5px] text-[#1C1C1E] break-words"></div>
-                    </div>
+                <div class="dsec">
+                    <span class="dlabel">Descripción</span>
+                    <div id="modalDetailDescription" class="ddesc"></div>
                 </div>
-
-                <!-- Full Description -->
-                <div>
-                    <div class="flex items-center justify-between mb-1.5">
-                        <span class="text-[10px] font-bold uppercase text-[#8E8E93] tracking-wider">Descripción y Detalles</span>
-                        <span id="modalDetailPts" class="font-mono text-[10px] text-[#8E8E93]"></span>
-                    </div>
-                    <div id="modalDetailDescription" class="min-h-[100px] max-h-[240px] overflow-y-auto rounded-[8px] bg-[#F9F9FA] border border-[#E5E5EA] p-3.5 text-[12px] leading-relaxed text-[#3A3A3C] whitespace-pre-wrap break-words"></div>
+                <div class="dsec">
+                    <span class="dlabel">Adjuntos</span>
+                    <div id="modalDetailFiles" class="dfiles"><span class="dmuted">Cargando…</span></div>
                 </div>
-                
-                <div id="modalDetailFeedback" role="alert" class="hidden text-[11px] font-medium text-[#D70015] bg-[#FFE5E5] px-3 py-2 rounded-[6px] border border-[#FFD0D0]"></div>
             </div>
 
-            <!-- Footer with Actions -->
-            <footer class="px-4 sm:px-6 py-3.5 sm:py-4 border-t border-[#E5E5EA] bg-[#FAFAFC] flex flex-wrap items-center justify-between gap-3">
-                <button type="button" onclick="closeTicketDetailsModal()" class="h-[32px] px-4 bg-[#E5E5EA] hover:bg-[#DCDCE0] text-[#3A3A3C] text-[12px] font-medium rounded-[7px] transition cursor-pointer">
-                    Cerrar
-                </button>
-                <div id="modalDetailActionContainer" class="flex flex-wrap items-center gap-2">
-                    <!-- Actions injected dynamically -->
+            <!-- Pestaña Conversación -->
+            <div id="tdPanelThread" role="tabpanel" aria-labelledby="tdTabThread" class="tdlg-thread" hidden>
+                <div id="tdWait" class="mwait" hidden>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2"></path></svg>
+                    <span id="tdWaitText" style="flex:1"></span>
                 </div>
+                <div id="tdMsgs" class="mlist" role="log" aria-label="Conversación del ticket" aria-live="polite"></div>
+                <div id="tdComposer" class="composer" data-mode="out" hidden>
+                    <div class="composer-top">
+                        <div role="radiogroup" aria-label="Tipo de mensaje" class="dtabs">
+                            <button type="button" role="radio" data-cmode="out" aria-checked="true" aria-selected="true">Responder al cliente</button>
+                            <button type="button" role="radio" data-cmode="note" aria-checked="false" aria-selected="false">Nota interna</button>
+                        </div>
+                        <span id="tdTo" class="composer-to"></span>
+                    </div>
+                    <label style="display:contents">
+                        <span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Mensaje</span>
+                        <textarea id="tdText" rows="3" maxlength="5000" placeholder="Escribe la respuesta al cliente…"></textarea>
+                    </label>
+                    <div id="tdFiles" class="dfiles" hidden></div>
+                    <div class="composer-tools">
+                        <span id="tdTpls" style="display:contents"></span>
+                        <span class="tdlg-sp"></span>
+                        <input id="tdFileInput" type="file" multiple hidden>
+                        <button type="button" id="tdAttach" class="tpl icon" aria-label="Adjuntar archivo" title="Adjuntar archivo">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11l-8.5 8.5a5 5 0 0 1-7-7L14 4a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L15 7"></path></svg>
+                        </button>
+                    </div>
+                </div>
+                <div id="tdNoWrite" class="nowrite" hidden></div>
+            </div>
+
+            <div id="modalDetailFeedback" role="alert" class="tdlg-msg hidden" data-tone="error"></div>
+
+            <footer class="tdlg-ft">
+                <button type="button" class="td-btn s" onclick="closeTicketDetailsModal()">Cerrar</button>
+                <span class="tdlg-sp"></span>
+                <div id="tdSendGroup" class="tdlg-acts" hidden>
+                    <button type="button" id="tdSendWait" class="td-btn s" title="Envía el correo y pasa el ticket a Espera de terceros" disabled>Enviar y esperar respuesta</button>
+                    <button type="button" id="tdSend" class="td-btn p" disabled>Enviar</button>
+                </div>
+                <div id="modalDetailActionContainer" class="tdlg-acts"></div>
             </footer>
         </section>
     </div>
     <!-- END: Ticket Details Modal -->
 
-    <script>
-        function updateView() {
-            const hash = window.location.hash || '#default';
-            const queues = document.querySelectorAll('.queue-section');
-            const tabs = document.querySelectorAll('.tab-link');
-            
-            // Reset tabs styling to default inactive
-            tabs.forEach(t => {
-                t.classList.remove('bg-white', 'text-[#007AFF]', 'shadow-[0_1px_3px_rgba(0,0,0,0.06)]', 'font-semibold', 'border', 'border-black/5');
-                t.classList.add('text-[#3A3A3C]', 'hover:bg-black/5', 'font-medium');
-                const badge = t.querySelector('.tab-badge');
-                if (badge) {
-                    badge.classList.remove('bg-[#007AFF]/15', 'text-[#0062CC]');
-                    badge.classList.add('bg-black/5', 'text-[#8E8E93]');
-                }
-            });
-
-            // Set active tab styling
-            const activeTab = document.querySelector(`.tab-link[href="${hash}"]`);
-            if (activeTab) {
-                activeTab.classList.remove('text-[#3A3A3C]', 'hover:bg-black/5', 'font-medium');
-                activeTab.classList.add('bg-white', 'text-[#007AFF]', 'shadow-[0_1px_3px_rgba(0,0,0,0.06)]', 'font-semibold', 'border', 'border-black/5');
-                const badge = activeTab.querySelector('.tab-badge');
-                if (badge) {
-                    badge.classList.remove('bg-black/5', 'text-[#8E8E93]');
-                    badge.classList.add('bg-[#007AFF]/15', 'text-[#0062CC]');
-                }
-            }
-
-            // Show/hide queues
-            if (hash === '#default') {
-                queues.forEach(q => {
-                    if (q.id === 'available' || q.id === 'assigned') {
-                        q.classList.remove('hidden');
-                        q.classList.add('flex');
-                    } else {
-                        q.classList.add('hidden');
-                        q.classList.remove('flex');
-                    }
-                });
-            } else if (hash === '#paused-waiting') {
-                // Show both paused and waiting queues when clicking paused/espera KPI card
-                queues.forEach(q => {
-                    if (q.id === 'paused' || q.id === 'waiting') {
-                        q.classList.remove('hidden');
-                        q.classList.add('flex');
-                    } else {
-                        q.classList.add('hidden');
-                        q.classList.remove('flex');
-                    }
-                });
-            } else {
-                queues.forEach(q => {
-                    if ('#' + q.id === hash) {
-                        q.classList.remove('hidden');
-                        q.classList.add('flex');
-                    } else {
-                        q.classList.add('hidden');
-                        q.classList.remove('flex');
-                    }
-                });
-            }
-        }
-
-        window.addEventListener('hashchange', updateView);
-        document.addEventListener('DOMContentLoaded', () => {
-            updateView();
-            syncResponsiveView();
-            startRealtimeSync();
-        });
-
-        // View Mode Toggle (Table / Grid)
-        let userPreferredViewMode = 'table'; // Desktop preference
-
-        function updateSegmentedButtons(activeMode) {
-            const tableBtn = document.getElementById('viewModeTableBtn');
-            const gridBtn = document.getElementById('viewModeGridBtn');
-            const tableSvg = tableBtn ? tableBtn.querySelector('svg') : null;
-            const gridSvg = gridBtn ? gridBtn.querySelector('svg') : null;
-
-            if (activeMode === 'table') {
-                if (tableBtn) tableBtn.className = 'px-2.5 py-1 rounded-[5px] bg-white shadow-sm text-[#1C1C1E] font-medium transition cursor-pointer flex items-center gap-1.5';
-                if (gridBtn) gridBtn.className = 'px-2.5 py-1 rounded-[5px] text-[#8E8E93] hover:text-[#1C1C1E] transition cursor-pointer flex items-center gap-1.5';
-                if (tableSvg) tableSvg.className = 'w-3.5 h-3.5 text-[#1C1C1E]';
-                if (gridSvg) gridSvg.className = 'w-3.5 h-3.5 text-[#8E8E93]';
-            } else {
-                if (gridBtn) gridBtn.className = 'px-2.5 py-1 rounded-[5px] bg-white shadow-sm text-[#1C1C1E] font-medium transition cursor-pointer flex items-center gap-1.5';
-                if (tableBtn) tableBtn.className = 'px-2.5 py-1 rounded-[5px] text-[#8E8E93] hover:text-[#1C1C1E] transition cursor-pointer flex items-center gap-1.5';
-                if (gridSvg) gridSvg.className = 'w-3.5 h-3.5 text-[#1C1C1E]';
-                if (tableSvg) tableSvg.className = 'w-3.5 h-3.5 text-[#8E8E93]';
-            }
-        }
-
-        function setViewMode(mode) {
-            const container = document.getElementById('queues-container');
-            if (!container) return;
-
-            if (window.innerWidth >= 768) {
-                userPreferredViewMode = mode;
-            }
-            if (mode === 'table') {
-                container.classList.remove('queue-view-grid');
-                container.classList.add('queue-view-table');
-                updateSegmentedButtons('table');
-            } else if (mode === 'grid') {
-                container.classList.remove('queue-view-table');
-                container.classList.add('queue-view-grid');
-                updateSegmentedButtons('grid');
-            }
-        }
-
-        function syncResponsiveView() {
-            const isMobile = window.innerWidth < 768;
-            const container = document.getElementById('queues-container');
-            if (!container) return;
-
-            if (isMobile) {
-                // On mobile screen sizes (< 768px), cards are displayed automatically
-                updateSegmentedButtons('grid');
-            } else {
-                // Restore user desktop preference
-                setViewMode(userPreferredViewMode);
-            }
-        }
-
-        window.addEventListener('resize', syncResponsiveView);
-
-        // Unified Filter State (Search + Priority + Available Area)
-        let currentPriorityFilter = 'ALL';
-        let currentSearchQuery = '';
-        let currentAvailableAreaFilter = 'ALL';
-
-        function applyFilters() {
-            const rows = document.querySelectorAll('[data-ticket-row]');
-            rows.forEach(r => {
-                const searchableText = `${r.textContent} ${r.dataset.ticketSender || ''} ${r.dataset.ticketOrigin || ''} ${r.dataset.ticketCode || ''}`.toLowerCase();
-                const pts = parseInt(r.dataset.ticketPts || '0', 10);
-                const prioCode = r.dataset.ticketPriorityCode || 'NONE';
-                const ticketArea = r.dataset.ticketArea || 'GENERAL';
-                const queueId = r.dataset.ticketQueue;
-
-                const matchesSearch = !currentSearchQuery || searchableText.includes(currentSearchQuery);
-                
-                let matchesPriority = true;
-                if (currentPriorityFilter === 'HIGH') {
-                    matchesPriority = pts >= 5;
-                } else if (currentPriorityFilter === 'P1') {
-                    matchesPriority = prioCode === 'P1';
-                } else if (currentPriorityFilter === 'P2') {
-                    matchesPriority = prioCode === 'P2';
-                }
-
-                // Available area filter specifically applies to tickets in the 'available' queue
-                let matchesArea = true;
-                if (queueId === 'available' && currentAvailableAreaFilter !== 'ALL') {
-                    matchesArea = ticketArea === currentAvailableAreaFilter;
-                }
-
-                r.style.display = (matchesSearch && matchesPriority && matchesArea) ? '' : 'none';
-            });
-
-            // Toggle empty state for filtered queues
-            const sections = document.querySelectorAll('.queue-section');
-            sections.forEach(sec => {
-                const tableRows = sec.querySelectorAll('tbody tr[data-ticket-row]');
-                const visibleTableRows = Array.from(tableRows).filter(tr => tr.style.display !== 'none');
-                const emptyRow = sec.querySelector('tr[data-filter-empty]');
-                if (emptyRow && tableRows.length > 0) {
-                    if (visibleTableRows.length === 0) {
-                        emptyRow.classList.remove('hidden');
-                    } else {
-                        emptyRow.classList.add('hidden');
-                    }
-                }
-
-                const gridCards = sec.querySelectorAll('.queue-grid-container article[data-ticket-row]');
-                const visibleGridCards = Array.from(gridCards).filter(c => c.style.display !== 'none');
-                const emptyGrid = sec.querySelector('[data-filter-empty-grid]');
-                if (emptyGrid && gridCards.length > 0) {
-                    if (visibleGridCards.length === 0) {
-                        emptyGrid.classList.remove('hidden');
-                    } else {
-                        emptyGrid.classList.add('hidden');
-                    }
-                }
-            });
-        }
-
-        function onSearchInput(query) {
-            currentSearchQuery = (query || '').toLowerCase().trim();
-            applyFilters();
-        }
-
-        // Available Tickets Area Filter
-        function filterAvailableByArea(areaKey, buttonEl) {
-            currentAvailableAreaFilter = areaKey;
-            const chips = document.querySelectorAll('#availableAreaChips .area-chip');
-            chips.forEach(c => {
-                c.className = 'area-chip px-2.5 py-1 rounded-[6px] bg-[#F5F5F7] hover:bg-[#EBEBF0] text-[#1C1C1E] border border-black/5 text-[11px] font-medium transition cursor-pointer';
-            });
-            if (buttonEl) {
-                buttonEl.className = 'area-chip active-area-chip px-2.5 py-1 rounded-[6px] bg-[#007AFF] text-white text-[11px] font-medium shadow-sm transition cursor-pointer';
-            }
-            applyFilters();
-        }
-
-        // Keyboard Shortcut ⌘K / Ctrl+K
-        window.addEventListener('keydown', e => {
-            if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-                e.preventDefault();
-                const searchInput = document.getElementById('globalSearchInput');
-                if (searchInput) {
-                    searchInput.focus();
-                    searchInput.select();
-                }
-            }
-        });
-
-        // Quick Priority Filter
-        function filterByPriorityLocal(level) {
-            currentPriorityFilter = level;
-            applyFilters();
-
-            const btnAll = document.getElementById('filterBtnAll');
-            const btnHigh = document.getElementById('filterBtnHigh');
-            const btnP1 = document.getElementById('filterBtnP1');
-            const btnP2 = document.getElementById('filterBtnP2');
-
-            const inactiveBtn = 'px-2.5 py-1 rounded-[6px] bg-[#F5F5F7] hover:bg-[#EBEBF0] text-[#1C1C1E] border border-black/5 text-[11px] font-medium transition cursor-pointer';
-            const activeBtn = 'px-2.5 py-1 rounded-[6px] bg-[#007AFF] text-white text-[11px] font-medium shadow-sm transition cursor-pointer';
-
-            if (btnAll) btnAll.className = level === 'ALL' ? activeBtn : inactiveBtn;
-            if (btnHigh) btnHigh.className = level === 'HIGH' ? activeBtn : inactiveBtn;
-            if (btnP1) btnP1.className = level === 'P1' ? (activeBtn + ' flex items-center gap-1') : (inactiveBtn + ' flex items-center gap-1');
-            if (btnP2) btnP2.className = level === 'P2' ? (activeBtn + ' flex items-center gap-1') : (inactiveBtn + ' flex items-center gap-1');
-        }
-
-        // Close details dropdown when clicking outside
-        document.addEventListener('click', e => {
-            document.querySelectorAll('details[open]').forEach(details => {
-                if (!details.contains(e.target)) {
-                    details.removeAttribute('open');
-                }
-            });
-        });
-
-        // ==========================================
-        // Ticket Details Modal Logic
-        // ==========================================
-        function openTicketDetails(ticketCode) {
-            const el = document.querySelector(`[data-ticket-row][data-ticket-code="${ticketCode}"]`);
-            if (!el) return;
-
-            const code = el.dataset.ticketCode;
-            const subject = el.dataset.ticketSubject || 'Sin asunto';
-            const description = el.dataset.ticketDescription || 'Sin descripción registrada.';
-            const areaLabel = el.dataset.ticketAreaLabel || 'Operaciones IP';
-            const origin = el.dataset.ticketOrigin || 'Correo';
-            const sender = el.dataset.ticketSender || '';
-            const prioLabel = el.dataset.ticketPriorityLabel || 'S/P';
-            const prioDot = el.dataset.ticketPriorityDot || '#C7C7CC';
-            const prioBg = el.dataset.ticketPriorityBg || '#F2F2F7';
-            const prioText = el.dataset.ticketPriorityText || '#8E8E93';
-            const prioBorder = el.dataset.ticketPriorityBorder || '#E5E5EA';
-            const pts = el.dataset.ticketPts || '0';
-            const created = el.dataset.ticketCreated || 'Fecha no disponible';
-            const status = el.dataset.ticketStatus || 'NUEVO';
-            const queue = el.dataset.ticketQueue;
-
-            document.getElementById('modalDetailCode').textContent = code;
-            document.getElementById('modalDetailSubject').textContent = subject;
-            document.getElementById('modalDetailDescription').textContent = description;
-            document.getElementById('modalDetailCreated').textContent = created;
-            document.getElementById('modalDetailOrigin').textContent = origin;
-            document.getElementById('modalDetailPts').textContent = `${pts} pts complejidad`;
-            
-            const senderSec = document.getElementById('modalDetailSenderSection');
-            const senderVal = document.getElementById('modalDetailSender');
-            if (sender) {
-                senderVal.textContent = sender;
-                senderSec.classList.remove('hidden');
-            } else {
-                senderSec.classList.add('hidden');
-            }
-
-            const prioBadge = document.getElementById('modalDetailPriorityBadge');
-            prioBadge.style.backgroundColor = prioBg;
-            prioBadge.style.color = prioText;
-            prioBadge.style.borderColor = prioBorder;
-            prioBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full" style="background-color: ${prioDot};"></span><span>${prioLabel}</span>`;
-
-            const areaBadge = document.getElementById('modalDetailAreaBadge');
-            areaBadge.textContent = areaLabel;
-
-            const statusBadge = document.getElementById('modalDetailStatusBadge');
-            if (statusBadge) {
-                const statusStyles = {
-                    NUEVO: { label: 'Nuevo', bg: '#F2F2F7', text: '#1C1C1E', border: '#D1D1D6' },
-                    ASIGNADO: { label: 'Asignado', bg: '#DCEBFE', text: '#0062CC', border: '#B8D9FD' },
-                    EN_PROGRESO: { label: 'En Progreso', bg: '#DCEBFE', text: '#0062CC', border: '#B8D9FD' },
-                    EN_PAUSA: { label: 'En Pausa', bg: '#FFF4D6', text: '#B25E02', border: '#FFE6A6' },
-                    EN_ESPERA_TERCEROS: { label: 'Espera Terceros', bg: '#FFE8D6', text: '#C05621', border: '#FBD38D' },
-                    RESUELTO: { label: 'Resuelto', bg: '#E3F9E5', text: '#1B873F', border: '#A7E8B5' },
-                    CERRADO: { label: 'Cerrado', bg: '#E5E5EA', text: '#636366', border: '#D1D1D6' }
-                };
-                const style = statusStyles[status] || { label: status, bg: '#F2F2F7', text: '#636366', border: '#E5E5EA' };
-                statusBadge.textContent = style.label;
-                statusBadge.style.backgroundColor = style.bg;
-                statusBadge.style.color = style.text;
-                statusBadge.style.borderColor = style.border;
-            }
-
-            // Actions container inside modal
-            const actionContainer = document.getElementById('modalDetailActionContainer');
-            actionContainer.innerHTML = '';
-            const feedback = document.getElementById('modalDetailFeedback');
-            feedback.textContent = '';
-            feedback.classList.add('hidden');
-
-            if (queue === 'available' || (queue === 'assigned' && status === 'NUEVO')) {
-                const claimBtn = document.createElement('button');
-                claimBtn.type = 'button';
-                claimBtn.setAttribute('data-ticket-action', 'claim');
-                claimBtn.setAttribute('data-ticket-code', code);
-                claimBtn.className = 'figma-button !w-auto !h-[32px] !px-4 bg-[#007AFF] hover:bg-[#0062CC] text-white rounded-[7px] shadow-xs transition cursor-pointer';
-                claimBtn.innerHTML = '<span class="figma-button__label text-white text-[12px] font-medium">Tomar Incidencia</span>';
-                actionContainer.appendChild(claimBtn);
-            } else if (queue === 'assigned') {
-                const pauseBtn = document.createElement('button');
-                pauseBtn.type = 'button';
-                pauseBtn.setAttribute('data-ticket-action', 'status');
-                pauseBtn.setAttribute('data-ticket-status', 'EN_PAUSA');
-                pauseBtn.setAttribute('data-ticket-code', code);
-                pauseBtn.className = 'figma-button !w-auto !h-[32px] !px-3 bg-white border border-[#D1D1D6] hover:bg-[#F2F2F7] text-[#1C1C1E] rounded-[7px] shadow-sm transition cursor-pointer';
-                pauseBtn.innerHTML = '<span class="figma-button__label text-[#1C1C1E] text-[12px] font-medium">Pausar</span>';
-                actionContainer.appendChild(pauseBtn);
-
-                const resolveBtn = document.createElement('button');
-                resolveBtn.type = 'button';
-                resolveBtn.setAttribute('data-ticket-action', 'status');
-                resolveBtn.setAttribute('data-ticket-status', 'CERRADO');
-                resolveBtn.setAttribute('data-ticket-code', code);
-                resolveBtn.className = 'figma-button !w-auto !h-[32px] !px-3.5 bg-[#34C759] hover:bg-[#28A745] text-white rounded-[7px] shadow-xs transition cursor-pointer';
-                resolveBtn.innerHTML = '<span class="figma-button__label text-white text-[12px] font-medium">Resolver</span>';
-                actionContainer.appendChild(resolveBtn);
-            } else if (queue === 'paused' || queue === 'waiting') {
-                const resumeBtn = document.createElement('button');
-                resumeBtn.type = 'button';
-                resumeBtn.setAttribute('data-ticket-action', 'status');
-                resumeBtn.setAttribute('data-ticket-status', 'EN_PROGRESO');
-                resumeBtn.setAttribute('data-ticket-code', code);
-                resumeBtn.className = 'figma-button !w-auto !h-[32px] !px-3 bg-[#007AFF] hover:bg-[#0062CC] text-white rounded-[7px] shadow-xs transition cursor-pointer';
-                resumeBtn.innerHTML = '<span class="figma-button__label text-white text-[12px] font-medium">Reanudar</span>';
-                actionContainer.appendChild(resumeBtn);
-
-                const resolveBtn = document.createElement('button');
-                resolveBtn.type = 'button';
-                resolveBtn.setAttribute('data-ticket-action', 'status');
-                resolveBtn.setAttribute('data-ticket-status', 'CERRADO');
-                resolveBtn.setAttribute('data-ticket-code', code);
-                resolveBtn.className = 'figma-button !w-auto !h-[32px] !px-3.5 bg-[#34C759] hover:bg-[#28A745] text-white rounded-[7px] shadow-xs transition cursor-pointer';
-                resolveBtn.innerHTML = '<span class="figma-button__label text-white text-[12px] font-medium">Resolver</span>';
-                actionContainer.appendChild(resolveBtn);
-            }
-
-            const overlay = document.getElementById('ticketDetailsOverlay');
-            overlay.classList.remove('hidden');
-            overlay.classList.add('flex');
-        }
-
-        function closeTicketDetailsModal() {
-            const overlay = document.getElementById('ticketDetailsOverlay');
-            if (overlay) {
-                overlay.classList.remove('flex');
-                overlay.classList.add('hidden');
-            }
-        }
-
-        function handleTicketDetailsBackdrop(event) {
-            if (event.target === document.getElementById('ticketDetailsOverlay')) {
-                closeTicketDetailsModal();
-            }
-        }
-
-        document.addEventListener('keydown', e => {
-            if (e.key === 'Escape') {
-                closeTicketDetailsModal();
-            }
-        });
-
-        // ==========================================
-        // Ticket Action Handlers (Tomar, Pausar, Resolver, Reanudar)
-        // With Global Concurrency Lock to Prevent Race Conditions
-        // ==========================================
-        let isActionInProgress = false;
-
-        document.addEventListener('click', async event => {
-            const button = event.target.closest('[data-ticket-action]');
-            if (!button || button.disabled) return;
-
-            // Prevent rapid-click race condition across multiple tickets
-            if (isActionInProgress) return;
-            isActionInProgress = true;
-
-            const row = button.closest('[data-ticket-row]');
-            const feedback = row ? row.querySelector('[data-ticket-feedback]') : document.getElementById('modalDetailFeedback');
-            const allActionButtons = Array.from(document.querySelectorAll('button[data-ticket-action]'));
-            const ticketCode = button.dataset.ticketCode;
-            const action = button.dataset.ticketAction;
-
-            // Preserve original labels for all buttons
-            const originalLabels = allActionButtons.map(control => {
-                const labelSpan = control.querySelector('.figma-button__label');
-                return labelSpan ? labelSpan.textContent.trim() : control.textContent.trim();
-            });
-
-            // Temporarily disable all action buttons
-            allActionButtons.forEach(control => { control.disabled = true; });
-            if (feedback) {
-                feedback.textContent = '';
-                feedback.classList.add('hidden');
-            }
-
-            const targetLabel = button.querySelector('.figma-button__label') || button;
-            targetLabel.textContent = action === 'claim' ? 'Tomando…' : 'Actualizando…';
-
-            try {
-                const url = `/api/tickets/${encodeURIComponent(ticketCode)}/${action === 'claim' ? 'claim' : 'status'}`;
-                const options = action === 'claim'
-                    ? { method: 'POST' }
-                    : {
-                        method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ status: button.dataset.ticketStatus })
-                    };
-                const response = await fetch(url, options);
-                let result = {};
-                try {
-                    result = await response.json();
-                } catch (error) {
-                    result = {};
-                }
-                if (!response.ok || !result.success) {
-                    throw new Error(result.message || result.error || 'No se pudo actualizar el ticket.');
-                }
-                window.location.reload();
-            } catch (error) {
-                isActionInProgress = false;
-                if (feedback) {
-                    feedback.textContent = error.message || 'No se pudo completar la acción. Inténtalo de nuevo.';
-                    feedback.classList.remove('hidden');
-                } else {
-                    alert(error.message || 'No se pudo completar la acción. Inténtalo de nuevo.');
-                }
-                allActionButtons.forEach((control, index) => {
-                    control.disabled = false;
-                    const labelSpan = control.querySelector('.figma-button__label') || control;
-                    labelSpan.textContent = originalLabels[index];
-                });
-            }
-        });
-
-        // ==========================================
-        // Real-Time Sync & Polling Engine
-        // ==========================================
-        let realtimePollingTimer = null;
-
-        function getTicketFingerprint(root) {
-            const rows = Array.from((root || document).querySelectorAll('tr[data-ticket-row]'));
-            return rows.map(r => `${r.dataset.ticketCode || ''}:${r.dataset.ticketStatus || ''}:${r.dataset.ticketQueue || ''}`).sort().join('|');
-        }
-
-        let initialTicketFingerprint = '';
-        if (typeof document !== 'undefined') {
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', () => {
-                    initialTicketFingerprint = getTicketFingerprint(document);
-                });
-            } else {
-                initialTicketFingerprint = getTicketFingerprint(document);
-            }
-        }
-
-        function manualRefresh() {
-            const icon = document.getElementById('refreshIcon');
-            if (icon) icon.classList.add('animate-spin');
-            window.location.reload();
-        }
-
-        async function checkRealtimeUpdates() {
-            // Do not disrupt operator if details modal is open, action in progress, or tab is hidden
-            if (document.hidden || isActionInProgress) return;
-            const modal = document.getElementById('ticketDetailsOverlay');
-            if (modal && !modal.classList.contains('hidden')) return;
-
-            try {
-                const res = await fetch(window.location.pathname + window.location.search, {
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                    cache: 'no-store'
-                });
-                if (!res.ok) return;
-
-                const html = await res.text();
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-
-                const newFingerprint = getTicketFingerprint(doc);
-                if (newFingerprint && initialTicketFingerprint && newFingerprint !== initialTicketFingerprint) {
-                    // Data changed on server! Refresh view smoothly
-                    window.location.reload();
-                } else {
-                    const badge = document.getElementById('realtimeStatusText');
-                    if (badge) badge.textContent = 'En tiempo real';
-                }
-            } catch (err) {
-                // Silently skip on network hiccups
-            }
-        }
-
-        function startRealtimeSync() {
-            // WebSocket / Socket.io Auto-Discovery
-            if (typeof io !== 'undefined') {
-                try {
-                    const socket = io();
-                    socket.on('connect', () => {
-                        const badge = document.getElementById('realtimeStatusText');
-                        if (badge) badge.textContent = 'En vivo (Socket)';
-                    });
-                    const socketEvents = ['ticket_updated', 'ticket_assigned', 'ticket_created', 'ticket_status_changed', 'new_ticket'];
-                    socketEvents.forEach(evt => {
-                        socket.on(evt, () => {
-                            if (!document.hidden && !isActionInProgress) {
-                                const modal = document.getElementById('ticketDetailsOverlay');
-                                if (!modal || modal.classList.contains('hidden')) {
-                                    window.location.reload();
-                                }
-                            }
-                        });
-                    });
-                } catch (e) {
-                    // Fall back to robust polling below
-                }
-            }
-
-            // Polling every 20 seconds
-            if (realtimePollingTimer) clearInterval(realtimePollingTimer);
-            realtimePollingTimer = setInterval(checkRealtimeUpdates, 20000);
-
-            // Resync immediately when tab becomes visible again
-            document.addEventListener('visibilitychange', () => {
-                if (!document.hidden) {
-                    checkRealtimeUpdates();
-                }
-            });
-        }
-    </script>
+<script type="application/json" id="opDatos"><%- JSON.stringify(datos).replace(/</g, '\\u003c') %></script>
 </body>
 </html>

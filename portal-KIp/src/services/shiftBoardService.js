@@ -60,12 +60,12 @@ function weekLabel(weekStart) {
  * @param {object} p
  * @param {Array} p.operators          [{ id, nombre, email, area_designada, estado_operativo }]
  * @param {Map}   p.horarios           userId → { dias, hora_inicio, hora_fin }
- * @param {Set}   p.guardiaSemana      ids de guardia en la semana elegida
- * @param {Set}   p.guardiaActual      ids de guardia en la semana de hoy (para el estado actual)
+ * @param {Map}   p.guardiaPorDia      fecha AAAA-MM-DD → Set de ids de guardia ese día (semana elegida)
+ * @param {Set}   p.guardiaActual      ids de guardia hoy (para el estado actual)
  * @param {Date}  p.weekStart          lunes 00:00 Caracas de la semana elegida
  * @param {Date}  [p.now]
  */
-function buildShiftBoard({ operators = [], horarios = new Map(), guardiaSemana = new Set(), guardiaActual = new Set(), weekStart, now = new Date() }) {
+function buildShiftBoard({ operators = [], horarios = new Map(), guardiaPorDia = new Map(), guardiaActual = new Set(), weekStart, now = new Date() }) {
     const semana = weekStart || getWeekStart(now);
     const semanaActual = getWeekStart(now);
 
@@ -82,7 +82,7 @@ function buildShiftBoard({ operators = [], horarios = new Map(), guardiaSemana =
             areaNombre: AREA_NAMES[o.area_designada] || o.area_designada || 'General',
             horario,
             horarioPersonalizado: Boolean(h),
-            guardia: guardiaSemana.has(o.id),
+            guardiaDias: [...guardiaPorDia].filter(([, ids]) => ids.has(o.id)).map(([f]) => f).sort(),
             estado: { codigo: turno.codigo, etiqueta: turno.etiqueta, grupo: stateGroup(turno.codigo) }
         };
     }).sort((a, b) => a.nombre.localeCompare(b.nombre));
@@ -92,6 +92,12 @@ function buildShiftBoard({ operators = [], horarios = new Map(), guardiaSemana =
         .map(codigo => ({ codigo, nombre: AREA_NAMES[codigo] || codigo }))
         .sort((a, b) => a.nombre.localeCompare(b.nombre));
 
+    // Quién está de guardia cada día de la semana elegida
+    const dias = weekDays(semana, now).map(d => {
+        const gente = filas.filter(f => f.guardiaDias.includes(d.fecha));
+        return { ...d, guardias: gente.map(f => ({ id: f.id, nombre: f.nombre, iniciales: f.iniciales })) };
+    });
+
     return {
         semana: {
             inicio: formatCaracasDate(semana),
@@ -99,7 +105,8 @@ function buildShiftBoard({ operators = [], horarios = new Map(), guardiaSemana =
             siguiente: formatCaracasDate(new Date(semana.getTime() + 7 * DAY_MS)),
             etiqueta: weekLabel(semana),
             esActual: semana.getTime() === semanaActual.getTime(),
-            dias: weekDays(semana, now)
+            dias,
+            sinGuardia: dias.filter(d => !d.guardias.length).length
         },
         equipo: { total: filas.length, turno: cuenta('turno'), guardia: cuenta('guardia'), fuera: cuenta('fuera') },
         areas,
