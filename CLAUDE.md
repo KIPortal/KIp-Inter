@@ -9,7 +9,7 @@ Portal de tickets y estadísticas del depto. **Operaciones IP** (Inter Telecomun
 
 ## Reglas de negocio (no cambiar sin preguntar)
 - Tiempo medido desde la llegada del ticket; se usa **promedio**, no mediana. No usar las palabras "SLA" ni "DERS".
-- Prioridad y puntos los fija el coordinador: P1=8, P2=5, P3=1, sin prioridad=0.
+- Prioridad y puntos los fija el coordinador: P1=8, P2=5, P3=1, sin prioridad=0. Excepción (decidido 2026-10-15): un ticket sin prioridad (p. ej. de correo) no se puede tomar sin elegirla; quien lo toma la elige partiendo de `Ticket.prioridad_sugerida` (palabras clave de Administración → Reglas, `rulesService.sugerirPrioridad`), y el coordinador puede corregirla.
 - El operador resuelve (RESUELTO); el coordinador cierra (CERRADO).
 - Roles: OPERADOR, COORDINADOR (todas las áreas), JEFE (solo su área: Dashboard, Tickets, Turno y Reportes limitados; no entra a Administración ni Auditoría) y GERENTE (todas las áreas; administra usuarios, roles y áreas; es el único que da o quita los roles Jefe y Gerente; mientras no haya un gerente activo, el coordinador puede nombrar al primero). Usa `roleService` (`esSupervisor`, `puedeAdministrar`, `ticketWhere`, `personaWhere`, `authorizeSupervisor`, `authorizeAdmin`) y el middleware `limitarAlArea` en rutas de tickets; nunca `rol === 'COORDINADOR'` a secas para "quién coordina".
 - Un coordinador o jefe marcado "Atiende tickets" (`User.atiende_tickets`) también toma y trabaja casos (Mi panel) y cuenta como operador en carga, turnos y reportes. Usa `roleService` (`atiendeTickets`, `ATIENDE_WHERE`), nunca `rol: 'OPERADOR'` a secas para "quién atiende".

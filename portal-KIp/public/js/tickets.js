@@ -338,7 +338,7 @@
 				onchange: () => { if (S.sel.has(t.codigo)) S.sel.delete(t.codigo); else S.sel.add(t.codigo); render(); }
 			})),
 			h('td', {}, h('button', { type: 'button', class: 'code', title: 'Ver detalle', text: t.codigo, onclick: () => openPanel(t.codigo) })),
-			h('td', {}, h('span', { class: 'prio ' + t.prioridad }, h('i'), PR[t.prioridad][0])),
+			h('td', {}, h('span', { class: 'prio ' + t.prioridad, title: t.sugerida ? 'Sugerida ' + t.sugerida + ' por palabras clave' : null }, h('i'), PR[t.prioridad][0] + (t.sugerida ? ' · ' + t.sugerida + '?' : ''))),
 			h('td', {}, h('span', { class: 'state' }, h('i', { class: 's-' + t.estado }), STATE_NAME[t.estado])),
 			h('td', { style: 'max-width:0' }, h('button', { type: 'button', class: 'subj', title: t.asunto, onclick: () => openPanel(t.codigo) },
 				h('span', { style: 'font-weight:500', text: t.asunto }), h('span', { class: 'area', text: '  ·  ' + t.areaNombre + (t.subgrupoNombre ? ' · ' + t.subgrupoNombre : '') }))),
@@ -426,12 +426,17 @@
 		const viva = ACTIVE.includes(t.estado);
 		// Coordinador que también atiende tickets: lo toma él y lo trabaja en Mi panel
 		if (D.usuario.atiende && !t.operador && t.estado === 'NUEVO') {
+			// Sin prioridad (p. ej. llegó por correo): se elige al tomarlo, partiendo de la sugerida
+			const prioSel = t.prioridad === 'SP' ? h('select', { class: 'field sm', 'aria-label': 'Prioridad al tomarlo' },
+				h('option', { value: '', text: 'Prioridad…' }),
+				['P1', 'P2', 'P3'].map(k => h('option', { value: k, text: PR[k][0] + (t.sugerida === k ? ' (sugerida)' : ''), selected: t.sugerida === k ? true : null }))) : null;
 			body.append(h('div', { class: 'sugbox' },
 				h('div', { class: 'row1' }, h('b', { text: 'Tomarlo tú' }), h('span', { text: 'Pasa a En atención a tu nombre' })),
-				h('div', { class: 'row2' }, h('span', { style: 'flex:1;font-size:12px;color:var(--t2)', text: 'Lo trabajas, respondes y resuelves desde Mi panel.' }),
+				h('div', { class: 'row2' }, h('span', { style: 'flex:1;font-size:12px;color:var(--t2)', text: prioSel ? 'Elige su prioridad: suma a tu carga al resolverlo.' : 'Lo trabajas, respondes y resuelves desde Mi panel.' }), prioSel,
 					h('button', { type: 'button', class: 'primary', text: 'Tomar', onclick: e => {
+						if (prioSel && !prioSel.value) { prioSel.focus(); showError(new Error('Elige la prioridad antes de tomarlo')); return; }
 						e.currentTarget.disabled = true;
-						api('POST', '/api/tickets/' + encodeURIComponent(t.codigo) + '/claim')
+						api('POST', '/api/tickets/' + encodeURIComponent(t.codigo) + '/claim', prioSel ? { prioridad: prioSel.value } : undefined)
 							.then(() => done('Ticket tomado', t.codigo + ' está en tu panel, En atención', 'green'))
 							.catch(err => { e.target.disabled = false; showError(err); });
 					} }))));

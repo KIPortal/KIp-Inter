@@ -5,6 +5,8 @@ const cron = require('node-cron');
 const prisma = require('../config/prisma');
 const { getNextTicketCode } = require('./ticketCodeService');
 const { textoDeCorreo, extraerCorreo } = require('./conversationService');
+const { loadConfig } = require('./configService');
+const { sugerirPrioridad } = require('./rulesService');
 
 // Estas variables deben ir en el archivo .env
 const TENANT_ID = process.env.GRAPH_TENANT_ID;
@@ -68,6 +70,9 @@ async function procesarCorreosEntrantes() {
             if (existe && !existe.eliminado_en) {
                 await registrarRespuestaCliente(existe, message);
             } else if (!existe) {
+                // Prioridad sugerida por palabras clave (Administración → Reglas); el operador la confirma al tomarlo
+                const reglas = (await loadConfig(prisma).catch(() => null))?.reglas;
+                const sugerida = sugerirPrioridad(`${message.subject || ''} ${message.bodyPreview || ''} ${message.from?.emailAddress?.address || ''}`, reglas || undefined);
                 await prisma.ticket.create({
                     data: {
                         codigo_incidencia: codigoIncidencia,
@@ -76,7 +81,8 @@ async function procesarCorreosEntrantes() {
                         origen_ingesta: 'CORREO',
                         remitente: message.from.emailAddress.address,
                         estado_actual: 'NUEVO',
-                        area_designada: 'GENERAL'
+                        area_designada: 'GENERAL',
+                        prioridad_sugerida: sugerida
                     }
                 });
             }

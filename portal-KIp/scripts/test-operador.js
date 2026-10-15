@@ -259,7 +259,7 @@ const cola = (p, k) => p.colas.find(q => q.k === k);
         const orig = { ticket: prisma.ticket, auditLog: prisma.auditLog };
         let where = null;
         prisma.ticket = {
-            findUnique: async () => ({ id: 't9', estado_actual: 'NUEVO', asignado_a_id: null, area_designada: 'SEGURIDAD' }),
+            findUnique: async () => ({ id: 't9', estado_actual: 'NUEVO', asignado_a_id: null, area_designada: 'SEGURIDAD', puntos_complejidad: 5 }),
             updateMany: async args => { where = args.where; return { count: 1 }; }
         };
         prisma.auditLog = { create: async () => ({}) };
@@ -268,7 +268,7 @@ const cola = (p, k) => p.colas.find(q => q.k === k);
             const res = mockRes();
             await claimTicket({ params: { ticketCode: 'INC-090' }, user: USER }, res);
             assert.strictEqual(res.code, 403, 'operador de otra área');
-            prisma.ticket.findUnique = async args => (args.include ? { id: 't9', estado_actual: 'EN_PROGRESO' } : { id: 't9', estado_actual: 'NUEVO', asignado_a_id: null, area_designada: 'SEGURIDAD' });
+            prisma.ticket.findUnique = async args => (args.include ? { id: 't9', estado_actual: 'EN_PROGRESO' } : { id: 't9', estado_actual: 'NUEVO', asignado_a_id: null, area_designada: 'SEGURIDAD', puntos_complejidad: 5 });
             const res2 = mockRes();
             await claimTicket({ params: { ticketCode: 'INC-090' }, user: { id: 'c1', rol: 'COORDINADOR', atiende_tickets: true, area_designada: 'GENERAL' } }, res2);
             assert.strictEqual(res2.code, 200, JSON.stringify(res2.body));
@@ -276,6 +276,46 @@ const cola = (p, k) => p.colas.find(q => q.k === k);
         } finally {
             Object.assign(prisma, orig);
         }
+    });
+
+    await t('Ticket sin prioridad (correo): se elige al tomarlo, partiendo de la sugerida', async () => {
+        const orig = { ticket: prisma.ticket, auditLog: prisma.auditLog };
+        let data = null, detalle = null;
+        prisma.ticket = {
+            findUnique: async args => (args.include ? { id: 't8', estado_actual: 'EN_PROGRESO' } : { id: 't8', estado_actual: 'NUEVO', asignado_a_id: null, area_designada: 'GENERAL', puntos_complejidad: 0, prioridad_sugerida: 'P1' }),
+            updateMany: async args => { data = args.data; return { count: 1 }; }
+        };
+        prisma.auditLog = { create: async args => { detalle = args.data.detalles; return {}; } };
+        try {
+            const { claimTicket } = require('../src/controllers/ticketController');
+            const sin = mockRes();
+            await claimTicket({ params: { ticketCode: 'INC-091' }, user: USER, body: {} }, sin);
+            assert.strictEqual(sin.code, 422);
+            assert.deepStrictEqual([sin.body.requierePrioridad, sin.body.sugerida], [true, 'P1']);
+            assert.strictEqual(data, null, 'no se tomó');
+            const mala = mockRes();
+            await claimTicket({ params: { ticketCode: 'INC-091' }, user: USER, body: { prioridad: 'NONE' } }, mala);
+            assert.strictEqual(mala.code, 422, '"sin prioridad" no vale');
+            const ok = mockRes();
+            await claimTicket({ params: { ticketCode: 'INC-091' }, user: USER, body: { prioridad: 'p2' } }, ok);
+            assert.strictEqual(ok.code, 200, JSON.stringify(ok.body));
+            assert.deepStrictEqual([data.puntos_complejidad, data.estado_actual], [5, 'EN_PROGRESO']);
+            assert.ok(detalle.includes('prioridad P2') && detalle.includes('sugerida P1'), detalle);
+        } finally {
+            Object.assign(prisma, orig);
+        }
+    });
+
+    await t('Panel: la fila sin prioridad trae la sugerida; el JS pide elegirla al tomar', () => {
+        const js = fs.readFileSync(path.join(__dirname, '..', 'public', 'js', 'operador.js'), 'utf8');
+        assert.ok(js.includes('function prioritySheet') && js.includes("t.p === 'SP' && !prioridad"));
+        const { sugerirPrioridad, mergeRules } = require('../src/services/rulesService');
+        assert.strictEqual(sugerirPrioridad('CAÍDA del enlace principal'), 'P1', 'sin tildes ni mayúsculas');
+        assert.strictEqual(sugerirPrioridad('Intermitencia y una consulta'), 'P2', 'gana la más alta');
+        assert.strictEqual(sugerirPrioridad('download del backup'), null, 'palabra completa');
+        assert.strictEqual(sugerirPrioridad('de noc@banco.com', mergeRules({ palabrasPrioridad: { P1: ['@banco.com'] } })), 'P1', 'por remitente');
+        assert.deepStrictEqual(mergeRules({ palabrasPrioridad: { P2: [' Lento ', 'lento', '', 7] } }).palabrasPrioridad.P2, ['Lento'], 'limpia y sin repetidas');
+        assert.strictEqual(mergeRules({}).palabrasPrioridad.P1.length > 0, true, 'trae palabras por defecto');
     });
 
     await t('Barra lateral: Mi panel solo para el coordinador que atiende', () => {

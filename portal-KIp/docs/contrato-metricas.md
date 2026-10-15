@@ -87,3 +87,8 @@ Campo `User.atiende_tickets` (migración `20261014180000_coordinador_atiende`), 
 - `GET /reportes/jornadas?desde=&hasta=&limite=`: lista de jornadas registradas con `creados`, `resueltos`, `activos`, `puntos`, `tieneExcel`.
 - `GET /reportes/jornadas/:fecha/excel`: Excel guardado de ese día (el jefe recibe uno regenerado solo con su área; si el archivo no está en disco se regenera desde la foto).
 - `npm run datos:cero` borra también el registro de jornadas (los Excel en disco se conservan); `limpiar-simulacion` quita SIM-xxx y los usuarios @demo.local de las fotos y recalcula su resumen. Cada foto lleva `datos.v` (versión de su forma).
+
+## Prioridad de los tickets de correo
+- Al llegar un correo, `rulesService.sugerirPrioridad` busca las palabras clave de `reglas.palabrasPrioridad` (`{ P1: [], P2: [], P3: [] }`, editables en Administración → Reglas) en asunto, texto y remitente (sin tildes ni mayúsculas, palabra completa; gana la más alta) y guarda `Ticket.prioridad_sugerida`. Los puntos siguen en 0.
+- `POST /api/tickets/:codigo/claim` con un ticket sin prioridad exige `{ prioridad: 'P1'|'P2'|'P3' }`; sin ella responde 422 `{ requierePrioridad: true, sugerida }`. La auditoría (TICKET_TOMADO) dice qué prioridad se eligió y cuál era la sugerida.
+- Filas: `sugerida` en la bandeja del operador (operatorPanelService) y en la cola de Tickets (ticketQueueService), solo cuando el ticket no tiene prioridad.

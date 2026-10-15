@@ -276,11 +276,17 @@ async function claimTicket(req, res) {
     try {
         const ticket = await prisma.ticket.findUnique({
             where: { codigo_incidencia: ticketCode },
-            select: { id: true, estado_actual: true, asignado_a_id: true, area_designada: true }
+            select: { id: true, estado_actual: true, asignado_a_id: true, area_designada: true, puntos_complejidad: true, prioridad_sugerida: true }
         });
         if (!ticket) return res.status(404).json({ success: false, error: 'Ticket no encontrado' });
         if (ticket.estado_actual !== 'NUEVO' || (ticket.asignado_a_id !== null && ticket.asignado_a_id !== req.user.id)) {
             return res.status(409).json({ success: false, error: 'El ticket ya no está disponible para reclamar' });
+        }
+        // Sin prioridad (p. ej. llegó por correo): quien lo toma la elige, partiendo de la sugerida
+        const sinPrioridad = !ticket.puntos_complejidad;
+        const elegida = typeof req.body?.prioridad === 'string' ? req.body.prioridad.trim().toUpperCase() : '';
+        if (sinPrioridad && !Object.hasOwn(PRIORITY_POINTS, elegida)) {
+            return res.status(422).json({ success: false, requierePrioridad: true, sugerida: ticket.prioridad_sugerida || null, error: 'Elige la prioridad del ticket (P1, P2 o P3) antes de tomarlo' });
         }
 
         const operatorArea = req.user.area_designada || 'GENERAL';
@@ -303,13 +309,16 @@ async function claimTicket(req, res) {
             data: {
                 estado_actual: 'EN_PROGRESO',
                 asignado_a_id: req.user.id,
-                fecha_asignacion: new Date()
+                fecha_asignacion: new Date(),
+                ...(sinPrioridad ? { puntos_complejidad: PRIORITY_POINTS[elegida] } : {})
             }
         });
         if (result.count !== 1) {
             return res.status(409).json({ success: false, error: 'El ticket ya no está disponible para reclamar' });
         }
-        await logAudit(req, 'TICKET_TOMADO', ticket.id, 'El operador lo tomó y quedó en progreso');
+        const clasif = !sinPrioridad ? ''
+            : ` con prioridad ${elegida}${ticket.prioridad_sugerida ? (ticket.prioridad_sugerida === elegida ? ' (la sugerida)' : ` (sugerida ${ticket.prioridad_sugerida})`) : ''}`;
+        await logAudit(req, 'TICKET_TOMADO', ticket.id, `El operador lo tomó y quedó en progreso${clasif}`);
         return await sendTicket(req, res, ticket.id);
     } catch (error) {
         console.error('Error al reclamar ticket:', error);

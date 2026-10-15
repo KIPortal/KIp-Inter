@@ -97,6 +97,10 @@ function describeChanges(antes, despues) {
     if (ra.metas.resueltoPct !== rd.metas.resueltoPct) cambios.push(`Meta de resueltos: ${rd.metas.resueltoPct} %`);
     if (ra.capacidad.puntosPorPersona !== rd.capacidad.puntosPorPersona) cambios.push(`Capacidad por persona: ${rd.capacidad.puntosPorPersona} puntos`);
     if (ra.metas.promedioHoras !== rd.metas.promedioHoras) cambios.push(`Meta de promedio: ${String(rd.metas.promedioHoras).replace('.', ',')} h`);
+    ['P1', 'P2', 'P3'].forEach(k => {
+        const pa = (ra.palabrasPrioridad || {})[k] || [], pd = (rd.palabrasPrioridad || {})[k] || [];
+        if (JSON.stringify(pa) !== JSON.stringify(pd)) cambios.push(`Palabras clave ${k}: ${pd.length ? pd.join(', ') : 'ninguna'}`);
+    });
     EVENTOS.forEach(ev => {
         despues.avisos[ev.clave].forEach((v, i) => {
             if (v !== null && v !== antes.avisos[ev.clave][i]) cambios.push(`Aviso «${ev.nombre}» a ${DESTINATARIOS[i].toLowerCase()}: ${v ? 'sí' : 'no'}`);
