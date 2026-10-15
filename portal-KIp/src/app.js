@@ -10,9 +10,11 @@ const turnoRoutes = require('./routes/turnoRoutes');
 const auditRoutes = require('./routes/auditRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const contactRoutes = require('./routes/contactRoutes');
+const avisosRoutes = require('./routes/avisosRoutes');
 const requireAuth = require('./middlewares/requireAuth');
 const { authorizeAdmin } = require('./services/roleService');
 const emailIngestionService = require('./services/emailIngestionService');
+const { loadStamp } = require('./services/changeStampService');
 
 const app = express();
 
@@ -52,6 +54,16 @@ const prisma = require('./config/prisma');
 const { refreshAreas } = require('./services/areaCatalog');
 app.use((req, res, next) => { refreshAreas(prisma).finally(next); });
 
+// Sello de cambios para la actualización en vivo (public/js/vivo.js)
+app.get('/api/cambios', requireAuth, async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    try {
+        res.json({ success: true, sello: await loadStamp(prisma) });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'No se pudo revisar si hay cambios' });
+    }
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/auth', authRoutes);
 app.use('/', dashboardRoutes);
@@ -62,6 +74,7 @@ app.use('/reportes', reportRoutes);
 app.use('/reports', reportRoutes);
 app.use('/contactos', contactRoutes);
 app.use('/api/contactos', contactRoutes);
+app.use('/api/avisos', avisosRoutes);
 app.use('/auditoria', requireAuth, authorizeAdmin, auditRoutes);
 app.use('/admin', requireAuth, authorizeAdmin, adminRoutes.page);
 app.use('/api/admin', requireAuth, authorizeAdmin, adminRoutes.api);

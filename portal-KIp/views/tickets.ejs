@@ -34,7 +34,7 @@
 <head>
 	<%- include('partials/head', { titulo: 'Tickets' }) %>
 </head>
-<body>
+<body data-vivo>
 <div class="app">
 	<%- include('partials/sidebar', { currentUser, activo: 'tickets', conteos: { tickets: r.activos, enTurno, totalOperadores: cola.operadores.length } }) %>
 

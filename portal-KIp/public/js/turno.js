@@ -39,6 +39,8 @@
 		return { horarios, guardia };
 	}
 
+	// Actualización en vivo (vivo.js): no recargar con cambios sin guardar
+	window.kipOcupado = () => paintDirty() > 0;
 	function paintDirty() {
 		const c = changes();
 		const n = c.horarios.length + (c.guardia ? 1 : 0);
