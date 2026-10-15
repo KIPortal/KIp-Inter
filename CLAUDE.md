@@ -27,7 +27,7 @@ Portal de tickets y estadísticas del depto. **Operaciones IP** (Inter Telecomun
 ## Arquitectura
 - Lógica pura en `src/services/` (metricsService, periodReportService, excelExportService, shiftService, simulationService, dashboardService, ticketQueueService, assignmentService, rulesService, shiftBoardService, configService, auditViewService, reportViewService, userAdminService, conversationService, operatorPanelService, roleService, contactService, jornadaRegistroService); controladores en `src/controllers/`; las vistas solo dibujan lo que entrega el controlador.
 - Los ids de usuario son **UUID (texto)**, nunca números.
-- Las áreas son la tabla `Area` (ya no un enum): usa el catálogo vivo de `src/services/areaCatalog.js` (`AREA_NAMES`, `activeAreas()`, `isActiveArea()`), nunca listas fijas. Las áreas y los usuarios se desactivan, no se borran (`Area.activa`, `User.activo`).
+- Las áreas son la tabla `Area` (ya no un enum): usa el catálogo vivo de `src/services/areaCatalog.js` (`AREA_NAMES`, `activeAreas()`, `isActiveArea()`), nunca listas fijas. Las áreas y los usuarios se desactivan, no se borran (`Area.activa`, `User.activo`). Al desactivar a una persona, sus tickets activos vuelven a la cola de su área (NUEVO, sin asignar, con su prioridad) y queda en Auditoría.
 - Subgrupos de área (tabla `Subgrupo`, p. ej. FTTx: Soporte y Cabecera): se configuran en Administración > Editar área; `User.subgrupo_id` y `Ticket.subgrupo_id` son opcionales. El operador con subgrupo ve en Entrantes los de su subgrupo y los del área sin subgrupo; al asignar, un ticket sin subgrupo toma el del operador. Catálogo vivo en `areaCatalog` (`subgruposDe`, `isValidSubgrupo`, `subgrupoName`).
 
 ## Pruebas (sin framework, sin base de datos real)

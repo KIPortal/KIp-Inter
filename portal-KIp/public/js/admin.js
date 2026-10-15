@@ -328,7 +328,7 @@
 				h('label', { class: 'dsec' }, h('b', { text: 'Teléfono o extensión (opcional)' }), input('telefono', { type: 'tel', maxlength: 40, placeholder: 'Ej. 0212-555 1234 ext 12' }),
 					h('span', { class: 't3', style: 'font-size:12px', text: 'Sale en Contactos para que el equipo sepa cómo ubicarlo' })),
 				bloqueado ? h('div', { class: 'warnbox', text: 'Solo el gerente puede editar a jefes y gerentes.' }) : null,
-				u && !esYo ? h('div', { class: 'rule-row', style: 'min-height:40px;border:0' }, h('span', { class: 'lbl', style: 'flex:1' }, h('b', { text: 'Usuario activo' }), h('span', { text: 'Desactivado no entra al portal ni recibe tickets; su historial se conserva' })), sw(M.activo, e => { M.activo = !M.activo; e.currentTarget.setAttribute('aria-checked', String(M.activo)); }, 'Usuario activo')) : null,
+				u && !esYo ? h('div', { class: 'rule-row', style: 'min-height:40px;border:0' }, h('span', { class: 'lbl', style: 'flex:1' }, h('b', { text: 'Usuario activo' }), h('span', { text: 'Desactivado no entra al portal ni recibe tickets; sus tickets activos vuelven a la cola de su área y su historial se conserva' })), sw(M.activo, e => { M.activo = !M.activo; e.currentTarget.setAttribute('aria-checked', String(M.activo)); }, 'Usuario activo')) : null,
 				h('div', { class: 'dsec' }, h('b', { text: u ? 'Nueva clave temporal (opcional)' : 'Clave temporal' }),
 					h('div', { style: 'display:flex;gap:8px' }, claveIn,
 						h('button', { type: 'button', class: 'pill pillbtn plain', style: 'height:34px;font-size:12px', text: 'Generar', onclick: () => { M.clave = genClave(); claveIn.value = M.clave; } }))),
@@ -351,7 +351,8 @@
 				let j = {};
 				try { j = await res.json(); } catch (e) { /* sin cuerpo */ }
 				if (!res.ok || !j.success) throw new Error(j.error || 'Error ' + res.status);
-				const msg = u ? 'Los cambios quedaron en Auditoría' : (M.clave ? 'Clave temporal: ' + M.clave : '');
+				const dev = (j.devueltos || []).length;
+				const msg = u ? (dev ? (dev === 1 ? '1 ticket activo volvió' : dev + ' tickets activos volvieron') + ' a la cola de su área. ' : '') + 'Los cambios quedaron en Auditoría' : (M.clave ? 'Clave temporal: ' + M.clave : '');
 				try { sessionStorage.setItem('kip.toast', JSON.stringify({ title: u ? 'Usuario actualizado' : 'Usuario creado', msg })); } catch (e) { /* nada */ }
 				leaving = true;
 				window.location.reload();

@@ -190,10 +190,6 @@ async function updateUser(req, res) {
         if (datos.activo === false && id === req.user?.id) {
             return res.status(409).json({ success: false, error: 'No puedes desactivar tu propio usuario' });
         }
-        if (datos.activo === false && antes.activo !== false) {
-            const activos = await prisma.ticket.count({ where: { asignado_a_id: id, estado_actual: { in: ACTIVE_STATES } } });
-            if (activos > 0) return res.status(409).json({ success: false, error: `Tiene ${activos} tickets activos asignados: reasígnalos antes de desactivarlo` });
-        }
         if (datos.email && datos.email !== antes.email) {
             const otro = await prisma.user.findUnique({ where: { email: datos.email }, select: { id: true } });
             if (otro && otro.id !== id) return res.status(409).json({ success: false, error: 'Ya existe un usuario con ese correo' });
@@ -202,9 +198,24 @@ async function updateUser(req, res) {
             const activos = await prisma.ticket.count({ where: { asignado_a_id: id, estado_actual: { in: ACTIVE_STATES } } });
             if (activos > 0) return res.status(409).json({ success: false, error: `Tiene ${activos} tickets activos asignados: reasígnalos antes de cambiarle el rol` });
         }
+        // Al desactivarlo, sus tickets activos vuelven a la cola de su área (sin operador, con su prioridad)
+        let devueltos = [];
+        if (datos.activo === false && antes.activo !== false) {
+            devueltos = await prisma.ticket.findMany({ where: { asignado_a_id: id, estado_actual: { in: ACTIVE_STATES } }, select: { id: true, codigo_incidencia: true } });
+            if (devueltos.length) {
+                await prisma.ticket.updateMany({
+                    where: { id: { in: devueltos.map(t => t.id) }, asignado_a_id: id },
+                    data: { asignado_a_id: null, estado_actual: 'NUEVO', fecha_asignacion: null }
+                });
+                for (const t of devueltos) {
+                    await prisma.auditLog.create({ data: { accion: 'TICKET_DESASIGNADO', ticketId: t.id, userId: auditUserId(req), detalles: `Volvió a la cola: ${antes.nombre} fue desactivado` } })
+                        .catch(e => console.error('No se pudo registrar auditoría:', e.message));
+                }
+            }
+        }
         const user = await prisma.user.update({ where: { id }, data: datos });
-        await auditUser(req, 'USUARIO_EDITADO', describeUser(antes, datos));
-        return res.json({ success: true, usuario: publico(user) });
+        await auditUser(req, 'USUARIO_EDITADO', describeUser(antes, datos) + (devueltos.length ? `; ${devueltos.length} tickets activos volvieron a la cola (${devueltos.map(t => t.codigo_incidencia).join(', ')})` : ''));
+        return res.json({ success: true, usuario: publico(user), devueltos: devueltos.map(t => t.codigo_incidencia) });
     } catch (e) {
         console.error('Error al editar usuario:', e);
         return res.status(500).json({ success: false, error: 'No se pudo guardar el usuario' });
