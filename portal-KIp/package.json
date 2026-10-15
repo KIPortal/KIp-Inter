@@ -28,7 +28,8 @@
     "test:conversacion": "node scripts/test-conversacion.js",
     "test:operador": "node scripts/test-operador.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "test:roles": "node scripts/test-roles.js"
+    "test:roles": "node scripts/test-roles.js",
+    "test:jornadas": "node scripts/test-jornadas.js"
   },
   "keywords": [],
   "author": "Jose Corobo (Jacu) <joseacorobo@gmail.com>",

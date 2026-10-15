@@ -19,6 +19,9 @@ const app = express();
 // Iniciar ingesta de correos vía Graph API
 emailIngestionService.iniciarIngesta();
 
+// Registro de jornadas: cierre automático cada día a las 00:05 (Caracas)
+require('./services/jornadaRegistroService').programarCierre(require('./config/prisma'));
+
 const sessionSecret = process.env.SESSION_SECRET || (process.env.NODE_ENV === 'production'
 	? null
 	: 'local-development-session-secret');

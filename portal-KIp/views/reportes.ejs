@@ -57,6 +57,15 @@
 			</a>
 		</header>
 
+		<% const f = v.fuente; %>
+		<div class="registro-bar" data-registro data-dia="<%= f.dia || '' %>" data-guardado="<%= f.guardado %>" data-faltan="<%= f.faltan.join(',') %>" style="display:flex;align-items:center;flex-wrap:wrap;gap:8px">
+			<span class="badge <%= f.tipo === 'registro' ? 'green' : 'accent' %>" data-fuente="<%= f.tipo %>"><span class="dot" aria-hidden="true"></span><%= f.texto %></span>
+			<% if (f.excel) { %><a class="chip" href="<%= f.excel %>" download>Excel guardado</a><% } %>
+			<% if (f.dia) { %><button type="button" class="chip" data-cerrar-jornada><%= f.guardado ? 'Volver a guardar jornada' : 'Guardar jornada' %></button><% } %>
+			<% if (!f.dia && f.faltan.length) { %><button type="button" class="chip" data-registrar-faltan>Registrar días faltantes</button><% } %>
+			<span class="hint" data-registro-msg role="status"></span>
+		</div>
+
 		<div role="tablist" aria-label="Secciones del reporte" style="align-self:flex-start">
 			<button type="button" role="tab" data-tab="resumen" aria-selected="true">Resumen</button>
 			<button type="button" role="tab" data-tab="area" aria-selected="false">Por área</button>

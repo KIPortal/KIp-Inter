@@ -1,5 +1,5 @@
 const prisma = require('../config/prisma');
-const { ATIENDE_WHERE, areaScope, ticketWhere } = require('../services/roleService');
+const { areaScope, ticketWhere } = require('../services/roleService');
 const {
     ACTIVE_STATES,
     getPeriodBounds
@@ -9,6 +9,8 @@ const { buildReportView } = require('../services/reportViewService');
 const { isActiveArea } = require('../services/areaCatalog');
 const { buildWorkbook } = require('../services/excelExportService');
 const { loadConfig } = require('../services/configService');
+const { loadReport, cerrarJornada, listarJornadas, excelDeJornada } = require('../services/jornadaRegistroService');
+const { auditUserId } = require('../services/auditViewService');
 
 function parsePeriodQuery(query = {}) {
     const periodo = typeof query.periodo === 'string' ? query.periodo.trim() : 'jornada';
@@ -21,32 +23,13 @@ function parsePeriodQuery(query = {}) {
     return { range, area };
 }
 
+// Periodos ya terminados se arman con el registro de jornadas si están todos sus días;
+// ?fuente=vivo fuerza los datos en vivo.
 async function loadPeriodReport(query) {
     const parsed = parsePeriodQuery(query);
     if (parsed.error) return parsed;
     const { range, area } = parsed;
-    const [tickets, operators] = await Promise.all([prisma.ticket.findMany({
-        where: {
-            OR: [
-                { createdAt: { gte: range.start, lt: range.end } },
-                { fecha_asignacion: { gte: range.start, lt: range.end } },
-                { resueltoEn: { gte: range.start, lt: range.end } },
-                { fecha_cierre: { gte: range.start, lt: range.end } },
-                { estado_actual: { in: ACTIVE_STATES } }
-            ]
-        },
-        select: {
-            codigo_incidencia: true, asunto: true, area_designada: true, estado_actual: true,
-            puntos_complejidad: true, createdAt: true, fecha_asignacion: true, resueltoEn: true, fecha_cierre: true,
-            asignado_a: { select: { id: true, nombre: true } }
-        },
-        orderBy: { createdAt: 'asc' }
-    }), prisma.user.findMany({
-        where: ATIENDE_WHERE,
-        select: { id: true, nombre: true, area_designada: true, estado_operativo: true },
-        orderBy: { nombre: 'asc' }
-    })]);
-    return { report: buildPeriodReport({ tickets, operators, range, area }), range };
+    return loadReport(prisma, { range, area, forzarVivo: query.fuente === 'vivo' });
 }
 
 // El jefe de área solo ve el reporte de su área
@@ -94,7 +77,8 @@ async function renderReportes(req, res) {
             periodo: query.periodo,
             fecha: typeof req.query.fecha === 'string' && req.query.fecha ? req.query.fecha : null,
             area: typeof query.area === 'string' && query.area ? query.area : null,
-            metas: config.reglas.metas
+            metas: config.reglas.metas,
+            fuente: result.fuente
         });
         const catalogo = areaScope(req.user) ? [areaScope(req.user)] : REPORT_AREAS;
         return res.render('reportes', { titulo: 'Reportes', currentUser: req.user, vista, areasCatalogo: catalogo.map(c => ({ codigo: c, nombre: AREA_NAMES[c] + (isActiveArea(c) ? '' : ' (desactivada)') })), activos });
@@ -104,4 +88,54 @@ async function renderReportes(req, res) {
     }
 }
 
-module.exports = { getPeriodData, downloadExcel, parsePeriodQuery, renderReportes };
+// --- Registro de jornadas ---
+
+const nombreDe = user => user?.nombre || user?.email || null;
+
+// POST /reportes/jornadas/cerrar { fecha?, reemplazar? } — guarda la foto y el Excel del día
+async function cerrarJornadaManual(req, res) {
+    try {
+        const fecha = typeof req.body?.fecha === 'string' && req.body.fecha.trim() ? req.body.fecha.trim() : undefined;
+        const reemplazar = req.body?.reemplazar === true || req.body?.reemplazar === 'true';
+        const r = await cerrarJornada(prisma, { fecha, origen: 'MANUAL', cerradoPor: nombreDe(req.user), reemplazar });
+        if (r.error) return res.status(400).json({ success: false, error: r.error });
+        if (r.existe) return res.status(409).json({ success: false, existe: true, fecha: r.fecha, error: `La jornada ${r.fecha} ya está registrada. ¿Reemplazarla con los datos de ahora?` });
+        try {
+            await prisma.auditLog.create({ data: { accion: 'JORNADA_CERRADA', userId: auditUserId(req), detalles: `Jornada ${r.fecha}${r.reemplazado ? ' (reemplazada)' : ''}: ${r.resumen.creados} recibidos, ${r.resumen.resueltos} resueltos, ${r.resumen.activos} activos` } });
+        } catch (e) {
+            console.error('No se pudo registrar auditoría:', e.message);
+        }
+        return res.json({ success: true, fecha: r.fecha, reemplazado: r.reemplazado, excelGuardado: Boolean(r.archivo) });
+    } catch (error) {
+        console.error('Error al cerrar la jornada:', error);
+        return res.status(500).json({ success: false, error: 'No se pudo registrar la jornada' });
+    }
+}
+
+// GET /reportes/jornadas?desde=&hasta= — jornadas registradas
+async function getJornadas(req, res) {
+    try {
+        const jornadas = await listarJornadas(prisma, { desde: req.query.desde, hasta: req.query.hasta, limite: req.query.limite });
+        return res.json({ success: true, jornadas });
+    } catch (error) {
+        console.error('Error al listar jornadas:', error);
+        return res.status(500).json({ success: false, error: 'No se pudieron listar las jornadas' });
+    }
+}
+
+// GET /reportes/jornadas/:fecha/excel — Excel guardado de ese día (el jefe recibe solo su área)
+async function downloadJornadaExcel(req, res) {
+    try {
+        const r = await excelDeJornada(prisma, req.params.fecha, { area: areaScope(req.user), generadoPor: nombreDe(req.user) || '' });
+        if (r.error) return res.status(400).json({ success: false, error: r.error });
+        if (r.noExiste) return res.status(404).json({ success: false, error: 'Esa jornada no está registrada' });
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="${r.filename}"`);
+        return res.send(r.buffer);
+    } catch (error) {
+        console.error('Error al descargar el Excel de la jornada:', error);
+        return res.status(500).json({ success: false, error: 'No se pudo entregar el Excel' });
+    }
+}
+
+module.exports = { getPeriodData, downloadExcel, parsePeriodQuery, renderReportes, cerrarJornadaManual, getJornadas, downloadJornadaExcel };

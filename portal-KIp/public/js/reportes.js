@@ -34,7 +34,55 @@
 		$$('[data-sort]').forEach(t => t.setAttribute('aria-selected', String(t.dataset.sort === S.sort)));
 	}
 
+	// Registro de jornadas: guarda la foto y el Excel del día (o de los días que faltan)
+	async function cerrar(fecha, reemplazar) {
+		const res = await fetch('/reportes/jornadas/cerrar', {
+			method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+			body: JSON.stringify({ fecha, reemplazar })
+		});
+		const data = await res.json().catch(() => ({}));
+		if (res.status === 409 && data.existe) {
+			if (!confirm(data.error)) return false;
+			return cerrar(fecha, true);
+		}
+		if (!res.ok || !data.success) throw new Error(data.error || 'No se pudo guardar la jornada');
+		return true;
+	}
+
+	function initRegistro() {
+		const bar = $('[data-registro]');
+		if (!bar) return;
+		const msg = $('[data-registro-msg]');
+		const run = async (btn, fechas, reemplazar) => {
+			btn.disabled = true;
+			msg.textContent = 'Guardando…';
+			try {
+				let hechos = 0;
+				for (const f of fechas) { if (await cerrar(f, reemplazar)) hechos++; }
+				msg.textContent = hechos ? 'Jornada guardada.' : '';
+				if (hechos) location.reload();
+			} catch (e) {
+				msg.textContent = e.message;
+			} finally {
+				btn.disabled = false;
+			}
+		};
+		const uno = $('[data-cerrar-jornada]');
+		if (uno) uno.addEventListener('click', () => {
+			const ya = bar.dataset.guardado === 'true';
+			if (ya && !confirm('Se reemplazará el registro guardado de este día con los datos de ahora. ¿Continuar?')) return;
+			run(uno, [bar.dataset.dia], ya);
+		});
+		const varios = $('[data-registrar-faltan]');
+		if (varios) varios.addEventListener('click', () => {
+			const fechas = bar.dataset.faltan.split(',').filter(Boolean);
+			if (!confirm(`Se guardarán ${fechas.length} días con los datos de ahora (los tickets activos serán los actuales, no los de ese cierre). ¿Continuar?`)) return;
+			run(varios, fechas, false);
+		});
+	}
+
 	document.addEventListener('DOMContentLoaded', () => {
+		initRegistro();
 		$$('[data-tab]').forEach(t => t.addEventListener('click', () => { if (t.dataset.tab !== 'op') S.area = ''; showTab(t.dataset.tab); }));
 		$$('[data-area-open]').forEach(el => {
 			const go = () => { S.area = el.dataset.areaOpen; showTab('op'); };

@@ -6,7 +6,7 @@
  * Funciones puras (ver scripts/test-report-view.js).
  */
 
-const { formatCaracasDate, parseCaracasDate } = require('./metricsService');
+const { formatCaracasDate, parseCaracasDate, UTC_OFFSET_HOURS } = require('./metricsService');
 const { AREA_NAMES } = require('./periodReportService');
 const { DEFAULT_RULES } = require('./rulesService');
 
@@ -20,6 +20,43 @@ function shiftMonth(iso, n) {
     const [y, m] = ymd(iso);
     const total = y * 12 + (m - 1) + n;
     return `${Math.floor(total / 12)}-${String((total % 12) + 1).padStart(2, '0')}-01`;
+}
+
+const diaCorto = iso => { const [, m, d] = ymd(iso); return `${d} ${MESES_CORTO[m - 1]}`; };
+function horaCaracas(value) {
+    const t = new Date(new Date(value).getTime() + UTC_OFFSET_HOURS * 3600000);
+    return `${diaCorto(t.toISOString().slice(0, 10))} ${t.toISOString().slice(11, 16)}`;
+}
+const ORIGEN_TXT = { AUTOMATICO: 'cierre automático', MANUAL: 'cierre manual', RECUPERADO: 'recuperado al arrancar' };
+
+/**
+ * De dónde salen las cifras (registro de jornadas o en vivo) y qué puede hacer el
+ * supervisor: guardar la jornada del día que mira o descargar su Excel guardado.
+ * @param {object|null} fuente  chooseSource() + registro { fecha, cerradoEn, origen, tieneExcel }
+ */
+function sourceView(fuente, periodo, desde) {
+    const f = fuente || { tipo: 'vivo', faltan: [], guardados: [], dias: 1, terminado: false, registro: null };
+    const dia = periodo === 'jornada' ? desde : null;
+    const reg = f.registro || null;
+    let texto;
+    if (f.tipo === 'registro') {
+        texto = dia && reg
+            ? `Registro del cierre · guardado ${horaCaracas(reg.cerradoEn)} (${ORIGEN_TXT[reg.origen] || 'cierre'})`
+            : `Registro de ${f.dias} ${f.dias === 1 ? 'jornada' : 'jornadas'} guardadas`;
+    } else if (f.faltan && f.faltan.length) {
+        const lista = f.faltan.slice(0, 4).map(diaCorto).join(', ') + (f.faltan.length > 4 ? '…' : '');
+        texto = `En vivo · ${f.faltan.length === 1 ? 'falta registrar' : `faltan ${f.faltan.length} días por registrar`}: ${lista}`;
+    } else {
+        texto = f.terminado ? 'En vivo' : `En vivo${f.guardados && f.guardados.length ? ` · ${f.guardados.length} de ${f.dias} días ya registrados` : ''}`;
+    }
+    return {
+        tipo: f.tipo,
+        texto,
+        dia,
+        guardado: Boolean(dia && reg),
+        faltan: f.faltan || [],
+        excel: dia && reg ? `/reportes/jornadas/${dia}/excel` : null
+    };
 }
 
 /** Etiqueta corta del periodo: "Martes 13 oct", "12 – 18 oct 2026", "Octubre 2026". */
@@ -54,7 +91,7 @@ const horas = min => (min === null || min === undefined ? null : Math.round((min
  * @param {object} report  salida de buildPeriodReport
  * @param {object} q       { periodo, fecha, area }
  */
-function buildReportView(report, { periodo, fecha = null, area = null, now = new Date(), metas = DEFAULT_RULES.metas } = {}) {
+function buildReportView(report, { periodo, fecha = null, area = null, now = new Date(), metas = DEFAULT_RULES.metas, fuente = report.fuente || null } = {}) {
     const r = report.resumen;
     const nav = navigation(periodo, r.desde, now);
     // Ámbar si no cumple la meta (Administración → Metas de Reportes)
@@ -133,6 +170,7 @@ function buildReportView(report, { periodo, fecha = null, area = null, now = new
             promSobreMeta: sobreMeta(horas(r.tiempoTotalMin))
         },
         metas,
+        fuente: sourceView(fuente, periodo, r.desde),
         areas,
         operadores,
         topResueltos,
@@ -142,4 +180,4 @@ function buildReportView(report, { periodo, fecha = null, area = null, now = new
     };
 }
 
-module.exports = { buildReportView, navigation, periodLabel };
+module.exports = { buildReportView, navigation, periodLabel, sourceView };

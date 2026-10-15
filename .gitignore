@@ -29,3 +29,6 @@ stitch_cache/
 # Uploads de prueba (no versionar)
 public/uploads/*
 !public/uploads/.gitkeep
+
+# Registro de jornadas (Excel diario guardado por el portal)
+portal-KIp/registros/

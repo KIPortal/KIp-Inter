@@ -25,16 +25,17 @@ Portal de tickets y estadísticas del depto. **Operaciones IP** (Inter Telecomun
 - `portal-KIp/docs/pendientes.md` — pendientes (incluye la seguridad del login aplazada).
 
 ## Arquitectura
-- Lógica pura en `src/services/` (metricsService, periodReportService, excelExportService, shiftService, simulationService, dashboardService, ticketQueueService, assignmentService, rulesService, shiftBoardService, configService, auditViewService, reportViewService, userAdminService, conversationService, operatorPanelService, roleService, contactService); controladores en `src/controllers/`; las vistas solo dibujan lo que entrega el controlador.
+- Lógica pura en `src/services/` (metricsService, periodReportService, excelExportService, shiftService, simulationService, dashboardService, ticketQueueService, assignmentService, rulesService, shiftBoardService, configService, auditViewService, reportViewService, userAdminService, conversationService, operatorPanelService, roleService, contactService, jornadaRegistroService); controladores en `src/controllers/`; las vistas solo dibujan lo que entrega el controlador.
 - Los ids de usuario son **UUID (texto)**, nunca números.
 - Las áreas son la tabla `Area` (ya no un enum): usa el catálogo vivo de `src/services/areaCatalog.js` (`AREA_NAMES`, `activeAreas()`, `isActiveArea()`), nunca listas fijas. Las áreas y los usuarios se desactivan, no se borran (`Area.activa`, `User.activo`).
 - Subgrupos de área (tabla `Subgrupo`, p. ej. FTTx: Soporte y Cabecera): se configuran en Administración > Editar área; `User.subgrupo_id` y `Ticket.subgrupo_id` son opcionales. El operador con subgrupo ve en Entrantes los de su subgrupo y los del área sin subgrupo; al asignar, un ticket sin subgrupo toma el del operador. Catálogo vivo en `areaCatalog` (`subgruposDe`, `isValidSubgrupo`, `subgrupoName`).
 
 ## Pruebas (sin framework, sin base de datos real)
-Scripts `scripts/test-*.js` con `assert`; en `package.json`: `test:metrics`, `test:tickets`, `test:period`, `test:shifts`, `test:simulation`, `test:dashboard`, `test:queue`, `test:assignment`, `test:turno`, `test:admin`, `test:audit`, `test:report-view`, `test:usuarios`, `test:areas`, `test:conversacion`, `test:operador`, `test:roles` y `test:ui` (revisión transversal de las 6 pantallas). Corre todas antes de dar algo por terminado. Estas pruebas simulan Prisma: no prueban la base real.
+Scripts `scripts/test-*.js` con `assert`; en `package.json`: `test:metrics`, `test:tickets`, `test:period`, `test:shifts`, `test:simulation`, `test:dashboard`, `test:queue`, `test:assignment`, `test:turno`, `test:admin`, `test:audit`, `test:report-view`, `test:usuarios`, `test:areas`, `test:conversacion`, `test:operador`, `test:roles`, `test:jornadas` y `test:ui` (revisión transversal de las 6 pantallas). Corre todas antes de dar algo por terminado. Estas pruebas simulan Prisma: no prueban la base real.
 
 ## Base de datos
 - Las migraciones están escritas a mano en `prisma/migrations/`; el usuario las aplica con `npx prisma migrate deploy` y luego `npx prisma generate`.
+- Registro de jornadas: cierre automático 00:05 Caracas (tabla `RegistroJornada` + Excel en `portal-KIp/registros/jornadas/AAAA/MM/`, no versionado); botón "Guardar jornada" en Reportes. Reportes usa las fotos para periodos terminados con todos sus días registrados.
 - Datos: `npm run datos:cero` (borra tickets y operadores; conserva coordinadores), `node scripts/simular-jornada.js --fecha=AAAA-MM-DD --tickets=N` (demo marcada SIM-xxx / @demo.local), `node scripts/limpiar-simulacion.js --confirmar`, `node scripts/crear-admin.js` (primer coordinador). Ya no existe seed.
 
 ## Ramas y git
