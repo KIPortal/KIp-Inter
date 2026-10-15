@@ -12,6 +12,7 @@ const { DEFAULT_RULES, mergeRules } = require('./rulesService');
 // null = no aplica a ese destinatario.
 const EVENTOS = Object.freeze([
     { clave: 'p1', nombre: 'P1 nuevo', desc: 'Llega un ticket con prioridad P1' },
+    { clave: 'resuelto', nombre: 'Ticket resuelto', desc: 'Un operador lo resolvió y espera revisión y cierre' },
     { clave: 'cola', nombre: 'Ticket en cola de espera', desc: 'Nadie del área está disponible para atenderlo' },
     { clave: 'antiguedad', nombre: 'Antigüedad superada', desc: 'Un ticket pasa el tiempo de su prioridad' },
     { clave: 'sobrecarga', nombre: 'Sobrecarga', desc: 'Un operador supera la regla de sobrecarga' },
@@ -21,6 +22,7 @@ const DESTINATARIOS = Object.freeze(['Coordinador', 'Operadores del área', 'De 
 
 const DEFAULT_AVISOS = Object.freeze({
     p1: [true, false, true],
+    resuelto: [true, null, null],
     cola: [true, null, null],
     antiguedad: [true, true, null],
     sobrecarga: [true, false, null],

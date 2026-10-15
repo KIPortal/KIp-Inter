@@ -98,6 +98,49 @@ const html = {};
         assert.ok(!require('../src/controllers/reportController').getReports);
     });
 
+    await t('Actualización en vivo: sello de cambios y páginas que se recargan solas', async () => {
+        const { buildStamp, loadStamp } = require('../src/services/changeStampService');
+        const d = new Date('2026-10-15T14:00:00Z');
+        assert.strictEqual(buildStamp([{ n: 3, max: d }, null]), '3@2026-10-15T14:00:00.000Z|-');
+        let max = d;
+        const agg = campo => ({ aggregate: async () => ({ _count: { _all: 2 }, _max: { [campo]: max } }) });
+        const fake = { INCLUDE_DELETED: {}, ticket: agg('updatedAt'), user: agg('updatedAt'), mensaje: agg('createdAt'), auditLog: { aggregate: async () => { throw new Error('sin tabla'); } } };
+        const antes = await loadStamp(fake);
+        assert.ok(antes.endsWith('|-'), 'una tabla que falla no rompe el sello');
+        max = new Date('2026-10-15T14:05:00Z');
+        assert.notStrictEqual(await loadStamp(fake), antes, 'una asignación o resolución cambia el sello');
+        ['dashboard', 'tickets', 'reportes', 'contactos', 'turno'].forEach(v =>
+            assert.ok(fs.readFileSync(path.join(root, 'views', v + '.ejs'), 'utf8').includes('<body data-vivo>'), v));
+        assert.ok(fs.readFileSync(path.join(root, 'views', 'partials', 'head.ejs'), 'utf8').includes('/js/vivo.js'));
+        assert.ok(fs.readFileSync(path.join(root, 'public', 'js', 'turno.js'), 'utf8').includes('window.kipOcupado = () => paintDirty() > 0'), 'Turno no recarga con cambios sin guardar');
+        assert.ok(fs.readFileSync(path.join(root, 'src', 'app.js'), 'utf8').includes("app.get('/api/cambios', requireAuth"));
+    });
+
+    await t('Avisos del coordinador: resueltos que esperan cierre, campana y matriz', async () => {
+        const { buildPorCerrar } = require('../src/services/closeNoticeService');
+        const { mergeAvisos, EVENTOS } = require('../src/services/configService');
+        const now = new Date('2026-10-15T15:00:00Z');
+        const lista = buildPorCerrar([
+            { codigo_incidencia: 'INC-001', asunto: 'Caída', estado_actual: 'RESUELTO', area_designada: 'WAN', resueltoEn: new Date('2026-10-15T14:30:00Z'), asignado_a: { nombre: 'Ana' } },
+            { codigo_incidencia: 'INC-002', asunto: 'Lento', estado_actual: 'RESUELTO', area_designada: 'WAN', resueltoEn: new Date('2026-10-15T14:59:40Z'), asignado_a: null },
+            { codigo_incidencia: 'INC-003', asunto: 'Abierto', estado_actual: 'EN_PROGRESO', area_designada: 'WAN' }
+        ], now);
+        assert.deepStrictEqual(lista.map(a => a.codigo), ['INC-002', 'INC-001'], 'solo RESUELTO, el más reciente primero');
+        assert.strictEqual(lista[0].hace, 'Ahora');
+        assert.strictEqual(lista[0].operador, 'Sin operador');
+        assert.strictEqual(lista[1].operador, 'Ana');
+        assert.ok(EVENTOS.some(e => e.clave === 'resuelto'));
+        assert.deepStrictEqual(mergeAvisos({}).resuelto, [true, null, null], 'llega al coordinador por defecto');
+        assert.deepStrictEqual(mergeAvisos({ resuelto: [false, true, true] }).resuelto, [false, null, null], 'se puede apagar; operadores y guardia no aplican');
+        const sidebar = path.join(root, 'views', 'partials', 'sidebar.ejs');
+        const coord = await ejs.renderFile(sidebar, { currentUser: { nombre: 'C', rol: 'JEFE' }, activo: 'dashboard' });
+        const oper = await ejs.renderFile(sidebar, { currentUser: { nombre: 'O', rol: 'OPERADOR' }, activo: 'panel' });
+        assert.ok(coord.includes('data-avisos-coord'), 'coordinador, jefe y gerente ven la campana');
+        assert.ok(!oper.includes('data-avisos-coord'), 'el operador no');
+        assert.ok(fs.readFileSync(path.join(root, 'src', 'app.js'), 'utf8').includes("app.use('/api/avisos', avisosRoutes)"));
+        assert.ok(fs.readFileSync(path.join(root, 'src', 'routes', 'avisosRoutes.js'), 'utf8').includes('requireAuth, authorizeSupervisor'));
+    });
+
     console.log(`\n   RESUMEN: ${passed}/${total} pruebas pasaron correctamente\n`);
     if (passed !== total) process.exit(1);
 })();

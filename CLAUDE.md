@@ -45,7 +45,7 @@ Scripts `scripts/test-*.js` con `assert`; en `package.json`: `test:metrics`, `te
 
 ## Pendientes conocidos
 - Rediseño del login: sigue con el estilo anterior (Tailwind CDN). El panel del operador ya es el nuevo (Fase 9: `operatorPanelService`, `public/css/operador.css`, `public/js/operador.js`; detalle con pestañas en `ticket-detalle.css` + `ticket-conversacion.js`).
-- Entrega de avisos dentro del portal: la matriz se configura en Administración; la campana del operador hoy deduce sus avisos de las colas (Fase 10 la conecta).
+- Entrega de avisos dentro del portal: la matriz se configura en Administración; la campana del operador deduce sus avisos de las colas. El coordinador, jefe o gerente tiene la campana "Por cerrar" en la barra lateral (`/api/avisos/coordinador`, `public/js/avisos.js`, evento `resuelto` de la matriz). Las pantallas con `<body data-vivo>` se recargan solas cuando cambia `/api/cambios` (`public/js/vivo.js`).
 - Telefonía: el teléfono de cada persona ya está en Contactos; falta un número fijo de guardia, si se necesita.
 - "Tiempo en horario" usa una ventana fija lun–vie 8–17 (aún no usa horarios por operador).
 - Seguridad del login (ver `docs/pendientes.md`).
