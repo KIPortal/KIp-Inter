@@ -180,4 +180,38 @@ function buildDemo({ ahora, porDia = 55, seed = 7 }) {
     };
 }
 
-module.exports = { buildSimulation, buildDemo, MARCA_REMITENTE, DOMINIO_DEMO, PREFIJO_CODIGO, OPERADORES };
+/**
+ * Reparte los tickets simulados entre operadores reales (no crea usuarios demo).
+ * Cada ticket va a un operador de su misma área; si su área no tiene operadores
+ * reales, pasa a un área que sí tenga (proporcional a cuántos operadores tiene).
+ * Los que en la simulación quedaron sin asignar siguen sin asignar.
+ * @param {Array} tickets  de buildSimulation/buildDemo (con area y operadorKey)
+ * @param {Array} reales   [{ id, nombre, area_designada, subgrupo_id? }]
+ * @returns {Array} copias de los tickets con area, operadorId, operadorNombre y subgrupoId
+ */
+function asignarAReales(tickets, reales) {
+    const porArea = new Map();
+    (reales || []).forEach(o => {
+        if (!porArea.has(o.area_designada)) porArea.set(o.area_designada, []);
+        porArea.get(o.area_designada).push(o);
+    });
+    if (!porArea.size) return null;
+    // Áreas de reemplazo: una entrada por operador, así un área con más gente recibe más
+    const relleno = [...porArea.entries()].flatMap(([area, ops]) => ops.map(() => area));
+    const turno = new Map();
+    let i = 0;
+    return tickets.map(t => {
+        const area = porArea.has(t.area) ? t.area : relleno[i++ % relleno.length];
+        const out = { ...t, area, operadorId: null, operadorNombre: null, subgrupoId: null };
+        if (t.operadorKey) {
+            const ops = porArea.get(area);
+            const n = turno.get(area) || 0;
+            const op = ops[n % ops.length];
+            turno.set(area, n + 1);
+            Object.assign(out, { operadorId: op.id, operadorNombre: op.nombre, subgrupoId: op.subgrupo_id || null });
+        }
+        return out;
+    });
+}
+
+module.exports = { buildSimulation, buildDemo, asignarAReales, MARCA_REMITENTE, DOMINIO_DEMO, PREFIJO_CODIGO, OPERADORES };

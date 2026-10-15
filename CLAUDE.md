@@ -36,7 +36,7 @@ Scripts `scripts/test-*.js` con `assert`; en `package.json`: `test:metrics`, `te
 ## Base de datos
 - Las migraciones están escritas a mano en `prisma/migrations/`; el usuario las aplica con `npx prisma migrate deploy` y luego `npx prisma generate`.
 - Registro de jornadas: cierre automático 00:05 Caracas (tabla `RegistroJornada` + Excel en `portal-KIp/registros/jornadas/AAAA/MM/`, no versionado); botón "Guardar jornada" en Reportes. Reportes usa las fotos para periodos terminados con todos sus días registrados.
-- Datos: `npm run datos:cero` (borra tickets y operadores; conserva coordinadores), `node scripts/simular-jornada.js --fecha=AAAA-MM-DD --tickets=N` (demo marcada SIM-xxx / @demo.local), `node scripts/limpiar-simulacion.js --confirmar`, `node scripts/crear-admin.js` (primer coordinador). Ya no existe seed.
+- Datos: `npm run datos:cero` (borra tickets y operadores; conserva coordinadores), `node scripts/simular-jornada.js --fecha=AAAA-MM-DD --tickets=N` (demo marcada SIM-xxx / @demo.local; con `--reales` reparte los tickets entre los operadores reales sin crear usuarios demo), `node scripts/limpiar-simulacion.js --confirmar`, `node scripts/crear-admin.js` (primer coordinador). Ya no existe seed.
 
 ## Ramas y git
 - `main` (estable), `feat/metricas-fase-a` (backend/schema), `feat/ui-fase-a` (vistas), `feat/seguridad-login` (login aplazado; NO fusionar aún: hash de claves, quitar el log de login, bloquear el acceso de desarrollo).
