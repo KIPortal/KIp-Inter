@@ -118,6 +118,7 @@ function buildQueue({ tickets = [], operators = [], now = new Date(), rules = DE
             subgrupo: t.subgrupo_id || '',
             subgrupoNombre: subgrupoName(t.subgrupo_id),
             prioridad: priorityOf(t.puntos_complejidad),
+            sugerida: priorityOf(t.puntos_complejidad) === 'SP' ? (t.prioridad_sugerida || null) : null,
             puntos: t.puntos_complejidad || 0,
             estado: t.estado_actual,
             operador: t.asignado_a ? { id: t.asignado_a.id, nombre: t.asignado_a.nombre, iniciales: initials(t.asignado_a.nombre) } : null,

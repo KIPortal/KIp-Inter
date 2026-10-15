@@ -205,6 +205,21 @@
 					h('div', { class: 'rule-row' },
 						h('span', { class: 'lbl', style: 'flex:1' }, h('span', { style: 'color:var(--t1);font-size:13px', text: 'Permitir sugerir otra área' }), h('span', { text: 'Solo cuando el coordinador lo pide desde el ticket' })),
 						sw(sg.permitirOtraArea, () => changeRules(x => { x.sugerencia.permitirOtraArea = !x.sugerencia.permitirOtraArea; }), 'Permitir sugerir otra área')))),
+			h('section', { class: 'glass card', 'aria-labelledby': 'h-pp', style: 'gap:12px' },
+				h('div', { style: 'display:flex;flex-direction:column' }, h('h2', { id: 'h-pp', class: 'card-title', text: 'Prioridad sugerida de los correos' }),
+					h('span', { class: 'hint t2', style: 'font-size:12px', text: 'Si el asunto, el texto o el remitente de un correo contiene una de estas palabras, el ticket llega con esa prioridad sugerida. Quien lo toma la confirma o la cambia. Separa con comas; sirve un dominio como @cliente.com. Gana la más alta.' })),
+				h('div', { class: 'rule-rows' }, [['P1', 'P1 Crítica', 'var(--c-red)'], ['P2', 'P2 Media', 'var(--c-amber)'], ['P3', 'P3 Baja', 'var(--c-slate)']].map(([k, label, dot]) => {
+					const lista = (r.palabrasPrioridad && r.palabrasPrioridad[k]) || [];
+					const inp = h('input', { class: 'field sm', type: 'text', style: 'flex:1;min-width:220px', value: lista.join(', '), 'aria-label': 'Palabras clave ' + label, maxlength: 1200, placeholder: 'Ninguna' });
+					inp.addEventListener('change', () => changeRules(x => {
+						x.palabrasPrioridad = x.palabrasPrioridad || {};
+						x.palabrasPrioridad[k] = inp.value.split(',').map(w => w.trim()).filter(Boolean).slice(0, L.palabras || 40);
+					}));
+					return h('div', { class: 'rule-row', style: 'flex-wrap:wrap' },
+						h('i', { class: 'pdot', style: 'background:' + dot }),
+						h('span', { class: 'lbl', style: 'min-width:90px' }, h('b', { text: label })),
+						inp);
+				}))),
 			h('section', { class: 'glass card', 'aria-labelledby': 'h-me', style: 'gap:12px' },
 				h('div', { style: 'display:flex;flex-direction:column' }, h('h2', { id: 'h-me', class: 'card-title', text: 'Metas de Reportes' }),
 					h('span', { class: 'hint t2', style: 'font-size:12px', text: 'En Reportes se marca en ámbar lo que no cumple la meta' })),
@@ -313,7 +328,7 @@
 				h('label', { class: 'dsec' }, h('b', { text: 'Teléfono o extensión (opcional)' }), input('telefono', { type: 'tel', maxlength: 40, placeholder: 'Ej. 0212-555 1234 ext 12' }),
 					h('span', { class: 't3', style: 'font-size:12px', text: 'Sale en Contactos para que el equipo sepa cómo ubicarlo' })),
 				bloqueado ? h('div', { class: 'warnbox', text: 'Solo el gerente puede editar a jefes y gerentes.' }) : null,
-				u && !esYo ? h('div', { class: 'rule-row', style: 'min-height:40px;border:0' }, h('span', { class: 'lbl', style: 'flex:1' }, h('b', { text: 'Usuario activo' }), h('span', { text: 'Desactivado no entra al portal ni recibe tickets; su historial se conserva' })), sw(M.activo, e => { M.activo = !M.activo; e.currentTarget.setAttribute('aria-checked', String(M.activo)); }, 'Usuario activo')) : null,
+				u && !esYo ? h('div', { class: 'rule-row', style: 'min-height:40px;border:0' }, h('span', { class: 'lbl', style: 'flex:1' }, h('b', { text: 'Usuario activo' }), h('span', { text: 'Desactivado no entra al portal ni recibe tickets; sus tickets activos vuelven a la cola de su área y su historial se conserva' })), sw(M.activo, e => { M.activo = !M.activo; e.currentTarget.setAttribute('aria-checked', String(M.activo)); }, 'Usuario activo')) : null,
 				h('div', { class: 'dsec' }, h('b', { text: u ? 'Nueva clave temporal (opcional)' : 'Clave temporal' }),
 					h('div', { style: 'display:flex;gap:8px' }, claveIn,
 						h('button', { type: 'button', class: 'pill pillbtn plain', style: 'height:34px;font-size:12px', text: 'Generar', onclick: () => { M.clave = genClave(); claveIn.value = M.clave; } }))),
@@ -336,7 +351,8 @@
 				let j = {};
 				try { j = await res.json(); } catch (e) { /* sin cuerpo */ }
 				if (!res.ok || !j.success) throw new Error(j.error || 'Error ' + res.status);
-				const msg = u ? 'Los cambios quedaron en Auditoría' : (M.clave ? 'Clave temporal: ' + M.clave : '');
+				const dev = (j.devueltos || []).length;
+				const msg = u ? (dev ? (dev === 1 ? '1 ticket activo volvió' : dev + ' tickets activos volvieron') + ' a la cola de su área. ' : '') + 'Los cambios quedaron en Auditoría' : (M.clave ? 'Clave temporal: ' + M.clave : '');
 				try { sessionStorage.setItem('kip.toast', JSON.stringify({ title: u ? 'Usuario actualizado' : 'Usuario creado', msg })); } catch (e) { /* nada */ }
 				leaving = true;
 				window.location.reload();

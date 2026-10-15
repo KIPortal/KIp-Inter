@@ -76,7 +76,7 @@ const emailDe = key => `${key}@${DOMINIO_DEMO}`;
  * @param {Date}   [o.ahora]   si la fecha es hoy, nada ocurre después de este instante
  * @param {number} [o.desde]   número del primer código SIM-xxx (para simular varios días)
  */
-function buildSimulation({ fecha, cantidad = 40, seed = 7, ahora = null, desde = 1 }) {
+function buildSimulation({ fecha, cantidad = 40, seed = 7, ahora = null, desde = 1, sinAsignar = 7 }) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha || '')) throw new Error('fecha inválida (AAAA-MM-DD)');
     const rand = rng(seed);
     const randEstado = rng(seed + 1000); // aparte, para no alterar el resto de la simulación
@@ -115,7 +115,7 @@ function buildSimulation({ fecha, cantidad = 40, seed = 7, ahora = null, desde =
         const elegido = t.area === 'WAN' && rand() < 0.8 ? ops[0]
             : [...ops].sort((a, b) => carga.get(a.key) - carga.get(b.key))[0];
         const asignado = t.creado + (3 + Math.floor(rand() * 25)) * min;
-        if (asignado >= limite || rand() < 0.07) continue; // algunos quedan sin asignar
+        if (asignado >= limite || rand() < sinAsignar / 100) continue; // algunos quedan en la cola del área, sin asignar
         t.operadorKey = elegido.key; t.asignado = asignado; t.estado = 'EN_PROGRESO';
         const base = { P1: 90, P2: 150, P3: 70, NONE: 100 }[t.prioridad];
         const resuelto = asignado + Math.max(10, Math.round(base * (0.4 + rand() * 1.4))) * min;
@@ -149,8 +149,9 @@ const ymd = ms => new Date(ms - 4 * 3600000).toISOString().slice(0, 10);
  * @param {Date}   o.ahora
  * @param {number} [o.porDia]  tickets de un día completo (por defecto 55)
  * @param {number} [o.seed]
+ * @param {number} [o.sinAsignar]  % de los tickets de hoy que quedan en la cola del área (por defecto 7)
  */
-function buildDemo({ ahora, porDia = 55, seed = 7 }) {
+function buildDemo({ ahora, porDia = 55, seed = 7, sinAsignar = 7 }) {
     const nowMs = new Date(ahora).getTime();
     const hoy = ymd(nowMs);
     const ayer = ymd(nowMs - DAY_MS);
@@ -162,7 +163,8 @@ function buildDemo({ ahora, porDia = 55, seed = 7 }) {
     const cantidadHoy = Math.max(3, Math.round(porDia * llegado / total));
 
     const diaAyer = buildSimulation({ fecha: ayer, cantidad: porDia, seed, desde: 1 });
-    const diaHoy = buildSimulation({ fecha: hoy, cantidad: cantidadHoy, seed: seed + 1, ahora: new Date(nowMs), desde: porDia + 1 });
+    // El % sin asignar solo aplica a hoy: ayer el coordinador ya repartió todo lo que pudo
+    const diaHoy = buildSimulation({ fecha: hoy, cantidad: cantidadHoy, seed: seed + 1, ahora: new Date(nowMs), desde: porDia + 1, sinAsignar });
 
     // Traspaso de anoche (16:45): pendientes de ayer, que no cambian de operador
     const pendientes = diaAyer.tickets.filter(t => ['NUEVO', 'EN_PROGRESO', 'EN_PAUSA', 'EN_ESPERA_TERCEROS'].includes(t.estado)).map(t => t.codigo);
@@ -180,4 +182,38 @@ function buildDemo({ ahora, porDia = 55, seed = 7 }) {
     };
 }
 
-module.exports = { buildSimulation, buildDemo, MARCA_REMITENTE, DOMINIO_DEMO, PREFIJO_CODIGO, OPERADORES };
+/**
+ * Reparte los tickets simulados entre operadores reales (no crea usuarios demo).
+ * Cada ticket va a un operador de su misma área; si su área no tiene operadores
+ * reales, pasa a un área que sí tenga (proporcional a cuántos operadores tiene).
+ * Los que en la simulación quedaron sin asignar siguen sin asignar.
+ * @param {Array} tickets  de buildSimulation/buildDemo (con area y operadorKey)
+ * @param {Array} reales   [{ id, nombre, area_designada, subgrupo_id? }]
+ * @returns {Array} copias de los tickets con area, operadorId, operadorNombre y subgrupoId
+ */
+function asignarAReales(tickets, reales) {
+    const porArea = new Map();
+    (reales || []).forEach(o => {
+        if (!porArea.has(o.area_designada)) porArea.set(o.area_designada, []);
+        porArea.get(o.area_designada).push(o);
+    });
+    if (!porArea.size) return null;
+    // Áreas de reemplazo: una entrada por operador, así un área con más gente recibe más
+    const relleno = [...porArea.entries()].flatMap(([area, ops]) => ops.map(() => area));
+    const turno = new Map();
+    let i = 0;
+    return tickets.map(t => {
+        const area = porArea.has(t.area) ? t.area : relleno[i++ % relleno.length];
+        const out = { ...t, area, operadorId: null, operadorNombre: null, subgrupoId: null };
+        if (t.operadorKey) {
+            const ops = porArea.get(area);
+            const n = turno.get(area) || 0;
+            const op = ops[n % ops.length];
+            turno.set(area, n + 1);
+            Object.assign(out, { operadorId: op.id, operadorNombre: op.nombre, subgrupoId: op.subgrupo_id || null });
+        }
+        return out;
+    });
+}
+
+module.exports = { buildSimulation, buildDemo, asignarAReales, MARCA_REMITENTE, DOMINIO_DEMO, PREFIJO_CODIGO, OPERADORES };

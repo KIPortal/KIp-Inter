@@ -175,7 +175,7 @@
 		const err = h('span', { class: 'err', role: 'alert', hidden: true });
 		const acts = actionsFor(t).map(([label, c, act]) => h('button', { type: 'button', class: c, 'data-act': act, 'data-code': t.code, text: label }));
 		return h('div', { class: cls, style: 'animation-delay:' + Math.min(i, 12) * 30 + 'ms', 'data-row': t.code },
-			h('span', { class: 'ppill ' + t.p, title: pr.label, text: pr.short }),
+			h('span', { class: 'ppill ' + t.p, title: t.sugerida ? 'Sin prioridad · sugerida ' + t.sugerida + ' por palabras clave; la eliges al tomarlo' : pr.label, text: t.sugerida ? 'S/P · ' + t.sugerida + '?' : pr.short }),
 			h('div', { class: 'tmain' },
 				h('span', null, h('span', { class: 'tcode', text: t.code }), h('button', { type: 'button', class: 'tlink', 'data-open': t.code, title: 'Ver detalles de ' + t.code, text: t.subject })),
 				h('span', null, tags, h('span', { class: 'tmeta' + (t.alerta ? ' alert' : ''), text: t.meta }))),
@@ -394,6 +394,21 @@
 		});
 	}
 
+	// Ticket sin prioridad (p. ej. llegó por correo): se elige al tomarlo, partiendo de la sugerida
+	function prioritySheet(t, btn) {
+		let elegida = t.sugerida || '';
+		const body = [
+			h('span', { class: 'flabel', text: t.sugerida ? 'Sugerida por palabras clave: ' + t.sugerida + '. Confírmala o cámbiala' : 'Elige la prioridad según el impacto del caso' }),
+			seg([['P1', 'P1 Crítica · 8 pts'], ['P2', 'P2 Media · 5 pts'], ['P3', 'P3 Baja · 1 pt']], elegida, k => { elegida = k; }),
+			h('span', { class: 't2', style: 'font-size:12px', text: 'Los puntos suman a tu carga al resolverlo. El coordinador puede corregirla.' })
+		];
+		openSheet((t.cola === 'asignados' ? 'Empezar ' : 'Tomar ') + t.code, t.subject, body, t.cola === 'asignados' ? 'Empezar' : 'Tomar', async () => {
+			if (!elegida) throw new Error('Elige una prioridad');
+			closeSheet();
+			await act('claim', t.code, btn, elegida);
+		});
+	}
+
 	function awaySheet() {
 		const prev = fuera() || {};
 		let motivo = prev.motivo || MOTIVOS[0];
@@ -434,10 +449,11 @@
 	}
 
 	// ---------- Acciones sobre tickets ----------
-	async function act(action, code, btn) {
+	async function act(action, code, btn, prioridad) {
 		const t = BY_CODE[code] || { code, subject: '' };
 		if (action === 'open') return openTicketDetails(code);
 		if (action === 'pause' || action === 'resolve') { closeTicketDetailsModal(); return statusSheet(action, t); }
+		if (action === 'claim' && t.p === 'SP' && !prioridad) { closeTicketDetailsModal(); return prioritySheet(t, btn); }
 		if (S.busy) return;
 		S.busy = true;
 		const all = Array.from(document.querySelectorAll('button[data-act]'));
@@ -445,7 +461,7 @@
 		if (btn) btn.textContent = action === 'claim' ? (t.cola === 'asignados' ? 'Empezando…' : 'Tomando…') : 'Actualizando…';
 		try {
 			if (action === 'claim') {
-				await api('/api/tickets/' + encodeURIComponent(code) + '/claim', 'POST');
+				await api('/api/tickets/' + encodeURIComponent(code) + '/claim', 'POST', prioridad ? { prioridad } : undefined);
 				done(t.cola === 'asignados' ? 'Ticket en atención' : 'Ticket tomado', code + ' pasó a En atención', t.cola === 'asignados' ? 'blue' : 'green');
 			} else if (action === 'resume') {
 				await api('/api/tickets/' + encodeURIComponent(code) + '/status', 'PATCH', { status: 'EN_PROGRESO' });

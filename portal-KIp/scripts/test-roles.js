@@ -140,7 +140,7 @@ const OP = { id: 'o1', rol: 'OPERADOR', area_designada: 'WAN' };
         let where = null;
         await con({
             ticket: {
-                findUnique: async ({ where: w }) => (w.codigo_incidencia ? { id: 't1', estado_actual: 'NUEVO', asignado_a_id: null, area_designada: w.codigo_incidencia === 'INC-1' ? 'WAN' : 'TELEFONIA' } : { id: 't1', codigo_incidencia: 'INC-1' }),
+                findUnique: async ({ where: w }) => (w.codigo_incidencia ? { id: 't1', estado_actual: 'NUEVO', asignado_a_id: null, puntos_complejidad: 1, area_designada: w.codigo_incidencia === 'INC-1' ? 'WAN' : 'TELEFONIA' } : { id: 't1', codigo_incidencia: 'INC-1' }),
                 updateMany: async ({ where: w }) => { where = w; return { count: 1 }; }
             },
             auditLog: { create: async () => ({}) }

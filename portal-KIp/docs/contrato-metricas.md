@@ -70,6 +70,7 @@ Campo `User.atiende_tickets` (migración `20261014180000_coordinador_atiende`), 
 
 - Tabla `Subgrupo { id, area_codigo, nombre, activo, orden }` (migración `20261015000000_subgrupos`); `User.subgrupo_id` y `Ticket.subgrupo_id` opcionales (al borrar: null).
 - Administración: `POST /api/admin/areas/:codigo/subgrupos { nombre }` (409 si se repite en el área), `PATCH /api/admin/subgrupos/:id { nombre?, activo? }` (409 al desactivar con personas activas o tickets activos). Usuarios: `subgrupo` (id o vacío) en `POST/PATCH /api/admin/usuarios`; debe ser activo y de su área; si cambia de área sin elegir otro, queda sin subgrupo.
+- `PATCH /api/admin/usuarios/:id { activo: false }`: los tickets activos de esa persona vuelven a NUEVO sin asignar (auditoría `TICKET_DESASIGNADO`); la respuesta trae `devueltos: [códigos]`.
 - Tickets: `POST /api/tickets { subgrupoId? }`, `PATCH /api/tickets/:code { subgrupo_id }` (validados contra el área final). Al asignar, si el ticket no tiene subgrupo toma el del operador (misma área); si cambia de área, se quita.
 - `buildQueue`: `areas[].subgrupos[{id,nombre}]` (activos), `tickets[].subgrupo/subgrupoNombre`, `operadores[].subgrupo/subgrupoNombre`. El filtro Área acepta `AREA|subgrupo`.
 - `buildCoordinatorPanel`: `areas[] = { codigo, nombre, abiertos, sinAsignar, total, puntos, personas, capacidad, porcentaje, resueltos, promedioHoras, operadores }`. `porcentaje` es la saturación: puntos abiertos (P1=8, P2=5, P3 y sin prioridad=1) ÷ (personas en turno o de guardia, no ausentes, × `reglas.capacidad.puntosPorPersona`, 16 por defecto). Sin nadie en turno y con abiertos = 100.
@@ -87,3 +88,8 @@ Campo `User.atiende_tickets` (migración `20261014180000_coordinador_atiende`), 
 - `GET /reportes/jornadas?desde=&hasta=&limite=`: lista de jornadas registradas con `creados`, `resueltos`, `activos`, `puntos`, `tieneExcel`.
 - `GET /reportes/jornadas/:fecha/excel`: Excel guardado de ese día (el jefe recibe uno regenerado solo con su área; si el archivo no está en disco se regenera desde la foto).
 - `npm run datos:cero` borra también el registro de jornadas (los Excel en disco se conservan); `limpiar-simulacion` quita SIM-xxx y los usuarios @demo.local de las fotos y recalcula su resumen. Cada foto lleva `datos.v` (versión de su forma).
+
+## Prioridad de los tickets de correo
+- Al llegar un correo, `rulesService.sugerirPrioridad` busca las palabras clave de `reglas.palabrasPrioridad` (`{ P1: [], P2: [], P3: [] }`, editables en Administración → Reglas) en asunto, texto y remitente (sin tildes ni mayúsculas, palabra completa; gana la más alta) y guarda `Ticket.prioridad_sugerida`. Los puntos siguen en 0.
+- `POST /api/tickets/:codigo/claim` con un ticket sin prioridad exige `{ prioridad: 'P1'|'P2'|'P3' }`; sin ella responde 422 `{ requierePrioridad: true, sugerida }`. La auditoría (TICKET_TOMADO) dice qué prioridad se eligió y cuál era la sugerida.
+- Filas: `sugerida` en la bandeja del operador (operatorPanelService) y en la cola de Tickets (ticketQueueService), solo cuando el ticket no tiene prioridad.

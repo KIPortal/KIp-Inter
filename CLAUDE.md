@@ -9,7 +9,7 @@ Portal de tickets y estadísticas del depto. **Operaciones IP** (Inter Telecomun
 
 ## Reglas de negocio (no cambiar sin preguntar)
 - Tiempo medido desde la llegada del ticket; se usa **promedio**, no mediana. No usar las palabras "SLA" ni "DERS".
-- Prioridad y puntos los fija el coordinador: P1=8, P2=5, P3=1, sin prioridad=0.
+- Prioridad y puntos los fija el coordinador: P1=8, P2=5, P3=1, sin prioridad=0. Excepción (decidido 2026-10-15): un ticket sin prioridad (p. ej. de correo) no se puede tomar sin elegirla; quien lo toma la elige partiendo de `Ticket.prioridad_sugerida` (palabras clave de Administración → Reglas, `rulesService.sugerirPrioridad`), y el coordinador puede corregirla.
 - El operador resuelve (RESUELTO); el coordinador cierra (CERRADO).
 - Roles: OPERADOR, COORDINADOR (todas las áreas), JEFE (solo su área: Dashboard, Tickets, Turno y Reportes limitados; no entra a Administración ni Auditoría) y GERENTE (todas las áreas; administra usuarios, roles y áreas; es el único que da o quita los roles Jefe y Gerente; mientras no haya un gerente activo, el coordinador puede nombrar al primero). Usa `roleService` (`esSupervisor`, `puedeAdministrar`, `ticketWhere`, `personaWhere`, `authorizeSupervisor`, `authorizeAdmin`) y el middleware `limitarAlArea` en rutas de tickets; nunca `rol === 'COORDINADOR'` a secas para "quién coordina".
 - Un coordinador o jefe marcado "Atiende tickets" (`User.atiende_tickets`) también toma y trabaja casos (Mi panel) y cuenta como operador en carga, turnos y reportes. Usa `roleService` (`atiendeTickets`, `ATIENDE_WHERE`), nunca `rol: 'OPERADOR'` a secas para "quién atiende".
@@ -27,7 +27,7 @@ Portal de tickets y estadísticas del depto. **Operaciones IP** (Inter Telecomun
 ## Arquitectura
 - Lógica pura en `src/services/` (metricsService, periodReportService, excelExportService, shiftService, simulationService, dashboardService, ticketQueueService, assignmentService, rulesService, shiftBoardService, configService, auditViewService, reportViewService, userAdminService, conversationService, operatorPanelService, roleService, contactService, jornadaRegistroService); controladores en `src/controllers/`; las vistas solo dibujan lo que entrega el controlador.
 - Los ids de usuario son **UUID (texto)**, nunca números.
-- Las áreas son la tabla `Area` (ya no un enum): usa el catálogo vivo de `src/services/areaCatalog.js` (`AREA_NAMES`, `activeAreas()`, `isActiveArea()`), nunca listas fijas. Las áreas y los usuarios se desactivan, no se borran (`Area.activa`, `User.activo`).
+- Las áreas son la tabla `Area` (ya no un enum): usa el catálogo vivo de `src/services/areaCatalog.js` (`AREA_NAMES`, `activeAreas()`, `isActiveArea()`), nunca listas fijas. Las áreas y los usuarios se desactivan, no se borran (`Area.activa`, `User.activo`). Al desactivar a una persona, sus tickets activos vuelven a la cola de su área (NUEVO, sin asignar, con su prioridad) y queda en Auditoría.
 - Subgrupos de área (tabla `Subgrupo`, p. ej. FTTx: Soporte y Cabecera): se configuran en Administración > Editar área; `User.subgrupo_id` y `Ticket.subgrupo_id` son opcionales. El operador con subgrupo ve en Entrantes los de su subgrupo y los del área sin subgrupo; al asignar, un ticket sin subgrupo toma el del operador. Catálogo vivo en `areaCatalog` (`subgruposDe`, `isValidSubgrupo`, `subgrupoName`).
 
 ## Pruebas (sin framework, sin base de datos real)
@@ -36,7 +36,7 @@ Scripts `scripts/test-*.js` con `assert`; en `package.json`: `test:metrics`, `te
 ## Base de datos
 - Las migraciones están escritas a mano en `prisma/migrations/`; el usuario las aplica con `npx prisma migrate deploy` y luego `npx prisma generate`.
 - Registro de jornadas: cierre automático 00:05 Caracas (tabla `RegistroJornada` + Excel en `portal-KIp/registros/jornadas/AAAA/MM/`, no versionado); botón "Guardar jornada" en Reportes. Reportes usa las fotos para periodos terminados con todos sus días registrados.
-- Datos: `npm run datos:cero` (borra tickets y operadores; conserva coordinadores), `node scripts/simular-jornada.js --fecha=AAAA-MM-DD --tickets=N` (demo marcada SIM-xxx / @demo.local), `node scripts/limpiar-simulacion.js --confirmar`, `node scripts/crear-admin.js` (primer coordinador). Ya no existe seed.
+- Datos: `npm run datos:cero` (borra tickets y operadores; conserva coordinadores), `node scripts/simular-tickets.js [--fecha=AAAA-MM-DD --tickets=N --sin-asignar=N]` (solo tickets SIM-xxx repartidos entre los operadores reales; nunca modifica usuarios), `node scripts/simular-jornada.js --fecha=AAAA-MM-DD --tickets=N` (demo marcada SIM-xxx / @demo.local; con `--reales` reparte los tickets entre los operadores reales sin crear usuarios demo; `--sin-asignar=N` deja N % de los de hoy en la cola del área), `node scripts/limpiar-simulacion.js --confirmar`, `node scripts/crear-admin.js` (primer coordinador). Ya no existe seed.
 
 ## Ramas y git
 - `main` (estable), `feat/metricas-fase-a` (backend/schema), `feat/ui-fase-a` (vistas), `feat/seguridad-login` (login aplazado; NO fusionar aún: hash de claves, quitar el log de login, bloquear el acceso de desarrollo).

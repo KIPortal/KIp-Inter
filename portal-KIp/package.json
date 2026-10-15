@@ -13,6 +13,7 @@
     "test:shifts": "node scripts/test-shifts.js",
     "datos:cero": "node scripts/reiniciar-datos.js --confirmar",
     "simular": "node scripts/simular-jornada.js",
+    "simular:tickets": "node scripts/simular-tickets.js",
     "simular:limpiar": "node scripts/limpiar-simulacion.js --confirmar",
     "test:simulation": "node scripts/test-simulation.js",
     "test:dashboard": "node scripts/test-dashboard.js",

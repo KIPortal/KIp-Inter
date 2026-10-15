@@ -99,17 +99,26 @@ const ORIGINAL = cat.allAreas();
         assert.strictEqual(logs.pop().detalles, 'WAN: nombre: WAN → WAN Core, desactivada');
     });
 
-    await t('Desactivar usuario: nunca a sí mismo ni con tickets activos', async () => {
+    await t('Desactivar usuario: nunca a sí mismo; sus tickets activos vuelven a la cola', async () => {
         prisma.user.findUnique = async ({ where }) => ({ id: where.id, nombre: 'Ana', email: 'a@x.com', rol: 'OPERADOR', area_designada: 'WAN', activo: true });
         const r = res();
         await ctrl.updateUser({ params: { id: 'c1' }, body: { activo: false }, user: { id: 'c1', rol: 'COORDINADOR' } }, r);
         assert.strictEqual(r.code, 409);
-        prisma.ticket.count = async () => 3;
+        let movidos = null;
+        prisma.ticket.count = async () => 2;
+        prisma.ticket.findMany = async ({ where }) => { assert.strictEqual(where.asignado_a_id, 'o1'); return [{ id: 't1', codigo_incidencia: 'INC-001' }, { id: 't2', codigo_incidencia: 'INC-002' }]; };
+        prisma.ticket.updateMany = async (q) => { movidos = q; return { count: 2 }; };
+        prisma.user.update = async () => ({ id: 'o1', nombre: 'Ana', email: 'a@x.com', rol: 'OPERADOR', area_designada: 'WAN' });
         const r2 = res();
         await ctrl.updateUser({ params: { id: 'o1' }, body: { activo: false }, user: { id: 'c1', rol: 'COORDINADOR' } }, r2);
-        assert.strictEqual(r2.code, 409);
-        prisma.ticket.count = async () => 0;
-        prisma.user.update = async () => ({ id: 'o1', nombre: 'Ana', email: 'a@x.com', rol: 'OPERADOR', area_designada: 'WAN' });
+        assert.strictEqual(r2.code, 200);
+        assert.deepStrictEqual(r2.body.devueltos, ['INC-001', 'INC-002']);
+        assert.deepStrictEqual(movidos.where.id, { in: ['t1', 't2'] });
+        assert.deepStrictEqual(movidos.data, { asignado_a_id: null, estado_actual: 'NUEVO', fecha_asignacion: null });
+        const ultimo = logs.pop();
+        assert.ok(ultimo.detalles.startsWith('Ana: desactivado; 2 tickets activos volvieron a la cola'), ultimo.detalles);
+        assert.ok(logs.some(l => l.accion === 'TICKET_DESASIGNADO' && l.ticketId === 't1'));
+        prisma.ticket.findMany = async () => [];
         const r3 = res();
         await ctrl.updateUser({ params: { id: 'o1' }, body: { activo: false }, user: { id: 'c1', rol: 'COORDINADOR' } }, r3);
         assert.strictEqual(r3.code, 200);

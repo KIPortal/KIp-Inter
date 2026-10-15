@@ -163,6 +163,7 @@ function buildRow(ticket, k, { now, myArea, rules, operatorName }) {
         subject: ticket.asunto || 'Sin asunto',
         p,
         pts: ticket.puntos_complejidad || 0,
+        sugerida: p === 'SP' ? (ticket.prioridad_sugerida || null) : null,
         estado: ticket.estado_actual,
         cola: k,
         area,
