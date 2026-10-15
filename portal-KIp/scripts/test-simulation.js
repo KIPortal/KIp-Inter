@@ -98,5 +98,16 @@ t('--reales: reparte entre operadores reales por área, sin crear usuarios demo'
     assert.strictEqual(asignarAReales(sim.tickets, []), null);
 });
 
+t('--sin-asignar: deja más tickets de hoy en la cola del área, sin tocar ayer', () => {
+    const ahora = new Date('2026-10-15T19:40:00Z');
+    const base = buildDemo({ ahora });
+    const cola = buildDemo({ ahora, sinAsignar: 40 });
+    const sin = d => d.tickets.filter(x => !x.operadorKey);
+    assert.ok(sin(cola.dias[1]).length > sin(base.dias[1]).length * 2, `${sin(cola.dias[1]).length} vs ${sin(base.dias[1]).length}`);
+    assert.ok(sin(cola.dias[1]).every(x => x.estado === 'NUEVO' && !x.asignado));
+    assert.strictEqual(sin(cola.dias[0]).length, sin(base.dias[0]).length, 'ayer igual');
+    assert.deepStrictEqual(buildDemo({ ahora, sinAsignar: 7 }).tickets.map(x => x.operadorKey), base.tickets.map(x => x.operadorKey), 'por defecto, igual que antes');
+});
+
 console.log(`\n   RESUMEN: ${passed}/${total} pruebas pasaron correctamente\n`);
 process.exit(passed === total ? 0 : 1);

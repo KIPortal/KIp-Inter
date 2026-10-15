@@ -6,6 +6,8 @@
  *   node scripts/simular-jornada.js --fecha=2026-10-12 --tickets=40 [--seed=7]  → un solo día
  *   Agregue --reales para repartir los tickets entre sus operadores reales (no crea usuarios
  *   demo ni cambia estados, horarios o guardias). Sirve con cualquiera de los dos modos.
+ *   --sin-asignar=30 deja ese % de los tickets de hoy en la cola de su área, sin operador
+ *   (por defecto 7). Los que llegaron en la última media hora tampoco están asignados aún.
  *
  * Todo queda marcado (remitente SIMULACION, códigos SIM-xxx, usuarios @demo.local).
  * Para borrarlo: node scripts/limpiar-simulacion.js --confirmar
@@ -22,9 +24,10 @@ const arg = (n, d) => { const a = process.argv.find(x => x.startsWith(`--${n}=`)
 (async () => {
     const seed = Number(arg('seed', 7));
     const fecha = arg('fecha');
+    const sinAsignar = Math.min(Math.max(Number(arg('sin-asignar', 7)) || 0, 0), 100);
     const sim = fecha
-        ? (s => ({ operadores: s.operadores, tickets: s.tickets, traspaso: null, dias: [{ fecha, tickets: s.tickets }] }))(buildSimulation({ fecha, cantidad: Number(arg('tickets', 40)), seed }))
-        : buildDemo({ ahora: new Date(), porDia: Number(arg('tickets', 55)), seed });
+        ? (s => ({ operadores: s.operadores, tickets: s.tickets, traspaso: null, dias: [{ fecha, tickets: s.tickets }] }))(buildSimulation({ fecha, cantidad: Number(arg('tickets', 40)), seed, sinAsignar }))
+        : buildDemo({ ahora: new Date(), porDia: Number(arg('tickets', 55)), seed, sinAsignar });
 
     const existentes = await prisma.ticket.count({ where: { ...prisma.INCLUDE_DELETED, codigo_incidencia: { startsWith: PREFIJO_CODIGO } } });
     if (existentes) { console.error('Ya hay una simulación cargada. Ejecute primero: node scripts/limpiar-simulacion.js --confirmar'); process.exit(1); }
@@ -98,7 +101,7 @@ const arg = (n, d) => { const a = process.argv.find(x => x.startsWith(`--${n}=`)
         });
     }
 
-    sim.dias.forEach(d => console.log(`Jornada ${d.fecha}: ${d.tickets.length} tickets.`));
+    sim.dias.forEach(d => console.log(`Jornada ${d.fecha}: ${d.tickets.length} tickets, ${d.tickets.filter(t => !t.operadorKey).length} en cola sin asignar.`));
     if (!reales) console.log(`${sim.operadores.length} operadores demo (${sim.operadores.filter(o => o.guardia).length} de guardia hoy)${sim.traspaso ? `, traspaso de anoche con ${sim.traspaso.codigos.length} pendientes` : ''}.`);
     console.log('Limpieza: node scripts/limpiar-simulacion.js --confirmar');
     await prisma.$disconnect();
