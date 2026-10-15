@@ -135,6 +135,11 @@
 		const saved = JSON.parse(sessionStorage.getItem('kip.tickets.f') || 'null');
 		if (saved) Object.assign(S.f, saved);
 	} catch (e) { /* sin filtros guardados */ }
+	// Desde la campana "Por cerrar": solo los resueltos que esperan cierre
+	if (window.location.hash === '#por-cerrar') {
+		Object.assign(S.f, DEF, { estado: 'RESUELTO' });
+		try { sessionStorage.setItem('kip.tickets.f', JSON.stringify(S.f)); history.replaceState(null, '', location.pathname + '#tickets'); } catch (e) { /* nada */ }
+	}
 	// Actualización en vivo (vivo.js): no recargar con una selección o búsqueda a medias
 	window.kipOcupado = () => S.sel.size > 0 || !!S.q;
 	const saveFilters = () => { try { sessionStorage.setItem('kip.tickets.f', JSON.stringify(S.f)); } catch (e) { /* nada */ } };
