@@ -8,8 +8,11 @@
 <head>
 	<%- include('partials/head', { titulo: 'Contactos' }) %>
 	<style>
-		.ct-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; align-items: start; }
-		.ct-area { display: flex; flex-direction: column; padding: 14px 0 6px; min-width: 0; }
+		.ct-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; align-items: stretch; }
+		.ct-area { display: flex; flex-direction: column; padding: 14px 0 6px; min-width: 0; height: 360px; }
+		/* Todas las tarjetas miden lo mismo; la lista de personas se desplaza por dentro */
+		.ct-area[hidden], .ct-p[hidden] { display: none; }
+		.ct-list { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
 		.ct-area h2 { margin: 0; padding: 0 18px 8px; font-size: 14px; font-weight: 700; display: flex; align-items: baseline; gap: 8px; }
 		.ct-area h2 span { font-size: 12px; font-weight: 500; color: var(--t2); }
 		.ct-p { display: flex; align-items: center; gap: 10px; padding: 9px 18px; border-top: 1px solid var(--sep2); min-width: 0; }
@@ -24,6 +27,7 @@
 		.ct-me .field { width: 220px; height: 34px; }
 		@media (max-width: 640px) {
 			.ct-grid { grid-template-columns: 1fr; }
+			.ct-area { height: auto; max-height: 420px; }
 			.ct-p .act .lbl { display: none; }
 			.ct-btn { height: 40px; min-width: 40px; }
 			.ct-me .field { flex: 1; width: auto; }
@@ -61,6 +65,7 @@
 			<% v.grupos.forEach(g => { %>
 				<section class="glass ct-area" data-ct-area>
 					<h2><%= g.nombre %><span><%= g.personas.length %></span></h2>
+					<div class="ct-list">
 					<% g.personas.forEach(p => { %>
 						<div class="ct-p" data-ct-p="<%= (p.nombre + ' ' + g.nombre + ' ' + p.rolTxt + ' ' + p.email).toLowerCase() %>">
 							<span class="avatar"><%= p.iniciales %><% if (p.estado) { %><i class="st st-<%= p.estado.grupo %>"></i><% } %></span>
@@ -80,6 +85,7 @@
 							</span>
 						</div>
 					<% }) %>
+					</div>
 				</section>
 			<% }) %>
 		</div>
