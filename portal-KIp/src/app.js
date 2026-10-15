@@ -27,6 +27,9 @@ if (!sessionSecret) {
 	throw new Error('SESSION_SECRET debe estar configurado en producción');
 }
 
+// Detrás de un túnel (cloudflared, ngrok) o un proxy local, confiar en X-Forwarded-Proto
+// solo cuando la conexión viene de la misma máquina; así la cookie segura de producción funciona con https.
+app.set('trust proxy', 'loopback');
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '..', 'views'));
 // Versión de los archivos estáticos: cambia en cada arranque para que el navegador no use JS/CSS viejos
