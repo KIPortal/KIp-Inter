@@ -7,7 +7,8 @@
 	const nivelTexto = pct => pct >= 60 ? 't-red' : (pct >= 40 ? 't-orange' : '');
 	const enTurno = panel.turno.grupos.filter(g => g.clave !== 'fuera').reduce((n, g) => n + g.personas.length, 0);
 	const totalOps = panel.turno.grupos.reduce((n, g) => n + g.personas.length, 0);
-	const areaInicial = panel.areas.length ? panel.areas[0].codigo : null;
+	// Todas las áreas empiezan plegadas; el coordinador abre la que quiera ver
+	const areaInicial = null;
 
 	// Escala del gráfico de resolución: múltiplo de 4 h, mínimo 8 h
 	const maxHoras = Math.max(0, ...panel.resolucion.areas.map(a => a.horas));
