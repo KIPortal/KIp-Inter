@@ -35,6 +35,7 @@ function fakePrisma({ tickets = [], operators = ops } = {}) {
                 if (where.fecha?.lte) out = out.filter(f => f.fecha <= where.fecha.lte);
                 return out.sort((x, y) => y.fecha.localeCompare(x.fecha));
             },
+            update: async ({ where, data }) => { const f = { ...filas.get(where.fecha), ...JSON.parse(JSON.stringify(data)) }; filas.set(where.fecha, f); return f; },
             upsert: async ({ where, create, update }) => {
                 const prev = filas.get(where.fecha);
                 // Como Postgres: el JSON sale de la base como texto, no como Date
@@ -153,6 +154,19 @@ const conPrisma = p => { p.ticket._p = p; p.user._p = p; return p; };
         fs.rmSync(path.join(dir, '2026/10/jornada-2026-10-13.xlsx'));
         assert.ok((await svc.excelDeJornada(p, dia, { dir })).buffer.length > 0, 'sin archivo en disco se regenera desde la foto');
         assert.ok((await svc.excelDeJornada(p, '2026-01-01', { dir })).noExiste);
+    });
+
+    await t('Depurar simulación: quita SIM-xxx y usuarios demo de las fotos y recalcula', async () => {
+        p.live.tickets = [vivos[0], tk({ codigo_incidencia: 'SIM-001', createdAt: at('12:00', '2026-10-16'), asignado_a: { id: 'demo', nombre: 'Demo' } })];
+        p.live.operators = [...ops, { id: 'demo', nombre: 'Demo', area_designada: 'WAN', estado_operativo: 'DISPONIBLE' }];
+        await svc.cerrarJornada(p, { fecha: '2026-10-16', reemplazar: true, now: at('23:00', '2026-10-16'), dir });
+        assert.strictEqual(p.filas.get('2026-10-16').resumen.creados, 1);
+        assert.strictEqual(p.filas.get('2026-10-16').datos.v, 1, 'la foto lleva su versión');
+        const n = await svc.depurarRegistros(p, { prefijoCodigo: 'SIM-', operadorIds: ['demo'], dir });
+        const f = p.filas.get('2026-10-16');
+        assert.strictEqual(n, 1, 'solo cambia el día con simulación');
+        assert.deepStrictEqual([f.resumen.creados, f.archivo, f.datos.operators.some(o => o.id === 'demo')], [0, null, false]);
+        assert.ok(!fs.existsSync(path.join(dir, '2026/10/jornada-2026-10-16.xlsx')), 'el Excel viejo se borra');
     });
 
     await t('Vista: texto de la fuente, botón de guardar y Excel guardado', () => {
