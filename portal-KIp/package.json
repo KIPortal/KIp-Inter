@@ -1,7 +1,7 @@
 {
   "name": "portal-KIp",
   "version": "1.0.0",
-  "description": "",
+  "description": "Portal de tickets y estadísticas de Operaciones IP",
   "main": "index.js",
   "scripts": {
     "build:assets": "node scripts/build-figma-assets.js",
@@ -31,8 +31,9 @@
     "test:roles": "node scripts/test-roles.js"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Jose Corobo (Jacu) <joseacorobo@gmail.com>",
+  "license": "UNLICENSED",
+  "private": true,
   "type": "commonjs",
   "dependencies": {
     "@azure/identity": "^4.13.3",

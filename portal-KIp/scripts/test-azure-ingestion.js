@@ -60,10 +60,10 @@ console.log('================================================================\n'
 console.log('--- SECCIÓN 1: Interpretación de Errores Azure AD (MSAL) ---');
 
 runTest('R1.1: Interpretar error AADSTS700016 (Application not found in directory)', () => {
-    const error = new Error('invalid_client: AADSTS700016: Application with identifier 0a07cb19-9bc7-4c8c-8314-f35cdd449ca9 was not found in the directory 523baf8c-cb88-4ca4-b200-17d8d7e14f21');
+    const error = new Error('invalid_client: AADSTS700016: Application with identifier 00000000-0000-0000-0000-00000000c1d0 was not found in the directory 00000000-0000-0000-0000-0000000007e1');
     const result = interpretAzureError(error, {
-        clientId: '0a07cb19-9bc7-4c8c-8314-f35cdd449ca9',
-        tenantId: '523baf8c-cb88-4ca4-b200-17d8d7e14f21'
+        clientId: '00000000-0000-0000-0000-00000000c1d0',
+        tenantId: '00000000-0000-0000-0000-0000000007e1'
     });
 
     assert.strictEqual(result.code, 'AADSTS700016');
@@ -103,8 +103,8 @@ runTest('R1.4: Interpretar error AADSTS65001 (Admin Consent required)', () => {
 });
 
 runTest('R1.5: Interpretar error AADSTS90002 (Tenant not found)', () => {
-    const error = new Error('AADSTS90002: Tenant 523baf8c-cb88-4ca4-b200-17d8d7e14f21 not found.');
-    const result = interpretAzureError(error, { tenantId: '523baf8c-cb88-4ca4-b200-17d8d7e14f21' });
+    const error = new Error('AADSTS90002: Tenant 00000000-0000-0000-0000-0000000007e1 not found.');
+    const result = interpretAzureError(error, { tenantId: '00000000-0000-0000-0000-0000000007e1' });
 
     assert.strictEqual(result.code, 'AADSTS90002');
     assert.strictEqual(result.tipo, 'TENANT_NO_ENCONTRADO');
