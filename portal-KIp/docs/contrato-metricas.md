@@ -78,3 +78,10 @@ Campo `User.atiende_tickets` (migración `20261014180000_coordinador_atiende`), 
 ## Distribución territorial (mapa del Dashboard)
 - `Ticket.estado_ve` (opcional, código ISO sin guion: `VEA`, `VEV`...) lo elige el coordinador al crear (`estadoVe`) o editar (`estado_ve`) el ticket.
 - `panel.mapa` (`buildTerritorialMap`): `estados[codigo] = { nombre, activos, porcentaje }`, `ranking` (7 con más activos), `totalActivos`, `sinEstado`, `resumen`. Los tickets sin estado no entran al mapa.
+
+## Registro de jornadas (Reportes)
+- Cada día a las 00:05 (Caracas) el portal registra la jornada anterior: foto de tickets y operadores en la tabla `RegistroJornada` (`datos`, `resumen`, `origen` AUTOMATICO | MANUAL | RECUPERADO) y el Excel en `registros/jornadas/AAAA/MM/jornada-AAAA-MM-DD.xlsx` (carpeta configurable con `REGISTROS_DIR`; `CIERRE_JORNADA=off` apaga el cierre automático). Al arrancar, si falta el registro de ayer, lo toma (RECUPERADO).
+- `GET /reportes/data`, `/reportes/excel` y la pantalla Reportes: un periodo ya terminado con todos sus días registrados se arma con las fotos (cada ticket con su estado del último cierre del periodo); si no terminó o falta algún día, en vivo. `?fuente=vivo` fuerza en vivo. La respuesta trae `fuente { tipo: 'registro'|'vivo', terminado, dias, guardados[], faltan[], registro }`.
+- `POST /reportes/jornadas/cerrar` `{ fecha?, reemplazar? }` (supervisor): guarda la jornada (hoy si no hay fecha). Si ya existe devuelve 409 `{ existe: true }`; con `reemplazar: true` la sustituye. Queda en Auditoría como `JORNADA_CERRADA`.
+- `GET /reportes/jornadas?desde=&hasta=&limite=`: lista de jornadas registradas con `creados`, `resueltos`, `activos`, `puntos`, `tieneExcel`.
+- `GET /reportes/jornadas/:fecha/excel`: Excel guardado de ese día (el jefe recibe uno regenerado solo con su área; si el archivo no está en disco se regenera desde la foto).

@@ -89,6 +89,7 @@ const tickets = [
         prisma.ticket.findMany = async () => tickets;
         prisma.ticket.count = async () => 1;
         prisma.user.findMany = async () => operators;
+        prisma.registroJornada.findMany = async () => [];
         let vista, data;
         await renderReportes({ user: { rol: 'COORDINADOR' }, query: { periodo: 'jornada', fecha: '2026-10-13', area: 'WAN' } }, { render: (x, d) => { vista = x; data = d; }, status: () => ({ send() {} }), redirect() {} });
         assert.strictEqual(vista, 'reportes');

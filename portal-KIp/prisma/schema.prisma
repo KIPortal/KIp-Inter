@@ -271,3 +271,16 @@ model Subgrupo {
 
   @@unique([area_codigo, nombre])
 }
+
+// Registro de jornadas: foto de cada día al cierre (tickets y operadores tal como estaban)
+// más la ruta del Excel guardado en disco. Permite evaluar días y semanas pasadas con el
+// estado real del cierre (activos, carga, ausentes), aunque luego cambien o se eliminen.
+model RegistroJornada {
+  fecha      String   @id @db.VarChar(10) // 'AAAA-MM-DD' (Caracas)
+  datos      Json     // { tickets, operators } con la misma forma que usa el reporte por periodo
+  resumen    Json     // resumen del reporte (todas las áreas) para listar sin recalcular
+  archivo    String?  // ruta del Excel guardado (relativa a la carpeta de registros)
+  origen     String   @db.VarChar(12) // 'AUTOMATICO' | 'MANUAL' | 'RECUPERADO'
+  cerradoPor String?  @db.VarChar(120)
+  cerradoEn  DateTime @default(now())
+}

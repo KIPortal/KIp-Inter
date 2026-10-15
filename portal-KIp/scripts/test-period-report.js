@@ -189,6 +189,7 @@ const mockRes = () => {
     await t('Endpoint /data: valida parámetros y devuelve las 5 secciones', async () => {
         prisma.ticket.findMany = async () => tickets;
         prisma.user.findMany = async () => operators;
+        prisma.registroJornada.findMany = async () => [];
         const bad = mockRes();
         await reportController.getPeriodData({ query: { periodo: 'anio' } }, bad);
         assert.strictEqual(bad.code, 400);
@@ -206,6 +207,7 @@ const mockRes = () => {
     await t('Endpoint /excel: cabeceras de descarga y archivo válido', async () => {
         prisma.ticket.findMany = async () => tickets;
         prisma.user.findMany = async () => operators;
+        prisma.registroJornada.findMany = async () => [];
         const res = mockRes();
         await reportController.downloadExcel({ query: { periodo: 'semana', fecha: '2026-10-07' }, user: { nombre: 'Coord' } }, res);
         assert(res.headers['Content-Type'].includes('spreadsheetml'));
