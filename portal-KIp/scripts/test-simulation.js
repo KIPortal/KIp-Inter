@@ -1,6 +1,6 @@
 // Pruebas de la simulación de jornada: determinismo, marcas y coherencia con el reporte.
 const assert = require('assert');
-const { buildSimulation, buildDemo, OPERADORES, MARCA_REMITENTE, PREFIJO_CODIGO, DOMINIO_DEMO } = require('../src/services/simulationService');
+const { buildSimulation, buildDemo, asignarAReales, OPERADORES, MARCA_REMITENTE, PREFIJO_CODIGO, DOMINIO_DEMO } = require('../src/services/simulationService');
 const { buildPeriodReport } = require('../src/services/periodReportService');
 const { getPeriodBounds } = require('../src/services/metricsService');
 
@@ -79,6 +79,34 @@ t('Modo demo: ayer completo + hoy hasta ahora, códigos únicos y traspaso con l
     assert.ok(d.traspaso.nota.startsWith(MARCA_REMITENTE) && d.traspaso.nota.length >= 10);
     const temprano = buildDemo({ ahora: new Date('2026-10-13T11:00:00Z'), porDia: 55 }); // 07:00
     assert.ok(temprano.dias[1].tickets.length <= 6, 'de madrugada llegan pocos');
+});
+
+t('--reales: reparte entre operadores reales por área, sin crear usuarios demo', () => {
+    const reales = [
+        { id: 'u1', nombre: 'Ana', area_designada: 'REDES_FTTH', subgrupo_id: 'sop' },
+        { id: 'u2', nombre: 'Beto', area_designada: 'REDES_FTTH' },
+        { id: 'u3', nombre: 'Caro', area_designada: 'WAN' }
+    ];
+    const r = asignarAReales(sim.tickets, reales);
+    assert.strictEqual(r.length, sim.tickets.length);
+    assert.ok(r.every(x => ['REDES_FTTH', 'WAN'].includes(x.area)), 'solo áreas con operadores');
+    assert.ok(r.every(x => !x.operadorId || reales.find(o => o.id === x.operadorId).area_designada === x.area), 'operador de su área');
+    assert.strictEqual(r.filter(x => x.operadorId).length, sim.tickets.filter(x => x.operadorKey).length, 'los sin asignar siguen sin asignar');
+    assert.ok(r.filter(x => x.area === 'WAN').length > 0 && r.filter(x => x.operadorId === 'u2').length > 0);
+    assert.ok(r.filter(x => x.operadorId === 'u1').every(x => x.subgrupoId === 'sop'), 'toma el subgrupo del operador');
+    assert.strictEqual(sim.tickets[0].operadorId, undefined, 'no modifica la simulación original');
+    assert.strictEqual(asignarAReales(sim.tickets, []), null);
+});
+
+t('--sin-asignar: deja más tickets de hoy en la cola del área, sin tocar ayer', () => {
+    const ahora = new Date('2026-10-15T19:40:00Z');
+    const base = buildDemo({ ahora });
+    const cola = buildDemo({ ahora, sinAsignar: 40 });
+    const sin = d => d.tickets.filter(x => !x.operadorKey);
+    assert.ok(sin(cola.dias[1]).length > sin(base.dias[1]).length * 2, `${sin(cola.dias[1]).length} vs ${sin(base.dias[1]).length}`);
+    assert.ok(sin(cola.dias[1]).every(x => x.estado === 'NUEVO' && !x.asignado));
+    assert.strictEqual(sin(cola.dias[0]).length, sin(base.dias[0]).length, 'ayer igual');
+    assert.deepStrictEqual(buildDemo({ ahora, sinAsignar: 7 }).tickets.map(x => x.operadorKey), base.tickets.map(x => x.operadorKey), 'por defecto, igual que antes');
 });
 
 console.log(`\n   RESUMEN: ${passed}/${total} pruebas pasaron correctamente\n`);
