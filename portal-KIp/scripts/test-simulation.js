@@ -109,5 +109,11 @@ t('--sin-asignar: deja más tickets de hoy en la cola del área, sin tocar ayer'
     assert.deepStrictEqual(buildDemo({ ahora, sinAsignar: 7 }).tickets.map(x => x.operadorKey), base.tickets.map(x => x.operadorKey), 'por defecto, igual que antes');
 });
 
+t('simular-tickets.js: solo crea tickets, nunca escribe usuarios, horarios ni guardias', () => {
+    const src = require('fs').readFileSync(require('path').join(__dirname, 'simular-tickets.js'), 'utf8');
+    assert.ok(!/prisma\.(user|horarioOperador|guardiaDia|area|subgrupo)\.(create|update|upsert|delete)/.test(src), 'no debe modificar operadores');
+    assert.ok(/prisma\.user\.findMany/.test(src) && /prisma\.ticket\.create/.test(src));
+});
+
 console.log(`\n   RESUMEN: ${passed}/${total} pruebas pasaron correctamente\n`);
 process.exit(passed === total ? 0 : 1);
