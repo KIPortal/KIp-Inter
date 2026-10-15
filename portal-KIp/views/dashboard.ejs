@@ -29,7 +29,7 @@
 <head>
 	<%- include('partials/head', { titulo: 'Dashboard General' }) %>
 </head>
-<body>
+<body data-vivo>
 <div class="app">
 	<%- include('partials/sidebar', { currentUser, activo: 'dashboard', conteos: { tickets: k.activos, enTurno, totalOperadores: totalOps } }) %>
 

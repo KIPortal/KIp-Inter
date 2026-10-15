@@ -1008,3 +1008,9 @@ form.search { margin: 0; }
     .area-row, .area-row .chev { transition: none; }
     .area-row:hover, .area-row:active { transform: none; }
 }
+
+/* Aviso de actualización en vivo (public/js/vivo.js) */
+.vivo-aviso { position: fixed; right: 20px; bottom: 20px; z-index: 60; height: 38px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--solid); color: var(--on-solid, #fff); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25); animation: vivo-in .25s ease; }
+.vivo-aviso:hover { filter: brightness(1.08); }
+@keyframes vivo-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .vivo-aviso { animation: none; } }

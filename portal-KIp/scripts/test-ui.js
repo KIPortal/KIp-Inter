@@ -98,6 +98,23 @@ const html = {};
         assert.ok(!require('../src/controllers/reportController').getReports);
     });
 
+    await t('Actualización en vivo: sello de cambios y páginas que se recargan solas', async () => {
+        const { buildStamp, loadStamp } = require('../src/services/changeStampService');
+        const d = new Date('2026-10-15T14:00:00Z');
+        assert.strictEqual(buildStamp([{ n: 3, max: d }, null]), '3@2026-10-15T14:00:00.000Z|-');
+        let max = d;
+        const agg = campo => ({ aggregate: async () => ({ _count: { _all: 2 }, _max: { [campo]: max } }) });
+        const fake = { INCLUDE_DELETED: {}, ticket: agg('updatedAt'), user: agg('updatedAt'), mensaje: agg('createdAt'), auditLog: { aggregate: async () => { throw new Error('sin tabla'); } } };
+        const antes = await loadStamp(fake);
+        assert.ok(antes.endsWith('|-'), 'una tabla que falla no rompe el sello');
+        max = new Date('2026-10-15T14:05:00Z');
+        assert.notStrictEqual(await loadStamp(fake), antes, 'una asignación o resolución cambia el sello');
+        ['dashboard', 'tickets', 'reportes', 'contactos'].forEach(v =>
+            assert.ok(fs.readFileSync(path.join(root, 'views', v + '.ejs'), 'utf8').includes('<body data-vivo>'), v));
+        assert.ok(fs.readFileSync(path.join(root, 'views', 'partials', 'head.ejs'), 'utf8').includes('/js/vivo.js'));
+        assert.ok(fs.readFileSync(path.join(root, 'src', 'app.js'), 'utf8').includes("app.get('/api/cambios', requireAuth"));
+    });
+
     console.log(`\n   RESUMEN: ${passed}/${total} pruebas pasaron correctamente\n`);
     if (passed !== total) process.exit(1);
 })();

@@ -135,6 +135,8 @@
 		const saved = JSON.parse(sessionStorage.getItem('kip.tickets.f') || 'null');
 		if (saved) Object.assign(S.f, saved);
 	} catch (e) { /* sin filtros guardados */ }
+	// Actualización en vivo (vivo.js): no recargar con una selección o búsqueda a medias
+	window.kipOcupado = () => S.sel.size > 0 || !!S.q;
 	const saveFilters = () => { try { sessionStorage.setItem('kip.tickets.f', JSON.stringify(S.f)); } catch (e) { /* nada */ } };
 
 	const pendientesTraspaso = new Set(D.traspaso ? D.traspaso.pendientes : []);
