@@ -93,6 +93,7 @@ function describeChanges(antes, despues) {
     if (ra.sugerencia.guardiaAntesMin !== rd.sugerencia.guardiaAntesMin) cambios.push(`Guardia por entrar: menos de ${fmtMin(rd.sugerencia.guardiaAntesMin)}`);
     if (ra.sugerencia.permitirOtraArea !== rd.sugerencia.permitirOtraArea) cambios.push(`Sugerir otra área: ${rd.sugerencia.permitirOtraArea ? 'sí' : 'no'}`);
     if (ra.metas.resueltoPct !== rd.metas.resueltoPct) cambios.push(`Meta de resueltos: ${rd.metas.resueltoPct} %`);
+    if (ra.capacidad.puntosPorPersona !== rd.capacidad.puntosPorPersona) cambios.push(`Capacidad por persona: ${rd.capacidad.puntosPorPersona} puntos`);
     if (ra.metas.promedioHoras !== rd.metas.promedioHoras) cambios.push(`Meta de promedio: ${String(rd.metas.promedioHoras).replace('.', ',')} h`);
     EVENTOS.forEach(ev => {
         despues.avisos[ev.clave].forEach((v, i) => {

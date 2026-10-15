@@ -240,8 +240,11 @@ function buildCoordinatorPanel({ tickets = [], operators = [], now = new Date(),
         };
     });
 
-    // ----- Carga por área: % de la carga del día que sigue abierta
-    // Carga del día = recibidos hoy + pendientes que vienen de días anteriores.
+    // ----- Carga por área: saturación = puntos abiertos ÷ capacidad de quienes están en turno.
+    // Capacidad = personas en turno o de guardia (no ausentes) × puntos por persona (Reglas).
+    // Un ticket sin prioridad pesa como P3: es trabajo aunque aún no tenga puntos.
+    const puntosPorPersona = (rules.capacidad || DEFAULT_RULES.capacidad).puntosPorPersona;
+    const pesoTicket = t => (t.puntos_complejidad > 0 ? t.puntos_complejidad : 1);
     const areaCodes = new Set([
         ...tickets.filter(t => ACTIVE_STATES.includes(t.estado_actual) || inRange(t.createdAt, hoy)).map(t => t.area_designada || 'GENERAL'),
         ...operators.map(o => o.area_designada || 'GENERAL')
@@ -254,13 +257,21 @@ function buildCoordinatorPanel({ tickets = [], operators = [], now = new Date(),
         const total = recibidosHoy + arrastrados;
         const resueltosArea = resueltosPeriodo.filter(deArea);
         const ops = operadores.filter(o => o.area === codigo);
+        const personas = operators.filter(o => (o.area_designada || 'GENERAL') === codigo
+            && o.estado_operativo !== 'AUSENTE' && shiftGroup(o.turno) !== 'fuera').length;
+        const puntos = abiertos.reduce((acc, t) => acc + pesoTicket(t), 0);
+        const capacidad = personas * puntosPorPersona;
         return {
             codigo,
             nombre: AREA_NAMES[codigo] || codigo,
             abiertos: abiertos.length,
             sinAsignar: abiertos.filter(t => !t.asignado_a_id).length,
             total,
-            porcentaje: total ? Math.round(abiertos.length / total * 100) : 0,
+            puntos,
+            personas,
+            capacidad,
+            // Sin nadie en turno, cualquier abierto satura el área
+            porcentaje: capacidad ? Math.round(puntos / capacidad * 100) : (puntos ? 100 : 0),
             resueltos: resueltosArea.length,
             promedioHoras: avgHours(resueltosArea),
             operadores: ops

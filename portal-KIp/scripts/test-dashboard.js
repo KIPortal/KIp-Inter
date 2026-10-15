@@ -3,6 +3,7 @@ const assert = require('assert');
 const path = require('path');
 const { MAPA_VIEWBOX, SHAPES } = require('../src/services/mapaVenezuelaShapes');
 const ejs = require('ejs');
+const { mergeRules } = require('../src/services/rulesService');
 const { buildCoordinatorPanel, agingTickets, jornadaStatus, formatAge } = require('../src/services/dashboardService');
 
 let total = 0, passed = 0;
@@ -51,14 +52,41 @@ const tickets = [
         assert.deepStrictEqual(k.criticoMasAntiguo, { codigo: 'INC-010', edad: '5 h 30' });
     });
 
-    await t('Carga por área: % de la carga del día que sigue abierta (incluye arrastrados)', () => {
+    await t('Carga por área: saturación = puntos abiertos ÷ capacidad de quienes están en turno', () => {
         const wan = panel.areas.find(a => a.codigo === 'WAN');
         assert.strictEqual(wan.abiertos, 5);
         assert.strictEqual(wan.total, 7 - 1 + 1, '6 recibidos hoy en WAN + 1 de ayer');
-        assert.strictEqual(wan.porcentaje, Math.round(5 / 7 * 100));
+        assert.strictEqual(wan.puntos, 8 + 1 + 1 + 1 + 1, 'sin prioridad pesa como P3');
+        assert.strictEqual(wan.personas, 3, 'en turno y de guardia');
+        assert.strictEqual(wan.capacidad, 3 * 16);
+        assert.strictEqual(wan.porcentaje, Math.round(12 / 48 * 100));
         assert.strictEqual(wan.operadores.length, 3);
-        assert.ok(panel.areas.some(a => a.codigo === 'TELEFONIA'), 'área con operador aparece aunque no tenga abiertos');
-        assert.strictEqual(panel.areas[0].codigo, 'WAN', 'ordenadas por % aún abiertos');
+        const tel = panel.areas.find(a => a.codigo === 'TELEFONIA');
+        assert.ok(tel, 'área con operador aparece aunque no tenga abiertos');
+        assert.strictEqual(tel.personas, 0, 'el ausente no suma capacidad');
+        assert.strictEqual(tel.porcentaje, 0);
+        assert.strictEqual(panel.areas[0].codigo, 'WAN', 'ordenadas por saturación');
+    });
+
+    await t('Carga por área: un P1 suelto no satura un área con gente; sin nadie en turno, sí', () => {
+        const ops = [
+            { id: 'x', nombre: 'Xavi', area_designada: 'WAN', estado_operativo: 'DISPONIBLE', turno: turno('EN_TURNO', 'En turno'), tickets_asignados: [1] },
+            { id: 'y', nombre: 'Yara', area_designada: 'SEGURIDAD', estado_operativo: 'DISPONIBLE', turno: turno('EN_TURNO', 'En turno'), tickets_asignados: [] },
+            { id: 'z', nombre: 'Zoe', area_designada: 'SEGURIDAD', estado_operativo: 'DISPONIBLE', turno: turno('EN_TURNO', 'En turno'), tickets_asignados: [] },
+            { id: 'w', nombre: 'Walter', area_designada: 'TELEFONIA', estado_operativo: 'DISPONIBLE', turno: turno('FUERA_DE_TURNO', 'Fuera de turno'), tickets_asignados: [] }
+        ];
+        const tk = [
+            ticket({ codigo_incidencia: 'INC-100', createdAt: at('14:00'), puntos_complejidad: 8, estado_actual: 'EN_PROGRESO', asignado_a_id: 'x' }),
+            ticket({ codigo_incidencia: 'INC-101', createdAt: at('14:00'), puntos_complejidad: 8, area_designada: 'SEGURIDAD' }),
+            ticket({ codigo_incidencia: 'INC-102', createdAt: at('14:00'), puntos_complejidad: 1, area_designada: 'TELEFONIA' })
+        ];
+        const p = buildCoordinatorPanel({ tickets: tk, operators: ops, now: NOW });
+        const pct = c => p.areas.find(a => a.codigo === c).porcentaje;
+        assert.strictEqual(pct('WAN'), 50, 'un P1 con una persona');
+        assert.strictEqual(pct('SEGURIDAD'), 25, 'un P1 con dos personas');
+        assert.strictEqual(pct('TELEFONIA'), 100, 'nadie en turno');
+        const p2 = buildCoordinatorPanel({ tickets: tk, operators: ops, now: NOW, rules: mergeRules({ capacidad: { puntosPorPersona: 8 } }) });
+        assert.strictEqual(p2.areas.find(a => a.codigo === 'WAN').porcentaje, 100, 'la capacidad sale de Reglas');
     });
 
     await t('Resolución por área: promedio desde la llegada, solo del periodo', () => {
