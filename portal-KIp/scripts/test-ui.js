@@ -109,9 +109,10 @@ const html = {};
         assert.ok(antes.endsWith('|-'), 'una tabla que falla no rompe el sello');
         max = new Date('2026-10-15T14:05:00Z');
         assert.notStrictEqual(await loadStamp(fake), antes, 'una asignación o resolución cambia el sello');
-        ['dashboard', 'tickets', 'reportes', 'contactos'].forEach(v =>
+        ['dashboard', 'tickets', 'reportes', 'contactos', 'turno'].forEach(v =>
             assert.ok(fs.readFileSync(path.join(root, 'views', v + '.ejs'), 'utf8').includes('<body data-vivo>'), v));
         assert.ok(fs.readFileSync(path.join(root, 'views', 'partials', 'head.ejs'), 'utf8').includes('/js/vivo.js'));
+        assert.ok(fs.readFileSync(path.join(root, 'public', 'js', 'turno.js'), 'utf8').includes('window.kipOcupado = () => paintDirty() > 0'), 'Turno no recarga con cambios sin guardar');
         assert.ok(fs.readFileSync(path.join(root, 'src', 'app.js'), 'utf8').includes("app.get('/api/cambios', requireAuth"));
     });
 
