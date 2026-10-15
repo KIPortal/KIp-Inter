@@ -107,7 +107,7 @@
 					<div class="card-head" style="padding-bottom:6px;gap:14px">
 						<h2 id="h-areas">Carga por área</h2>
 						<span class="hint">Pulsa un área para ver a sus operadores</span>
-						<button type="button" class="info" title="Porcentaje de la carga del día que sigue abierta. Carga del día = recibidos hoy + pendientes de días anteriores." aria-label="Porcentaje de la carga del día que sigue abierta. Carga del día = recibidos hoy + pendientes de días anteriores."><%- icono.info %></button>
+						<button type="button" class="info" title="Saturación: puntos de los tickets abiertos del área ÷ capacidad de quienes están en turno o de guardia. P1=8, P2=5, P3 y sin prioridad=1; cada persona aguanta los puntos que fija Administración &gt; Reglas." aria-label="Saturación: puntos de los tickets abiertos del área ÷ capacidad de quienes están en turno o de guardia. P1=8, P2=5, P3 y sin prioridad=1; cada persona aguanta los puntos que fija Administración &gt; Reglas."><%- icono.info %></button>
 						<span class="grow"></span>
 						<span class="legend"><i class="bg-blue"></i>Menos de 40 %</span>
 						<span class="legend"><i class="bg-amber"></i>40–59 %</span>
@@ -119,18 +119,18 @@
 					<div class="scroll-x">
 						<div style="min-width:620px">
 							<div class="area-grid area-headrow">
-								<span>Área</span><span>Aún abiertos</span><span style="text-align:right">%</span><span style="text-align:right">Abiertos</span><span style="text-align:right" title="Recibidos hoy + pendientes de días anteriores">Carga</span><span></span>
+								<span>Área</span><span>Saturación</span><span style="text-align:right">%</span><span style="text-align:right">Abiertos</span><span style="text-align:right" title="Puntos abiertos / capacidad de quienes están en turno">Puntos</span><span></span>
 							</div>
 							<% panel.areas.forEach((a, i) => { const abierta = a.codigo === areaInicial; %>
 								<button type="button" class="area-row area-grid" data-area="<%= a.codigo %>" aria-pressed="<%= abierta %>" aria-controls="ops-<%= a.codigo %>" aria-label="Ver operadores de <%= a.nombre %>">
 									<span class="name"><%= a.nombre %></span>
-									<div class="track" title="<%= a.porcentaje %> % aún abiertos · <%= a.abiertos %> de <%= a.total %>">
+									<div class="track" title="<%= a.porcentaje %> % de saturación · <%= a.puntos %> de <%= a.capacidad %> puntos · <%= a.personas %> en turno">
 										<span class="bar-fill bg-<%= nivel(a.porcentaje) %>" style="width: <%= Math.min(a.porcentaje, 100) %>%; animation-delay: <%= i * 70 %>ms"></span>
 										<span class="tick" style="left:40%"></span><span class="tick" style="left:60%"></span>
 									</div>
 									<span class="num <%= nivelTexto(a.porcentaje) %>" style="font-weight:700"><%= a.porcentaje %>%</span>
 									<span class="num" style="font-weight:500"><%= a.abiertos %></span>
-									<span class="num t2"><%= a.total %></span>
+									<span class="num t2"><%= a.puntos %>/<%= a.capacidad %></span>
 									<%- icono.chev %>
 								</button>
 								<%
@@ -140,7 +140,7 @@
 								<div class="area-ops" id="ops-<%= a.codigo %>" data-ops="<%= a.codigo %>"<% if (!abierta) { %> hidden<% } %>>
 									<div class="ops-head">
 										<span class="summary">
-											<%= a.operadores.length %> <%= a.operadores.length === 1 ? 'operador' : 'operadores' %> · <%= a.abiertos %> activos<% if (a.sinAsignar) { %> (<%= a.sinAsignar %> sin asignar)<% } %> · <%= a.resueltos %> resueltos <%= panel.periodo === 'semana' ? 'esta semana' : 'hoy' %> · <%= a.porcentaje %>% aún abiertos
+											<%= a.operadores.length %> <%= a.operadores.length === 1 ? 'operador' : 'operadores' %> · <%= a.abiertos %> activos<% if (a.sinAsignar) { %> (<%= a.sinAsignar %> sin asignar)<% } %> · <%= a.resueltos %> resueltos <%= panel.periodo === 'semana' ? 'esta semana' : 'hoy' %> · <%= a.personas %> en turno · <%= a.porcentaje %>% de saturación
 										</span>
 										<span class="legend"><i class="bg-blue"></i>Carga actual</span>
 										<span class="legend"><i class="bg-green"></i>Resueltos</span>

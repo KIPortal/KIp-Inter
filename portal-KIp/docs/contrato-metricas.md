@@ -72,6 +72,7 @@ Campo `User.atiende_tickets` (migración `20261014180000_coordinador_atiende`), 
 - Administración: `POST /api/admin/areas/:codigo/subgrupos { nombre }` (409 si se repite en el área), `PATCH /api/admin/subgrupos/:id { nombre?, activo? }` (409 al desactivar con personas activas o tickets activos). Usuarios: `subgrupo` (id o vacío) en `POST/PATCH /api/admin/usuarios`; debe ser activo y de su área; si cambia de área sin elegir otro, queda sin subgrupo.
 - Tickets: `POST /api/tickets { subgrupoId? }`, `PATCH /api/tickets/:code { subgrupo_id }` (validados contra el área final). Al asignar, si el ticket no tiene subgrupo toma el del operador (misma área); si cambia de área, se quita.
 - `buildQueue`: `areas[].subgrupos[{id,nombre}]` (activos), `tickets[].subgrupo/subgrupoNombre`, `operadores[].subgrupo/subgrupoNombre`. El filtro Área acepta `AREA|subgrupo`.
+- `buildCoordinatorPanel`: `areas[] = { codigo, nombre, abiertos, sinAsignar, total, puntos, personas, capacidad, porcentaje, resueltos, promedioHoras, operadores }`. `porcentaje` es la saturación: puntos abiertos (P1=8, P2=5, P3 y sin prioridad=1) ÷ (personas en turno o de guardia, no ausentes, × `reglas.capacidad.puntosPorPersona`, 16 por defecto). Sin nadie en turno y con abiertos = 100.
 - Mi panel: con subgrupo, Entrantes = los de su subgrupo + los del área sin subgrupo (+ General).
 
 ## Distribución territorial (mapa del Dashboard)

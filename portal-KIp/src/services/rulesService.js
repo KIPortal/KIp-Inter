@@ -18,7 +18,9 @@ const DEFAULT_RULES = Object.freeze({
         permitirOtraArea: true   // si nadie está disponible, se puede pedir sugerencia de otra área
     }),
     // Metas de Reportes: ámbar si el % resuelto queda por debajo o el promedio por encima
-    metas: Object.freeze({ resueltoPct: 93, promedioHoras: 4 })
+    metas: Object.freeze({ resueltoPct: 93, promedioHoras: 4 }),
+    // Saturación por área: puntos abiertos que aguanta cada persona en turno (16 = dos P1)
+    capacidad: Object.freeze({ puntosPorPersona: 16 })
 });
 
 // Límites de los pasos que ofrece Administración
@@ -28,7 +30,8 @@ const LIMITS = Object.freeze({
     antiguedad: [5, 24 * 60],
     guardiaAntesMin: [5, 240],
     resueltoPct: [50, 100],
-    promedioHoras: [0.5, 72]
+    promedioHoras: [0.5, 72],
+    puntosPorPersona: [4, 80]
 });
 
 const POINTS_TO_KEY = { 8: 'P1', 5: 'P2', 1: 'P3' };
@@ -49,6 +52,7 @@ function mergeRules(saved) {
     const an = s.antiguedad || {};
     const su = s.sugerencia || {};
     const me = s.metas || {};
+    const ca = s.capacidad || {};
     return {
         sobrecarga: {
             activa: bool(sc.activa, d.sobrecarga.activa),
@@ -70,6 +74,9 @@ function mergeRules(saved) {
         metas: {
             resueltoPct: num(me.resueltoPct, d.metas.resueltoPct, LIMITS.resueltoPct),
             promedioHoras: num(me.promedioHoras, d.metas.promedioHoras, LIMITS.promedioHoras, 1)
+        },
+        capacidad: {
+            puntosPorPersona: num(ca.puntosPorPersona, d.capacidad.puntosPorPersona, LIMITS.puntosPorPersona)
         }
     };
 }
