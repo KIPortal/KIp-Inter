@@ -85,3 +85,4 @@ Campo `User.atiende_tickets` (migración `20261014180000_coordinador_atiende`), 
 - `POST /reportes/jornadas/cerrar` `{ fecha?, reemplazar? }` (supervisor): guarda la jornada (hoy si no hay fecha). Si ya existe devuelve 409 `{ existe: true }`; con `reemplazar: true` la sustituye. Queda en Auditoría como `JORNADA_CERRADA`.
 - `GET /reportes/jornadas?desde=&hasta=&limite=`: lista de jornadas registradas con `creados`, `resueltos`, `activos`, `puntos`, `tieneExcel`.
 - `GET /reportes/jornadas/:fecha/excel`: Excel guardado de ese día (el jefe recibe uno regenerado solo con su área; si el archivo no está en disco se regenera desde la foto).
+- `npm run datos:cero` borra también el registro de jornadas (los Excel en disco se conservan); `limpiar-simulacion` quita SIM-xxx y los usuarios @demo.local de las fotos y recalcula su resumen. Cada foto lleva `datos.v` (versión de su forma).

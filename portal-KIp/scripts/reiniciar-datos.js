@@ -1,6 +1,6 @@
 /**
  * Deja la base lista para empezar desde cero: borra TODOS los tickets (también los de la
- * papelera), adjuntos, auditoría, guardias, horarios y los usuarios OPERADOR.
+ * papelera), adjuntos, auditoría, guardias, horarios, el registro de jornadas y los usuarios OPERADOR.
  * Conserva a los COORDINADORES (para poder entrar al sistema).
  *   node scripts/reiniciar-datos.js --confirmar
  * Luego, opcionalmente, cargue una jornada de demostración con scripts/simular-jornada.js.
@@ -24,7 +24,9 @@ const prisma = require('../src/config/prisma');
     const h = await prisma.horarioOperador.deleteMany({});
     const t = await prisma.ticket.deleteMany({});
     const u = await prisma.user.deleteMany({ where: { rol: 'OPERADOR' } });
-    console.log(`Listo: ${t.count} tickets, ${u.count} operadores, ${a.count} auditorías, ${j.count} adjuntos, ${g.count} guardias y ${h.count} horarios eliminados.`);
+    // Registro de jornadas: las fotos hablan de tickets que ya no existen (los Excel en disco se conservan)
+    const r = await prisma.registroJornada.deleteMany({}).catch(() => ({ count: 0 }));
+    console.log(`Listo: ${t.count} tickets, ${u.count} operadores, ${a.count} auditorías, ${j.count} adjuntos, ${g.count} guardias, ${h.count} horarios y ${r.count} jornadas registradas eliminados.`);
     console.log('Coordinadores conservados. Siguiente número de ticket: INC-001.');
     await prisma.$disconnect();
 })().catch(e => { console.error(e); process.exit(1); });

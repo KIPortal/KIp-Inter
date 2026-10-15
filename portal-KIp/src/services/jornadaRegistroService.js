@@ -71,9 +71,13 @@ async function loadLiveData(prisma, range) {
     return { tickets, operators };
 }
 
+// Versión de la forma de la foto: si el reporte llega a necesitar más campos, las fotos
+// viejas se reconocen por su versión y los campos que les falten quedan vacíos.
+const SNAPSHOT_VERSION = 1;
+
 /** Foto guardable en JSON (fechas como texto ISO). */
 function snapshotFrom({ tickets = [], operators = [] }) {
-    return JSON.parse(JSON.stringify({ tickets, operators }));
+    return { v: SNAPSHOT_VERSION, ...JSON.parse(JSON.stringify({ tickets, operators })) };
 }
 
 /** Foto leída de la base → fechas de vuelta a Date. */
@@ -230,6 +234,33 @@ async function excelDeJornada(prisma, fecha, { area = null, generadoPor = '', di
 }
 
 /**
+ * Quita de las fotos guardadas los tickets y operadores indicados (p. ej. la simulación
+ * SIM-xxx / @demo.local) y recalcula su resumen. El Excel de esos días se borra y se
+ * regenera desde la foto al descargarlo.
+ */
+async function depurarRegistros(prisma, { prefijoCodigo = null, operadorIds = [], dir = registrosDir() } = {}) {
+    const ids = new Set(operadorIds);
+    const fuera = t => (prefijoCodigo && String(t.codigo_incidencia || '').startsWith(prefijoCodigo)) || (t.asignado_a && ids.has(t.asignado_a.id));
+    const filas = await prisma.registroJornada.findMany({ select: { fecha: true, datos: true, archivo: true } });
+    let cambiados = 0;
+    for (const f of filas) {
+        const tickets = (f.datos?.tickets || []);
+        const operators = (f.datos?.operators || []);
+        const t2 = tickets.filter(t => !fuera(t));
+        const o2 = operators.filter(o => !ids.has(o.id));
+        if (t2.length === tickets.length && o2.length === operators.length) continue;
+        const datos = { ...f.datos, tickets: t2, operators: o2 };
+        const report = buildPeriodReport({ ...reviveSnapshot(datos), range: getPeriodBounds('jornada', f.fecha) });
+        if (f.archivo) {
+            try { fs.rmSync(path.join(dir, f.archivo), { force: true }); } catch (e) { /* se regenera igual */ }
+        }
+        await prisma.registroJornada.update({ where: { fecha: f.fecha }, data: { datos, resumen: report.resumen, archivo: null } });
+        cambiados++;
+    }
+    return cambiados;
+}
+
+/**
  * Cierre automático: cada día a las 00:05 (Caracas) registra la jornada que terminó.
  * Al arrancar, si falta el registro de ayer (servidor apagado a medianoche), lo toma.
  * Se desactiva con CIERRE_JORNADA=off.
@@ -265,5 +296,6 @@ module.exports = {
     cerrarJornada,
     listarJornadas,
     excelDeJornada,
+    depurarRegistros,
     programarCierre
 };
