@@ -15,7 +15,7 @@ const profileRoutes = require('./routes/profileRoutes');
 const requireAuth = require('./middlewares/requireAuth');
 const { authorizeAdmin } = require('./services/roleService');
 const emailIngestionService = require('./services/emailIngestionService');
-const { loadStamp } = require('./services/changeStampService');
+const { loadStamp, cachedStamp } = require('./services/changeStampService');
 
 const app = express();
 
@@ -40,7 +40,13 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '..', 'views'));
 // Versión de los archivos estáticos: cambia en cada arranque para que el navegador no use JS/CSS viejos
 app.locals.v = Date.now().toString(36);
-app.use(express.static(path.join(__dirname, '..', 'public')));
+// Lo que se pide con ?v= (CSS y JS de las vistas) cambia de URL en cada arranque:
+// el navegador lo guarda sin volver a preguntar; lo demás se revalida como antes.
+app.use(express.static(path.join(__dirname, '..', 'public'), {
+	setHeaders(res) {
+		if (res.req?.query?.v) res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+	}
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(session({
@@ -56,10 +62,11 @@ const { refreshAreas } = require('./services/areaCatalog');
 app.use((req, res, next) => { refreshAreas(prisma).finally(next); });
 
 // Sello de cambios para la actualización en vivo (public/js/vivo.js)
+const sello = cachedStamp(() => loadStamp(prisma));
 app.get('/api/cambios', requireAuth, async (req, res) => {
     res.set('Cache-Control', 'no-store');
     try {
-        res.json({ success: true, sello: await loadStamp(prisma) });
+        res.json({ success: true, sello: await sello() });
     } catch (error) {
         res.status(500).json({ success: false, error: 'No se pudo revisar si hay cambios' });
     }

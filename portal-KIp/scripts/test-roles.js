@@ -167,7 +167,7 @@ const OP = { id: 'o1', rol: 'OPERADOR', area_designada: 'WAN' };
             const r = mockRes();
             await dash.renderTickets({ user: JEFE, query: {} }, r);
             assert.strictEqual(r.view, 'tickets');
-            assert.ok(consultas.some(w => w && JSON.stringify(w.area_designada) === JSON.stringify({ in: ['WAN', 'GENERAL'] })), 'tickets de su área');
+            assert.ok(consultas.some(w => w && JSON.stringify(w).includes('"area_designada":{"in":["WAN","GENERAL"]}')), 'tickets de su área');
             assert.ok(consultas.some(w => w && w.area_designada === 'WAN' && w.activo === true), 'personas de su área');
             const rep = require('../src/controllers/reportController');
             const r2 = mockRes();

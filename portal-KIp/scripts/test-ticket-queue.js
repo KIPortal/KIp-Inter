@@ -2,7 +2,8 @@
 const assert = require('assert');
 const path = require('path');
 const ejs = require('ejs');
-const { buildQueue, buildHandoffView, handoffExpiry, daysAgo } = require('../src/services/ticketQueueService');
+const { buildQueue, buildHandoffView, handoffExpiry, daysAgo, ventanaCola } = require('../src/services/ticketQueueService');
+const { ticketsAlAzar, cumple } = require('./ventana-tickets-helper');
 
 let total = 0, passed = 0;
 async function t(name, fn) { total++; try { await fn(); passed++; console.log(`  ✅ [PASS] ${name}`); } catch (e) { console.error(`  ❌ [FAIL] ${name}\n     ${e.message}`); } }
@@ -140,6 +141,13 @@ const tickets = [
         assert.strictEqual(data.enPapelera, 2);
         assert.deepStrictEqual(data.plantillas.cierre, ['Motivo guardado']);
         assert.ok(data.cola.tickets.length > 0);
+    });
+
+    await t('Ventana de la cola: sin los cerrados de otros días da la misma cola', () => {
+        const todos = ticketsAlAzar(NOW).map(x => ({ ...x, asunto: 'Falla', asignado_a: null, creado_por: null, adjuntos: [] }));
+        const ventana = todos.filter(x => cumple(x, ventanaCola(NOW)));
+        assert.ok(ventana.length < todos.length, 'la ventana debe dejar fuera cerrados viejos');
+        assert.deepStrictEqual(buildQueue({ tickets: ventana, operators, now: NOW }), buildQueue({ tickets: todos, operators, now: NOW }));
     });
 
     console.log(`\n   RESUMEN: ${passed}/${total} pruebas pasaron correctamente\n`);

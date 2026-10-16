@@ -4,7 +4,8 @@ const path = require('path');
 const { MAPA_VIEWBOX, SHAPES } = require('../src/services/mapaVenezuelaShapes');
 const ejs = require('ejs');
 const { mergeRules } = require('../src/services/rulesService');
-const { buildCoordinatorPanel, agingTickets, jornadaStatus, formatAge } = require('../src/services/dashboardService');
+const { buildCoordinatorPanel, agingTickets, jornadaStatus, formatAge, ventanaDashboard } = require('../src/services/dashboardService');
+const { ticketsAlAzar, cumple } = require('./ventana-tickets-helper');
 
 let total = 0, passed = 0;
 async function t(name, fn) { total++; try { await fn(); passed++; console.log(`  ✅ [PASS] ${name}`); } catch (e) { console.error(`  ❌ [FAIL] ${name}\n     ${e.message}`); } }
@@ -203,6 +204,17 @@ const tickets = [
         assert.strictEqual((html.match(/class="mapa-estado/g) || []).length, 25);
         assert.ok(html.includes('data-estado-btn="VEV"'));
         assert.ok(html.includes('Zulia'));
+    });
+
+    await t('Ventana del Dashboard: sin los cerrados viejos da el mismo panel (hoy y semana)', () => {
+        const todos = ticketsAlAzar(NOW);
+        for (const periodo of ['jornada', 'semana']) {
+            const ventana = todos.filter(x => cumple(x, ventanaDashboard({ periodo, now: NOW })));
+            assert.ok(ventana.length < todos.length, 'la ventana debe dejar fuera cerrados viejos');
+            const completo = buildCoordinatorPanel({ tickets: todos, operators, now: NOW, periodo });
+            const filtrado = buildCoordinatorPanel({ tickets: ventana, operators, now: NOW, periodo });
+            assert.deepStrictEqual(filtrado, completo, periodo);
+        }
     });
 
     console.log(`\n   RESUMEN: ${passed}/${total} pruebas pasaron correctamente\n`);

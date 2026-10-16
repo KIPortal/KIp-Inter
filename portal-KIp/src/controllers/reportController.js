@@ -67,12 +67,15 @@ async function renderReportes(req, res) {
     try {
         const periodo = ['jornada', 'semana', 'mes', 'especifica'].includes(req.query.periodo) ? req.query.periodo : 'jornada';
         const query = { ...consulta(req), periodo: periodo === 'especifica' ? 'jornada' : periodo };
-        const result = await loadPeriodReport(query);
-        if (result.error) return res.redirect(302, '/reportes');
-        const [activos, config] = await Promise.all([
+        // Las tres cargas van juntas a la base, no una detrás de otra
+        const extras = Promise.all([
             prisma.ticket.count({ where: { estado_actual: { in: ACTIVE_STATES }, ...ticketWhere(req.user) } }),
             loadConfig(prisma)
         ]);
+        extras.catch(() => {}); // si el periodo no es válido no se espera
+        const result = await loadPeriodReport(query);
+        if (result.error) return res.redirect(302, '/reportes');
+        const [activos, config] = await extras;
         const vista = buildReportView(result.report, {
             periodo: query.periodo,
             fecha: typeof req.query.fecha === 'string' && req.query.fecha ? req.query.fecha : null,

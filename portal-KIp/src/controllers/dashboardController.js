@@ -2,8 +2,8 @@ const prisma = require('../config/prisma');
 const { ACTIVE_STATES, getDayBounds } = require('../services/metricsService');
 const { getShiftStatus, getWeekStart } = require('../services/shiftService');
 const { loadShiftData } = require('./turnoController');
-const { buildCoordinatorPanel } = require('../services/dashboardService');
-const { buildQueue } = require('../services/ticketQueueService');
+const { buildCoordinatorPanel, ventanaDashboard } = require('../services/dashboardService');
+const { buildQueue, ventanaCola } = require('../services/ticketQueueService');
 const { buildOperatorPanel } = require('../services/operatorPanelService');
 const { ATIENDE_WHERE, atiendeTickets, ticketWhere, personaWhere } = require('../services/roleService');
 const { loadActiveHandoff } = require('./ticketController');
@@ -25,7 +25,8 @@ async function renderDashboard(req, res) {
         // El jefe de área solo ve su área (ticketWhere/personaWhere no limitan al coordinador ni al gerente)
         const [tickets, operadores, config] = await Promise.all([
             prisma.ticket.findMany({
-                where: ticketWhere(req.user),
+                // Sin los cerrados viejos: no cambian ninguna cifra del periodo
+                where: { AND: [ticketWhere(req.user), ventanaDashboard({ periodo: req.query.periodo, now: ahora })] },
                 select: {
                     codigo_incidencia: true, estado_actual: true, area_designada: true, estado_ve: true, puntos_complejidad: true,
                     asignado_a_id: true, createdAt: true, updatedAt: true, fecha_asignacion: true,
@@ -88,7 +89,8 @@ async function renderTickets(req, res) {
         const ahora = new Date();
         const [tickets, operadores, enPapelera, traspaso, config, siguienteCodigo] = await Promise.all([
             prisma.ticket.findMany({
-                where: ticketWhere(req.user),
+                // La cola solo muestra los no cerrados y los cerrados hoy
+                where: { AND: [ticketWhere(req.user), ventanaCola(ahora)] },
                 include: {
                     ...ticketRelations,
                     asignado_a: { select: { id: true, nombre: true } },

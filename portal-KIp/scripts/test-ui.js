@@ -116,6 +116,22 @@ const html = {};
         assert.ok(fs.readFileSync(path.join(root, 'src', 'app.js'), 'utf8').includes("app.get('/api/cambios', requireAuth"));
     });
 
+    await t('Sello en caché: varias pestañas comparten una consulta y se renueva al vencer', async () => {
+        const { cachedStamp } = require('../src/services/changeStampService');
+        let reloj = 0, consultas = 0;
+        const sello = cachedStamp(async () => `s${++consultas}`, { ms: 5000, clock: () => reloj });
+        const juntas = await Promise.all([sello(), sello(), sello()]);
+        assert.deepStrictEqual(juntas, ['s1', 's1', 's1']);
+        reloj = 4999;
+        assert.strictEqual(await sello(), 's1');
+        reloj = 5000;
+        assert.strictEqual(await sello(), 's2');
+        assert.strictEqual(consultas, 2);
+        const conError = cachedStamp(async () => { throw new Error('sin base'); });
+        await assert.rejects(conError(), /sin base/);
+        await assert.rejects(conError(), /sin base/, 'un error no queda guardado');
+    });
+
     await t('Avisos del coordinador: resueltos que esperan cierre, campana y matriz', async () => {
         const { buildPorCerrar } = require('../src/services/closeNoticeService');
         const { mergeAvisos, EVENTOS } = require('../src/services/configService');
