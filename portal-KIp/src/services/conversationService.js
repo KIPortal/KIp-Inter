@@ -79,6 +79,49 @@ function asuntoRespuesta(ticket) {
     return 'Re: [' + ticket.codigo_incidencia + '] ' + asunto;
 }
 
+// Líneas donde empieza el historial citado de un correo (Outlook, Gmail, en español e inglés)
+const CORTES_CITA = [
+    /^-{2,}\s*(original message|mensaje original)/i,
+    /^_{8,}\s*$/,
+    /^(de|from)\s*:\s*\S.*$/i,
+    /^el .{3,200}escribi[oó]\s*:\s*$/i,
+    /^on .{3,200}wrote\s*:\s*$/i,
+    /^>/
+];
+
+/**
+ * Quita lo citado de un correo de respuesta (el hilo anterior que el programa de
+ * correo copia debajo), para que el historial no repita los mensajes.
+ * Si no queda nada, devuelve el texto completo.
+ */
+function quitarCitado(texto) {
+    const lineas = String(texto || '').split('\n');
+    const corte = lineas.findIndex((l, i) => i > 0 && CORTES_CITA.some(re => re.test(l.trim())));
+    if (corte <= 0) return String(texto || '').trim();
+    const propio = lineas.slice(0, corte).join('\n').trim();
+    return propio || String(texto || '').trim();
+}
+
+/**
+ * Enlace mailto para responder desde el correo del operador: va al cliente, con
+ * el código en el asunto y el buzón del NOC en copia. Así la ingesta guarda la
+ * respuesta del operador (y la del cliente, si responde a todos) en el historial.
+ */
+function mailtoRespuesta({ para, cc, asunto, citado, de }) {
+    const destino = extraerCorreo(para);
+    if (!destino) return null;
+    const q = [];
+    const copia = extraerCorreo(cc);
+    if (copia && copia.toLowerCase() !== destino.toLowerCase()) q.push('cc=' + encodeURIComponent(copia));
+    q.push('subject=' + encodeURIComponent(asunto || ''));
+    const cita = String(citado || '').trim().slice(0, 700);
+    if (cita) {
+        const cuerpo = '\n\n\n----- ' + (de || 'Mensaje anterior') + ' escribió -----\n' + cita.split('\n').map(l => '> ' + l).join('\n');
+        q.push('body=' + encodeURIComponent(cuerpo.replace(/\n/g, '\r\n')));
+    }
+    return 'mailto:' + encodeURIComponent(destino).replace(/%40/g, '@') + '?' + q.join('&');
+}
+
 /**
  * Valida lo que envía el operador. Devuelve { error } o { tipo, texto, esperar }.
  */
@@ -157,7 +200,7 @@ const adjuntosVista = (lista) => (lista || []).map(a => ({
  * @param {Array}  p.logs     auditoría del ticket con user
  * @param {object} p.viewer   usuario que mira (id, rol, area_designada)
  */
-function buildConversation({ ticket, mensajes = [], logs = [], viewer, now = new Date() }) {
+function buildConversation({ ticket, mensajes = [], logs = [], viewer, now = new Date(), buzon = null }) {
     const items = [];
     const inicial = {
         id: 'inicio', k: 'in',
@@ -175,6 +218,8 @@ function buildConversation({ ticket, mensajes = [], logs = [], viewer, now = new
         const mio = viewer && m.autor_id && m.autor_id === viewer.id;
         let meta = k === 'in' ? 'Correo recibido' : k === 'note' ? 'Nota interna · solo el equipo' : 'Correo enviado';
         if (k === 'out' && !m.enviado) meta = 'Correo no enviado · falta configurar el envío';
+        // Respuesta que el operador mandó desde su propio correo con el buzón en copia
+        if (k === 'out' && m.enviado && m.de) meta = 'Correo enviado desde su correo';
         items.push({
             id: m.id, k,
             quien: k === 'in' ? (m.de || ticket.remitente || 'Cliente') : (mio ? 'Tú' : ((m.autor && m.autor.nombre) || 'Operador')),
@@ -196,6 +241,7 @@ function buildConversation({ ticket, mensajes = [], logs = [], viewer, now = new
     const esperando = ticket.estado_actual === 'EN_ESPERA_TERCEROS';
     const ultimoOut = hilo.filter(i => i.k === 'out').slice(-1)[0];
     const para = extraerCorreo(ticket.remitente);
+    const ultimoIn = hilo.filter(i => i.k === 'in').slice(-1)[0];
 
     return {
         codigo: ticket.codigo_incidencia,
@@ -211,6 +257,11 @@ function buildConversation({ ticket, mensajes = [], logs = [], viewer, now = new
             : null,
         para,
         asunto: asuntoRespuesta(ticket),
+        // Responder desde el correo del operador (Outlook, etc.) sin perder el historial
+        correoExterno: !motivo && para ? {
+            href: mailtoRespuesta({ para, cc: buzon, asunto: asuntoRespuesta(ticket), citado: ultimoIn && ultimoIn.texto, de: ultimoIn && ultimoIn.quien }),
+            buzon: extraerCorreo(buzon)
+        } : null,
         plantillas: PLANTILLAS_RESPUESTA.map(([etiqueta, texto]) => ({ etiqueta, texto })),
         limites: { texto: MAX_TEXTO, adjuntos: MAX_ADJUNTOS }
     };
@@ -226,6 +277,8 @@ module.exports = {
     extraerCorreo,
     textoDeCorreo,
     asuntoRespuesta,
+    quitarCitado,
+    mailtoRespuesta,
     validarMensaje,
     validarAdjuntos,
     puedeVer,
