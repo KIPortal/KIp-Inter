@@ -25,4 +25,21 @@ async function loadStamp(prisma) {
     return buildStamp([parte(t, 'updatedAt'), parte(u, 'updatedAt'), parte(m, 'createdAt'), parte(a, 'createdAt')]);
 }
 
-module.exports = { buildStamp, loadStamp };
+/**
+ * Con varias pestañas abiertas, cada una consulta el sello cada 20 s. Se guarda
+ * unos segundos y las consultas simultáneas comparten la misma ida a la base.
+ */
+function cachedStamp(loader, { ms = 5000, clock = Date.now } = {}) {
+    let valor = null, hasta = 0, enCurso = null;
+    return function () {
+        if (valor !== null && clock() < hasta) return Promise.resolve(valor);
+        if (!enCurso) {
+            enCurso = Promise.resolve().then(loader)
+                .then(v => { valor = v; hasta = clock() + ms; return v; })
+                .finally(() => { enCurso = null; });
+        }
+        return enCurso;
+    };
+}
+
+module.exports = { buildStamp, loadStamp, cachedStamp };

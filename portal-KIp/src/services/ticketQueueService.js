@@ -192,4 +192,20 @@ function buildQueue({ tickets = [], operators = [], now = new Date(), rules = DE
     return { tickets: filas, operadores, areas: conSubgrupos, estadosVe: estadosVeLista(), sugeridos: sug.porArea, otraArea: sug.otraArea, resumen, reglas: rules };
 }
 
-module.exports = { buildQueue, buildHandoffView, handoffExpiry, priorityOf, daysAgo };
+/**
+ * Filtro de Prisma con los tickets que la cola puede mostrar: los no cerrados
+ * y los cerrados hoy. Los cerrados de otros días se descartaban en buildQueue.
+ */
+function ventanaCola(now = new Date()) {
+    const desde = getDayBounds(now).start;
+    return {
+        OR: [
+            { estado_actual: { not: 'CERRADO' } },
+            { createdAt: { gte: desde } },
+            { resueltoEn: { gte: desde } },
+            { fecha_cierre: { gte: desde } }
+        ]
+    };
+}
+
+module.exports = { buildQueue, ventanaCola, buildHandoffView, handoffExpiry, priorityOf, daysAgo };

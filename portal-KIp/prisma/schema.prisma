@@ -126,6 +126,14 @@ model Ticket {
   auditorias         AuditLog[]
   traspasos          TraspasoTicket[]
   mensajes           Mensaje[]
+
+  @@index([asignado_a_id, estado_actual])
+  @@index([estado_actual, area_designada])
+  @@index([createdAt])
+  @@index([resueltoEn])
+  @@index([fecha_cierre])
+  @@index([fecha_asignacion])
+  @@index([updatedAt])
 }
 
 model Adjunto {
@@ -141,6 +149,9 @@ model Adjunto {
   mensajeId       String?
   mensaje         Mensaje? @relation(fields: [mensajeId], references: [id], onDelete: Cascade)
   createdAt       DateTime @default(now())
+
+  @@index([ticketId])
+  @@index([mensajeId])
 }
 
 // Mensajes de la conversación del ticket. El primer correo (el que abrió el ticket)
@@ -172,6 +183,9 @@ model AuditLog {
   userId    String?
   user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   createdAt DateTime @default(now())
+
+  @@index([ticketId, createdAt])
+  @@index([createdAt])
 }
 
 // Horario de turno normal de cada operador (spec §3). Sin registro = lunes a viernes 8:00-17:00.

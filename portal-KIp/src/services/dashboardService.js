@@ -357,4 +357,24 @@ function buildCoordinatorPanel({ tickets = [], operators = [], now = new Date(),
     };
 }
 
-module.exports = { buildCoordinatorPanel, buildTerritorialMap, agingTickets, jornadaStatus, formatAge, AGE_LIMIT_MINUTES };
+/**
+ * Filtro de Prisma con los tickets que el Dashboard necesita: todos los no
+ * cerrados más los cerrados que se tocaron desde el inicio del periodo (o de
+ * las últimas 24 h, lo que sea antes). Los cerrados más viejos no cambian
+ * ninguna cifra y, con el historial creciendo, eran casi toda la consulta.
+ */
+function ventanaDashboard({ periodo = 'jornada', now = new Date() } = {}) {
+    const rango = getPeriodBounds(periodo === 'semana' ? 'semana' : 'jornada', null, now);
+    const desde = new Date(Math.min(rango.start.getTime(), getDayBounds(now).start.getTime(), time(now) - 24 * HOUR_MS));
+    return {
+        OR: [
+            { estado_actual: { not: 'CERRADO' } },
+            { createdAt: { gte: desde } },
+            { fecha_asignacion: { gte: desde } },
+            { resueltoEn: { gte: desde } },
+            { fecha_cierre: { gte: desde } }
+        ]
+    };
+}
+
+module.exports = { buildCoordinatorPanel, ventanaDashboard, buildTerritorialMap, agingTickets, jornadaStatus, formatAge, AGE_LIMIT_MINUTES };
