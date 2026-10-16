@@ -1,5 +1,8 @@
 // Ayuda de las pruebas: tickets al azar (con cerrados viejos) y un filtro que
 // imita en memoria el `where` de ventanaDashboard / ventanaCola.
+// CERRADO va repetido a propósito: se elige un estado al azar de esta lista, así que
+// 3 de cada 8 tickets salen cerrados (como en la historia real, donde la mayoría lo
+// está). Son los cerrados viejos los que la ventana debe dejar fuera sin cambiar nada.
 const ESTADOS = ['NUEVO', 'EN_PROGRESO', 'EN_PAUSA', 'EN_ESPERA_TERCEROS', 'RESUELTO', 'CERRADO', 'CERRADO', 'CERRADO'];
 const AREAS = ['WAN', 'REDES_FTTH', 'TELEFONIA', 'GENERAL'];
 
