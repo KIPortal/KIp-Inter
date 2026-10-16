@@ -86,6 +86,17 @@
 			: 'Solo la ve el equipo, no se envía al cliente';
 		$('tdTo').title = $('tdTo').textContent;
 		$('tdTpls').style.display = out ? 'contents' : 'none';
+		// Responder desde el programa de correo: cliente, asunto con el código y el buzón del NOC en copia
+		const ext = $('tdMailExt');
+		if (ext) {
+			ext.hidden = !(out && c.correoExterno && c.correoExterno.href);
+			if (!ext.hidden) {
+				ext.href = c.correoExterno.href;
+				ext.title = c.correoExterno.buzon
+					? 'Abre tu correo con el cliente, el asunto con ' + c.codigo + ' y ' + c.correoExterno.buzon + ' en copia. No quites el código ni la copia: así tu respuesta y la del cliente quedan en este historial.'
+					: 'Abre tu correo con el cliente y el asunto con ' + c.codigo + '. Falta configurar el buzón del NOC: tu respuesta no quedará en este historial.';
+			}
+		}
 		$('tdSend').textContent = out ? 'Enviar' : 'Guardar nota';
 		$('tdSendWait').hidden = !out;
 		syncButtons();

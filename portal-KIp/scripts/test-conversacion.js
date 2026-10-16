@@ -8,7 +8,7 @@ const ejs = require('ejs');
 const prisma = require('../src/config/prisma');
 const conv = require('../src/services/conversationService');
 const ctrl = require('../src/controllers/conversationController');
-const { registrarRespuestaCliente } = require('../src/services/emailIngestionService');
+const { registrarRespuestaCliente, registrarRespuestaOperador } = require('../src/services/emailIngestionService');
 
 let total = 0, passed = 0;
 async function t(name, fn) {
@@ -247,6 +247,38 @@ function setup(ticket) {
         setup(baseTicket({ estado_actual: 'EN_PAUSA' }));
         assert.strictEqual(await registrarRespuestaCliente(store.ticket, { body: { content: 'hola' } }), false);
         assert.strictEqual(store.ticket.estado_actual, 'EN_PAUSA', 'solo reanuda si esperaba al cliente');
+    });
+
+    await t('Responder desde mi correo: mailto con el cliente, el código y el buzón en copia; la respuesta vuelve al hilo', async () => {
+        assert.strictEqual(conv.quitarCitado('Ya funciona, gracias.\n\nDe: NOC <noc@inter.com>\nEnviado: jueves\n> viejo'), 'Ya funciona, gracias.');
+        assert.strictEqual(conv.quitarCitado('Listo\nEl jue, 15 oct 2026 a las 10:00, Ana <a@b.com> escribió:\n> algo'), 'Listo');
+        assert.strictEqual(conv.quitarCitado('De: alguien\nsolo esto'), 'De: alguien\nsolo esto', 'si la primera línea parece cita, no se corta');
+        const href = conv.mailtoRespuesta({ para: 'Cliente <cliente@empresa.com>', cc: 'noc@inter.com', asunto: 'Re: [INC-007] Caída', citado: 'Sin servicio', de: 'cliente@empresa.com' });
+        assert.ok(href.startsWith('mailto:cliente@empresa.com?cc=noc%40inter.com&subject=Re%3A%20%5BINC-007%5D'), href);
+        assert.ok(href.includes('%3E%20Sin%20servicio'), 'cita el último mensaje del cliente');
+        assert.strictEqual(conv.mailtoRespuesta({ para: 'sin correo', asunto: 'x' }), null);
+        const vista = conv.buildConversation({ ticket: baseTicket({ estado_actual: 'EN_PROGRESO', asignado_a_id: OP.id }), viewer: OP, now: NOW, buzon: 'noc@inter.com' });
+        assert.ok(vista.correoExterno && vista.correoExterno.href.includes('cc=noc%40inter.com'));
+        assert.strictEqual(vista.correoExterno.buzon, 'noc@inter.com');
+        const ajeno = conv.buildConversation({ ticket: baseTicket({ estado_actual: 'EN_PROGRESO', asignado_a_id: 'otro' }), viewer: OP, now: NOW, buzon: 'noc@inter.com' });
+        if (!ajeno.puedeEscribir) assert.strictEqual(ajeno.correoExterno, null, 'sin permiso para escribir, sin botón');
+
+        setup(baseTicket({ estado_actual: 'EN_ESPERA_TERCEROS' }));
+        await registrarRespuestaOperador(store.ticket, {
+            from: { emailAddress: { address: OP.email || 'op@inter.com' } }, toRecipients: [{ emailAddress: { address: 'cliente@empresa.com' } }],
+            receivedDateTime: '2026-10-14T16:00:00Z', body: { contentType: 'text', content: 'Ya enviamos al técnico.\n\nFrom: Cliente\n> hola' }
+        }, { id: OP.id, email: 'op@inter.com' });
+        const m = store.mensajes[0];
+        assert.strictEqual(m.tipo, 'SALIENTE');
+        assert.strictEqual(m.autor_id, OP.id);
+        assert.strictEqual(m.enviado, true);
+        assert.strictEqual(m.para, 'cliente@empresa.com');
+        assert.strictEqual(m.texto, 'Ya enviamos al técnico.', 'sin el historial citado');
+        assert.strictEqual(store.ticket.estado_actual, 'EN_ESPERA_TERCEROS', 'no cambia el estado');
+        const hilo = conv.buildConversation({ ticket: store.ticket, mensajes: [{ ...m, id: 'm1', autor: { nombre: 'Op' } }], viewer: { id: 'coord', rol: 'COORDINADOR' }, now: NOW });
+        assert.strictEqual(hilo.items.find(i => i.id === 'm1').meta, 'Correo enviado desde su correo');
+        const html = fs.readFileSync(path.join(__dirname, '..', 'views', 'operator-dashboard.ejs'), 'utf8');
+        assert.ok(html.includes('id="tdMailExt"'), 'botón Abrir en mi correo');
     });
 
     await t('Vista del operador: pestañas, conversación y estilos del tema', async () => {

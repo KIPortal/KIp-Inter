@@ -50,7 +50,7 @@ async function armarConversacion(ticket, viewer) {
             include: { user: { select: { nombre: true } } }
         })
     ]);
-    return conv.buildConversation({ ticket, mensajes, logs, viewer, now: new Date() });
+    return conv.buildConversation({ ticket, mensajes, logs, viewer, now: new Date(), buzon: process.env.GRAPH_NOC_MAILBOX || null });
 }
 
 // GET /api/tickets/:ticketCode/conversacion

@@ -173,3 +173,4 @@ a.dfile:hover { color: var(--accent-t); }
 @keyframes tdIn { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: none; } }
 @keyframes tdMsg { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .tdlg-overlay, .tdlg, .mrow { animation: none; } }
+.composer-tools a.tpl { text-decoration: none; }

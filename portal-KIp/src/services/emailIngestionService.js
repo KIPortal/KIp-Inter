@@ -4,7 +4,7 @@ const { TokenCredentialAuthenticationProvider } = require('@microsoft/microsoft-
 const cron = require('node-cron');
 const prisma = require('../config/prisma');
 const { getNextTicketCode } = require('./ticketCodeService');
-const { textoDeCorreo, extraerCorreo } = require('./conversationService');
+const { textoDeCorreo, extraerCorreo, quitarCitado } = require('./conversationService');
 const { loadConfig } = require('./configService');
 const { sugerirPrioridad } = require('./rulesService');
 
@@ -46,7 +46,7 @@ async function procesarCorreosEntrantes() {
             .api(`/users/${NOC_MAILBOX}/mailFolders/inbox/messages`)
             .filter('isRead eq false')
             .top(10)
-            .select('id,subject,body,bodyPreview,from,receivedDateTime')
+            .select('id,subject,body,bodyPreview,from,toRecipients,receivedDateTime')
             .get();
 
         if (!messages.value || messages.value.length === 0) {
@@ -68,7 +68,11 @@ async function procesarCorreosEntrantes() {
             // 2. Insertar, o sumar el correo a la conversación si el ticket ya existe
             const existe = await prisma.ticket.findUnique({ where: { codigo_incidencia: codigoIncidencia } });
             if (existe && !existe.eliminado_en) {
-                await registrarRespuestaCliente(existe, message);
+                // Si lo escribió alguien del portal (respondió desde su correo con el buzón en copia),
+                // es una respuesta enviada; si no, es el cliente
+                const autor = await autorDelPortal(message);
+                if (autor) await registrarRespuestaOperador(existe, message, autor);
+                else await registrarRespuestaCliente(existe, message);
             } else if (!existe) {
                 // Prioridad sugerida por palabras clave (Administración → Reglas); el operador la confirma al tomarlo
                 const reglas = (await loadConfig(prisma).catch(() => null))?.reglas;
@@ -98,6 +102,35 @@ async function procesarCorreosEntrantes() {
     }
 }
 
+/** Usuario del portal que envió el correo (por su dirección), o null si es un cliente. */
+async function autorDelPortal(message, db = prisma) {
+    const de = extraerCorreo(message && message.from && message.from.emailAddress && message.from.emailAddress.address);
+    if (!de) return null;
+    return db.user.findFirst({ where: { email: { equals: de, mode: 'insensitive' } }, select: { id: true, nombre: true, email: true } });
+}
+
+/**
+ * Respuesta que un operador mandó desde su propio correo (Outlook, etc.) con el
+ * buzón del NOC en copia: queda en la conversación como correo enviado, sin el
+ * historial citado. No cambia el estado del ticket.
+ */
+async function registrarRespuestaOperador(ticket, message, autor, db = prisma) {
+    const para = (message.toRecipients || []).map(r => r && r.emailAddress && r.emailAddress.address).filter(Boolean)[0] || null;
+    await db.mensaje.create({
+        data: {
+            ticketId: ticket.id,
+            tipo: 'SALIENTE',
+            texto: quitarCitado(textoDeCorreo(message)) || '(Correo sin texto)',
+            autor_id: autor.id,
+            de: String(autor.email || '').slice(0, 180) || null,
+            para: para ? String(para).slice(0, 180) : null,
+            enviado: true,
+            ...(message.receivedDateTime ? { createdAt: new Date(message.receivedDateTime) } : {})
+        }
+    });
+    return true;
+}
+
 /**
  * Correo del cliente sobre un ticket que ya existe: queda en la conversación y,
  * si el ticket esperaba su respuesta, vuelve a En atención.
@@ -108,7 +141,7 @@ async function registrarRespuestaCliente(ticket, message, db = prisma) {
         data: {
             ticketId: ticket.id,
             tipo: 'ENTRANTE',
-            texto: textoDeCorreo(message) || '(Correo sin texto)',
+            texto: quitarCitado(textoDeCorreo(message)) || '(Correo sin texto)',
             de: de ? String(de).slice(0, 180) : null,
             ...(message.receivedDateTime ? { createdAt: new Date(message.receivedDateTime) } : {})
         }
@@ -169,5 +202,7 @@ module.exports = {
     iniciarIngesta,
     procesarCorreosEntrantes,
     registrarRespuestaCliente,
+    registrarRespuestaOperador,
+    autorDelPortal,
     enviarCorreo
 };
