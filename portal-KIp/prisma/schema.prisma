@@ -70,6 +70,7 @@ model User {
   estado_operativo EstadoOperativo @default(DISPONIBLE)
   atiende_tickets  Boolean         @default(false) // coordinador o jefe que también toma y trabaja tickets (Mi panel)
   telefono         String?         @db.VarChar(40) // teléfono o extensión para Contactos
+  foto             String?         @db.VarChar(80) // foto de perfil: archivo en fotos-perfil/ (no versionado); ver profileService
   tickets_resueltos Int            @default(0)
   
   tickets_creados   Ticket[] @relation("CreadorTicket")

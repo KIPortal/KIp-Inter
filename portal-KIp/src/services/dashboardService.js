@@ -20,6 +20,7 @@ const { AREA_NAMES } = require('./periodReportService');
 const { DEFAULT_RULES, ageLimitFor, overloadOptions } = require('./rulesService');
 const { buildSuggestions, normalizeOperator } = require('./assignmentService');
 const { ESTADOS_VE } = require('./estadosVeService');
+const { fotoUrl } = require('./profileService');
 
 const MINUTE_MS = 60 * 1000;
 const HOUR_MS = 60 * MINUTE_MS;
@@ -227,6 +228,7 @@ function buildCoordinatorPanel({ tickets = [], operators = [], now = new Date(),
             id: o.id,
             nombre: o.nombre,
             iniciales: initials(o.nombre),
+            foto: fotoUrl(o.foto),
             area: o.area_designada || 'GENERAL',
             areaNombre: AREA_NAMES[o.area_designada] || o.area_designada || 'General',
             estado: { grupo: shiftGroup(o.turno), etiqueta: o.turno?.etiqueta || 'Fuera de turno' },

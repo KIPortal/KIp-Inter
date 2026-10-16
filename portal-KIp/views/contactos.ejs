@@ -68,7 +68,7 @@
 					<div class="ct-list">
 					<% g.personas.forEach(p => { %>
 						<div class="ct-p" data-ct-p="<%= (p.nombre + ' ' + g.nombre + ' ' + p.rolTxt + ' ' + p.email).toLowerCase() %>">
-							<span class="avatar"><%= p.iniciales %><% if (p.estado) { %><i class="st st-<%= p.estado.grupo %>"></i><% } %></span>
+							<span class="avatar"><% if (p.foto) { %><img src="<%= p.foto %>" alt="" loading="lazy"><% } else { %><%= p.iniciales %><% } %><% if (p.estado) { %><i class="st st-<%= p.estado.grupo %>"></i><% } %></span>
 							<span class="who">
 								<b><%= p.nombre %><%= p.esYo ? ' (tú)' : '' %></b>
 								<span class="t2"><%= p.rolTxt %><%= p.estado ? ' · ' + p.estado.etiqueta : '' %><%= p.telefono ? ' · ' + p.telefono : '' %></span>

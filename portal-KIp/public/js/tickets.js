@@ -86,6 +86,8 @@
 		n.append(c.nodeType ? c : document.createTextNode(String(c)));
 	}
 	const $ = s => document.querySelector(s);
+	// Círculo de la persona: su foto de perfil si tiene, si no sus iniciales
+	const avatar = o => h('span', { class: 'avatar' }, o.foto ? h('img', { src: o.foto, alt: '', loading: 'lazy' }) : o.iniciales);
 	const fmt = m => m < 60 ? m + ' min' : Math.floor(m / 60) + ' h ' + String(m % 60).padStart(2, '0');
 	const hhmm = iso => new Date(iso).toLocaleTimeString('es-VE', { timeZone: 'America/Caracas', hour: '2-digit', minute: '2-digit' });
 	const fecha = iso => new Date(iso).toLocaleString('es-VE', { timeZone: 'America/Caracas', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
@@ -343,7 +345,7 @@
 			h('td', { style: 'max-width:0' }, h('button', { type: 'button', class: 'subj', title: t.asunto, onclick: () => openPanel(t.codigo) },
 				h('span', { style: 'font-weight:500', text: t.asunto }), h('span', { class: 'area', text: '  ·  ' + t.areaNombre + (t.subgrupoNombre ? ' · ' + t.subgrupoNombre : '') }))),
 			h('td', {}, t.operador
-				? h('span', { class: 'who' }, h('span', { class: 'avatar', text: t.operador.iniciales }), t.operador.nombre)
+				? h('span', { class: 'who' }, avatar(t.operador), t.operador.nombre)
 				: h('span', { class: 'unassigned' + (t.enCola ? ' t-red' : ''), text: t.enCola ? 'En cola de espera' : 'Sin asignar' })),
 			h('td', { class: 'qtime' + (t.alerta && viva ? ' late' : ''), title: t.alerta || '' },
 				t.alerta && viva ? h('span', { icon: 'warn' }) : null, fmt(t.edadMin)),
@@ -446,7 +448,7 @@
 			const sug = sg ? OPS[sg.id] : null;
 			const sugBox = (op, motivo, titulo) => h('div', { class: 'sugbox' },
 				h('div', { class: 'row1' }, h('b', { text: titulo }), h('span', { text: motivo })),
-				h('div', { class: 'row2' }, h('span', { class: 'avatar', text: op.iniciales }),
+				h('div', { class: 'row2' }, avatar(op),
 					h('div', { class: 'nm' }, h('b', { text: op.nombre }), h('span', { text: op.areaNombre + ' · ' + plural(op.carga, 'activo', 'activos') })),
 					h('button', { type: 'button', class: 'primary', text: 'Asignar', onclick: () => doAssign([t.codigo], op.id, {}) })),
 				h('button', { type: 'button', class: 'linkbtn', style: 'align-self:flex-start;font-size:12px;font-weight:600', text: 'Elegir otro operador', onclick: () => openAssign([t.codigo]) }));
@@ -634,7 +636,7 @@
 							type: 'button', class: 'opchoice', role: 'radio', 'aria-checked': String(M.pick === o.id), disabled: off,
 							onclick: () => { M.pick = o.id; paint(); }
 						},
-						h('span', { class: 'avatar', text: o.iniciales }),
+						avatar(o),
 						h('span', { class: 'nm' },
 							h('b', {}, o.nombre, o.id === sugId ? h('span', { class: 'tag green', text: 'Sugerido' }) : null, o.sobrecarga ? h('span', { class: 'tag red', text: 'Sobrecarga' }) : null),
 							h('span', {}, h('i', { style: 'background:' + ST_COLOR[o.estado.grupo] }), (o.deGuardia ? o.elegible.motivo : o.estado.etiqueta) + (M.area ? '' : ' · ' + o.areaNombre))),

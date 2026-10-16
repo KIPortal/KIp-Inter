@@ -19,6 +19,7 @@ const { estadosVeLista } = require('./estadosVeService');
 const { agingTickets, formatAge } = require('./dashboardService');
 const { DEFAULT_RULES, overloadOptions } = require('./rulesService');
 const { normalizeOperator, buildSuggestions, eligibility } = require('./assignmentService');
+const { fotoUrl } = require('./profileService');
 
 const MINUTE_MS = 60 * 1000;
 const HOUR_MS = 60 * MINUTE_MS;
@@ -121,7 +122,7 @@ function buildQueue({ tickets = [], operators = [], now = new Date(), rules = DE
             sugerida: priorityOf(t.puntos_complejidad) === 'SP' ? (t.prioridad_sugerida || null) : null,
             puntos: t.puntos_complejidad || 0,
             estado: t.estado_actual,
-            operador: t.asignado_a ? { id: t.asignado_a.id, nombre: t.asignado_a.nombre, iniciales: initials(t.asignado_a.nombre) } : null,
+            operador: t.asignado_a ? { id: t.asignado_a.id, nombre: t.asignado_a.nombre, iniciales: initials(t.asignado_a.nombre), foto: fotoUrl(t.asignado_a.foto) } : null,
             creadoPor: t.creado_por?.nombre || (t.origen_ingesta === 'CORREO' ? 'Buzón compartido' : 'Coordinador'),
             llegada: new Date(t.createdAt).toISOString(),
             edadMin: Math.max(0, Math.round((nowMs - time(t.createdAt)) / MINUTE_MS)),
@@ -149,6 +150,7 @@ function buildQueue({ tickets = [], operators = [], now = new Date(), rules = DE
             id: o.id,
             nombre: o.nombre,
             iniciales: initials(o.nombre),
+            foto: fotoUrl(o.foto),
             area: o.area_designada || 'GENERAL',
             areaNombre: AREA_NAMES[o.area_designada] || o.area_designada || 'General',
             subgrupo: o.subgrupo_id || '',

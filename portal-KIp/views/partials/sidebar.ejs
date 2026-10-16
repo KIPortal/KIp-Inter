@@ -1,7 +1,8 @@
 <%#
   Barra lateral del coordinador (IMPLEMENTACION.md §2.1, prototipo Main.dc.html).
   Uso: include('partials/sidebar', { currentUser, activo: 'dashboard', conteos: { tickets, enTurno, totalOperadores } })
-  activo: dashboard | tickets | turno | reportes | auditoria | admin | contactos | panel (operador)
+  activo: dashboard | tickets | turno | reportes | auditoria | admin | contactos | panel (operador) | perfil
+  El bloque del usuario (foto o inicial) lleva a Mi perfil (/perfil).
   Coordinador, jefe y gerente ven Coordinación; Auditoría y Administración, solo coordinador y gerente.
   conteos es opcional; si falta un dato, no se muestra.
   Operador: conteos.misTickets (activos) y conteos.area (nombre del área, va bajo su nombre).
@@ -12,6 +13,7 @@
 	const c = (typeof conteos !== 'undefined' && conteos) ? conteos : {};
 	const nombre = usuario.nombre || 'Usuario';
 	const inicial = nombre.trim().charAt(0).toUpperCase() || '?';
+	const foto = /^[0-9a-zA-Z-]{1,60}\.(jpg|png|webp)$/.test(usuario.foto || '') ? '/perfil/foto/' + usuario.foto : null;
 	const esSupervisor = ['COORDINADOR', 'JEFE', 'GERENTE'].includes(usuario.rol);
 	const administra = usuario.rol === 'COORDINADOR' || usuario.rol === 'GERENTE';
 	const esOperador = usuario.rol === 'OPERADOR';
@@ -76,13 +78,13 @@
 	</script>
 
 	<div class="sb-top">
-		<div class="sb-user" title="<%= nombre %><%= usuario.email ? ' · ' + usuario.email : '' %>">
-			<span class="sb-avatar" aria-hidden="true"><%= inicial %></span>
+		<a class="sb-user" href="/perfil" title="Mi perfil · <%= nombre %><%= usuario.email ? ' · ' + usuario.email : '' %>"<% if (actual === 'perfil') { %> aria-current="page"<% } %>>
+			<span class="sb-avatar" aria-hidden="true"><% if (foto) { %><img src="<%= foto %>" alt=""><% } else { %><%= inicial %><% } %></span>
 			<span class="sb-txt">
 				<span class="sb-uname"><%= nombre %></span>
 				<% if (esOperador && c.area) { %><span class="sb-mail"><%= c.area %></span><% } else if (usuario.email) { %><span class="sb-mail"><%= usuario.email %></span><% } %>
 			</span>
-		</div>
+		</a>
 	</div>
 
 	<% const principal = esOperador ? operacion : coordinacion; %>

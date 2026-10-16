@@ -1,0 +1,196 @@
+<%
+	// Mi perfil: cada quien cambia su foto, su teléfono y su clave.
+	// Nombre, rol, área y subgrupo los fija Administración. Solo dibuja lo que entrega profileService.buildProfileView.
+	const v = vista;
+	const bloqueado = typeof temporal !== 'undefined' && temporal;
+%>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+	<%- include('partials/head', { titulo: 'Mi perfil' }) %>
+	<style>
+		.pf { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; max-width: 920px; }
+		.pf section { padding: 18px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+		.pf h2 { margin: 0; font-size: 14px; font-weight: 700; }
+		.pf .hint { font-size: 12px; color: var(--t2); margin: 0; }
+		.pf-id { grid-column: 1 / -1; flex-direction: row !important; align-items: center; gap: 18px !important; flex-wrap: wrap; }
+		.pf-foto { width: 96px; height: 96px; font-size: 30px; }
+		.pf-who { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
+		.pf-who b { font-size: 18px; }
+		.pf-who span { font-size: 13px; color: var(--t2); overflow-wrap: anywhere; }
+		.pf-acts { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+		.pf-acts .primary, .pf-acts .pill { height: 32px; padding: 0 14px; font-size: 12px; font-weight: 600; }
+		.pf dl { display: grid; grid-template-columns: max-content 1fr; gap: 8px 14px; margin: 0; font-size: 13px; }
+		.pf dt { color: var(--t2); }
+		.pf dd { margin: 0; font-weight: 600; }
+		.pf label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: var(--t2); }
+		.pf .msg { font-size: 12px; min-height: 16px; }
+		.pf .msg.err { color: var(--c-red); }
+		.pf .msg.ok { color: var(--green-t); }
+		@media (max-width: 720px) { .pf { grid-template-columns: 1fr; } }
+	</style>
+</head>
+<body>
+<div class="app">
+	<%- include('partials/sidebar', { currentUser, activo: 'perfil' }) %>
+
+	<main class="app-main">
+		<header class="toolbar">
+			<div style="display:flex;flex-direction:column;margin-right:6px">
+				<h1>Mi perfil</h1>
+				<span class="sub">Tu foto, tu teléfono y tu clave</span>
+			</div>
+		</header>
+
+		<% if (bloqueado) { %><p class="empty">Estás con el acceso de desarrollo: aquí no hay usuario para guardar cambios.</p><% } %>
+
+		<div class="pf">
+			<section class="glass pf-id" aria-label="Tu foto">
+				<span class="avatar pf-foto" id="pfFoto"><% if (v.foto) { %><img src="<%= v.foto %>" alt="Foto de <%= v.nombre %>"><% } else { %><%= v.iniciales %><% } %></span>
+				<div class="pf-who">
+					<b><%= v.nombre %></b>
+					<span><%= v.rolTxt %> · <%= v.area %><%= v.subgrupo ? ' · ' + v.subgrupo : '' %></span>
+					<span><%= v.email %></span>
+					<div class="pf-acts" style="margin-top:6px">
+						<input type="file" id="pfArchivo" accept="image/jpeg,image/png,image/webp" hidden>
+						<button type="button" class="primary" id="pfSubir"<%= bloqueado ? ' disabled' : '' %>><%= v.foto ? 'Cambiar foto' : 'Agregar foto' %></button>
+						<button type="button" class="pill pillbtn" id="pfQuitar"<%= v.foto && !bloqueado ? '' : ' hidden' %>>Quitar foto</button>
+						<span class="msg" id="pfFotoMsg"></span>
+					</div>
+					<p class="hint">JPG, PNG o WebP. Se recorta en cuadrado y se reduce antes de subirla (máx. 2 MB). La ven tus compañeros en la barra lateral, Contactos y los tickets.</p>
+				</div>
+			</section>
+
+			<section class="glass" aria-label="Tus datos">
+				<h2>Tus datos</h2>
+				<dl>
+					<dt>Nombre</dt><dd><%= v.nombre %></dd>
+					<dt>Correo</dt><dd><%= v.email %></dd>
+					<dt>Rol</dt><dd><%= v.rolTxt %><%= v.atiende && v.rolTxt !== 'Operador' ? ' (atiende tickets)' : '' %></dd>
+					<dt>Área</dt><dd><%= v.area %><%= v.subgrupo ? ' · ' + v.subgrupo : '' %></dd>
+				</dl>
+				<p class="hint">Para cambiar estos datos, pídeselo al coordinador o al gerente (Administración).</p>
+				<label>Teléfono o extensión
+					<input class="field" id="pfTel" type="tel" maxlength="40" value="<%= v.telefono %>" placeholder="Ej. 0212-555 1234 ext 12"<%= bloqueado ? ' disabled' : '' %>>
+				</label>
+				<div class="pf-acts">
+					<button type="button" class="primary" id="pfGuardarTel"<%= bloqueado ? ' disabled' : '' %>>Guardar teléfono</button>
+					<span class="msg" id="pfTelMsg"></span>
+				</div>
+			</section>
+
+			<section class="glass" aria-label="Cambiar clave">
+				<h2>Cambiar clave</h2>
+				<form id="pfClave" autocomplete="on">
+					<input type="text" name="username" value="<%= v.email %>" autocomplete="username" hidden>
+					<div style="display:flex;flex-direction:column;gap:10px">
+						<label>Clave actual<input class="field" type="password" name="actual" autocomplete="current-password" required<%= bloqueado ? ' disabled' : '' %>></label>
+						<label>Clave nueva (mínimo <%= v.minClave %> caracteres)<input class="field" type="password" name="nueva" minlength="<%= v.minClave %>" maxlength="72" autocomplete="new-password" required<%= bloqueado ? ' disabled' : '' %>></label>
+						<label>Repite la clave nueva<input class="field" type="password" name="confirmar" autocomplete="new-password" required<%= bloqueado ? ' disabled' : '' %>></label>
+						<div class="pf-acts">
+							<button type="submit" class="primary"<%= bloqueado ? ' disabled' : '' %>>Cambiar clave</button>
+							<span class="msg" id="pfClaveMsg"></span>
+						</div>
+					</div>
+				</form>
+			</section>
+		</div>
+	</main>
+</div>
+<script>
+(function () {
+	'use strict';
+	const $ = id => document.getElementById(id);
+	const decir = (el, texto, ok) => { el.textContent = texto; el.className = 'msg ' + (ok ? 'ok' : 'err'); };
+	async function enviar(method, url, body, headers) {
+		const res = await fetch(url, { method, headers: headers || { 'Content-Type': 'application/json' }, body });
+		let j = {};
+		try { j = await res.json(); } catch (e) { /* sin cuerpo */ }
+		if (!res.ok || !j.success) throw new Error(j.error || 'Error ' + res.status);
+		return j;
+	}
+
+	// Foto: se recorta en cuadrado y se reduce a 512 px en el navegador; el servidor revisa tipo y peso
+	function reducir(file) {
+		return new Promise(resolve => {
+			const img = new Image();
+			const url = URL.createObjectURL(file);
+			img.onload = () => {
+				try {
+					const lado = Math.min(img.naturalWidth, img.naturalHeight);
+					const tam = Math.min(512, lado);
+					const c = document.createElement('canvas');
+					c.width = c.height = tam;
+					c.getContext('2d').drawImage(img, (img.naturalWidth - lado) / 2, (img.naturalHeight - lado) / 2, lado, lado, 0, 0, tam, tam);
+					c.toBlob(b => { URL.revokeObjectURL(url); resolve(b || file); }, 'image/jpeg', 0.88);
+				} catch (e) { URL.revokeObjectURL(url); resolve(file); }
+			};
+			img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+			img.src = url;
+		});
+	}
+	const archivo = $('pfArchivo'), subir = $('pfSubir'), quitar = $('pfQuitar'), fotoMsg = $('pfFotoMsg');
+	subir.addEventListener('click', () => archivo.click());
+	archivo.addEventListener('change', async () => {
+		const f = archivo.files && archivo.files[0];
+		archivo.value = '';
+		if (!f) return;
+		if (!/^image\/(jpeg|png|webp)$/.test(f.type)) return decir(fotoMsg, 'La foto debe ser JPG, PNG o WebP');
+		subir.disabled = true;
+		decir(fotoMsg, 'Subiendo…', true);
+		try {
+			const blob = await reducir(f);
+			await enviar('PUT', '/api/perfil/foto', blob, { 'Content-Type': blob.type || f.type });
+			window.location.reload();
+		} catch (e) {
+			decir(fotoMsg, e.message);
+			subir.disabled = false;
+		}
+	});
+	quitar.addEventListener('click', async () => {
+		if (!window.confirm('¿Quitar tu foto de perfil? Se verán tus iniciales.')) return;
+		quitar.disabled = true;
+		try {
+			await enviar('DELETE', '/api/perfil/foto');
+			window.location.reload();
+		} catch (e) {
+			decir(fotoMsg, e.message);
+			quitar.disabled = false;
+		}
+	});
+
+	// Teléfono: mismo guardado que Contactos
+	const guardarTel = $('pfGuardarTel'), telMsg = $('pfTelMsg');
+	guardarTel.addEventListener('click', async () => {
+		guardarTel.disabled = true;
+		try {
+			const j = await enviar('PATCH', '/api/contactos/yo', JSON.stringify({ telefono: $('pfTel').value }));
+			$('pfTel').value = j.telefono || '';
+			decir(telMsg, 'Teléfono guardado', true);
+		} catch (e) {
+			decir(telMsg, e.message);
+		}
+		guardarTel.disabled = false;
+	});
+
+	// Clave
+	const form = $('pfClave'), claveMsg = $('pfClaveMsg');
+	form.addEventListener('submit', async e => {
+		e.preventDefault();
+		const datos = { actual: form.actual.value, nueva: form.nueva.value, confirmar: form.confirmar.value };
+		if (datos.nueva !== datos.confirmar) return decir(claveMsg, 'La confirmación no coincide con la clave nueva');
+		const btn = form.querySelector('button[type=submit]');
+		btn.disabled = true;
+		try {
+			await enviar('POST', '/api/perfil/clave', JSON.stringify(datos));
+			form.reset();
+			decir(claveMsg, 'Clave cambiada. Úsala la próxima vez que entres.', true);
+		} catch (err) {
+			decir(claveMsg, err.message);
+		}
+		btn.disabled = false;
+	});
+})();
+</script>
+</body>
+</html>

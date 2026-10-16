@@ -160,7 +160,7 @@
 												<div class="ops-grid op-row" data-carga="<%= o.carga %>" data-resueltos="<%= o.resueltos %>">
 													<div class="op-who">
 														<span class="pos" data-pos><%= j + 1 %></span>
-														<span class="avatar"><%= o.iniciales %><span class="st st-<%= o.estado.grupo %>"></span></span>
+														<span class="avatar"><% if (o.foto) { %><img src="<%= o.foto %>" alt="" loading="lazy"><% } else { %><%= o.iniciales %><% } %><span class="st st-<%= o.estado.grupo %>"></span></span>
 														<div class="nm"><b><%= o.nombre %></b><span><%= o.estado.etiqueta %></span></div>
 													</div>
 													<div class="op-bars">
@@ -341,7 +341,7 @@
 								<td><span class="rank-pos<%= i < 3 ? ' m' + (i + 1) : '' %>"><%= i + 1 %></span></td>
 								<td>
 									<div style="display:flex;align-items:center;gap:8px">
-										<span class="avatar sm"><%= o.iniciales %><span class="st st-<%= o.estado.grupo %>"></span></span>
+										<span class="avatar sm"><% if (o.foto) { %><img src="<%= o.foto %>" alt="" loading="lazy"><% } else { %><%= o.iniciales %><% } %><span class="st st-<%= o.estado.grupo %>"></span></span>
 										<div style="display:flex;flex-direction:column"><span style="font-weight:600"><%= o.nombre %></span><span class="t2"><%= o.areaNombre %> · <%= o.estado.etiqueta %></span></div>
 									</div>
 								</td>

@@ -11,6 +11,7 @@
 const { getDayBounds, getClosingDate, UTC_OFFSET_HOURS } = require('./metricsService');
 const { AREA_NAMES, subgrupoName } = require('./areaCatalog');
 const { DEFAULT_RULES } = require('./rulesService');
+const { fotoUrl } = require('./profileService');
 const { DEFAULT_SCHEDULE, GUARDIA_WEEKDAY, GUARDIA_WEEKEND, caracasClock } = require('./shiftService');
 
 const MINUTE_MS = 60 * 1000;
@@ -321,7 +322,7 @@ function buildOperatorPanel({
 
     return {
         saludo: saludo(user.nombre, now),
-        usuario: { id: user.id, nombre: user.nombre || 'Operador', iniciales: initials(user.nombre), area: myArea, areaNombre: areaNombre + (subgrupoName(user.subgrupo_id) ? ' · ' + subgrupoName(user.subgrupo_id) : '') },
+        usuario: { id: user.id, nombre: user.nombre || 'Operador', iniciales: initials(user.nombre), foto: fotoUrl(user.foto), area: myArea, areaNombre: areaNombre + (subgrupoName(user.subgrupo_id) ? ' · ' + subgrupoName(user.subgrupo_id) : '') },
         turno: shiftWindow({ horario, deGuardia, turno }, now),
         disponibilidad,
         puntosHoy,
