@@ -32,3 +32,6 @@ public/uploads/*
 
 # Registro de jornadas (Excel diario guardado por el portal)
 portal-KIp/registros/
+
+# Fotos de perfil que sube cada persona (Mi perfil)
+portal-KIp/fotos-perfil/

@@ -12,7 +12,7 @@ async function renderContactos(req, res) {
         const [usuarios, operadores] = await Promise.all([
             prisma.user.findMany({
                 where: { activo: true },
-                select: { id: true, nombre: true, email: true, rol: true, area_designada: true, telefono: true },
+                select: { id: true, nombre: true, email: true, rol: true, area_designada: true, telefono: true, foto: true },
                 orderBy: { nombre: 'asc' }
             }),
             loadOperatorsWithShift(new Date())

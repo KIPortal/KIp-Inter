@@ -30,7 +30,8 @@
     "test:operador": "node scripts/test-operador.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "test:roles": "node scripts/test-roles.js",
-    "test:jornadas": "node scripts/test-jornadas.js"
+    "test:jornadas": "node scripts/test-jornadas.js",
+    "test:perfil": "node scripts/test-perfil.js"
   },
   "keywords": [],
   "author": "Jose Corobo (Jacu) <joseacorobo@gmail.com>",

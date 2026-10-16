@@ -7,6 +7,7 @@
  */
 
 const { AREA_NAMES, AREAS } = require('./areaCatalog');
+const { fotoUrl } = require('./profileService');
 
 const ROL_TXT = { GERENTE: 'Gerente', JEFE: 'Jefe de área', COORDINADOR: 'Coordinador', OPERADOR: 'Operador' };
 const ORDEN_ROL = { GERENTE: 0, JEFE: 1, COORDINADOR: 2, OPERADOR: 3 };
@@ -42,6 +43,7 @@ function buildContacts({ usuarios = [], turnoPorId = new Map(), yoId = null } = 
             id: u.id,
             nombre: u.nombre,
             iniciales: iniciales(u.nombre),
+            foto: fotoUrl(u.foto),
             rol: u.rol,
             rolTxt: ROL_TXT[u.rol] || u.rol,
             email: u.email,

@@ -357,6 +357,8 @@ nav.side {
 
 .sb-top { display: flex; flex-direction: column; gap: 10px; padding: 0 0 14px; margin-bottom: 8px; border-bottom: 1px solid var(--sep); }
 .sb-user { display: flex; align-items: center; gap: 8px; padding: 2px 6px 0; min-width: 0; }
+a.sb-user { color: var(--t1); border-radius: 8px; padding: 4px 6px; margin-top: -2px; }
+a.sb-user:hover, a.sb-user[aria-current=page] { background: var(--hover); color: var(--t1); }
 .sb-avatar { width: 28px; height: 28px; flex: none; border-radius: 50%; background: var(--solid); color: #FFFFFF; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
 .sb-txt { display: flex; flex-direction: column; line-height: 1.3; min-width: 0; max-width: 200px; overflow: hidden; white-space: nowrap; transition: opacity .2s ease, max-width .38s var(--ease); }
 .sb-uname { font-size: 12px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
@@ -531,6 +533,9 @@ nav.side[data-collapsed=true] a.sideitem > span { display: none; }
 .op-who .nm span { font-size: 12px; color: var(--t2); }
 .avatar { position: relative; width: 28px; height: 28px; flex: none; border-radius: 50%; background: var(--accent-bg); color: var(--accent-t); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
 .avatar.sm { width: 26px; height: 26px; }
+/* Foto de perfil dentro del círculo (Mi perfil); sin foto se ven las iniciales */
+.avatar > img, .sb-avatar > img, .op-avatar > img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
+.avatar:has(> img), .sb-avatar:has(> img), .op-avatar:has(> img) { background: var(--fill); }
 .avatar .st { position: absolute; right: -1px; bottom: -1px; width: 8px; height: 8px; border-radius: 50%; border: 2px solid var(--control); box-sizing: content-box; }
 .st-turno { background: var(--c-green); }
 .st-guardia { background: var(--c-violet); }

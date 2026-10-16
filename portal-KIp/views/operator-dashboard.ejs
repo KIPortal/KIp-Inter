@@ -33,7 +33,7 @@
 	<main class="app-main">
 		<header class="op-head">
 			<span class="popwrap">
-				<button type="button" class="op-avatar" data-menu-me aria-haspopup="menu" aria-expanded="false" aria-label="Menú de <%= p.usuario.nombre %>"><%= p.usuario.iniciales %></button>
+				<button type="button" class="op-avatar" data-menu-me aria-haspopup="menu" aria-expanded="false" aria-label="Menú de <%= p.usuario.nombre %>"><% if (p.usuario.foto) { %><img src="<%= p.usuario.foto %>" alt=""><% } else { %><%= p.usuario.iniciales %><% } %></button>
 			</span>
 			<div class="who">
 				<h1><%= p.saludo %></h1>

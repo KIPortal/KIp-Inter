@@ -13,7 +13,7 @@ const { loadConfig } = require('../services/configService');
 const { getNextTicketCode } = require('../services/ticketCodeService');
 
 const ticketRelations = {
-    asignado_a: { select: { id: true, nombre: true, email: true, rol: true, area_designada: true, estado_operativo: true } },
+    asignado_a: { select: { id: true, nombre: true, email: true, rol: true, area_designada: true, estado_operativo: true, foto: true } },
     creado_por: { select: { nombre: true, email: true } }
 };
 
@@ -58,6 +58,7 @@ async function loadOperatorsWithShift(ahora = new Date(), filtro = {}) {
             area_designada: true,
             telefono: true,
             subgrupo_id: true,
+            foto: true,
             estado_operativo: true,
             tickets_asignados: {
                 // Carga activa completa: incluye recién asignados (NUEVO) y en pausa
