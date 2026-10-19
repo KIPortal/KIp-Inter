@@ -35,7 +35,9 @@ function explicarError(err) {
         return 'La cuenta no tiene un buzón de Exchange Online/Outlook disponible.';
     }
     if (/ErrorAccessDenied|403/i.test(txt)) {
-        return 'Inició sesión, pero sin permiso de correo. Revisa que la app tenga los permisos delegados Mail.ReadWrite, Mail.Send y offline_access.';
+        return graphAuth.soloLectura()
+            ? 'Inició sesión, pero sin permiso de correo. Revisa que la app tenga los permisos delegados Mail.Read y offline_access.'
+            : 'Inició sesión, pero sin permiso de correo. Revisa que la app tenga los permisos delegados Mail.ReadWrite, Mail.Send y offline_access.';
     }
     return null;
 }
@@ -46,7 +48,11 @@ async function probarBuzon(pca) {
     });
     const inbox = await client.api('/me/mailFolders/inbox').select('totalItemCount,unreadItemCount').get();
     console.log(`📬 Bandeja de entrada: ${inbox.totalItemCount} correos, ${inbox.unreadItemCount} sin leer.`);
-    console.log('   Ojo: al encender el portal, los no leídos se convierten en tickets y quedan marcados como leídos.');
+    if (graphAuth.soloLectura()) {
+        console.log('   Solo lectura: el portal no marca ni envía nada; toma los correos que lleguen desde que se enciende.');
+    } else {
+        console.log('   Ojo: al encender el portal, los no leídos se convierten en tickets y quedan marcados como leídos.');
+    }
 }
 
 async function main() {

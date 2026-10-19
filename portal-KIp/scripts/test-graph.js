@@ -25,15 +25,31 @@ class PcaSimulado {
 const msalPath = require.resolve('@azure/msal-node');
 require.cache[msalPath] = { id: msalPath, filename: msalPath, loaded: true, exports: { PublicClientApplication: PcaSimulado } };
 
+// Prisma simulado: la ingesta crea tickets en memoria
+const ticketsCreados = [];
+const prismaPath = require.resolve('../src/config/prisma');
+require.cache[prismaPath] = { id: prismaPath, filename: prismaPath, loaded: true, exports: {
+    INCLUDE_DELETED: {},
+    ticket: {
+        findMany: async () => ticketsCreados.map(t => ({ codigo_incidencia: t.codigo_incidencia })),
+        findUnique: async () => null,
+        create: async ({ data }) => { ticketsCreados.push(data); return data; }
+    },
+    configuracion: { findMany: async () => [] }
+} };
+
+let correosSimulados = [];
 const graphLib = require('@microsoft/microsoft-graph-client');
 const initOriginal = graphLib.Client.init;
 let authProviderCapturado = null;
 graphLib.Client.init = ({ authProvider }) => {
     authProviderCapturado = authProvider;
     const api = (ruta) => {
+        const pedido = { get: ruta };
         const q = {
-            filter() { return q; }, top() { return q; }, select() { return q; },
-            get: async () => { llamadas.push({ get: ruta }); return { value: [] }; },
+            filter(f) { pedido.filter = f; return q; }, orderby(o) { pedido.orderby = o; return q; },
+            top() { return q; }, select() { return q; },
+            get: async () => { llamadas.push(pedido); return { value: correosSimulados }; },
             patch: async () => { llamadas.push({ patch: ruta }); },
             post: async (body) => { llamadas.push({ post: ruta, body }); }
         };
@@ -105,7 +121,7 @@ const { explicarError } = require('./graph-login');
     await prueba('Lee la Bandeja de entrada del propio buzón (/me), sin GRAPH_NOC_MAILBOX', async () => {
         llamadas.length = 0;
         await mail.procesarCorreosEntrantes();
-        assert.deepStrictEqual(llamadas, [{ get: '/me/mailFolders/inbox/messages' }]);
+        assert.deepStrictEqual(llamadas, [{ get: '/me/mailFolders/inbox/messages', filter: 'isRead eq false' }]);
     });
     await prueba('El cliente de Graph usa el token de la sesión guardada', async () => {
         const token = await new Promise((res, rej) => authProviderCapturado((e, t) => e ? rej(e) : res(t)));
@@ -118,6 +134,66 @@ const { explicarError } = require('./graph-login');
         assert.strictEqual(llamadas[0].post, '/me/sendMail');
         assert.strictEqual(llamadas[0].body.message.toRecipients[0].emailAddress.address, 'cliente@x.com');
     });
+
+    console.log('\n--- Solo lectura ---');
+    const dirEstado = fs.mkdtempSync(path.join(os.tmpdir(), 'graph-estado-'));
+    const archivoEstado = path.join(dirEstado, 'estado.json');
+    await prueba('Solo lectura pide solo Mail.Read (y offline_access)', () => {
+        assert.strictEqual(graphAuth.soloLectura({ GRAPH_SOLO_LECTURA: 'si' }), true);
+        assert.strictEqual(graphAuth.soloLectura({ GRAPH_SOLO_LECTURA: 'no' }), false);
+        assert.strictEqual(graphAuth.soloLectura({}), false);
+        assert.deepStrictEqual(graphAuth.scopesDelegados({ GRAPH_SOLO_LECTURA: 'Sí' }), ['Mail.Read', 'offline_access']);
+    });
+    await prueba('La marca avanza con cada correo y recuerda los que llegaron en el mismo instante', () => {
+        let e = { desde: '2026-10-19T10:00:00.000Z', ids: [] };
+        e = graphAuth.avanzarEstado(e, { id: 'a', receivedDateTime: '2026-10-19T10:00:00Z' });
+        assert.deepStrictEqual(e, { desde: '2026-10-19T10:00:00.000Z', ids: ['a'] });
+        e = graphAuth.avanzarEstado(e, { id: 'b', receivedDateTime: '2026-10-19T10:05:00Z' });
+        assert.deepStrictEqual(e, { desde: '2026-10-19T10:05:00.000Z', ids: ['b'] });
+        assert.deepStrictEqual(graphAuth.avanzarEstado(e, { id: 'viejo', receivedDateTime: '2026-10-19T09:00:00Z' }), e);
+    });
+    await prueba('El estado se guarda y se lee; un archivo dañado cuenta como "nunca se leyó"', () => {
+        assert.strictEqual(graphAuth.leerEstado(archivoEstado), null);
+        graphAuth.guardarEstado({ desde: '2026-10-19T10:00:00.000Z', ids: ['x'] }, archivoEstado);
+        assert.deepStrictEqual(graphAuth.leerEstado(archivoEstado), { desde: '2026-10-19T10:00:00.000Z', ids: ['x'] });
+        fs.writeFileSync(archivoEstado, 'no es json');
+        assert.strictEqual(graphAuth.leerEstado(archivoEstado), null);
+        fs.unlinkSync(archivoEstado);
+    });
+    process.env.GRAPH_SOLO_LECTURA = 'si';
+    process.env.GRAPH_ESTADO_ARCHIVO = archivoEstado;
+    await prueba('La primera vez no importa correos viejos: solo guarda la hora de inicio', async () => {
+        llamadas.length = 0;
+        await mail.procesarCorreosEntrantes();
+        assert.deepStrictEqual(llamadas, [], 'no consulta el buzón');
+        const e = graphAuth.leerEstado(archivoEstado);
+        assert.ok(e && Math.abs(Date.parse(e.desde) - Date.now()) < 5000);
+    });
+    await prueba('Lee los nuevos por fecha, crea el ticket y no marca nada en el buzón', async () => {
+        graphAuth.guardarEstado({ desde: '2026-10-19T10:00:00.000Z', ids: ['ya'] }, archivoEstado);
+        correosSimulados = [
+            { id: 'ya', subject: 'Repetido', bodyPreview: '', from: { emailAddress: { address: 'c@x.com' } }, receivedDateTime: '2026-10-19T10:00:00Z' },
+            { id: 'nuevo', subject: 'Caída enlace', bodyPreview: 'sin servicio', from: { emailAddress: { address: 'c@x.com' } }, receivedDateTime: '2026-10-19T10:07:00Z' }
+        ];
+        llamadas.length = 0;
+        ticketsCreados.length = 0;
+        await mail.procesarCorreosEntrantes();
+        assert.deepStrictEqual(llamadas, [{
+            get: '/me/mailFolders/inbox/messages',
+            filter: 'receivedDateTime ge 2026-10-19T10:00:00.000Z',
+            orderby: 'receivedDateTime asc'
+        }], 'una sola consulta y ningún PATCH');
+        assert.deepStrictEqual(ticketsCreados.map(t => [t.codigo_incidencia, t.asunto]), [['INC-001', 'Caída enlace']]);
+        assert.deepStrictEqual(graphAuth.leerEstado(archivoEstado), { desde: '2026-10-19T10:07:00.000Z', ids: ['nuevo'] });
+        correosSimulados = [];
+    });
+    await prueba('En solo lectura no envía respuestas', async () => {
+        llamadas.length = 0;
+        const r = await mail.enviarCorreo({ para: 'cliente@x.com', asunto: 'Re', texto: 'Hola' });
+        assert.deepStrictEqual(r, { enviado: false, configurado: false, soloLectura: true });
+        assert.deepStrictEqual(llamadas, []);
+    });
+    delete process.env.GRAPH_SOLO_LECTURA;
 
     console.log('\n--- Mensajes de ayuda del inicio de sesión ---');
     await prueba('Explica los errores comunes en español', () => {

@@ -7,15 +7,29 @@
  *   (node scripts/graph-login.js) y el portal lee y responde desde SU buzón (/me).
  *   No usa secreto. La sesión (con su token de renovación) queda en
  *   GRAPH_SESION_ARCHIVO, que nunca se sube a git.
+ *
+ * GRAPH_SOLO_LECTURA="si" (en cualquier modo): solo lee (permiso Mail.Read). No marca
+ * correos como leídos ni envía respuestas; recuerda hasta qué correo leyó en
+ * GRAPH_ESTADO_ARCHIVO y la primera vez empieza desde ese momento (no importa lo viejo).
  */
 const fs = require('fs');
 const path = require('path');
 
 const SCOPES_DELEGADOS = ['Mail.ReadWrite', 'Mail.Send', 'offline_access'];
+const SCOPES_SOLO_LECTURA = ['Mail.Read', 'offline_access'];
 const SESION_POR_DEFECTO = path.resolve(__dirname, '../../.graph-sesion.json');
+const ESTADO_POR_DEFECTO = path.resolve(__dirname, '../../.graph-estado.json');
 
 function modo(env = process.env) {
     return String(env.GRAPH_MODO || '').trim().toLowerCase() === 'delegado' ? 'delegado' : 'aplicacion';
+}
+
+function soloLectura(env = process.env) {
+    return ['si', 'sí', 'true', '1'].includes(String(env.GRAPH_SOLO_LECTURA || '').trim().toLowerCase());
+}
+
+function scopesDelegados(env = process.env) {
+    return soloLectura(env) ? SCOPES_SOLO_LECTURA : SCOPES_DELEGADOS;
 }
 
 function archivoSesion(env = process.env) {
@@ -26,6 +40,35 @@ function archivoSesion(env = process.env) {
 function rutaBuzon(env = process.env) {
     if (modo(env) === 'delegado') return '/me';
     return env.GRAPH_NOC_MAILBOX ? `/users/${encodeURIComponent(env.GRAPH_NOC_MAILBOX)}` : null;
+}
+
+// --- Hasta dónde se leyó (modo solo lectura) ---
+
+function archivoEstado(env = process.env) {
+    return env.GRAPH_ESTADO_ARCHIVO ? path.resolve(env.GRAPH_ESTADO_ARCHIVO) : ESTADO_POR_DEFECTO;
+}
+
+/** { desde: ISO, ids: [ids ya procesados recibidos exactamente en `desde`] } o null si nunca se leyó. */
+function leerEstado(archivo = archivoEstado(), fsMod = fs) {
+    try {
+        const e = JSON.parse(fsMod.readFileSync(archivo, 'utf8'));
+        return e && e.desde && !isNaN(Date.parse(e.desde)) ? { desde: e.desde, ids: Array.isArray(e.ids) ? e.ids : [] } : null;
+    } catch (_) {
+        return null;
+    }
+}
+
+function guardarEstado(estado, archivo = archivoEstado(), fsMod = fs) {
+    fsMod.writeFileSync(archivo, JSON.stringify(estado));
+}
+
+/** Estado tras procesar un correo: avanza la marca de tiempo o suma el id si llegó en el mismo instante. */
+function avanzarEstado(estado, message) {
+    const t = Date.parse(message.receivedDateTime);
+    const actual = Date.parse(estado.desde);
+    if (isNaN(t) || t < actual) return estado;
+    if (t > actual) return { desde: new Date(t).toISOString(), ids: [message.id] };
+    return { desde: estado.desde, ids: estado.ids.includes(message.id) ? estado.ids : [...estado.ids, message.id] };
 }
 
 /** Guarda y lee la caché de MSAL en un archivo local. */
@@ -63,21 +106,28 @@ async function tokenDelegado(pca) {
         e.code = 'SIN_SESION';
         throw e;
     }
-    const r = await pca.acquireTokenSilent({ account: cuentas[0], scopes: SCOPES_DELEGADOS });
+    const r = await pca.acquireTokenSilent({ account: cuentas[0], scopes: scopesDelegados() });
     return r.accessToken;
 }
 
 /** Inicio de sesión con código (lo usa scripts/graph-login.js). `mostrar` recibe { verificationUri, userCode, message }. */
 async function iniciarSesionConCodigo(pca, mostrar = (r) => console.log(r.message)) {
     return pca.acquireTokenByDeviceCode({
-        scopes: SCOPES_DELEGADOS,
+        scopes: scopesDelegados(),
         deviceCodeCallback: mostrar
     });
 }
 
 module.exports = {
     SCOPES_DELEGADOS,
+    SCOPES_SOLO_LECTURA,
     modo,
+    soloLectura,
+    scopesDelegados,
+    archivoEstado,
+    leerEstado,
+    guardarEstado,
+    avanzarEstado,
     archivoSesion,
     rutaBuzon,
     pluginArchivo,

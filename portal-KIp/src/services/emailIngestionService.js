@@ -44,6 +44,12 @@ function getGraphClient() {
     return graphClient;
 }
 
+/** Solo lectura, primera vez: se toman los correos que lleguen desde ahora (no se importa lo viejo). */
+function marcarInicioLectura() {
+    graphAuth.guardarEstado({ desde: new Date().toISOString(), ids: [] });
+    console.log('[Graph API] Solo lectura: se tomarán los correos que lleguen desde ahora.');
+}
+
 /**
  * Función encargada de leer correos no leídos y transformarlos en tickets
  */
@@ -52,11 +58,20 @@ async function procesarCorreosEntrantes() {
     const buzon = graphAuth.rutaBuzon();
     if (!client || !buzon) return;
 
+    const soloLectura = graphAuth.soloLectura();
     try {
-        // Obtenemos los últimos 10 correos no leídos
-        const messages = await client
-            .api(`${buzon}/mailFolders/inbox/messages`)
-            .filter('isRead eq false')
+        let consulta = client.api(`${buzon}/mailFolders/inbox/messages`);
+        let estado = null;
+        if (soloLectura) {
+            // Solo lectura: no se marca nada en el buzón; se recuerda hasta qué correo se leyó
+            estado = graphAuth.leerEstado();
+            if (!estado) return marcarInicioLectura();
+            consulta = consulta.filter(`receivedDateTime ge ${estado.desde}`).orderby('receivedDateTime asc');
+        } else {
+            consulta = consulta.filter('isRead eq false');
+        }
+        // Hasta 10 correos por vuelta
+        const messages = await consulta
             .top(10)
             .select('id,subject,body,bodyPreview,from,toRecipients,receivedDateTime')
             .get();
@@ -66,6 +81,7 @@ async function procesarCorreosEntrantes() {
         }
 
         for (const message of messages.value) {
+            if (soloLectura && estado.ids.includes(message.id)) continue; // ya procesado
             console.log(`[Graph API] Procesando correo: ${message.subject}`);
 
             // 1. Extraer o generar el Código de Incidencia
@@ -103,10 +119,15 @@ async function procesarCorreosEntrantes() {
                 });
             }
 
-            // 3. Marcar correo como leído
-            await client
-                .api(`${buzon}/messages/${message.id}`)
-                .patch({ isRead: true });
+            // 3. Que no se vuelva a procesar: avanzar la marca (solo lectura) o marcarlo como leído
+            if (soloLectura) {
+                estado = graphAuth.avanzarEstado(estado, message);
+                graphAuth.guardarEstado(estado);
+            } else {
+                await client
+                    .api(`${buzon}/messages/${message.id}`)
+                    .patch({ isRead: true });
+            }
         }
 
     } catch (error) {
@@ -177,6 +198,7 @@ async function registrarRespuestaCliente(ticket, message, db = prisma) {
  * Si Graph está configurado y falla, lanza el error.
  */
 async function enviarCorreo({ para, asunto, texto, adjuntos = [] }) {
+    if (graphAuth.soloLectura()) return { enviado: false, configurado: false, soloLectura: true };
     const client = getGraphClient();
     const buzon = graphAuth.rutaBuzon();
     if (!client || !buzon) return { enviado: false, configurado: false };
@@ -203,8 +225,10 @@ async function enviarCorreo({ para, asunto, texto, adjuntos = [] }) {
  * Inicializa el Cron Job que se ejecutará cada 2 minutos
  */
 function iniciarIngesta() {
-    console.log(`✅ Servicio de Ingesta Automática (Graph API) preparado (modo ${graphAuth.modo()}).`);
+    console.log(`✅ Servicio de Ingesta Automática (Graph API) preparado (modo ${graphAuth.modo()}${graphAuth.soloLectura() ? ', solo lectura' : ''}).`);
     
+    if (graphAuth.soloLectura() && !graphAuth.leerEstado()) marcarInicioLectura();
+
     // Ejecutar cada 2 minutos: '*/2 * * * *'
     cron.schedule('*/2 * * * *', async () => {
         await procesarCorreosEntrantes();

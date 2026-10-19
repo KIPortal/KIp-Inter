@@ -61,6 +61,14 @@ Abre el enlace, escribe el código e inicia sesión con el correo del buzón. El
 
 ---
 
+## 👁️ Solo lectura (`GRAPH_SOLO_LECTURA="si"`)
+Sirve con cualquiera de los dos escenarios. El portal solo **lee** la Bandeja de entrada y crea tickets:
+- Basta el permiso `Mail.Read` (Application o Delegated, según el escenario). Con delegado, además `offline_access`.
+- No marca correos como leídos ni envía respuestas: responder desde el portal guarda el mensaje sin enviarlo.
+- Recuerda hasta qué correo leyó en `portal-KIp/.graph-estado.json` (no se sube a git). La primera vez empieza desde ese momento: los correos que ya estaban no se importan. Para volver a empezar desde ahora, borra ese archivo.
+
+---
+
 ## 🛠️ Herramientas de Diagnóstico Incorporadas
 
 El proyecto incluye scripts automatizados para verificar la salud de la integración sin comprometer el servidor principal.
