@@ -35,3 +35,6 @@ portal-KIp/registros/
 
 # Fotos de perfil que sube cada persona (Mi perfil)
 portal-KIp/fotos-perfil/
+
+# Sesión de correo del modo de prueba de Graph (contiene el token de renovación)
+.graph-sesion.json

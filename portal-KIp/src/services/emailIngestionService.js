@@ -7,16 +7,27 @@ const { getNextTicketCode } = require('./ticketCodeService');
 const { textoDeCorreo, extraerCorreo, quitarCitado } = require('./conversationService');
 const { loadConfig } = require('./configService');
 const { sugerirPrioridad } = require('./rulesService');
+const graphAuth = require('./graphAuthService');
 
 // Estas variables deben ir en el archivo .env
 const TENANT_ID = process.env.GRAPH_TENANT_ID;
 const CLIENT_ID = process.env.GRAPH_CLIENT_ID;
 const CLIENT_SECRET = process.env.GRAPH_CLIENT_SECRET;
-const NOC_MAILBOX = process.env.GRAPH_NOC_MAILBOX; // Correo que vamos a leer (ej. noc@tuempresa.com)
 
 let graphClient;
 
 function getGraphClient() {
+    if (!graphClient && graphAuth.modo() === 'delegado') {
+        // Modo de prueba: token de la persona que inició sesión con scripts/graph-login.js
+        if (!process.env.GRAPH_CLIENT_ID) {
+            console.warn("⚠️ Falta GRAPH_CLIENT_ID. La ingesta de correos está deshabilitada.");
+            return null;
+        }
+        const pca = graphAuth.crearClientePublico();
+        graphClient = Client.init({
+            authProvider: (done) => graphAuth.tokenDelegado(pca).then(t => done(null, t), e => done(e, null))
+        });
+    }
     if (!graphClient) {
         if (!TENANT_ID || !CLIENT_ID || !CLIENT_SECRET) {
             console.warn("⚠️ Faltan credenciales de Graph API. La ingesta de correos está deshabilitada.");
@@ -38,12 +49,13 @@ function getGraphClient() {
  */
 async function procesarCorreosEntrantes() {
     const client = getGraphClient();
-    if (!client || !NOC_MAILBOX) return;
+    const buzon = graphAuth.rutaBuzon();
+    if (!client || !buzon) return;
 
     try {
         // Obtenemos los últimos 10 correos no leídos
         const messages = await client
-            .api(`/users/${NOC_MAILBOX}/mailFolders/inbox/messages`)
+            .api(`${buzon}/mailFolders/inbox/messages`)
             .filter('isRead eq false')
             .top(10)
             .select('id,subject,body,bodyPreview,from,toRecipients,receivedDateTime')
@@ -93,7 +105,7 @@ async function procesarCorreosEntrantes() {
 
             // 3. Marcar correo como leído
             await client
-                .api(`/users/${NOC_MAILBOX}/messages/${message.id}`)
+                .api(`${buzon}/messages/${message.id}`)
                 .patch({ isRead: true });
         }
 
@@ -166,10 +178,11 @@ async function registrarRespuestaCliente(ticket, message, db = prisma) {
  */
 async function enviarCorreo({ para, asunto, texto, adjuntos = [] }) {
     const client = getGraphClient();
-    if (!client || !NOC_MAILBOX) return { enviado: false, configurado: false };
+    const buzon = graphAuth.rutaBuzon();
+    if (!client || !buzon) return { enviado: false, configurado: false };
     const destino = extraerCorreo(para);
     if (!destino) throw new Error('Destinatario no válido');
-    await client.api(`/users/${NOC_MAILBOX}/sendMail`).post({
+    await client.api(`${buzon}/sendMail`).post({
         message: {
             subject: asunto,
             body: { contentType: 'Text', content: texto },
@@ -190,7 +203,7 @@ async function enviarCorreo({ para, asunto, texto, adjuntos = [] }) {
  * Inicializa el Cron Job que se ejecutará cada 2 minutos
  */
 function iniciarIngesta() {
-    console.log('✅ Servicio de Ingesta Automática (Graph API) preparado.');
+    console.log(`✅ Servicio de Ingesta Automática (Graph API) preparado (modo ${graphAuth.modo()}).`);
     
     // Ejecutar cada 2 minutos: '*/2 * * * *'
     cron.schedule('*/2 * * * *', async () => {
