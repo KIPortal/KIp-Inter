@@ -57,6 +57,8 @@ npm run correo:login
 ```
 Abre el enlace, escribe el código e inicia sesión con el correo del buzón. El script prueba la Bandeja de entrada y guarda la sesión en `portal-KIp/.graph-sesion.json` (no se sube a git; contiene el token de renovación, trátalo como una clave). Para cambiar de cuenta: `node scripts/graph-login.js --salir`.
 
+**Si la organización bloquea el inicio con código** (error 53003/530035, "You don't have access to this"), prueba en el navegador de tu equipo: agrega en la app **Authentication → Add a platform → Mobile and desktop applications** con la Redirect URI `http://localhost` y corre `npm run correo:login -- --navegador`. Si también se bloquea, la política de la empresa solo la puede cambiar TI.
+
 **Si el correo es de una empresa** (no @outlook.com), la empresa debe permitir que los usuarios aprueben apps. Si al iniciar sesión sale "Se necesita la aprobación del administrador", este modo no sirve con ese correo hasta que un administrador apruebe la app.
 
 ---

@@ -200,6 +200,8 @@ const { explicarError } = require('./graph-login');
         assert.match(explicarError({ message: 'AADSTS7000218: ...' }), /Allow public client flows/);
         assert.match(explicarError({ message: 'AADSTS65001: The user or administrator has not consented' }), /administrador/);
         assert.match(explicarError({ message: 'AADSTS50020: User account from identity provider does not exist in tenant' }), /directorio/);
+        assert.match(explicarError({ message: 'AADSTS53003: Access has been blocked by Conditional Access policies' }), /--navegador/);
+        assert.match(explicarError({ message: 'AADSTS500113: No reply address is registered for the application' }), /http:\/\/localhost/);
         assert.strictEqual(explicarError({ message: 'otra cosa' }), null);
     });
 

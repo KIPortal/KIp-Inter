@@ -118,6 +118,20 @@ async function iniciarSesionConCodigo(pca, mostrar = (r) => console.log(r.messag
     });
 }
 
+/**
+ * Inicio de sesión en el navegador de este equipo (alternativa cuando la organización
+ * bloquea el inicio con código). Requiere en la app la plataforma "Mobile and desktop
+ * applications" con la Redirect URI http://localhost.
+ */
+async function iniciarSesionConNavegador(pca, abrir) {
+    return pca.acquireTokenInteractive({
+        scopes: scopesDelegados(),
+        openBrowser: abrir,
+        successTemplate: '<h2>Sesión iniciada.</h2><p>Ya puedes cerrar esta ventana y volver a la consola.</p>',
+        errorTemplate: '<h2>No se pudo iniciar sesión.</h2><p>Revisa la consola para ver el motivo.</p>'
+    });
+}
+
 module.exports = {
     SCOPES_DELEGADOS,
     SCOPES_SOLO_LECTURA,
@@ -133,5 +147,6 @@ module.exports = {
     pluginArchivo,
     crearClientePublico,
     tokenDelegado,
-    iniciarSesionConCodigo
+    iniciarSesionConCodigo,
+    iniciarSesionConNavegador
 };

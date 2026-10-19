@@ -5,10 +5,13 @@
  * Se hace una sola vez: la sesión queda guardada en .graph-sesion.json (no se sube a git)
  * y el portal la renueva solo. Al terminar, comprueba que puede leer la Bandeja de entrada.
  *
- *   node scripts/graph-login.js           inicia sesión (o muestra la sesión actual) y prueba el buzón
- *   node scripts/graph-login.js --salir   borra la sesión guardada
+ *   node scripts/graph-login.js              inicia sesión con código (o muestra la sesión actual) y prueba el buzón
+ *   node scripts/graph-login.js --navegador  inicia sesión en el navegador de este equipo (si la organización bloquea el código)
+ *   node scripts/graph-login.js --salir      borra la sesión guardada
  */
 const fs = require('fs');
+const path = require('path');
+const { spawn } = require('child_process');
 const { Client } = require('@microsoft/microsoft-graph-client');
 const { loadEnvVariables } = require('./diagnose-azure');
 const graphAuth = require('../src/services/graphAuthService');
@@ -16,6 +19,12 @@ const graphAuth = require('../src/services/graphAuthService');
 /** Explica en español los errores más comunes del inicio de sesión delegado. */
 function explicarError(err) {
     const txt = `${err && err.errorCode || ''} ${err && err.message || err}`;
+    if (/AADSTS53003|530035|BlockedByConditionalAccess|don't have permission to access this resource/i.test(txt)) {
+        return 'Una política de seguridad de la organización bloqueó el inicio de sesión. Si usaste el código, prueba con el navegador: npm run correo:login -- --navegador. Si también se bloquea, solo TI puede permitirlo.';
+    }
+    if (/AADSTS500113|AADSTS50011|redirect/i.test(txt)) {
+        return 'Falta la Redirect URI para iniciar en el navegador. En Azure: la app → Authentication → Add a platform → Mobile and desktop applications → marca o escribe http://localhost y guarda.';
+    }
     if (/AADSTS7000218|public client/i.test(txt)) {
         return 'La app no permite este tipo de inicio de sesión. En Azure: la app → Authentication → "Allow public client flows" = Yes, y guarda.';
     }
@@ -55,6 +64,32 @@ async function probarBuzon(pca) {
     }
 }
 
+/** Variables GRAPH_ repetidas en el .env: solo vale la última y suele ser la de ejemplo. */
+function variablesRepetidas() {
+    const candidatos = [path.resolve(process.cwd(), '.env'), path.resolve(__dirname, '../.env')];
+    const archivo = candidatos.find(p => fs.existsSync(p));
+    if (!archivo) return [];
+    const vistas = {};
+    for (const linea of fs.readFileSync(archivo, 'utf8').split(/\r?\n/)) {
+        const m = /^\s*(GRAPH_[A-Z_]+)\s*=/.exec(linea);
+        if (m) vistas[m[1]] = (vistas[m[1]] || 0) + 1;
+    }
+    return Object.keys(vistas).filter(k => vistas[k] > 1);
+}
+
+/** Abre una dirección en el navegador predeterminado (Windows, macOS o Linux). */
+function abrirNavegador(url) {
+    console.log(`Se abrirá el navegador. Si no se abre, copia esta dirección:\n${url}\n`);
+    const [cmd, args] = process.platform === 'win32' ? ['rundll32', ['url.dll,FileProtocolHandler', url]]
+        : process.platform === 'darwin' ? ['open', [url]] : ['xdg-open', [url]];
+    try {
+        const hijo = spawn(cmd, args, { detached: true, stdio: 'ignore' });
+        hijo.on('error', () => {}); // sin navegador: queda la dirección impresa
+        hijo.unref();
+    } catch (_) {}
+    return Promise.resolve();
+}
+
 async function main() {
     loadEnvVariables();
     const archivo = graphAuth.archivoSesion();
@@ -65,6 +100,10 @@ async function main() {
         return;
     }
 
+    const repetidas = variablesRepetidas();
+    if (repetidas.length) {
+        console.log(`⚠️  En el .env hay variables repetidas: ${repetidas.join(', ')}. Solo vale la última; deja una de cada una.\n`);
+    }
     if (graphAuth.modo() !== 'delegado') {
         console.log('⚠️  GRAPH_MODO no es "delegado" en el .env: el portal seguirá usando el modo con secreto.');
         console.log('   Pon GRAPH_MODO="delegado" para que el portal use esta sesión.\n');
@@ -74,6 +113,10 @@ async function main() {
     const cuentas = await pca.getTokenCache().getAllAccounts();
     if (cuentas.length) {
         console.log(`Ya hay una sesión guardada: ${cuentas[0].username}. (Para cambiarla: node scripts/graph-login.js --salir)`);
+    } else if (process.argv.includes('--navegador')) {
+        console.log('Inicia sesión con el correo del buzón y acepta los permisos.');
+        const r = await graphAuth.iniciarSesionConNavegador(pca, abrirNavegador);
+        console.log(`\n✅ Sesión iniciada como ${r.account && r.account.username}. Guardada en ${archivo}`);
     } else {
         const r = await graphAuth.iniciarSesionConCodigo(pca, (d) => {
             if (!d || !d.userCode) return; // Microsoft no dio código: el error llega después
