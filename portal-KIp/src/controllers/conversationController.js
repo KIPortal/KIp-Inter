@@ -99,7 +99,8 @@ async function postMessage(req, res) {
                 })));
                 const r = await mail.enviarCorreo({ para, asunto: conv.asuntoRespuesta(ticket), texto: datos.texto, adjuntos });
                 enviado = r.enviado;
-                if (!r.configurado) aviso = 'Guardado sin enviar: falta configurar el envío de correo';
+                if (r.soloLectura) aviso = 'Guardado sin enviar: el correo está en modo solo lectura';
+                else if (!r.configurado) aviso = 'Guardado sin enviar: falta configurar el envío de correo';
             } catch (error) {
                 console.error('Error al enviar correo:', error.message);
                 return fail(502, 'No se pudo enviar el correo. Inténtalo de nuevo');

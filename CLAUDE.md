@@ -32,7 +32,7 @@ Portal de tickets y estadísticas del depto. **Operaciones IP** (Inter Telecomun
 - Subgrupos de área (tabla `Subgrupo`, p. ej. FTTx: Soporte y Cabecera): se configuran en Administración > Editar área; `User.subgrupo_id` y `Ticket.subgrupo_id` son opcionales. El operador con subgrupo ve en Entrantes los de su subgrupo y los del área sin subgrupo; al asignar, un ticket sin subgrupo toma el del operador. Catálogo vivo en `areaCatalog` (`subgruposDe`, `isValidSubgrupo`, `subgrupoName`).
 
 ## Pruebas (sin framework, sin base de datos real)
-Scripts `scripts/test-*.js` con `assert`; en `package.json`: `test:metrics`, `test:tickets`, `test:period`, `test:shifts`, `test:simulation`, `test:dashboard`, `test:queue`, `test:assignment`, `test:turno`, `test:admin`, `test:audit`, `test:report-view`, `test:usuarios`, `test:areas`, `test:conversacion`, `test:operador`, `test:roles`, `test:jornadas`, `test:perfil` y `test:ui` (revisión transversal de las 6 pantallas). Corre todas antes de dar algo por terminado. Estas pruebas simulan Prisma: no prueban la base real.
+Scripts `scripts/test-*.js` con `assert`; en `package.json`: `test:metrics`, `test:tickets`, `test:period`, `test:shifts`, `test:simulation`, `test:dashboard`, `test:queue`, `test:assignment`, `test:turno`, `test:admin`, `test:audit`, `test:report-view`, `test:usuarios`, `test:areas`, `test:conversacion`, `test:operador`, `test:roles`, `test:jornadas`, `test:perfil`, `test:graph` y `test:ui` (revisión transversal de las 6 pantallas). Corre todas antes de dar algo por terminado. Estas pruebas simulan Prisma: no prueban la base real.
 
 ## Base de datos
 - Las migraciones están escritas a mano en `prisma/migrations/`; el usuario las aplica con `npx prisma migrate deploy` y luego `npx prisma generate`.

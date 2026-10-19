@@ -16,13 +16,14 @@ Este método permite que el servidor lea los correos de forma 100% invisible, si
 2. Navegar a **App registrations** (Registros de aplicaciones) > **New registration**.
 3. Nombrar la aplicación (ej. `NOC-Portal-Ingestion`) y elegir **Accounts in this organizational directory only** (Single tenant).
 4. Ir a **API permissions** > **Add a permission** > **Microsoft Graph** > **Application permissions** (NO delegados).
-5. Buscar y marcar la casilla `Mail.ReadWrite` (el servicio marca los correos como leídos con PATCH; con solo `Mail.Read` esa llamada falla con 403). **Pedir a TI que restrinja la app al buzón compartido del NOC** (Application Access Policy / RBAC for Applications); sin esa restricción el permiso de aplicación alcanza todos los buzones del tenant.
+5. Buscar y marcar `Mail.ReadWrite` y `Mail.Send` (este último para responder desde el portal). `Mail.ReadWrite` porque el servicio marca los correos como leídos con PATCH; con solo `Mail.Read` esa llamada falla con 403. **Pedir a TI que restrinja la app al buzón compartido del NOC** (Application Access Policy / RBAC for Applications); sin esa restricción el permiso de aplicación alcanza todos los buzones del tenant.
 6. **[CRÍTICO]** Hacer clic en **Grant admin consent for [Tu Organización]** y confirmar.
 7. Ir a **Certificates & secrets** > **New client secret**. Copiar el `Value` (Secreto).
 8. Ir a **Overview**. Copiar el `Application (client) ID` y el `Directory (tenant) ID`.
 
 ### Configuración en `.env`:
 ```env
+GRAPH_MODO="aplicacion"
 GRAPH_TENANT_ID="tu-tenant-id"
 GRAPH_CLIENT_ID="tu-client-id"
 GRAPH_CLIENT_SECRET="tu-secret-value"
@@ -32,17 +33,39 @@ GRAPH_TARGET_FOLDER="inbox"
 
 ---
 
-## 👤 Escenario 2: Acceso de Usuario Estándar (Delegated Permissions)
-*Recomendado cuando solo posees un correo corporativo prestado y su contraseña, sin acceso de administrador al tenant de Azure de dicha empresa.*
+## 👤 Escenario 2: Modo de prueba con inicio de sesión (Delegated Permissions)
+*Para probar sin que TI cree nada: tú registras la app en tu propia cuenta de Azure e inicias sesión una vez con el correo del buzón. El portal lee y responde desde ese buzón (`/me`).*
 
-Este método requiere que un usuario inicie sesión manualmente una vez a través de un enlace para autorizar a la aplicación. El sistema guardará un "Refresh Token" para continuar leyendo en segundo plano.
+### Registrar la app (una vez, en portal.azure.com con tu cuenta)
+1. **Microsoft Entra ID → App registrations → New registration.** Nombre: `KIp-Portal-Prueba`. Tipo de cuenta: **Accounts in any organizational directory and personal Microsoft accounts**. Sin Redirect URI.
+2. **Authentication → Advanced settings → Allow public client flows = Yes** y guardar. (Sin esto el inicio de sesión con código da `AADSTS7000218`.)
+3. **API permissions → Add a permission → Microsoft Graph → Delegated permissions:** `Mail.ReadWrite`, `Mail.Send` y `offline_access`. No hace falta "Grant admin consent" ni secreto.
+4. **Overview:** copia el *Application (client) ID*.
 
-### Pasos de Configuración:
-1. El administrador de tu propio Azure (o tú mismo en una cuenta de desarrollador) debe crear una App Registration.
-2. En **API permissions**, se debe agregar **Microsoft Graph** > **Delegated permissions** > `Mail.ReadWrite` y `offline_access`. *(En este caso, NO se requiere el botón de "Admin Consent").*
-3. En **Authentication**, agregar una plataforma tipo **Mobile and desktop applications** o configurar una **Redirect URI** (`http://localhost:3000/auth/callback`).
-4. Al arrancar el servidor, la terminal mostrará un enlace de inicio de sesión.
-5. El operador abre el enlace, inicia sesión con la **cuenta corporativa prestada**, y acepta los permisos.
+### `.env`
+```env
+GRAPH_MODO="delegado"
+GRAPH_CLIENT_ID="el-application-client-id"
+GRAPH_TENANT_ID="common"
+GRAPH_NOC_MAILBOX="buzon@empresa.com"   # solo para mostrarlo en el portal
+```
+
+### Iniciar sesión (una vez)
+```powershell
+cd portal-KIp
+npm run correo:login
+```
+Abre el enlace, escribe el código e inicia sesión con el correo del buzón. El script prueba la Bandeja de entrada y guarda la sesión en `portal-KIp/.graph-sesion.json` (no se sube a git; contiene el token de renovación, trátalo como una clave). Para cambiar de cuenta: `node scripts/graph-login.js --salir`.
+
+**Si el correo es de una empresa** (no @outlook.com), la empresa debe permitir que los usuarios aprueben apps. Si al iniciar sesión sale "Se necesita la aprobación del administrador", este modo no sirve con ese correo hasta que un administrador apruebe la app.
+
+---
+
+## 👁️ Solo lectura (`GRAPH_SOLO_LECTURA="si"`)
+Sirve con cualquiera de los dos escenarios. El portal solo **lee** la Bandeja de entrada y crea tickets:
+- Basta el permiso `Mail.Read` (Application o Delegated, según el escenario). Con delegado, además `offline_access`.
+- No marca correos como leídos ni envía respuestas: responder desde el portal guarda el mensaje sin enviarlo.
+- Recuerda hasta qué correo leyó en `portal-KIp/.graph-estado.json` (no se sube a git). La primera vez empieza desde ese momento: los correos que ya estaban no se importan. Para volver a empezar desde ahora, borra ese archivo.
 
 ---
 
@@ -53,11 +76,11 @@ El proyecto incluye scripts automatizados para verificar la salud de la integrac
 ### 1. Diagnóstico de Conexión
 Verifica que las credenciales del `.env` sean válidas y diagnostica errores comunes (ej. `AADSTS700016`).
 ```bash
-npm run diagnose:azure
+node scripts/diagnose-azure.js   # solo el modo con secreto
 ```
 
-### 2. Simulador de Ingesta (Modo Offline)
-Si no dispones temporalmente de un buzón corporativo, puedes simular la llegada de correos para probar la lógica de creación de tickets y WebSockets.
+### 2. Pruebas sin buzón
 ```bash
-npm run test:azure
+npm run test:graph          # modos de autenticación (aplicación / delegado)
+npm run test:conversacion   # cómo se guardan los correos en la conversación
 ```
