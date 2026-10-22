@@ -59,8 +59,9 @@ async function loadLiveData(prisma, range) {
         },
         select: {
             codigo_incidencia: true, asunto: true, area_designada: true, estado_actual: true,
-            puntos_complejidad: true, createdAt: true, fecha_asignacion: true, resueltoEn: true, fecha_cierre: true,
-            asignado_a: { select: { id: true, nombre: true } }
+            puntos_complejidad: true, prioridad: true, nivel: true, tipo_caso_id: true, createdAt: true, fecha_asignacion: true, resueltoEn: true, fecha_cierre: true,
+            asignado_a: { select: { id: true, nombre: true } },
+            tipo_caso: { select: { nombre: true, nivel: true, minutos_estimados: true, frecuencia: true } }
         },
         orderBy: { createdAt: 'asc' }
     }), prisma.user.findMany({

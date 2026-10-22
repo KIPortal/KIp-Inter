@@ -176,7 +176,27 @@ function buildReportView(report, { periodo, fecha = null, area = null, now = new
         topResueltos,
         topCarga,
         lecturas: report.lecturas,
-        flujo: report.flujoHorario.map(h => h.recibidos)
+        flujo: report.flujoHorario.map(h => h.recibidos),
+        casos: casosView(report.casosComunes)
+    };
+}
+
+/** Casos comunes: barras relativas al tipo que más llegó y aviso si tarda más de lo estimado. */
+function casosView(cc) {
+    const c = cc || { dias: 1, recibidos: 0, clasificados: 0, sinClasificar: 0, filas: [] };
+    const max = Math.max(1, ...c.filas.map(f => f.ocurrencias));
+    return {
+        dias: c.dias,
+        recibidos: c.recibidos,
+        clasificados: c.clasificados,
+        sinClasificar: c.sinClasificar,
+        filas: c.filas.map(f => ({
+            ...f,
+            ancho: Math.round((f.ocurrencias / max) * 100),
+            pct: Math.round(f.participacion * 1000) / 10,
+            promedioHoras: horas(f.tiempoPromedioMin),
+            estimadoHoras: horas(f.minutosEstimados)
+        }))
     };
 }
 

@@ -434,6 +434,128 @@
 		setTimeout(() => (subgrupo && sgBox ? nuevoIn : nombre).focus(), 30);
 	}
 
+	// ---------- Tipos de caso: casos comunes de cada área con su nivel de dificultad ----------
+	// Los puntos de un ticket salen del nivel (N1=2, N2=4, N3=8, N4=10); la prioridad solo marca urgencia.
+	const NV = D.niveles || { puntos: { 1: 2, 2: 4, 3: 8, 4: 10 }, nombres: { 1: 'Sencillo', 2: 'Moderado', 3: 'Complejo', 4: 'Muy complejo' }, frecuencias: ['ALTA', 'MEDIA', 'BAJA'] };
+	const FREC = { ALTA: 'Alta', MEDIA: 'Media', BAJA: 'Baja' };
+	const NIVEL_TONO = { 1: 'green', 2: 'gray', 3: 'purple', 4: 'red' };
+	const tiposFiltro = { area: '' };
+	const send = async (method, url, body) => {
+		const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+		let j = {};
+		try { j = await res.json(); } catch (e) { /* sin cuerpo */ }
+		if (!res.ok || !j.success) throw new Error(j.error || 'Error ' + res.status);
+		return j;
+	};
+	const nivelTag = n => h('span', { class: 'tag ' + NIVEL_TONO[n], title: NV.nombres[n], text: 'N' + n + ' · ' + NV.puntos[n] + ' pts' });
+	function renderTipos() {
+		const box = $('[data-panel="tipos"]');
+		if (!box) return;
+		const tipos = D.tiposCaso || [];
+		const areas = D.areas.filter(a => a.activa && a.codigo !== 'GENERAL');
+		if (!tiposFiltro.area) {
+			const conTipos = areas.find(a => tipos.some(t => t.area === a.codigo));
+			tiposFiltro.area = (conTipos || areas[0] || {}).codigo || '';
+		}
+		const lista = tipos.filter(t => t.area === tiposFiltro.area).sort((a, b) => (b.activo - a.activo) || (a.nivel - b.nivel) || a.nombre.localeCompare(b.nombre));
+		const areaSel = h('select', { class: 'field', style: 'width:auto;min-width:200px', 'aria-label': 'Área', onchange: e => { tiposFiltro.area = e.target.value; renderTipos(); } },
+			areas.map(a => h('option', { value: a.codigo, selected: a.codigo === tiposFiltro.area, text: a.nombre + ' (' + tipos.filter(t => t.area === a.codigo && t.activo).length + ')' })));
+		box.replaceChildren(
+			h('div', { class: 'card-head', style: 'padding:18px 24px 14px;flex-wrap:wrap;gap:10px' },
+				h('div', { style: 'display:flex;flex-direction:column;flex:1;min-width:220px' }, h('h2', { text: 'Tipos de caso' }),
+					h('span', { class: 'hint', text: 'Casos comunes de cada área. Quien toma un ticket elige su tipo; los puntos salen del nivel de dificultad.' })),
+				areaSel,
+				h('button', { type: 'button', class: 'primary', style: 'height:30px;padding:0 14px;font-size:12px', text: '＋ Nuevo tipo', disabled: !tiposFiltro.area, onclick: () => openTipo(null) })),
+			h('div', { style: 'display:flex;flex-wrap:wrap;gap:8px;padding:0 24px 12px' },
+				[1, 2, 3, 4].map(n => h('span', { style: 'display:inline-flex;align-items:center;gap:6px;font-size:12px', class: 't2' }, nivelTag(n), NV.nombres[n]))),
+			!lista.length
+				? h('p', { class: 'empty', style: 'padding:4px 24px 16px', text: 'Esta área aún no tiene tipos de caso. Agrega sus casos comunes con “＋ Nuevo tipo”; mientras tanto se elige “Otro” con su nivel.' })
+				: h('div', { class: 'scroll-x' }, h('table', { class: 'rank-table' },
+					h('thead', {}, h('tr', {},
+						h('th', { style: 'padding-left:24px', text: 'Caso' }),
+						h('th', { style: 'width:120px', text: 'Nivel' }),
+						h('th', { class: 'r', style: 'width:90px', text: 'Estimado' }),
+						h('th', { style: 'width:90px', text: 'Frecuencia' }),
+						h('th', { style: 'width:56px;padding-right:24px' }, h('span', { class: 'sr-only', text: 'Acciones' })))),
+					h('tbody', {}, lista.map(t => h('tr', { class: 'row', style: t.activo ? null : 'opacity:.55' },
+						h('td', { style: 'padding:10px 8px 10px 24px' }, h('span', { style: 'display:flex;flex-direction:column' },
+							h('b', { style: 'font-size:13px' }, t.nombre, t.activo ? null : [' ', h('span', { class: 'tag gray', text: 'Desactivado' })]),
+							(t.subgrupoNombre || t.dependencias) ? h('span', { class: 't2', style: 'font-size:12px', text: [t.subgrupoNombre ? 'Subgrupo ' + t.subgrupoNombre : '', t.dependencias ? 'Depende de: ' + t.dependencias : ''].filter(Boolean).join(' · ') }) : null)),
+						h('td', {}, nivelTag(t.nivel)),
+						h('td', { class: 'r', style: 'font-variant-numeric:tabular-nums', text: t.minutos ? fmtMin(t.minutos) : '—' }),
+						h('td', { class: 't2', text: FREC[t.frecuencia] || '—' }),
+						h('td', { style: 'padding-right:24px;text-align:right' }, h('button', { type: 'button', class: 'ico', title: 'Editar', 'aria-label': 'Editar ' + t.nombre, html: ICON.edit, onclick: () => openTipo(t.id) }))))))),
+			h('span', { class: 't3', style: 'padding:12px 24px 16px;font-size:12px', text: 'Un tipo desactivado ya no se puede elegir; los tickets que lo tienen lo conservan. El tiempo estimado se compara en Reportes con el promedio real (desde la llegada del ticket).' }));
+		const sub = $('[data-sec-sub="tipos"]');
+		if (sub) sub.textContent = tipos.filter(t => t.activo).length + ' casos comunes · nivel y puntos';
+	}
+
+	function openTipo(id) {
+		const t = id ? (D.tiposCaso || []).find(x => x.id === id) : null;
+		const area = t ? t.area : tiposFiltro.area;
+		const areaInfo = D.areas.find(a => a.codigo === area) || { nombre: area, subgrupos: [] };
+		const M = {
+			nombre: t ? t.nombre : '', nivel: t ? t.nivel : 2, minutos: t && t.minutos ? String(t.minutos) : '',
+			frecuencia: t ? t.frecuencia : 'MEDIA', dependencias: t ? t.dependencias : '', subgrupo: t ? t.subgrupo : '', activo: t ? t.activo : true
+		};
+		const ov = h('div', { class: 'overlay', onclick: e => { if (e.target === ov) ov.remove(); } });
+		const box = h('div', { class: 'dialog', role: 'dialog', 'aria-modal': 'true', style: 'width:520px' });
+		ov.append(box);
+		const err = h('div', { class: 'warnbox', hidden: true });
+		const ok = h('button', { type: 'button', class: 'primary', text: t ? 'Guardar' : 'Crear tipo' });
+		const input = (key, attrs) => h('input', Object.assign({ class: 'field', value: M[key], oninput: e => { M[key] = e.target.value; } }, attrs));
+		const nivelSeg = h('div', { class: 'seg', role: 'radiogroup', 'aria-label': 'Nivel de dificultad' });
+		const paintNivel = () => nivelSeg.replaceChildren(...[1, 2, 3, 4].map(n => h('button', {
+			type: 'button', role: 'radio', 'aria-checked': String(M.nivel === n), onclick: () => { M.nivel = n; paintNivel(); }
+		}, h('span', { text: 'Nivel ' + n }), h('small', { text: NV.puntos[n] + ' pts · ' + NV.nombres[n] }))));
+		paintNivel();
+		const frecSel = h('select', { class: 'field', 'aria-label': 'Frecuencia', onchange: e => { M.frecuencia = e.target.value; } },
+			h('option', { value: '', selected: !M.frecuencia, text: 'Sin indicar' }),
+			NV.frecuencias.map(f => h('option', { value: f, selected: M.frecuencia === f, text: FREC[f] })));
+		const subgrupos = (areaInfo.subgrupos || []).filter(g => g.activo || g.id === M.subgrupo);
+		const sgSel = subgrupos.length ? h('select', { class: 'field', 'aria-label': 'Subgrupo', onchange: e => { M.subgrupo = e.target.value; } },
+			h('option', { value: '', selected: !M.subgrupo, text: 'Todo el área' }),
+			subgrupos.map(g => h('option', { value: g.id, selected: g.id === M.subgrupo, text: g.nombre + (g.activo ? '' : ' (desactivado)') }))) : null;
+		box.append(
+			h('div', { class: 'dlg-head' }, h('h2', { text: t ? 'Editar tipo de caso' : 'Nuevo tipo de caso' }), h('span', { text: areaInfo.nombre })),
+			h('div', { class: 'dlg-body', style: 'gap:14px' },
+				h('label', { class: 'dsec' }, h('b', { text: 'Caso' }), input('nombre', { maxlength: 120, placeholder: 'Ej. Configuración de OLT' })),
+				h('div', { class: 'dsec' }, h('b', { text: 'Nivel de dificultad' }), nivelSeg,
+					h('span', { class: 't3', style: 'font-size:12px', text: 'Los puntos que suma el ticket a la carga de quien lo resuelve y de su área.' })),
+				h('div', { style: 'display:grid;grid-template-columns:1fr 1fr;gap:12px' },
+					h('label', { class: 'dsec' }, h('b', { text: 'Tiempo estimado (min)' }), input('minutos', { type: 'number', min: 1, max: 10080, step: 1, inputmode: 'numeric', placeholder: 'Ej. 30' })),
+					h('label', { class: 'dsec' }, h('b', { text: 'Frecuencia' }), frecSel)),
+				h('label', { class: 'dsec' }, h('b', { text: 'Depende de (opcional)' }), input('dependencias', { maxlength: 200, placeholder: 'Otras áreas o proveedores, ej. HE, Sistemas Nacionales' })),
+				sgSel ? h('label', { class: 'dsec' }, h('b', { text: 'Subgrupo' }), sgSel) : null,
+				t ? h('div', { class: 'rule-row', style: 'min-height:40px;border:0' },
+					h('span', { class: 'lbl', style: 'flex:1' }, h('b', { text: 'Tipo activo' }), h('span', { text: 'Desactivado ya no se puede elegir; los tickets que lo tienen lo conservan.' })),
+					sw(M.activo, e => { M.activo = !M.activo; e.currentTarget.setAttribute('aria-checked', String(M.activo)); }, 'Tipo activo')) : null,
+				err),
+			h('div', { class: 'dlg-foot' }, h('span', { class: 'note', text: 'El cambio queda en Auditoría' }), h('span', { class: 'grow' }),
+				h('button', { type: 'button', class: 'pill pillbtn plain', text: 'Cancelar', onclick: () => ov.remove() }), ok));
+		ok.addEventListener('click', async () => {
+			const body = {
+				nombre: M.nombre, nivel: M.nivel, minutos: M.minutos.trim() ? Number(M.minutos) : null,
+				frecuencia: M.frecuencia || null, dependencias: M.dependencias, subgrupo: M.subgrupo || null
+			};
+			if (t) body.activo = M.activo; else body.area = area;
+			ok.disabled = true;
+			try {
+				const j = await send(t ? 'PATCH' : 'POST', t ? '/api/admin/tipos-caso/' + encodeURIComponent(t.id) : '/api/admin/tipos-caso', body);
+				D.tiposCaso = (D.tiposCaso || []).filter(x => x.id !== j.tipo.id).concat(j.tipo);
+				ov.remove();
+				renderTipos();
+				toast(t ? 'Tipo de caso actualizado' : 'Tipo de caso creado', j.tipo.nombre + ' · nivel ' + j.tipo.nivel + ' (' + j.tipo.puntos + ' pts)', true);
+			} catch (e) {
+				ok.disabled = false;
+				err.textContent = e.message;
+				err.hidden = false;
+			}
+		});
+		document.body.append(ov);
+		setTimeout(() => box.querySelector('input').focus(), 30);
+	}
+
 	// ---------- Secciones ----------
 	function showSection(key) {
 		$$('[data-sec]').forEach(b => b.setAttribute('aria-current', b.dataset.sec === key ? 'page' : 'false'));
@@ -476,8 +598,9 @@
 		renderPlantillas();
 		renderReglas();
 		renderAvisos();
+		renderTipos();
 		const hash = window.location.hash.slice(1);
-		if (['areas', 'plantillas', 'reglas', 'avisos'].includes(hash)) showSection(hash);
+		if (['areas', 'tipos', 'plantillas', 'reglas', 'avisos'].includes(hash)) showSection(hash);
 		paintDirty();
 		try {
 			const t = JSON.parse(sessionStorage.getItem('kip.toast') || 'null');

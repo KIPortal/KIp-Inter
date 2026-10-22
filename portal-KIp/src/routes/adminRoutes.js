@@ -14,5 +14,7 @@ api.post('/areas', adminController.createArea);
 api.patch('/areas/:codigo', adminController.updateArea);
 api.post('/areas/:codigo/subgrupos', adminController.createSubgrupo);
 api.patch('/subgrupos/:id', adminController.updateSubgrupo);
+api.post('/tipos-caso', adminController.createTipoCaso);
+api.patch('/tipos-caso/:id', adminController.updateTipoCaso);
 
 module.exports = { page, api };

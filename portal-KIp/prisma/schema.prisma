@@ -94,7 +94,11 @@ model Ticket {
   descripcion        String?       @db.Text
   remitente          String?       @db.VarChar(180)
   estado_actual      EstadoTicket  @default(NUEVO)
-  puntos_complejidad Int           @default(0) // Se asigna al cerrar el ticket
+  puntos_complejidad Int           @default(0) // Puntos de carga: salen del nivel de dificultad (N1=2, N2=4, N3=8, N4=10)
+  prioridad          String?       @db.VarChar(2) // Urgencia P1/P2/P3 (null = sin prioridad); ordena la cola, ya no da puntos
+  nivel              Int?          // Nivel de dificultad 1-4 (el del tipo de caso al clasificarlo, o el elegido para "Otro")
+  tipo_caso_id       String?
+  tipo_caso          TipoCaso?     @relation(fields: [tipo_caso_id], references: [id], onDelete: SetNull)
   origen_ingesta     OrigenIngesta @default(CORREO)
   area_designada     String        @default("GENERAL") @db.VarChar(40)
   estado_ve          String?       @db.VarChar(3) // Estado de Venezuela (VEA, VEV...); ver estadosVeService
@@ -271,6 +275,7 @@ model Area {
   usuarios  User[]
   tickets   Ticket[]
   subgrupos Subgrupo[]
+  tipos_caso TipoCaso[]
 }
 
 // Subgrupo de un área (FTTx: Soporte y Cabecera). Se desactiva, no se borra.
@@ -284,8 +289,31 @@ model Subgrupo {
   createdAt   DateTime @default(now())
   usuarios    User[]
   tickets     Ticket[]
+  tipos_caso  TipoCaso[]
 
   @@unique([area_codigo, nombre])
+}
+
+// Tipo de caso (caso común) de un área con su nivel de dificultad 1-4; ver tipoCasoService.
+// Se desactiva, no se borra (los tickets conservan el suyo).
+model TipoCaso {
+  id                String    @id @default(uuid())
+  area_codigo       String    @db.VarChar(40)
+  area              Area      @relation(fields: [area_codigo], references: [codigo])
+  subgrupo_id       String?
+  subgrupo          Subgrupo? @relation(fields: [subgrupo_id], references: [id], onDelete: SetNull)
+  nombre            String    @db.VarChar(120)
+  nivel             Int       // 1 más sencillo … 4 muy complejo
+  minutos_estimados Int?      // tiempo de resolución estimado
+  frecuencia        String?   @db.VarChar(5) // ALTA | MEDIA | BAJA (declarada por el área)
+  dependencias      String?   @db.VarChar(200) // de quién depende (otras áreas, proveedores)
+  activo            Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  tickets           Ticket[]
+
+  @@unique([area_codigo, nombre])
+  @@index([area_codigo, activo])
 }
 
 // Registro de jornadas: foto de cada día al cierre (tickets y operadores tal como estaban)

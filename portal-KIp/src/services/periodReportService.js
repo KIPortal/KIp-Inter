@@ -20,6 +20,8 @@ const {
 
 // Catálogo vivo de áreas (tabla Area); arranca con las 7 originales
 const { AREAS, AREA_NAMES } = require('./areaCatalog');
+const { prioridadDe } = require('./rulesService');
+const { buildCasosComunes, nivelDeTicket } = require('./tipoCasoService');
 
 const STATE_NAMES = {
     NUEVO: 'Nuevo',
@@ -36,12 +38,13 @@ const inRange = (value, range) => {
     return t >= range.start.getTime() && t < range.end.getTime();
 };
 
-/** Prioridad a partir de los puntos asignados por el coordinador (P1=8, P2=5, P3=1). */
-function priorityFromPoints(points) {
-    if (points >= 8) return 'P1';
-    if (points >= 5) return 'P2';
-    if (points >= 1) return 'P3';
-    return 'Sin prioridad';
+/**
+ * Prioridad (urgencia) de un ticket para el reporte: 'P1', 'P2', 'P3' o 'Sin prioridad'.
+ * Los puntos ya no la indican (salen del nivel del tipo de caso); ver rulesService.prioridadDe.
+ */
+function priorityOfTicket(t) {
+    const p = prioridadDe(t);
+    return p === 'SP' ? 'Sin prioridad' : p;
 }
 
 /** Estado de carga de un operador según las reglas de sobrecarga (spec §7). */
@@ -68,7 +71,7 @@ function timeMetrics(resolved) {
 /** Puntos de los tickets resueltos y cuántos hubo por prioridad. */
 function pointsSummary(resolved) {
     const puntos = resolved.reduce((sum, t) => sum + (t.puntos_complejidad || 0), 0);
-    const count = p => resolved.filter(t => priorityFromPoints(t.puntos_complejidad || 0) === p).length;
+    const count = p => resolved.filter(t => priorityOfTicket(t) === p).length;
     return {
         puntos,
         ptsPorTicket: resolved.length ? Math.round((puntos / resolved.length) * 10) / 10 : 0,
@@ -207,8 +210,10 @@ function buildPeriodReport({ tickets, operators, range, area }) {
             codigo: t.codigo_incidencia,
             asunto: t.asunto,
             area: AREA_NAMES[t.area_designada] || t.area_designada,
-            prioridad: priorityFromPoints(t.puntos_complejidad || 0),
+            prioridad: priorityOfTicket(t),
             puntos: t.puntos_complejidad || 0,
+            nivel: nivelDeTicket(t),
+            tipoCaso: t.tipo_caso?.nombre || (nivelDeTicket(t) ? 'Otro' : ''),
             operador: t.asignado_a?.nombre || 'Sin asignar',
             estado: STATE_NAMES[t.estado_actual] || t.estado_actual,
             llegada: t.createdAt || null,
@@ -220,11 +225,14 @@ function buildPeriodReport({ tickets, operators, range, area }) {
             remitente: t.remitente || null
         }));
 
-    return { resumen, porArea, porOperador, flujoHorario, detalle, lecturas: buildInsights({ resumen, porArea, porOperador, flujoHorario, tickets: scoped }) };
+    // --- Casos comunes: ocurrencia, puntos y tiempo real frente al estimado, por tipo de caso ---
+    const casosComunes = buildCasosComunes({ tickets: scoped, range });
+
+    return { resumen, porArea, porOperador, flujoHorario, detalle, casosComunes, lecturas: buildInsights({ resumen, porArea, porOperador, flujoHorario, casosComunes, tickets: scoped }) };
 }
 
 /** Lecturas clave en lenguaje llano para el coordinador (también se muestran en el Excel). */
-function buildInsights({ resumen, porArea, porOperador, flujoHorario, tickets }) {
+function buildInsights({ resumen, porArea, porOperador, flujoHorario, casosComunes, tickets }) {
     const out = [];
     const pico = flujoHorario.reduce((best, h) => (h.recibidos > best.recibidos ? h : best), { recibidos: 0 });
     if (pico.recibidos > 0) out.push(`Hora pico de llegada: ${pico.etiqueta} (${pico.recibidos} ${pico.recibidos === 1 ? 'ticket' : 'tickets'}).`);
@@ -234,6 +242,10 @@ function buildInsights({ resumen, porArea, porOperador, flujoHorario, tickets })
     if (lenta) out.push(`Mayor tiempo de solución promedio: ${lenta.nombre} (${lenta.tiempoTotal}).`);
     const topOp = porOperador.filter(o => o.resueltos > 0)[0];
     if (topOp) out.push(`Más puntos resueltos: ${topOp.nombre} (${topOp.puntos} pts en ${topOp.resueltos} tickets).`);
+    const comun = (casosComunes?.filas || []).find(f => f.tipoId);
+    if (comun) out.push(`Caso más común: ${comun.nombre} (${comun.ocurrencias} ${comun.ocurrencias === 1 ? 'vez' : 'veces'}, nivel ${comun.nivel}).`);
+    const lentos = (casosComunes?.filas || []).filter(f => f.sobreEstimado).map(f => f.nombre);
+    if (lentos.length) out.push(`Tardan más de lo estimado: ${lentos.slice(0, 3).join(', ')}${lentos.length > 3 ? ` y ${lentos.length - 3} más` : ''}.`);
     const sobre = porOperador.filter(o => o.sobrecarga).map(o => o.nombre);
     if (sobre.length) out.push(`Operadores en sobrecarga ahora: ${sobre.join(', ')}.`);
     const sinAsignar = tickets.filter(t => ACTIVE_STATES.includes(t.estado_actual) && !t.asignado_a).length;
@@ -243,4 +255,4 @@ function buildInsights({ resumen, porArea, porOperador, flujoHorario, tickets })
     return out;
 }
 
-module.exports = { buildPeriodReport, priorityFromPoints, AREAS, AREA_NAMES, STATE_NAMES };
+module.exports = { buildPeriodReport, priorityOfTicket, AREAS, AREA_NAMES, STATE_NAMES };

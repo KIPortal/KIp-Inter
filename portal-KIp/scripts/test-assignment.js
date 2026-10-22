@@ -70,8 +70,8 @@ t('Reglas: valores por defecto y combinación con datos inválidos', () => {
     assert.deepStrictEqual(r.antiguedad, { activa: true, P1: 45, P2: 120, P3: 240, SP: 30 });
     assert.deepStrictEqual(r.sobrecarga, { activa: true, multiplicador: 2, minimo: 3 });
     assert.strictEqual(mergeRules({ sobrecarga: { multiplicador: 9 } }).sobrecarga.multiplicador, 3, 'tope del paso');
-    assert.strictEqual(ageLimitFor(8), 60);
-    assert.strictEqual(ageLimitFor(7), 30, 'puntos desconocidos = sin prioridad');
+    assert.strictEqual(ageLimitFor('P1'), 60);
+    assert.strictEqual(ageLimitFor('P7'), 30, 'prioridad desconocida = sin prioridad');
 });
 
 t('Interruptores: sin antigüedad, sin sobrecarga y sin guardia anticipada', () => {

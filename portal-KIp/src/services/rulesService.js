@@ -19,7 +19,7 @@ const DEFAULT_RULES = Object.freeze({
     }),
     // Metas de Reportes: ámbar si el % resuelto queda por debajo o el promedio por encima
     metas: Object.freeze({ resueltoPct: 93, promedioHoras: 4 }),
-    // Saturación por área: puntos abiertos que aguanta cada persona en turno (16 = dos P1)
+    // Saturación por área: puntos abiertos que aguanta cada persona en turno (16 = dos casos de nivel 3)
     capacidad: Object.freeze({ puntosPorPersona: 16 }),
     // Prioridad sugerida a los tickets de correo: palabras clave del asunto, el cuerpo o el
     // remitente (p. ej. "@cliente.com"). Gana la prioridad más alta que coincida.
@@ -45,7 +45,22 @@ const LIMITS = Object.freeze({
 
 const PRIORIDADES = Object.freeze(['P1', 'P2', 'P3']);
 
+// Antes de los tipos de caso los puntos eran la prioridad (P1=8, P2=5, P3=1): sirve para
+// tickets y fotos de jornada viejas que no traen el campo `prioridad`.
 const POINTS_TO_KEY = { 8: 'P1', 5: 'P2', 1: 'P3' };
+
+/**
+ * Prioridad (urgencia) de un ticket: 'P1', 'P2', 'P3' o 'SP' (sin prioridad).
+ * Desde los tipos de caso va en `Ticket.prioridad` y ya no sale de los puntos;
+ * si el ticket no trae el campo (foto vieja), se deduce de los puntos como antes.
+ */
+function prioridadDe(ticket) {
+    const t = ticket || {};
+    if (t.prioridad === undefined) return POINTS_TO_KEY[t.puntos_complejidad] || 'SP';
+    return PRIORIDADES.includes(t.prioridad) ? t.prioridad : 'SP';
+}
+// Para ordenar por urgencia: P1 primero
+const PRIORIDAD_RANGO = Object.freeze({ P1: 3, P2: 2, P3: 1, SP: 0 });
 
 function num(value, fallback, [min, max], decimals = 0) {
     const n = Number(value);
@@ -131,9 +146,9 @@ function sugerirPrioridad(texto, rules = DEFAULT_RULES) {
     })) || null;
 }
 
-/** Minutos de antigüedad permitidos para unos puntos de prioridad. */
-function ageLimitFor(points, rules = DEFAULT_RULES) {
-    return rules.antiguedad[POINTS_TO_KEY[points] || 'SP'];
+/** Minutos de antigüedad permitidos para una prioridad ('P1'…'SP'). */
+function ageLimitFor(prioridad, rules = DEFAULT_RULES) {
+    return rules.antiguedad[PRIORIDAD_RANGO[prioridad] !== undefined ? prioridad : 'SP'];
 }
 
 /** Umbrales para computeOverload; con la alerta apagada nadie queda en sobrecarga. */
@@ -143,4 +158,4 @@ function overloadOptions(rules = DEFAULT_RULES) {
         : { ratio: Infinity, minimo: Infinity };
 }
 
-module.exports = { DEFAULT_RULES, LIMITS, PRIORIDADES, mergeRules, ageLimitFor, overloadOptions, sugerirPrioridad, POINTS_TO_KEY };
+module.exports = { DEFAULT_RULES, LIMITS, PRIORIDADES, mergeRules, ageLimitFor, overloadOptions, sugerirPrioridad, POINTS_TO_KEY, prioridadDe, PRIORIDAD_RANGO };

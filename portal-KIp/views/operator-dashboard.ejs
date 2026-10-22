@@ -14,7 +14,7 @@
 		done: toLen(Math.min(t.fin - t.inicio, ahoraMin - t.inicio)).toFixed(1) + ' ' + CIRC.toFixed(1)
 	};
 	const activos = p.mezcla.total;
-	const datos = { panel: p, usuario: { id: currentUser.id } };
+	const datos = { panel: p, usuario: { id: currentUser.id }, tiposCaso: locals.tiposCaso || [] };
 	const PR = { P1: 'var(--red-t)', P2: 'var(--orange-t)', P3: 'var(--t2)', SP: 'var(--t3)' };
 %>
 <!DOCTYPE html>
@@ -149,7 +149,7 @@
                     <div class="dfield"><span>Remitente</span><span id="modalDetailSender"></span></div>
                     <div class="dfield"><span>Origen</span><span id="modalDetailOrigin"></span></div>
                     <div class="dfield"><span>Recibido</span><span id="modalDetailCreated"></span></div>
-                    <div class="dfield"><span>Puntos</span><span id="modalDetailPts"></span></div>
+                    <div class="dfield"><span>Tipo de caso</span><span id="modalDetailPts"></span></div>
                 </div>
                 <div class="dsec">
                     <span class="dlabel">Descripción</span>

@@ -3,7 +3,7 @@ const assert = require('assert');
 const ExcelJS = require('exceljs');
 const prisma = require('../src/config/prisma');
 const m = require('../src/services/metricsService');
-const { buildPeriodReport, priorityFromPoints } = require('../src/services/periodReportService');
+const { buildPeriodReport, priorityOfTicket } = require('../src/services/periodReportService');
 const { buildWorkbook } = require('../src/services/excelExportService');
 const reportController = require('../src/controllers/reportController');
 
@@ -55,8 +55,11 @@ const mockRes = () => {
         assert.strictEqual(m.businessMinutesBetween('2026-10-10T14:00:00Z', '2026-10-11T20:00:00Z'), 0);
         assert.strictEqual(m.businessMinutesBetween('2026-10-07T20:00:00Z', '2026-10-07T10:00:00Z'), 0);
     });
-    await t('Prioridad: P1/P2/P3 según puntos', () => {
-        assert.deepStrictEqual([8, 5, 1, 0].map(priorityFromPoints), ['P1', 'P2', 'P3', 'Sin prioridad']);
+    await t('Prioridad: la guardada en el ticket; en fotos viejas, según puntos', () => {
+        // Fotos viejas sin el campo `prioridad`: sale de los puntos de antes
+        assert.deepStrictEqual([8, 5, 1, 0].map(p => priorityOfTicket({ puntos_complejidad: p })), ['P1', 'P2', 'P3', 'Sin prioridad']);
+        // Con el campo, la prioridad es la guardada y los puntos (nivel) no la cambian
+        assert.deepStrictEqual([['P2', 10], [null, 8], ['X', 2]].map(([prioridad, puntos_complejidad]) => priorityOfTicket({ prioridad, puntos_complejidad })), ['P2', 'Sin prioridad', 'Sin prioridad']);
     });
 
     // Fixture: miércoles 2026-10-07 (Caracas). 12:00Z = 08:00 Caracas.
@@ -146,11 +149,11 @@ const mockRes = () => {
         assert.strictEqual(vacio.detalle.length, 0);
     });
 
-    await t('Excel: 4 hojas (resumen, operadores, flujo, detalle), totales con fórmula y hora de Caracas', async () => {
+    await t('Excel: 5 hojas (resumen, operadores, flujo, detalle, casos comunes), totales con fórmula y hora de Caracas', async () => {
         const buffer = await buildWorkbook(rep, { generadoPor: 'Coordinador', generadoEn: d('2026-10-07T20:00:00Z') });
         const wb = new ExcelJS.Workbook();
         await wb.xlsx.load(buffer);
-        assert.deepStrictEqual(wb.worksheets.map(s => s.name), ['Resumen Ejecutivo', 'Productividad Operadores', 'Flujo Horario', 'Detalle de Tickets']);
+        assert.deepStrictEqual(wb.worksheets.map(s => s.name), ['Resumen Ejecutivo', 'Productividad Operadores', 'Flujo Horario', 'Detalle de Tickets', 'Casos Comunes']);
         const det = wb.getWorksheet('Detalle de Tickets');
         assert.strictEqual(det.rowCount, 4 + rep.detalle.length);
         assert.strictEqual(wb.getWorksheet('Flujo Horario').rowCount, 4 + 24 + 1);
@@ -214,7 +217,7 @@ const mockRes = () => {
         assert.strictEqual(res.headers['Content-Disposition'], 'attachment; filename="reporte-semana-2026-10-05_2026-10-11.xlsx"');
         const wb = new ExcelJS.Workbook();
         await wb.xlsx.load(res.body);
-        assert.strictEqual(wb.worksheets.length, 4);
+        assert.strictEqual(wb.worksheets.length, 5);
     });
     await t('Rutas: /data y /excel exigen rol COORDINADOR', () => {
         const router = require('../src/routes/reportRoutes');
