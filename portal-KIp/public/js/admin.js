@@ -164,7 +164,7 @@
 						h('span', { class: 't2', text: o.carga + ' activos · ' + o.puntos + ' pts · promedio ' + dec(o.promedio) + ' pts en ' + o.area + ' · índice ' + dec(o.indice) }))))),
 			h('section', { class: 'glass card', 'aria-labelledby': 'h-ca' },
 				h('div', { class: 'card-head' },
-					h('div', { style: 'display:flex;flex-direction:column;flex:1' }, h('h2', { id: 'h-ca', text: 'Saturación por área' }), h('span', { class: 'hint', text: 'Carga por área del Dashboard: puntos abiertos ÷ (personas en turno × esta capacidad). Puntos por nivel: N1=2, N2=4, N3=8, N4=10; sin clasificar=2' }))),
+					h('div', { style: 'display:flex;flex-direction:column;flex:1' }, h('h2', { id: 'h-ca', text: 'Saturación por área' }), h('span', { class: 'hint', text: 'Carga por área del Dashboard: puntos de la jornada (abiertos + resueltos hoy) ÷ (personas en turno × esta capacidad). Puntos por nivel: N1=2, N2=4, N3=8, N4=10; sin clasificar=2' }))),
 				h('div', { class: 'rule-line' },
 					h('span', { text: 'Cada persona en turno aguanta' }),
 					stepper(String(r.capacidad.puntosPorPersona), 'Puntos por persona',

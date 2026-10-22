@@ -246,8 +246,12 @@ function buildCoordinatorPanel({ tickets = [], operators = [], now = new Date(),
         };
     });
 
-    // ----- Carga por área: saturación = puntos abiertos ÷ capacidad de quienes están en turno.
-    // Capacidad = personas en turno o de guardia (no ausentes) × puntos por persona (Reglas).
+    // ----- Carga por área: saturación = puntos acumulados de la jornada ÷ capacidad.
+    // Puntos acumulados = los de los abiertos más los de lo resuelto hoy (la jornada de Caracas),
+    // así el área no cae a 0 % cuando ya despachó su trabajo.
+    // Capacidad = personas en turno o de guardia (no ausentes) × puntos por persona (Reglas);
+    // fuera de turno se usa a todos los no ausentes del área, para no marcar 100 % con lo ya resuelto
+    // (abiertos sin nadie en turno sí marcan 100 %).
     // Un ticket sin clasificar pesa como nivel 1 (pesoCarga): es trabajo aunque aún no tenga puntos.
     const puntosPorPersona = (rules.capacidad || DEFAULT_RULES.capacidad).puntosPorPersona;
     const areaCodes = new Set([
@@ -262,10 +266,12 @@ function buildCoordinatorPanel({ tickets = [], operators = [], now = new Date(),
         const total = recibidosHoy + arrastrados;
         const resueltosArea = resueltosPeriodo.filter(deArea);
         const ops = operadores.filter(o => o.area === codigo);
-        const personas = operators.filter(o => (o.area_designada || 'GENERAL') === codigo
-            && o.estado_operativo !== 'AUSENTE' && shiftGroup(o.turno) !== 'fuera').length;
-        const puntos = puntosActivos(abiertos);
-        const capacidad = personas * puntosPorPersona;
+        const delArea = operators.filter(o => (o.area_designada || 'GENERAL') === codigo && o.estado_operativo !== 'AUSENTE');
+        const personas = delArea.filter(o => shiftGroup(o.turno) !== 'fuera').length;
+        const puntosAbiertos = puntosActivos(abiertos);
+        const puntosResueltos = puntosActivos(resueltosHoy.filter(deArea));
+        const puntos = puntosAbiertos + puntosResueltos;
+        const capacidad = (personas || delArea.length) * puntosPorPersona;
         return {
             codigo,
             nombre: AREA_NAMES[codigo] || codigo,
@@ -273,10 +279,12 @@ function buildCoordinatorPanel({ tickets = [], operators = [], now = new Date(),
             sinAsignar: abiertos.filter(t => !t.asignado_a_id).length,
             total,
             puntos,
+            puntosAbiertos,
+            puntosResueltos,
             personas,
             capacidad,
-            // Sin nadie en turno, cualquier abierto satura el área
-            porcentaje: capacidad ? Math.round(puntos / capacidad * 100) : (puntos ? 100 : 0),
+            // Abiertos sin nadie en turno saturan el área; lo ya resuelto solo pesa contra su capacidad
+            porcentaje: !personas && puntosAbiertos ? 100 : (capacidad ? Math.round(puntos / capacidad * 100) : 0),
             resueltos: resueltosArea.length,
             promedioHoras: avgHours(resueltosArea),
             operadores: ops
