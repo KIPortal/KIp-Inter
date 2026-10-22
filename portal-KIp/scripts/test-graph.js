@@ -135,6 +135,25 @@ const { explicarError } = require('./graph-login');
         assert.strictEqual(llamadas[0].body.message.toRecipients[0].emailAddress.address, 'cliente@x.com');
     });
 
+    await prueba('Intervalo de revisión: 30 s por defecto, configurable, mínimo 10', () => {
+        assert.strictEqual(mail.intervaloSegundos({}), 30);
+        assert.strictEqual(mail.intervaloSegundos({ GRAPH_INTERVALO_SEGUNDOS: '15' }), 15);
+        assert.strictEqual(mail.intervaloSegundos({ GRAPH_INTERVALO_SEGUNDOS: '2' }), 10);
+        assert.strictEqual(mail.intervaloSegundos({ GRAPH_INTERVALO_SEGUNDOS: 'x' }), 30);
+    });
+    await prueba('Con el lote lleno pide el siguiente sin esperar (máximo 4 por vuelta) y no se encima', async () => {
+        correosSimulados = Array.from({ length: 25 }, (_, i) => ({
+            id: `m${i}`, subject: `Aviso ${i}`, bodyPreview: '', from: { emailAddress: { address: 'c@x.com' } }, receivedDateTime: '2026-10-19T10:00:00Z'
+        }));
+        llamadas.length = 0;
+        await Promise.all([mail.revisarBuzon(), mail.revisarBuzon()]);
+        assert.strictEqual(llamadas.filter(l => l.get).length, 4);
+        correosSimulados = [];
+        llamadas.length = 0;
+        await mail.revisarBuzon();
+        assert.strictEqual(llamadas.filter(l => l.get).length, 1, 'sin correos, una sola consulta');
+    });
+
     console.log('\n--- Solo lectura ---');
     const dirEstado = fs.mkdtempSync(path.join(os.tmpdir(), 'graph-estado-'));
     const archivoEstado = path.join(dirEstado, 'estado.json');
