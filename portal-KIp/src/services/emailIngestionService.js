@@ -7,6 +7,8 @@ const { textoDeCorreo, extraerCorreo, quitarCitado } = require('./conversationSe
 const { loadConfig } = require('./configService');
 const { sugerirPrioridad } = require('./rulesService');
 const graphAuth = require('./graphAuthService');
+const graphWebhook = require('./graphWebhookService');
+const enVivo = require('./liveUpdatesService');
 
 // Estas variables deben ir en el archivo .env
 const TENANT_ID = process.env.GRAPH_TENANT_ID;
@@ -139,6 +141,8 @@ async function procesarCorreosEntrantes() {
                     .patch({ isRead: true });
             }
         }
+        // Las pantallas abiertas se enteran ya, sin esperar su próxima revisión
+        enVivo.avisar();
         return messages.value.length;
 
     } catch (error) {
@@ -261,10 +265,17 @@ function iniciarIngesta() {
     setInterval(revisarBuzon, cada * 1000);
 }
 
+/** Con el portal ya escuchando: aviso inmediato de Microsoft si GRAPH_WEBHOOK_URL está configurado. */
+function activarAvisoInmediato() {
+    if (!String(process.env.GRAPH_WEBHOOK_URL || '').trim()) return Promise.resolve(null);
+    return graphWebhook.iniciar({ client: getGraphClient(), rutaBuzon: graphAuth.rutaBuzon(), revisar: revisarBuzon });
+}
+
 module.exports = {
     iniciarIngesta,
     procesarCorreosEntrantes,
     revisarBuzon,
+    activarAvisoInmediato,
     intervaloSegundos,
     registrarRespuestaCliente,
     registrarRespuestaOperador,
