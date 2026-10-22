@@ -12,7 +12,7 @@
  * - Nunca se asigna solo: la sugerencia la confirma el coordinador.
  */
 
-const { UTC_OFFSET_HOURS, ACTIVE_STATES } = require('./metricsService');
+const { UTC_OFFSET_HOURS, ACTIVE_STATES, puntosActivos } = require('./metricsService');
 const { GUARDIA_WEEKDAY, GUARDIA_WEEKEND } = require('./shiftService');
 const { DEFAULT_RULES } = require('./rulesService');
 
@@ -43,6 +43,7 @@ function normalizeOperator(o, carga, sobrecarga) {
         nombre: o.nombre,
         area: o.area_designada || o.area || 'GENERAL',
         carga: carga ?? o.carga ?? (o.tickets_asignados || []).length,
+        puntosCarga: o.puntosCarga ?? puntosActivos(o.tickets_asignados),
         sobrecarga: Boolean(sobrecarga ?? o.sobrecarga),
         deGuardia: Boolean(o.deGuardia ?? o.turno?.deGuardia),
         disponible: Boolean(o.disponible ?? o.turno?.disponible),
@@ -64,7 +65,8 @@ function eligibility(op, now = new Date(), rules = DEFAULT_RULES) {
     return { elegible: false, motivo: 'No está disponible' };
 }
 
-const byLoad = (a, b) => (a.carga - b.carga) || a.nombre.localeCompare(b.nombre);
+// Menor carga = menos puntos activos; a igual puntaje, menos tickets
+const byLoad = (a, b) => ((a.puntosCarga || 0) - (b.puntosCarga || 0)) || (a.carga - b.carga) || a.nombre.localeCompare(b.nombre);
 
 /**
  * Mejor operador para un área (o fuera de ella con `otraArea`).

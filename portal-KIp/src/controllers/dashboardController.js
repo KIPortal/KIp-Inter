@@ -77,7 +77,7 @@ async function loadOperatorsWithShift(ahora = new Date(), filtro = {}) {
             tickets_asignados: {
                 // Carga activa completa: incluye recién asignados (NUEVO) y en pausa
                 where: { estado_actual: { in: ACTIVE_STATES } },
-                select: { codigo_incidencia: true, estado_actual: true },
+                select: { codigo_incidencia: true, estado_actual: true, puntos_complejidad: true },
                 orderBy: { createdAt: 'desc' }
             }
         },

@@ -14,7 +14,9 @@ const {
     getResolutionMinutes,
     averageResolutionMinutes,
     formatMinutes,
-    computeOverload
+    computeOverload,
+    pesoCarga,
+    puntosActivos
 } = require('../src/services/metricsService');
 
 let total = 0;
@@ -164,6 +166,27 @@ runTest('Sobrecarga: los operadores ausentes no bajan el promedio del área', ()
     // Si se contara: promedio 3 → índice 2 → alerta falsa.
     assert.strictEqual(result.get('a').promedioArea, 4.5);
     assert.strictEqual(result.get('a').sobrecarga, false);
+});
+
+runTest('Sobrecarga: se mide por los puntos activos acumulados, con mínimo de 3 activos', () => {
+    // a: 3 casos N4 (30 pts); b y c: 5 casos N1 cada uno (10 pts). Promedio 16,67 pts.
+    const pts = (id, tickets) => op(id, puntosActivos(tickets), { activos: tickets.length });
+    const n = (k, p) => Array.from({ length: k }, () => ({ puntos_complejidad: p }));
+    const r = computeOverload([pts('a', n(3, 10)), pts('b', n(5, 2)), pts('c', n(5, 2))]);
+    assert.strictEqual(r.get('a').sobrecarga, true, 'menos tickets pero más puntos');
+    assert.strictEqual(r.get('b').sobrecarga, false, 'más tickets pero sencillos');
+    assert.strictEqual(r.get('a').promedioArea, 16.67);
+    // Dos casos N4 (20 pts) superan 1.5× pero no llegan al mínimo de 3 activos
+    const dos = computeOverload([pts('a', n(2, 10)), pts('b', n(1, 2)), pts('c', n(1, 2))]);
+    assert.strictEqual(dos.get('a').sobrecarga, false);
+});
+
+runTest('Carga: un activo sin clasificar pesa 2 pts (nivel 1)', () => {
+    assert.strictEqual(pesoCarga({ puntos_complejidad: 8 }), 8);
+    assert.strictEqual(pesoCarga({ puntos_complejidad: 0 }), 2);
+    assert.strictEqual(pesoCarga({}), 2);
+    assert.strictEqual(puntosActivos([{ puntos_complejidad: 4 }, { puntos_complejidad: null }]), 6);
+    assert.strictEqual(puntosActivos(undefined), 0);
 });
 
 runTest('Sobrecarga: un área con un solo operador no es comparable y no genera alerta', () => {

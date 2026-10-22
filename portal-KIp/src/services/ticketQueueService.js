@@ -11,7 +11,8 @@ const {
     UTC_OFFSET_HOURS,
     getDayBounds,
     getClosingDate,
-    computeOverload
+    computeOverload,
+    puntosActivos
 } = require('./metricsService');
 const { AREA_NAMES } = require('./periodReportService');
 const { activeAreas, allSubgrupos, subgrupoName } = require('./areaCatalog');
@@ -136,10 +137,12 @@ function buildQueue({ tickets = [], operators = [], now = new Date(), rules = DE
         };
     });
 
-    // Operadores: carga activa, estado de turno y sobrecarga (1.5× el promedio del área, mínimo 3)
+    // Operadores: carga activa, estado de turno y sobrecarga (puntos activos > 1.5× el promedio del área, mínimo 3 activos)
     const carga = new Map(operators.map(o => [o.id, (o.tickets_asignados || []).length]));
+    const puntosCarga = new Map(operators.map(o => [o.id, puntosActivos(o.tickets_asignados)]));
     const overload = computeOverload(operators.map(o => ({
-        id: o.id, area_designada: o.area_designada, estado_operativo: o.estado_operativo, cargaActual: carga.get(o.id)
+        id: o.id, area_designada: o.area_designada, estado_operativo: o.estado_operativo,
+        cargaActual: puntosCarga.get(o.id), activos: carga.get(o.id)
     })), overloadOptions(rules));
     const operadores = operators.map(o => {
         const ov = overload.get(o.id) || {};
@@ -158,6 +161,7 @@ function buildQueue({ tickets = [], operators = [], now = new Date(), rules = DE
             subgrupoNombre: subgrupoName(o.subgrupo_id),
             estado: { grupo: shiftGroup(o.turno), etiqueta: o.turno?.etiqueta || 'Fuera de turno' },
             carga: carga.get(o.id) || 0,
+            puntosCarga: puntosCarga.get(o.id) || 0,
             sobrecarga: Boolean(ov.sobrecarga),
             promedioArea: ov.promedioArea ?? null
         };
