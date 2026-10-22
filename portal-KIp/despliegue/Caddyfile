@@ -1,0 +1,8 @@
+# Caddy saca y renueva solo el certificado https del dominio (p. ej. kip-pruebas.duckdns.org)
+{$DOMINIO} {
+	encode gzip
+	reverse_proxy portal:3000 {
+		# Sin búfer para que /api/cambios/stream (actualización en vivo) llegue al instante
+		flush_interval -1
+	}
+}
