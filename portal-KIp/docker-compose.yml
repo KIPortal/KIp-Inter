@@ -1,0 +1,29 @@
+# Portal + Caddy (https automático) para una VM Linux: Oracle Cloud gratis o el servidor de Inter.
+# Uso: crea portal-KIp/.env y portal-KIp/despliegue/caddy.env (DOMINIO=...), luego `docker compose up -d --build`.
+services:
+  portal:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      TRUST_PROXY: "1"
+    volumes:
+      - portal-datos:/datos
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    env_file: despliegue/caddy.env
+    volumes:
+      - ./despliegue/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-datos:/data
+    depends_on:
+      - portal
+
+volumes:
+  portal-datos:
+  caddy-datos:
