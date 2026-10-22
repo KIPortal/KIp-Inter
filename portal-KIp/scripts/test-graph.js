@@ -214,6 +214,43 @@ const { explicarError } = require('./graph-login');
     });
     delete process.env.GRAPH_SOLO_LECTURA;
 
+    console.log('\n--- Aviso inmediato de correos nuevos (GRAPH_WEBHOOK_URL) ---');
+    const webhook = require('../src/services/graphWebhookService');
+    await prueba('Solo se activa con una dirección https', () => {
+        assert.strictEqual(webhook.urlNotificaciones({}), null);
+        assert.strictEqual(webhook.urlNotificaciones({ GRAPH_WEBHOOK_URL: 'http://x.com' }), null);
+        assert.strictEqual(webhook.urlNotificaciones({ GRAPH_WEBHOOK_URL: 'https://abc.trycloudflare.com/' }), 'https://abc.trycloudflare.com/api/graph/notificaciones');
+        assert.strictEqual(webhook.recursoBandeja('/me'), "me/mailFolders('inbox')/messages");
+        assert.strictEqual(webhook.recursoBandeja('/users/noc%40x.com'), "users/noc%40x.com/mailFolders('inbox')/messages");
+    });
+    const respuesta = () => ({ code: null, body: null, tipo: null,
+        status(c) { this.code = c; return this; }, type(t) { this.tipo = t; return this; },
+        send(b) { this.body = b; return this; }, sendStatus(c) { this.code = c; return this; } });
+    await prueba('Sin GRAPH_WEBHOOK_URL no pide nada a Microsoft', async () => {
+        llamadas.length = 0;
+        assert.strictEqual(await webhook.iniciar({ client: { api: () => { throw new Error('no debía llamar'); } }, rutaBuzon: '/me', revisar() {}, env: {} }), null);
+    });
+    await prueba('Crea la suscripción, responde la validación y revisa el buzón al recibir un aviso válido', async () => {
+        let pedido = null, revisiones = 0;
+        const client = { api: ruta => ({ post: async b => { pedido = { ruta, b }; return { id: 'sub-1' }; }, patch: async () => {} }) };
+        const sub = await webhook.iniciar({ client, rutaBuzon: '/me', revisar: () => { revisiones++; }, env: { GRAPH_WEBHOOK_URL: 'https://abc.trycloudflare.com' }, timers: { setInterval: () => ({}) } });
+        assert.strictEqual(sub.id, 'sub-1');
+        assert.strictEqual(pedido.ruta, '/subscriptions');
+        assert.strictEqual(pedido.b.changeType, 'created');
+        assert.strictEqual(pedido.b.resource, "me/mailFolders('inbox')/messages");
+        assert.ok(pedido.b.clientState && Date.parse(pedido.b.expirationDateTime) > Date.now());
+        const v = respuesta();
+        webhook.recibir({ query: { validationToken: 'tok 1' } }, v);
+        assert.deepStrictEqual([v.code, v.tipo, v.body], [200, 'text/plain', 'tok 1']);
+        const falso = respuesta();
+        webhook.recibir({ query: {}, body: { value: [{ clientState: 'otro' }] } }, falso);
+        const bueno = respuesta();
+        webhook.recibir({ query: {}, body: { value: [{ clientState: pedido.b.clientState }] } }, bueno);
+        await new Promise(r => setImmediate(r));
+        assert.deepStrictEqual([falso.code, bueno.code], [202, 202]);
+        assert.strictEqual(revisiones, 1, 'solo el aviso con el clientState correcto dispara la revisión');
+    });
+
     console.log('\n--- Mensajes de ayuda del inicio de sesión ---');
     await prueba('Explica los errores comunes en español', () => {
         assert.match(explicarError({ message: 'AADSTS7000218: ...' }), /Allow public client flows/);

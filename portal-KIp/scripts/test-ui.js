@@ -116,6 +116,39 @@ const html = {};
         assert.ok(fs.readFileSync(path.join(root, 'src', 'app.js'), 'utf8').includes("app.get('/api/cambios', requireAuth"));
     });
 
+    await t('Actualización empujada: una consulta para todas las pestañas y aviso solo si cambia', async () => {
+        const { crearDifusor } = require('../src/services/liveUpdatesService');
+        const { EventEmitter } = require('events');
+        let sello = 'A', consultas = 0;
+        const timers = { setInterval: () => ({}), clearInterval: () => {} };
+        const d = crearDifusor({ cargarSello: async () => { consultas++; return sello; }, timers });
+        const conectar = () => {
+            const req = new EventEmitter();
+            const res = { escrito: '', set() {}, write(x) { this.escrito += x; } };
+            return { req, res, listo: d.suscribir(req, res) };
+        };
+        const p1 = conectar(), p2 = conectar();
+        await Promise.all([p1.listo, p2.listo]);
+        assert.match(p1.res.escrito, /event: cambio\ndata: \{"sello":"A"\}/, 'al conectar recibe el sello actual');
+        assert.strictEqual(d.conectados(), 2);
+        consultas = 0; p1.res.escrito = p2.res.escrito = '';
+        await d.avisar();
+        assert.strictEqual(consultas, 1, 'una sola consulta para todas');
+        assert.strictEqual(p1.res.escrito, '', 'sin cambios no avisa');
+        sello = 'B';
+        await d.avisar();
+        assert.ok(p1.res.escrito.includes('"sello":"B"') && p2.res.escrito.includes('"sello":"B"'), 'con cambios avisa a todas');
+        p1.req.emit('close'); p2.req.emit('close');
+        assert.strictEqual(d.conectados(), 0);
+        consultas = 0;
+        await d.avisar();
+        assert.strictEqual(consultas, 0, 'sin pestañas abiertas no consulta la base');
+        const app = fs.readFileSync(path.join(root, 'src', 'app.js'), 'utf8');
+        assert.ok(app.includes("app.get('/api/cambios/stream', requireAuth"));
+        const vivo = fs.readFileSync(path.join(root, 'public', 'js', 'vivo.js'), 'utf8');
+        assert.ok(vivo.includes("new EventSource('/api/cambios/stream')") && vivo.includes('cerrarCanal'), 'la pestaña escucha el canal y lo cierra al ocultarse');
+    });
+
     await t('Sello en caché: varias pestañas comparten una consulta y se renueva al vencer', async () => {
         const { cachedStamp } = require('../src/services/changeStampService');
         let reloj = 0, consultas = 0;

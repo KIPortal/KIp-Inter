@@ -72,6 +72,14 @@ app.get('/api/cambios', requireAuth, async (req, res) => {
     }
 });
 
+// Lo mismo, empujado: el servidor avisa a las pestañas abiertas apenas cambia el sello
+const enVivo = require('./services/liveUpdatesService');
+const difusor = enVivo.configurar(enVivo.crearDifusor({ cargarSello: () => loadStamp(prisma) }));
+app.get('/api/cambios/stream', requireAuth, (req, res) => difusor.suscribir(req, res));
+
+// Aviso de Microsoft Graph cuando llega un correo (solo si GRAPH_WEBHOOK_URL está configurado)
+app.post('/api/graph/notificaciones', require('./services/graphWebhookService').recibir);
+
 app.use('/api/auth', authRoutes);
 app.use('/auth', authRoutes);
 app.use('/', dashboardRoutes);
