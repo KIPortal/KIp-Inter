@@ -1,7 +1,6 @@
 const { ClientSecretCredential } = require('@azure/identity');
 const { Client } = require('@microsoft/microsoft-graph-client');
 const { TokenCredentialAuthenticationProvider } = require('@microsoft/microsoft-graph-client/authProviders/azureTokenCredentials');
-const cron = require('node-cron');
 const prisma = require('../config/prisma');
 const { getNextTicketCode } = require('./ticketCodeService');
 const { textoDeCorreo, extraerCorreo, quitarCitado } = require('./conversationService');
@@ -15,6 +14,16 @@ const CLIENT_ID = process.env.GRAPH_CLIENT_ID;
 const CLIENT_SECRET = process.env.GRAPH_CLIENT_SECRET;
 
 let graphClient;
+
+// Correos por consulta; si llega el lote completo se pide el siguiente sin esperar (hasta LOTES_POR_VUELTA)
+const LOTE = 25;
+const LOTES_POR_VUELTA = 4;
+
+/** Segundos entre revisiones del buzón (GRAPH_INTERVALO_SEGUNDOS, 30 por defecto, mínimo 10). */
+function intervaloSegundos(env = process.env) {
+    const n = parseInt(env.GRAPH_INTERVALO_SEGUNDOS, 10);
+    return Number.isFinite(n) ? Math.max(10, n) : 30;
+}
 
 function getGraphClient() {
     if (!graphClient && graphAuth.modo() === 'delegado') {
@@ -51,12 +60,12 @@ function marcarInicioLectura() {
 }
 
 /**
- * Función encargada de leer correos no leídos y transformarlos en tickets
+ * Lee un lote de correos nuevos y los convierte en tickets. Devuelve cuántos correos trajo la consulta.
  */
 async function procesarCorreosEntrantes() {
     const client = getGraphClient();
     const buzon = graphAuth.rutaBuzon();
-    if (!client || !buzon) return;
+    if (!client || !buzon) return 0;
 
     const soloLectura = graphAuth.soloLectura();
     try {
@@ -65,20 +74,21 @@ async function procesarCorreosEntrantes() {
         if (soloLectura) {
             // Solo lectura: no se marca nada en el buzón; se recuerda hasta qué correo se leyó
             estado = graphAuth.leerEstado();
-            if (!estado) return marcarInicioLectura();
+            if (!estado) { marcarInicioLectura(); return 0; }
             consulta = consulta.filter(`receivedDateTime ge ${estado.desde}`).orderby('receivedDateTime asc');
         } else {
             consulta = consulta.filter('isRead eq false');
         }
-        // Hasta 10 correos por vuelta
         const messages = await consulta
-            .top(10)
+            .top(LOTE)
             .select('id,subject,body,bodyPreview,from,toRecipients,receivedDateTime')
             .get();
 
         if (!messages.value || messages.value.length === 0) {
-            return; // No hay correos nuevos
+            return 0; // No hay correos nuevos
         }
+        // Las reglas de prioridad se cargan una vez por lote, no por correo
+        let reglas;
 
         for (const message of messages.value) {
             if (soloLectura && estado.ids.includes(message.id)) continue; // ya procesado
@@ -103,7 +113,7 @@ async function procesarCorreosEntrantes() {
                 else await registrarRespuestaCliente(existe, message);
             } else if (!existe) {
                 // Prioridad sugerida por palabras clave (Administración → Reglas); el operador la confirma al tomarlo
-                const reglas = (await loadConfig(prisma).catch(() => null))?.reglas;
+                if (reglas === undefined) reglas = (await loadConfig(prisma).catch(() => null))?.reglas || null;
                 const sugerida = sugerirPrioridad(`${message.subject || ''} ${message.bodyPreview || ''} ${message.from?.emailAddress?.address || ''}`, reglas || undefined);
                 await prisma.ticket.create({
                     data: {
@@ -129,9 +139,26 @@ async function procesarCorreosEntrantes() {
                     .patch({ isRead: true });
             }
         }
+        return messages.value.length;
 
     } catch (error) {
         console.error('❌ Error al procesar correos desde Graph API:', error.message);
+        return 0;
+    }
+}
+
+let revisando = false;
+
+/** Una vuelta: lotes seguidos mientras vengan llenos. Si la anterior sigue en curso, no se encima. */
+async function revisarBuzon() {
+    if (revisando) return;
+    revisando = true;
+    try {
+        for (let i = 0; i < LOTES_POR_VUELTA; i++) {
+            if (await procesarCorreosEntrantes() < LOTE) break;
+        }
+    } finally {
+        revisando = false;
     }
 }
 
@@ -222,22 +249,23 @@ async function enviarCorreo({ para, asunto, texto, adjuntos = [] }) {
 }
 
 /**
- * Inicializa el Cron Job que se ejecutará cada 2 minutos
+ * Revisa el buzón al arrancar y luego cada GRAPH_INTERVALO_SEGUNDOS (30 s por defecto)
  */
 function iniciarIngesta() {
-    console.log(`✅ Servicio de Ingesta Automática (Graph API) preparado (modo ${graphAuth.modo()}${graphAuth.soloLectura() ? ', solo lectura' : ''}).`);
-    
+    const cada = intervaloSegundos();
+    console.log(`✅ Servicio de Ingesta Automática (Graph API) preparado (modo ${graphAuth.modo()}${graphAuth.soloLectura() ? ', solo lectura' : ''}, cada ${cada} s).`);
+
     if (graphAuth.soloLectura() && !graphAuth.leerEstado()) marcarInicioLectura();
 
-    // Ejecutar cada 2 minutos: '*/2 * * * *'
-    cron.schedule('*/2 * * * *', async () => {
-        await procesarCorreosEntrantes();
-    });
+    revisarBuzon();
+    setInterval(revisarBuzon, cada * 1000);
 }
 
 module.exports = {
     iniciarIngesta,
     procesarCorreosEntrantes,
+    revisarBuzon,
+    intervaloSegundos,
     registrarRespuestaCliente,
     registrarRespuestaOperador,
     autorDelPortal,
