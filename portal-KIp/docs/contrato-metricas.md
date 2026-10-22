@@ -91,7 +91,7 @@ Campo `User.atiende_tickets` (migración `20261014180000_coordinador_atiende`), 
 
 ## Tipos de caso y puntos por nivel (ver especificación §16)
 - Tabla `TipoCaso` (migración `20261022120000_tipos_caso`, que además carga los casos de los Excel de FTTx y WAN). `Ticket` suma `prioridad` (P1/P2/P3 o null), `nivel` (1-4) y `tipo_caso_id`; `puntos_complejidad` = puntos del nivel (N1=2, N2=4, N3=8, N4=10).
-- `GET /api/tickets/tipos-caso` → `{ tipos: [{ id, nombre, area, areaNombre, subgrupo, subgrupoNombre, nivel, puntos, minutos, frecuencia, dependencias, activo }] }` (solo activos).
+- Tickets y Mi panel reciben en `datos` `tiposCaso: [{ id, nombre, area, areaNombre, subgrupo, subgrupoNombre, nivel, puntos, minutos, frecuencia, dependencias, activo }]` (solo activos; en memoria hasta que Administración crea o edita uno) y `niveles: { puntos, nombres }` (de `tipoCasoService`; las pantallas no copian la tabla).
 - `POST /api/admin/tipos-caso` `{ nombre, area, nivel, minutos?, frecuencia?, dependencias?, subgrupo? }` y `PATCH /api/admin/tipos-caso/:id` (los mismos campos, parciales, más `activo`; el área no cambia). Auditoría `TIPO_CASO_CREADO` / `TIPO_CASO_EDITADO`. Nombre repetido en el área = 409.
 - `POST /api/tickets/:codigo/claim`: un ticket sin nivel exige `{ tipoCasoId }` (del área del ticket) o `{ nivel: 1-4 }` ("Otro"); sin él responde 422 `{ requiereTipo: true }` (y `requierePrioridad` si además falta la prioridad).
 - `PATCH /api/tickets/:codigo` acepta `tipoCasoId` / `nivel` (con `{ tipoCasoId: null, nivel: null }` se quita: 0 pts) y `prioridad` (`P1`|`P2`|`P3`|`NONE`), que ya no cambia los puntos. `POST /api/tickets` acepta `tipoCasoId`/`nivel` opcionales. Desasignar deja la prioridad en null y conserva el tipo.

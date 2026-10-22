@@ -7,7 +7,7 @@ const { auditUserId } = require('../services/auditViewService');
 
 // La prioridad (urgencia) ya no da puntos: los puntos salen del nivel del tipo de caso
 const PRIORIDADES = new Set(['P1', 'P2', 'P3']);
-const { clasificar, tipoCasoVista } = require('../services/tipoCasoService');
+const { clasificar } = require('../services/tipoCasoService');
 const { isActiveArea, isValidSubgrupo, subgrupoName } = require('../services/areaCatalog');
 const { parseEstadoVe } = require('../services/estadosVeService');
 // Solo se puede elegir un área activa (las desactivadas conservan su historial)
@@ -44,17 +44,6 @@ async function clasificacionPedida(body, area) {
 }
 
 const describirClasificacion = (data, nombre) => `tipo ${nombre || 'Otro'} (nivel ${data.nivel}, ${data.puntos_complejidad} pts)`;
-
-// Catálogo de tipos de caso activos (para elegirlo al tomar o editar un ticket)
-async function listTiposCaso(req, res) {
-    try {
-        const tipos = await prisma.tipoCaso.findMany({ where: { activo: true }, orderBy: [{ area_codigo: 'asc' }, { nivel: 'asc' }, { nombre: 'asc' }] });
-        return res.json({ success: true, tipos: tipos.map(tipoCasoVista) });
-    } catch (error) {
-        console.error('Error al listar tipos de caso:', error);
-        return res.status(500).json({ success: false, error: 'No se pudieron cargar los tipos de caso' });
-    }
-}
 
 // Si dos coordinadores crean a la vez, el segundo choca con el código (P2002) y reintenta
 const CREATE_ATTEMPTS = 3;
@@ -824,7 +813,6 @@ async function listTrash(req, res) {
 }
 
 module.exports = {
-    listTiposCaso,
     handoffTickets,
     getActiveHandoff,
     closeHandoff,

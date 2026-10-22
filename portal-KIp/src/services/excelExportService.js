@@ -173,7 +173,7 @@ async function buildWorkbook(report, { generadoPor = '', generadoEn = new Date()
     });
     const noteRow = lecRow + 2 + (report.lecturas || []).length;
     s1.mergeCells(noteRow, 1, noteRow, 10);
-    s1.getCell(noteRow, 1).value = 'Tiempos: promedio (suma ÷ tickets resueltos) desde que llegó el ticket. "En horario" cuenta solo lunes a viernes de 8:00 a 17:00 (Caracas). Los tickets sin prioridad suman 0 puntos hasta que el coordinador les asigne P1, P2 o P3. Estado de carga y "Activos ahora" reflejan el momento de la descarga.';
+    s1.getCell(noteRow, 1).value = 'Tiempos: promedio (suma ÷ tickets resueltos) desde que llegó el ticket. "En horario" cuenta solo lunes a viernes de 8:00 a 17:00 (Caracas). Puntos por nivel de dificultad del tipo de caso: N1 = 2, N2 = 4, N3 = 8, N4 = 10 (sin tipo = 0). P1, P2 y P3 son la prioridad (urgencia) y no dan puntos. Estado de carga y "Activos ahora" reflejan el momento de la descarga.';
     s1.getCell(noteRow, 1).font = { name: 'Calibri', size: 9, italic: true, color: { argb: C.grey } };
     s1.getCell(noteRow, 1).alignment = { wrapText: true, vertical: 'top' };
     s1.getRow(noteRow).height = 40;
@@ -182,7 +182,7 @@ async function buildWorkbook(report, { generadoPor = '', generadoEn = new Date()
     const s2 = wb.addWorksheet('Productividad Operadores', { pageSetup: PAGE, views: [{ state: 'frozen', xSplit: 1, ySplit: 4, showGridLines: false }] });
     [26, 22, 11, 10, 11, 10, 10, 10, 12, 15, 16, 11, 10, 17].forEach((w, i) => { s2.getColumn(i + 1).width = w; });
     title(s2, 14, report, generadoPor, generadoEn, 'RENDIMIENTO Y DESGLOSE POR OPERADOR');
-    headerRow(s2, 4, ['Operador', 'Área', 'Tickets resueltos', 'Puntos', 'Pts / Ticket', 'P1 (8 pts)', 'P2 (5 pts)', 'P3 (1 pt)', 'Sin prioridad', 'Tiempo prom. total (min)', 'Tiempo prom. en horario (min)', 'Activos ahora', 'Índice de carga', 'Estado de carga']);
+    headerRow(s2, 4, ['Operador', 'Área', 'Tickets resueltos', 'Puntos', 'Pts / Ticket', 'P1 Crítica', 'P2 Media', 'P3 Baja', 'Sin prioridad', 'Tiempo prom. total (min)', 'Tiempo prom. en horario (min)', 'Activos ahora', 'Índice de carga', 'Estado de carga']);
     const f2 = 5;
     report.porOperador.forEach((o, i) => {
         s2.getRow(f2 + i).values = [o.nombre, o.areaNombre, o.resueltos, o.puntos, null, o.p1, o.p2, o.p3, o.sinPrioridad, num(o.tiempoTotalMin), num(o.tiempoHorarioMin), o.activos, num(o.indiceCarga), o.estadoCarga];

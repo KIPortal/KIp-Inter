@@ -19,7 +19,8 @@
 		siguienteCodigo,
 		usuario: { id: currentUser.id, nombre: currentUser.nombre || 'Coordinador', atiende: currentUser.atiende_tickets === true },
 		plantillas: typeof plantillas !== 'undefined' && plantillas ? plantillas : null,
-		tiposCaso: locals.tiposCaso || []
+		tiposCaso: locals.tiposCaso || [],
+		niveles: locals.niveles || null
 	};
 	const tarjetas = [
 		['Activos', r.activos, ''],

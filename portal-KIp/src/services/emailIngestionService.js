@@ -27,11 +27,19 @@ function intervaloSegundos(env = process.env) {
     return Number.isFinite(n) ? Math.max(10, n) : 30;
 }
 
+// El aviso de credenciales faltantes se imprime una sola vez, no en cada revisión
+let avisoDado = false;
+function avisarUnaVez(texto) {
+    if (avisoDado) return;
+    avisoDado = true;
+    console.warn(texto);
+}
+
 function getGraphClient() {
     if (!graphClient && graphAuth.modo() === 'delegado') {
         // Modo de prueba: token de la persona que inició sesión con scripts/graph-login.js
         if (!process.env.GRAPH_CLIENT_ID) {
-            console.warn("⚠️ Falta GRAPH_CLIENT_ID. La ingesta de correos está deshabilitada.");
+            avisarUnaVez("⚠️ Falta GRAPH_CLIENT_ID. La ingesta de correos está deshabilitada.");
             return null;
         }
         const pca = graphAuth.crearClientePublico();
@@ -41,7 +49,7 @@ function getGraphClient() {
     }
     if (!graphClient) {
         if (!TENANT_ID || !CLIENT_ID || !CLIENT_SECRET) {
-            console.warn("⚠️ Faltan credenciales de Graph API. La ingesta de correos está deshabilitada.");
+            avisarUnaVez("⚠️ Faltan credenciales de Graph API. La ingesta de correos está deshabilitada.");
             return null;
         }
 
@@ -59,6 +67,55 @@ function getGraphClient() {
 function marcarInicioLectura() {
     graphAuth.guardarEstado({ desde: new Date().toISOString(), ids: [] });
     console.log('[Graph API] Solo lectura: se tomarán los correos que lleguen desde ahora.');
+}
+
+// Intentos por correo antes de dejarlo atrás (en memoria: se reinicia al reiniciar el portal)
+const MAX_INTENTOS = 3;
+const fallos = new Map();
+
+// Si la base no responde, el correo no tiene la culpa: se reintenta sin contar el intento
+const esDeConexion = e => /^P10\d\d$/.test(String(e?.code || '')) || e?.name === 'PrismaClientInitializationError';
+
+const ASUNTO_VACIO = '(sin asunto)';
+const codigoEnAsunto = message => {
+    const match = String(message.subject || '').match(/INC-\d+/i);
+    return match ? match[0].toUpperCase() : null;
+};
+
+/** Convierte un correo en ticket nuevo, o lo suma a la conversación del ticket que nombra (INC-xxx). */
+async function procesarCorreo(message, cargarReglas) {
+    const asunto = String(message.subject || '').trim() || ASUNTO_VACIO;
+    const remitente = message.from?.emailAddress?.address || null;
+    console.log(`[Graph API] Procesando correo: ${asunto}`);
+
+    // 1. Código de incidencia: el que venga en el asunto ("INC-XXX") o uno nuevo
+    const codigoIncidencia = codigoEnAsunto(message) || await getNextTicketCode(prisma);
+
+    // 2. Insertar, o sumar el correo a la conversación si el ticket ya existe
+    const existe = await prisma.ticket.findUnique({ where: { codigo_incidencia: codigoIncidencia } });
+    if (existe && !existe.eliminado_en) {
+        // Si lo escribió alguien del portal (respondió desde su correo con el buzón en copia),
+        // es una respuesta enviada; si no, es el cliente
+        const autor = await autorDelPortal(message);
+        if (autor) await registrarRespuestaOperador(existe, message, autor);
+        else await registrarRespuestaCliente(existe, message);
+    } else if (!existe) {
+        // Prioridad sugerida por palabras clave (Administración → Reglas); el operador la confirma al tomarlo
+        const reglas = await cargarReglas();
+        const sugerida = sugerirPrioridad(`${message.subject || ''} ${message.bodyPreview || ''} ${remitente || ''}`, reglas || undefined);
+        await prisma.ticket.create({
+            data: {
+                codigo_incidencia: codigoIncidencia,
+                asunto,
+                descripcion: message.bodyPreview,
+                origen_ingesta: 'CORREO',
+                remitente,
+                estado_actual: 'NUEVO',
+                area_designada: 'GENERAL',
+                prioridad_sugerida: sugerida
+            }
+        });
+    }
 }
 
 /**
@@ -91,47 +148,37 @@ async function procesarCorreosEntrantes() {
         }
         // Las reglas de prioridad se cargan una vez por lote, no por correo
         let reglas;
+        const cargarReglas = async () => {
+            if (reglas === undefined) reglas = (await loadConfig(prisma).catch(() => null))?.reglas || null;
+            return reglas;
+        };
+        let detenido = false; // un correo falló y se reintenta en la próxima vuelta
 
         for (const message of messages.value) {
             if (soloLectura && estado.ids.includes(message.id)) continue; // ya procesado
-            console.log(`[Graph API] Procesando correo: ${message.subject}`);
-
-            // 1. Extraer o generar el Código de Incidencia
-            // Lógica básica: Buscar si en el asunto ya hay un "INC-XXX"
-            const match = message.subject.match(/INC-\d+/i);
-            let codigoIncidencia = match ? match[0].toUpperCase() : null;
-
-            if (!codigoIncidencia) {
-                codigoIncidencia = await getNextTicketCode(prisma);
+            try {
+                await procesarCorreo(message, cargarReglas);
+                fallos.delete(message.id);
+            } catch (error) {
+                if (esDeConexion(error)) {
+                    console.error('❌ [Graph API] La base de datos no responde; se reintenta en la próxima vuelta:', error.message);
+                    detenido = true;
+                    break;
+                }
+                // Un correo que falla no traba a los demás: se reintenta en las próximas vueltas
+                // y, si sigue fallando, se deja atrás (queda en el registro) para que entren los siguientes
+                const intentos = (fallos.get(message.id) || 0) + 1;
+                if (intentos < MAX_INTENTOS) {
+                    fallos.set(message.id, intentos);
+                    console.error(`❌ [Graph API] No se pudo procesar "${message.subject || ASUNTO_VACIO}" (intento ${intentos} de ${MAX_INTENTOS}):`, error.message);
+                    detenido = true;
+                    break;
+                }
+                fallos.delete(message.id);
+                console.error(`❌ [Graph API] Se omite "${message.subject || ASUNTO_VACIO}" (${message.id}) tras ${MAX_INTENTOS} intentos:`, error.message);
             }
 
-            // 2. Insertar, o sumar el correo a la conversación si el ticket ya existe
-            const existe = await prisma.ticket.findUnique({ where: { codigo_incidencia: codigoIncidencia } });
-            if (existe && !existe.eliminado_en) {
-                // Si lo escribió alguien del portal (respondió desde su correo con el buzón en copia),
-                // es una respuesta enviada; si no, es el cliente
-                const autor = await autorDelPortal(message);
-                if (autor) await registrarRespuestaOperador(existe, message, autor);
-                else await registrarRespuestaCliente(existe, message);
-            } else if (!existe) {
-                // Prioridad sugerida por palabras clave (Administración → Reglas); el operador la confirma al tomarlo
-                if (reglas === undefined) reglas = (await loadConfig(prisma).catch(() => null))?.reglas || null;
-                const sugerida = sugerirPrioridad(`${message.subject || ''} ${message.bodyPreview || ''} ${message.from?.emailAddress?.address || ''}`, reglas || undefined);
-                await prisma.ticket.create({
-                    data: {
-                        codigo_incidencia: codigoIncidencia,
-                        asunto: message.subject,
-                        descripcion: message.bodyPreview,
-                        origen_ingesta: 'CORREO',
-                        remitente: message.from.emailAddress.address,
-                        estado_actual: 'NUEVO',
-                        area_designada: 'GENERAL',
-                        prioridad_sugerida: sugerida
-                    }
-                });
-            }
-
-            // 3. Que no se vuelva a procesar: avanzar la marca (solo lectura) o marcarlo como leído
+            // Que no se vuelva a procesar: avanzar la marca (solo lectura) o marcarlo como leído
             if (soloLectura) {
                 estado = graphAuth.avanzarEstado(estado, message);
                 graphAuth.guardarEstado(estado);
@@ -143,7 +190,8 @@ async function procesarCorreosEntrantes() {
         }
         // Las pantallas abiertas se enteran ya, sin esperar su próxima revisión
         enVivo.avisar();
-        return messages.value.length;
+        // Si un correo se detuvo para reintentarlo, la vuelta termina aquí
+        return detenido ? 0 : messages.value.length;
 
     } catch (error) {
         console.error('❌ Error al procesar correos desde Graph API:', error.message);
@@ -256,6 +304,8 @@ async function enviarCorreo({ para, asunto, texto, adjuntos = [] }) {
  * Revisa el buzón al arrancar y luego cada GRAPH_INTERVALO_SEGUNDOS (30 s por defecto)
  */
 function iniciarIngesta() {
+    // Sin credenciales no se programa nada (el aviso ya salió una vez)
+    if (!getGraphClient()) return;
     const cada = intervaloSegundos();
     console.log(`✅ Servicio de Ingesta Automática (Graph API) preparado (modo ${graphAuth.modo()}${graphAuth.soloLectura() ? ', solo lectura' : ''}, cada ${cada} s).`);
 
