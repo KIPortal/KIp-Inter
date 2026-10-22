@@ -17,19 +17,19 @@ const { AREA_NAMES } = require('./periodReportService');
 const { activeAreas, allSubgrupos, subgrupoName } = require('./areaCatalog');
 const { estadosVeLista } = require('./estadosVeService');
 const { agingTickets, formatAge } = require('./dashboardService');
-const { DEFAULT_RULES, overloadOptions } = require('./rulesService');
+const { DEFAULT_RULES, overloadOptions, prioridadDe } = require('./rulesService');
 const { normalizeOperator, buildSuggestions, eligibility } = require('./assignmentService');
 const { fotoUrl } = require('./profileService');
+const { tipoCasoDeTicket } = require('./tipoCasoService');
 
 const MINUTE_MS = 60 * 1000;
 const HOUR_MS = 60 * MINUTE_MS;
 const DAY_MS = 24 * HOUR_MS;
 
-const PRIORITY_BY_POINTS = { 8: 'P1', 5: 'P2', 1: 'P3' };
 const ORIGIN_NAMES = { CORREO: 'Correo', LLAMADA: 'Llamada', JEFATURA: 'Jefatura', COORDINADOR: 'Coordinador' };
 
 const time = value => (value ? new Date(value).getTime() : NaN);
-const priorityOf = points => PRIORITY_BY_POINTS[points] || 'SP';
+const priorityOf = prioridadDe;
 
 function initials(nombre) {
     return String(nombre || '?').split(/\s+/).filter(Boolean).slice(0, 2).map(p => p[0].toUpperCase()).join('') || '?';
@@ -118,9 +118,10 @@ function buildQueue({ tickets = [], operators = [], now = new Date(), rules = DE
             estadoVe: t.estado_ve || '',
             subgrupo: t.subgrupo_id || '',
             subgrupoNombre: subgrupoName(t.subgrupo_id),
-            prioridad: priorityOf(t.puntos_complejidad),
-            sugerida: priorityOf(t.puntos_complejidad) === 'SP' ? (t.prioridad_sugerida || null) : null,
+            prioridad: priorityOf(t),
+            sugerida: priorityOf(t) === 'SP' ? (t.prioridad_sugerida || null) : null,
             puntos: t.puntos_complejidad || 0,
+            ...tipoCasoDeTicket(t),
             estado: t.estado_actual,
             operador: t.asignado_a ? { id: t.asignado_a.id, nombre: t.asignado_a.nombre, iniciales: initials(t.asignado_a.nombre), foto: fotoUrl(t.asignado_a.foto) } : null,
             creadoPor: t.creado_por?.nombre || (t.origen_ingesta === 'CORREO' ? 'Buzón compartido' : 'Coordinador'),
@@ -179,7 +180,7 @@ function buildQueue({ tickets = [], operators = [], now = new Date(), rules = DE
     const resumen = {
         activos: activos.length,
         sinAsignar: activos.filter(t => !t.asignado_a_id).length,
-        criticosSinAsignar: tickets.filter(t => !t.asignado_a_id && t.estado_actual !== 'CERRADO' && (t.puntos_complejidad || 0) >= 5).length,
+        criticosSinAsignar: tickets.filter(t => !t.asignado_a_id && t.estado_actual !== 'CERRADO' && ['P1', 'P2'].includes(priorityOf(t))).length,
         pausaEspera: tickets.filter(t => ['EN_PAUSA', 'EN_ESPERA_TERCEROS'].includes(t.estado_actual)).length,
         resueltosSinCerrar: tickets.filter(t => t.estado_actual === 'RESUELTO').length,
         creadosHoy: tickets.filter(t => enHoy(t.createdAt)).length,

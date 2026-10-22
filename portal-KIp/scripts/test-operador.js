@@ -259,7 +259,7 @@ const cola = (p, k) => p.colas.find(q => q.k === k);
         const orig = { ticket: prisma.ticket, auditLog: prisma.auditLog };
         let where = null;
         prisma.ticket = {
-            findUnique: async () => ({ id: 't9', estado_actual: 'NUEVO', asignado_a_id: null, area_designada: 'SEGURIDAD', puntos_complejidad: 5 }),
+            findUnique: async () => ({ id: 't9', estado_actual: 'NUEVO', asignado_a_id: null, area_designada: 'SEGURIDAD', prioridad: 'P2', nivel: 2, puntos_complejidad: 4 }),
             updateMany: async args => { where = args.where; return { count: 1 }; }
         };
         prisma.auditLog = { create: async () => ({}) };
@@ -268,7 +268,7 @@ const cola = (p, k) => p.colas.find(q => q.k === k);
             const res = mockRes();
             await claimTicket({ params: { ticketCode: 'INC-090' }, user: USER }, res);
             assert.strictEqual(res.code, 403, 'operador de otra área');
-            prisma.ticket.findUnique = async args => (args.include ? { id: 't9', estado_actual: 'EN_PROGRESO' } : { id: 't9', estado_actual: 'NUEVO', asignado_a_id: null, area_designada: 'SEGURIDAD', puntos_complejidad: 5 });
+            prisma.ticket.findUnique = async args => (args.include ? { id: 't9', estado_actual: 'EN_PROGRESO' } : { id: 't9', estado_actual: 'NUEVO', asignado_a_id: null, area_designada: 'SEGURIDAD', prioridad: 'P2', nivel: 2, puntos_complejidad: 4 });
             const res2 = mockRes();
             await claimTicket({ params: { ticketCode: 'INC-090' }, user: { id: 'c1', rol: 'COORDINADOR', atiende_tickets: true, area_designada: 'GENERAL' } }, res2);
             assert.strictEqual(res2.code, 200, JSON.stringify(res2.body));
@@ -291,16 +291,20 @@ const cola = (p, k) => p.colas.find(q => q.k === k);
             const sin = mockRes();
             await claimTicket({ params: { ticketCode: 'INC-091' }, user: USER, body: {} }, sin);
             assert.strictEqual(sin.code, 422);
-            assert.deepStrictEqual([sin.body.requierePrioridad, sin.body.sugerida], [true, 'P1']);
+            assert.deepStrictEqual([sin.body.requierePrioridad, sin.body.requiereTipo, sin.body.sugerida], [true, true, 'P1']);
             assert.strictEqual(data, null, 'no se tomó');
             const mala = mockRes();
             await claimTicket({ params: { ticketCode: 'INC-091' }, user: USER, body: { prioridad: 'NONE' } }, mala);
             assert.strictEqual(mala.code, 422, '"sin prioridad" no vale');
+            const sinTipo = mockRes();
+            await claimTicket({ params: { ticketCode: 'INC-091' }, user: USER, body: { prioridad: 'p2' } }, sinTipo);
+            assert.strictEqual(sinTipo.code, 422, 'también falta el tipo de caso');
+            assert.deepStrictEqual([sinTipo.body.requierePrioridad, sinTipo.body.requiereTipo], [false, true]);
             const ok = mockRes();
-            await claimTicket({ params: { ticketCode: 'INC-091' }, user: USER, body: { prioridad: 'p2' } }, ok);
+            await claimTicket({ params: { ticketCode: 'INC-091' }, user: USER, body: { prioridad: 'p2', nivel: 3 } }, ok);
             assert.strictEqual(ok.code, 200, JSON.stringify(ok.body));
-            assert.deepStrictEqual([data.puntos_complejidad, data.estado_actual], [5, 'EN_PROGRESO']);
-            assert.ok(detalle.includes('prioridad P2') && detalle.includes('sugerida P1'), detalle);
+            assert.deepStrictEqual([data.prioridad, data.nivel, data.puntos_complejidad, data.tipo_caso_id, data.estado_actual], ['P2', 3, 8, null, 'EN_PROGRESO'], 'los puntos salen del nivel (N3 = 8)');
+            assert.ok(detalle.includes('prioridad P2') && detalle.includes('sugerida P1') && detalle.includes('tipo Otro (nivel 3, 8 pts)'), detalle);
         } finally {
             Object.assign(prisma, orig);
         }

@@ -32,6 +32,10 @@ const ACCIONES = Object.freeze({
     USUARIO_EDITADO: ['Editó usuario', 'azul'],
     AREA_CREADA: ['Creó área', 'verde'],
     AREA_EDITADA: ['Editó área', 'azul'],
+    SUBGRUPO_CREADO: ['Creó subgrupo', 'verde'],
+    SUBGRUPO_EDITADO: ['Editó subgrupo', 'azul'],
+    TIPO_CASO_CREADO: ['Creó tipo de caso', 'verde'],
+    TIPO_CASO_EDITADO: ['Editó tipo de caso', 'azul'],
     JORNADA_CERRADA: ['Cerró jornada', 'verde']
 });
 

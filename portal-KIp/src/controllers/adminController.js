@@ -16,6 +16,7 @@ const { loadOperatorsWithShift } = require('./dashboardController');
 const { validateUser, describeUser, MIN_CLAVE } = require('../services/userAdminService');
 const { allAreas, refreshAreas, validateAreaName, allSubgrupos, isValidSubgrupo, subgrupoName } = require('../services/areaCatalog');
 const { SUPERVISORES, ROLES_ALTOS, motivoNoGestionar } = require('../services/roleService');
+const { validarTipoCaso, tipoCasoVista, NIVEL_PUNTOS, NIVEL_NOMBRE, FRECUENCIAS } = require('../services/tipoCasoService');
 
 // ¿Hay algún gerente activo? Sin gerente, el coordinador puede nombrar al primero.
 // Solo se consulta cuando el cambio toca a jefes o gerentes.
@@ -29,7 +30,7 @@ const grupo = codigo => (codigo === 'EN_TURNO' ? 'turno' : (codigo === 'DE_GUARD
 async function activeTickets() {
     return prisma.ticket.findMany({
         where: { estado_actual: { in: ACTIVE_STATES } },
-        select: { codigo_incidencia: true, estado_actual: true, puntos_complejidad: true, asignado_a_id: true, createdAt: true, updatedAt: true, fecha_asignacion: true }
+        select: { codigo_incidencia: true, estado_actual: true, puntos_complejidad: true, prioridad: true, asignado_a_id: true, createdAt: true, updatedAt: true, fecha_asignacion: true }
     });
 }
 
@@ -37,10 +38,14 @@ async function renderAdmin(req, res) {
     try {
         const ahora = new Date();
         await refreshAreas(prisma, { force: true });
-        const [config, operadores, tickets, coordinadores, desactivados] = await Promise.all([
+        const [config, operadores, tickets, coordinadores, desactivados, tiposCaso] = await Promise.all([
             loadConfig(prisma), loadOperatorsWithShift(ahora), activeTickets(),
             prisma.user.findMany({ where: { rol: { in: SUPERVISORES }, activo: true }, select: { id: true, nombre: true, email: true, rol: true, area_designada: true, atiende_tickets: true, telefono: true, subgrupo_id: true }, orderBy: { nombre: 'asc' } }),
-            prisma.user.findMany({ where: { activo: false }, select: { id: true, nombre: true, email: true, rol: true, area_designada: true, telefono: true }, orderBy: { nombre: 'asc' } })
+            prisma.user.findMany({ where: { activo: false }, select: { id: true, nombre: true, email: true, rol: true, area_designada: true, telefono: true }, orderBy: { nombre: 'asc' } }),
+            prisma.tipoCaso.findMany({ orderBy: [{ area_codigo: 'asc' }, { nivel: 'asc' }, { nombre: 'asc' }] }).catch(error => {
+                console.error('Tipos de caso no disponibles (¿migración pendiente?):', String(error.message).trim().split('\n').pop());
+                return [];
+            })
         ]);
         const areas = allAreas().map(({ codigo, activa }) => {
             const ops = operadores.filter(o => o.rol === 'OPERADOR' && (o.area_designada || 'GENERAL') === codigo).map(o => ({
@@ -76,6 +81,8 @@ async function renderAdmin(req, res) {
             // Sin gerente activo, el coordinador también puede dar los roles Jefe y Gerente
             daRolesAltos: req.user?.rol === 'GERENTE' || !coordinadores.some(c => c.rol === 'GERENTE'),
             minClave: MIN_CLAVE,
+            tiposCaso: tiposCaso.map(tipoCasoVista),
+            niveles: { puntos: NIVEL_PUNTOS, nombres: NIVEL_NOMBRE, frecuencias: FRECUENCIAS },
             eventos: EVENTOS,
             destinatarios: DESTINATARIOS,
             limites: { ...LIMITS, plantillas: MAX_PLANTILLAS, texto: MAX_TEXTO },
@@ -346,4 +353,51 @@ async function updateSubgrupo(req, res) {
     }
 }
 
-module.exports = { renderAdmin, saveConfig, preview, createUser, updateUser, createArea, updateArea, createSubgrupo, updateSubgrupo };
+// Tipos de caso (casos comunes) de cada área con su nivel de dificultad: crear, editar y
+// activar/desactivar (no se borran: los tickets conservan el suyo). Los puntos salen del nivel.
+const describirTipo = d => [
+    d.nombre !== undefined ? `nombre: ${d.nombre}` : '',
+    d.nivel !== undefined ? `nivel ${d.nivel} (${NIVEL_PUNTOS[d.nivel]} pts)` : '',
+    d.minutos_estimados !== undefined ? `estimado: ${d.minutos_estimados ?? '-'} min` : '',
+    d.frecuencia !== undefined ? `frecuencia: ${d.frecuencia || '-'}` : '',
+    d.dependencias !== undefined ? `dependencias: ${d.dependencias || '-'}` : '',
+    d.subgrupo_id !== undefined ? `subgrupo: ${subgrupoName(d.subgrupo_id) || '-'}` : '',
+    d.activo !== undefined ? (d.activo ? 'reactivado' : 'desactivado') : ''
+].filter(Boolean).join(', ');
+
+async function createTipoCaso(req, res) {
+    const v = validarTipoCaso(req.body);
+    if (v.error) return res.status(400).json({ success: false, error: v.error });
+    try {
+        const tipo = await prisma.tipoCaso.create({ data: v.data });
+        await auditUser(req, 'TIPO_CASO_CREADO', `${AREA_NAMES[tipo.area_codigo] || tipo.area_codigo} · ${describirTipo(v.data)}`);
+        return res.status(201).json({ success: true, tipo: tipoCasoVista(tipo) });
+    } catch (e) {
+        if (e.code === 'P2002') return res.status(409).json({ success: false, error: 'Esa área ya tiene un tipo de caso con ese nombre' });
+        console.error('Error al crear tipo de caso:', e);
+        return res.status(500).json({ success: false, error: 'No se pudo crear el tipo de caso' });
+    }
+}
+
+async function updateTipoCaso(req, res) {
+    const id = String(req.params.id || '').trim();
+    try {
+        const antes = await prisma.tipoCaso.findUnique({ where: { id } });
+        if (!antes) return res.status(404).json({ success: false, error: 'Tipo de caso no encontrado' });
+        // El área no cambia: el subgrupo se valida contra la del tipo
+        const v = validarTipoCaso({ ...(req.body || {}), area: antes.area_codigo }, { parcial: true });
+        if (v.error) return res.status(400).json({ success: false, error: v.error });
+        delete v.data.area_codigo;
+        Object.keys(v.data).forEach(k => { if (v.data[k] === antes[k]) delete v.data[k]; });
+        if (!Object.keys(v.data).length) return res.json({ success: true, tipo: tipoCasoVista(antes) });
+        const tipo = await prisma.tipoCaso.update({ where: { id }, data: v.data });
+        await auditUser(req, 'TIPO_CASO_EDITADO', `${AREA_NAMES[antes.area_codigo] || antes.area_codigo} · ${antes.nombre}: ${describirTipo(v.data)}`);
+        return res.json({ success: true, tipo: tipoCasoVista(tipo) });
+    } catch (e) {
+        if (e.code === 'P2002') return res.status(409).json({ success: false, error: 'Esa área ya tiene un tipo de caso con ese nombre' });
+        console.error('Error al editar tipo de caso:', e);
+        return res.status(500).json({ success: false, error: 'No se pudo guardar el tipo de caso' });
+    }
+}
+
+module.exports = { renderAdmin, saveConfig, preview, createUser, updateUser, createArea, updateArea, createSubgrupo, updateSubgrupo, createTipoCaso, updateTipoCaso };

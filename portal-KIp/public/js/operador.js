@@ -396,18 +396,37 @@
 		});
 	}
 
-	// Ticket sin prioridad (p. ej. llegó por correo): se elige al tomarlo, partiendo de la sugerida
+	// Tipos de caso del área (Administración): el nivel da los puntos (N1=2, N2=4, N3=8, N4=10)
+	const NIVEL_PTS = { 1: 2, 2: 4, 3: 8, 4: 10 };
+	const TIPOS = DATOS.tiposCaso || [];
+
+	// Al tomar: sin prioridad (p. ej. llegó por correo) se elige partiendo de la sugerida;
+	// sin tipo de caso se elige del catálogo del área, o "Otro" con su nivel
 	function prioritySheet(t, btn) {
-		let elegida = t.sugerida || '';
+		const pideP = t.p === 'SP';
+		const pideTipo = !t.nivel;
+		let elegida = pideP ? (t.sugerida || '') : t.p;
+		const delArea = TIPOS.filter(x => x.area === t.area);
+		const tipoSel = pideTipo ? h('select', { class: 'field', 'aria-label': 'Tipo de caso' },
+			h('option', { value: '', text: 'Elige el tipo de caso…' }),
+			delArea.length ? h('optgroup', { label: 'Casos comunes de tu área' },
+				delArea.map(x => h('option', { value: 'id:' + x.id, text: x.nombre + ' · N' + x.nivel + ' (' + x.puntos + ' pts)' }))) : null,
+			h('optgroup', { label: 'Otro (no está en la lista)' },
+				[1, 2, 3, 4].map(n => h('option', { value: 'n:' + n, text: 'Otro · nivel ' + n + ' (' + NIVEL_PTS[n] + ' pts)' })))) : null;
 		const body = [
-			h('span', { class: 'flabel', text: t.sugerida ? 'Sugerida por palabras clave: ' + t.sugerida + '. Confírmala o cámbiala' : 'Elige la prioridad según el impacto del caso' }),
-			seg([['P1', 'P1 Crítica · 8 pts'], ['P2', 'P2 Media · 5 pts'], ['P3', 'P3 Baja · 1 pt']], elegida, k => { elegida = k; }),
-			h('span', { class: 't2', style: 'font-size:12px', text: 'Los puntos suman a tu carga al resolverlo. El coordinador puede corregirla.' })
+			pideP ? h('span', { class: 'flabel', text: t.sugerida ? 'Prioridad sugerida por palabras clave: ' + t.sugerida + '. Confírmala o cámbiala' : 'Elige la prioridad según la urgencia del caso' }) : null,
+			pideP ? seg([['P1', 'P1 Crítica'], ['P2', 'P2 Media'], ['P3', 'P3 Baja']], elegida, k => { elegida = k; }) : null,
+			pideTipo ? h('span', { class: 'flabel', text: 'Tipo de caso' }) : null,
+			tipoSel,
+			h('span', { class: 't2', style: 'font-size:12px', text: pideTipo ? 'El nivel de dificultad da los puntos que suma a tu carga al resolverlo (N1 = 2, N2 = 4, N3 = 8, N4 = 10). El coordinador puede corregirlo.' : 'El coordinador puede corregirla.' })
 		];
 		openSheet((t.cola === 'asignados' ? 'Empezar ' : 'Tomar ') + t.code, t.subject, body, t.cola === 'asignados' ? 'Empezar' : 'Tomar', async () => {
 			if (!elegida) throw new Error('Elige una prioridad');
+			const v = tipoSel ? tipoSel.value : '';
+			if (pideTipo && !v) throw new Error('Elige el tipo de caso');
+			const tipo = v.slice(0, 3) === 'id:' ? { tipoCasoId: v.slice(3) } : v ? { nivel: Number(v.slice(2)) } : null;
 			closeSheet();
-			await act('claim', t.code, btn, elegida);
+			await act('claim', t.code, btn, pideP ? elegida : null, tipo);
 		});
 	}
 
@@ -451,11 +470,11 @@
 	}
 
 	// ---------- Acciones sobre tickets ----------
-	async function act(action, code, btn, prioridad) {
+	async function act(action, code, btn, prioridad, tipo) {
 		const t = BY_CODE[code] || { code, subject: '' };
 		if (action === 'open') return openTicketDetails(code);
 		if (action === 'pause' || action === 'resolve') { closeTicketDetailsModal(); return statusSheet(action, t); }
-		if (action === 'claim' && t.p === 'SP' && !prioridad) { closeTicketDetailsModal(); return prioritySheet(t, btn); }
+		if (action === 'claim' && ((t.p === 'SP' && !prioridad) || (!t.nivel && !tipo))) { closeTicketDetailsModal(); return prioritySheet(t, btn); }
 		if (S.busy) return;
 		S.busy = true;
 		const all = Array.from(document.querySelectorAll('button[data-act]'));
@@ -463,7 +482,8 @@
 		if (btn) btn.textContent = action === 'claim' ? (t.cola === 'asignados' ? 'Empezando…' : 'Tomando…') : 'Actualizando…';
 		try {
 			if (action === 'claim') {
-				await api('/api/tickets/' + encodeURIComponent(code) + '/claim', 'POST', prioridad ? { prioridad } : undefined);
+				const cuerpo = Object.assign({}, prioridad ? { prioridad } : {}, tipo || {});
+				await api('/api/tickets/' + encodeURIComponent(code) + '/claim', 'POST', Object.keys(cuerpo).length ? cuerpo : undefined);
 				done(t.cola === 'asignados' ? 'Ticket en atención' : 'Ticket tomado', code + ' pasó a En atención', t.cola === 'asignados' ? 'blue' : 'green');
 			} else if (action === 'resume') {
 				await api('/api/tickets/' + encodeURIComponent(code) + '/status', 'PATCH', { status: 'EN_PROGRESO' });
@@ -505,7 +525,7 @@
 	function handoffTicket(code) {
 		const f = P.traspaso && P.traspaso.filas.find(x => x.code === code);
 		if (!f) return null;
-		return { code, subject: f.subject, p: f.p, pts: { P1: 8, P2: 5, P3: 1 }[f.p] || 0, estado: f.puedeTomar ? 'NUEVO' : '', cola: f.puedeTomar ? 'entrantes' : 'traspaso', areaNombre: '—', remitente: '', origen: '—', recibido: '', asignado: f.op, desc: '' };
+		return { code, subject: f.subject, p: f.p, pts: f.pts || 0, nivel: f.nivel || null, tipoCaso: f.tipoCaso || '', area: f.area, estado: f.puedeTomar ? 'NUEVO' : '', cola: f.puedeTomar ? 'entrantes' : 'traspaso', areaNombre: '—', remitente: '', origen: '—', recibido: '', asignado: f.op, desc: '' };
 	}
 	function openTicketDetails(code) {
 		const t = BY_CODE[code] || handoffTicket(code);
@@ -520,7 +540,7 @@
 		set('modalDetailSender', t.remitente || '—');
 		set('modalDetailOrigin', t.origen || '—');
 		set('modalDetailCreated', t.recibido || '—');
-		set('modalDetailPts', (t.pts || 0) + ' pts');
+		set('modalDetailPts', t.nivel ? (t.tipoCaso || 'Otro') + ' · N' + t.nivel + ' · ' + (t.pts || 0) + ' pts' : 'Sin tipo de caso (lo eliges al tomarlo)');
 
 		const pr = PRIO[t.p] || PRIO.SP;
 		const pb = $('modalDetailPriorityBadge');
@@ -528,7 +548,7 @@
 		pb.style.background = pr.bg;
 		pb.style.color = pr.text;
 		const dot = h('span', { class: 'dot', style: 'background:' + pr.dot + (pr.dot === 'transparent' ? ';box-shadow:inset 0 0 0 1px var(--t3)' : '') });
-		pb.append(dot, pr.label + ' · ' + (t.pts || 0) + ' pts');
+		pb.append(dot, pr.label);
 
 		const st = STATUS[t.cola === 'asignados' ? 'ASIGNADO' : t.estado] || [t.estado || '—', 'var(--fill)', 'var(--t2)'];
 		const sb = $('modalDetailStatusBadge');

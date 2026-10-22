@@ -22,6 +22,7 @@ router.post('/batch-assign', authorizeSupervisor, limitarAlArea, ticketControlle
 router.post('/handoff', authorizeSupervisor, limitarAlArea, ticketController.handoffTickets);
 router.get('/handoff/actual', authorizeSupervisor, limitarAlArea, ticketController.getActiveHandoff);
 router.post('/handoff/:id/atendido', authorizeSupervisor, limitarAlArea, ticketController.closeHandoff);
+router.get('/tipos-caso', ticketController.listTiposCaso);
 router.get('/trash', authorizeSupervisor, limitarAlArea, ticketController.listTrash);
 router.get('/:ticketCode/history', authorizeSupervisor, limitarAlArea, ticketController.getTicketHistory);
 router.post('/:ticketCode/close', authorizeSupervisor, limitarAlArea, ticketController.closeTicket);

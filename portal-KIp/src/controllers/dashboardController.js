@@ -11,11 +11,24 @@ const { AREA_NAMES } = require('../services/periodReportService');
 const { MAPA_VIEWBOX, SHAPES: MAPA_SHAPES } = require('../services/mapaVenezuelaShapes');
 const { loadConfig } = require('../services/configService');
 const { getNextTicketCode } = require('../services/ticketCodeService');
+const { tipoCasoVista } = require('../services/tipoCasoService');
 
 const ticketRelations = {
     asignado_a: { select: { id: true, nombre: true, email: true, rol: true, area_designada: true, estado_operativo: true, foto: true } },
-    creado_por: { select: { nombre: true, email: true } }
+    creado_por: { select: { nombre: true, email: true } },
+    tipo_caso: { select: { nombre: true, nivel: true, minutos_estimados: true } }
 };
+
+// Tipos de caso activos para elegirlos al tomar o editar un ticket (vacío si falta la migración)
+async function loadTiposCaso() {
+    try {
+        const tipos = await prisma.tipoCaso.findMany({ where: { activo: true }, orderBy: [{ area_codigo: 'asc' }, { nivel: 'asc' }, { nombre: 'asc' }] });
+        return tipos.map(tipoCasoVista);
+    } catch (error) {
+        console.error('Tipos de caso no disponibles (¿migración pendiente?):', String(error.message).trim().split('\n').pop());
+        return [];
+    }
+}
 
 async function renderDashboard(req, res) {
     if (req.user.rol === 'OPERADOR') return renderOperatorDashboard(req, res);
@@ -28,7 +41,7 @@ async function renderDashboard(req, res) {
                 // Sin los cerrados viejos: no cambian ninguna cifra del periodo
                 where: { AND: [ticketWhere(req.user), ventanaDashboard({ periodo: req.query.periodo, now: ahora })] },
                 select: {
-                    codigo_incidencia: true, estado_actual: true, area_designada: true, estado_ve: true, puntos_complejidad: true,
+                    codigo_incidencia: true, estado_actual: true, area_designada: true, estado_ve: true, puntos_complejidad: true, prioridad: true,
                     asignado_a_id: true, createdAt: true, updatedAt: true, fecha_asignacion: true,
                     resueltoEn: true, fecha_cierre: true
                 }
@@ -87,7 +100,7 @@ async function renderTickets(req, res) {
     if (req.user.rol === 'OPERADOR') return res.redirect(302, '/');
     try {
         const ahora = new Date();
-        const [tickets, operadores, enPapelera, traspaso, config, siguienteCodigo] = await Promise.all([
+        const [tickets, operadores, enPapelera, traspaso, config, siguienteCodigo, tiposCaso] = await Promise.all([
             prisma.ticket.findMany({
                 // La cola solo muestra los no cerrados y los cerrados hoy
                 where: { AND: [ticketWhere(req.user), ventanaCola(ahora)] },
@@ -102,7 +115,8 @@ async function renderTickets(req, res) {
             prisma.ticket.count({ where: { eliminado_en: { not: null }, ...ticketWhere(req.user) } }),
             loadActiveHandoff(ahora),
             loadConfig(prisma),
-            getNextTicketCode(prisma)
+            getNextTicketCode(prisma),
+            loadTiposCaso()
         ]);
         const cola = buildQueue({ tickets, operators: operadores, now: ahora, rules: config.reglas });
         const guardias = operadores.filter(o => o.deGuardia)
@@ -117,7 +131,8 @@ async function renderTickets(req, res) {
             enPapelera,
             siguienteCodigo,
             enTurno: operadores.filter(o => o.turno?.enTurno).length,
-            plantillas: config.plantillas
+            plantillas: config.plantillas,
+            tiposCaso
         });
     } catch (error) {
         console.error('Error al cargar tickets:', error);
@@ -134,7 +149,7 @@ async function renderOperatorDashboard(req, res) {
         const hoy = getDayBounds(ahora).start;
         const detalle = ticketRelations;
 
-        const [entrantes, mios, resueltos, operador, { horarioPorUsuario, guardiaIds }, config] = await Promise.all([
+        const [entrantes, mios, resueltos, operador, { horarioPorUsuario, guardiaIds }, config, tiposCaso] = await Promise.all([
             prisma.ticket.findMany({
                 where: {
                     estado_actual: 'NUEVO', asignado_a_id: null, area_designada: { in: [...new Set([area, 'GENERAL'])] },
@@ -159,7 +174,8 @@ async function renderOperatorDashboard(req, res) {
             }),
             prisma.user.findUnique({ where: { id: user.id }, select: { estado_operativo: true } }),
             loadShiftData(getWeekStart(ahora), ahora),
-            loadConfig(prisma)
+            loadConfig(prisma),
+            loadTiposCaso()
         ]);
 
         const h = horarioPorUsuario.get(user.id);
@@ -176,7 +192,7 @@ async function renderOperatorDashboard(req, res) {
             if (traspaso && traspaso.pendientes.length) {
                 traspasoTickets = await prisma.ticket.findMany({
                     where: { codigo_incidencia: { in: traspaso.pendientes } },
-                    include: { asignado_a: { select: { id: true, nombre: true } } }
+                    include: { asignado_a: { select: { id: true, nombre: true } }, tipo_caso: ticketRelations.tipo_caso }
                 });
             }
         }
@@ -186,7 +202,7 @@ async function renderOperatorDashboard(req, res) {
             entrantes, mios, resueltos, turno, horario, deGuardia, traspaso, traspasoTickets,
             rules: config.reglas, now: ahora
         });
-        return res.render('operator-dashboard', { titulo: 'Mi panel', currentUser: req.user, panel });
+        return res.render('operator-dashboard', { titulo: 'Mi panel', currentUser: req.user, panel, tiposCaso });
     } catch (error) {
         console.error('Error al cargar el panel del operador:', error);
         return res.status(500).send('Error en el servidor');

@@ -17,7 +17,7 @@ const {
     computeOverload
 } = require('./metricsService');
 const { AREA_NAMES } = require('./periodReportService');
-const { DEFAULT_RULES, ageLimitFor, overloadOptions } = require('./rulesService');
+const { DEFAULT_RULES, ageLimitFor, overloadOptions, prioridadDe, PRIORIDAD_RANGO } = require('./rulesService');
 const { buildSuggestions, normalizeOperator } = require('./assignmentService');
 const { ESTADOS_VE } = require('./estadosVeService');
 const { fotoUrl } = require('./profileService');
@@ -28,10 +28,10 @@ const HOUR_MS = 60 * MINUTE_MS;
 // Jornada normal (Caracas) para el anillo de "Estado del turno"
 const JORNADA = { inicio: 8, fin: 17 };
 
-// Antigüedad por defecto (minutos) según puntos; las reglas vigentes vienen de rulesService.
-const AGE_LIMIT_MINUTES = { 8: DEFAULT_RULES.antiguedad.P1, 5: DEFAULT_RULES.antiguedad.P2, 1: DEFAULT_RULES.antiguedad.P3, 0: DEFAULT_RULES.antiguedad.SP };
+// Antigüedad por defecto (minutos) según la prioridad; las reglas vigentes vienen de rulesService.
+const AGE_LIMIT_MINUTES = { P1: DEFAULT_RULES.antiguedad.P1, P2: DEFAULT_RULES.antiguedad.P2, P3: DEFAULT_RULES.antiguedad.P3, SP: DEFAULT_RULES.antiguedad.SP };
 
-const PRIORITY_LABEL = { 8: 'P1', 5: 'P2', 1: 'P3', 0: 'Sin prioridad' };
+const PRIORITY_LABEL = { P1: 'P1', P2: 'P2', P3: 'P3', SP: 'Sin prioridad' };
 
 const time = value => (value ? new Date(value).getTime() : NaN);
 const inRange = (value, range) => {
@@ -72,8 +72,8 @@ function agingTickets(tickets, now, rules = DEFAULT_RULES) {
     const out = [];
     for (const t of tickets) {
         if (!['NUEVO', 'EN_PROGRESO'].includes(t.estado_actual)) continue;
-        const puntos = AGE_LIMIT_MINUTES[t.puntos_complejidad] !== undefined ? t.puntos_complejidad : 0;
-        const limite = ageLimitFor(puntos, rules);
+        const clave = prioridadDe(t);
+        const limite = ageLimitFor(clave, rules);
         const sinAsignar = !t.asignado_a_id;
         const desde = sinAsignar
             ? time(t.createdAt)
@@ -81,11 +81,11 @@ function agingTickets(tickets, now, rules = DEFAULT_RULES) {
         if (!Number.isFinite(desde) || desde <= 0) continue;
         const minutos = (nowMs - desde) / MINUTE_MS;
         if (minutos > limite) {
-            out.push({ codigo: t.codigo_incidencia, prioridad: PRIORITY_LABEL[puntos], puntos, sinAsignar, minutos, limite });
+            out.push({ codigo: t.codigo_incidencia, prioridad: PRIORITY_LABEL[clave], clave, sinAsignar, minutos, limite });
         }
     }
     // Primero los de mayor prioridad y, dentro, los más atrasados
-    return out.sort((a, b) => (b.puntos - a.puntos) || ((b.minutos / b.limite) - (a.minutos / a.limite)));
+    return out.sort((a, b) => (PRIORIDAD_RANGO[b.clave] - PRIORIDAD_RANGO[a.clave]) || ((b.minutos / b.limite) - (a.minutos / a.limite)));
 }
 
 /** Avance de la jornada 08:00–17:00 de hoy (Caracas). */
@@ -169,7 +169,7 @@ function buildCoordinatorPanel({ tickets = [], operators = [], now = new Date(),
 
     // Críticos sin asignar: misma regla que el contador anterior (P1 y P2, sin cerrar)
     const criticos = tickets
-        .filter(t => !t.asignado_a_id && t.estado_actual !== 'CERRADO' && (t.puntos_complejidad || 0) >= 5)
+        .filter(t => !t.asignado_a_id && t.estado_actual !== 'CERRADO' && ['P1', 'P2'].includes(prioridadDe(t)))
         .sort((a, b) => time(a.createdAt) - time(b.createdAt));
     const masAntiguo = criticos[0];
 
@@ -315,10 +315,10 @@ function buildCoordinatorPanel({ tickets = [], operators = [], now = new Date(),
     atrasados.forEach(a => {
         alertas.push({
             tipo: 'antiguedad',
-            titulo: `${a.codigo} · ${a.puntos ? a.prioridad + ' ' : 'sin prioridad, '}${a.sinAsignar ? 'sin asignar' : 'sin movimiento'}`,
+            titulo: `${a.codigo} · ${a.clave !== 'SP' ? a.prioridad + ' ' : 'sin prioridad, '}${a.sinAsignar ? 'sin asignar' : 'sin movimiento'}`,
             detalle: `${a.sinAsignar ? 'Sin asignar desde la llegada' : 'Sin movimiento desde hace'} ·`,
             valor: formatAge(a.minutos),
-            nivel: a.puntos === 8 ? 'rojo' : 'ambar'
+            nivel: a.clave === 'P1' ? 'rojo' : 'ambar'
         });
     });
 

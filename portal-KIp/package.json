@@ -33,6 +33,7 @@
     "test:jornadas": "node scripts/test-jornadas.js",
     "test:perfil": "node scripts/test-perfil.js",
     "test:graph": "node scripts/test-graph.js",
+    "test:tipos": "node scripts/test-tipos-caso.js",
     "correo:login": "node scripts/graph-login.js"
   },
   "keywords": [],

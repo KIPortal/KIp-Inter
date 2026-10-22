@@ -19,7 +19,8 @@
 	const STATE_NAME = {};
 	STATES.forEach(s => { STATE_NAME[s[0]] = s[1]; });
 	const ACTIVE = ['NUEVO', 'EN_PROGRESO', 'EN_PAUSA', 'EN_ESPERA_TERCEROS'];
-	const PR = { P1: ['P1 Crítica', 8], P2: ['P2 Media', 5], P3: ['P3 Baja', 1], SP: ['Sin prioridad', 0] };
+	// Prioridad = urgencia (ordena la cola); ya no da puntos: los puntos salen del nivel del tipo de caso
+	const PR = { P1: ['P1 Crítica', 'Urgente'], P2: ['P2 Media', 'Pronto'], P3: ['P3 Baja', 'Cuando se pueda'], SP: ['Sin prioridad', 'La elige quien lo toma'] };
 	const PKEYS = ['P1', 'P2', 'P3', 'SP'];
 	const PR_API = { P1: 'P1', P2: 'P2', P3: 'P3', SP: 'NONE' };
 	const PR_DOT = { P1: 'var(--c-red)', P2: 'var(--c-amber)', P3: 'var(--c-slate)', SP: 'var(--sep)' };
@@ -40,6 +41,24 @@
 	D.operadores.forEach(o => { OPS[o.id] = o; });
 	const BY_CODE = {};
 	D.tickets.forEach(t => { BY_CODE[t.codigo] = t; });
+	// Tipos de caso (Administración → Tipos de caso): nivel 1-4 → N1=2, N2=4, N3=8, N4=10 pts
+	const NIVEL_PTS = { 1: 2, 2: 4, 3: 8, 4: 10 };
+	const TIPOS = D.tiposCaso || [];
+	const tipoTexto = t => (t.nivel ? (t.tipoCaso || 'Otro') + ' · N' + t.nivel + ' · ' + NIVEL_PTS[t.nivel] + ' pts' : 'Sin tipo de caso');
+	// Valor del selector: 'id:<tipo>' (del catálogo) o 'n:<nivel>' (Otro); '' sin elegir
+	const tipoValor = t => (t.tipoCasoId ? 'id:' + t.tipoCasoId : t.nivel ? 'n:' + t.nivel : '');
+	const tipoBody = v => (v.slice(0, 3) === 'id:' ? { tipoCasoId: v.slice(3) } : v.slice(0, 2) === 'n:' ? { nivel: Number(v.slice(2)) } : { tipoCasoId: null, nivel: null });
+	function tipoSelect(area, cur, extra, cls) {
+		const delArea = TIPOS.filter(x => x.area === area);
+		const actual = cur && cur.slice(0, 3) === 'id:' && !delArea.some(x => 'id:' + x.id === cur) && extra ? h('option', { value: cur, selected: true, text: extra }) : null;
+		return h('select', { class: cls || 'field', 'aria-label': 'Tipo de caso' },
+			h('option', { value: '', text: 'Tipo de caso…', selected: !cur ? true : null }),
+			actual,
+			delArea.length ? h('optgroup', { label: 'Casos comunes de ' + (AREA_NAME[area] || area) },
+				delArea.map(x => h('option', { value: 'id:' + x.id, selected: cur === 'id:' + x.id ? true : null, text: x.nombre + ' · N' + x.nivel + ' (' + x.puntos + ' pts)' }))) : null,
+			h('optgroup', { label: 'Otro (no está en la lista)' },
+				[1, 2, 3, 4].map(n => h('option', { value: 'n:' + n, selected: cur === 'n:' + n ? true : null, text: 'Otro · nivel ' + n + ' (' + NIVEL_PTS[n] + ' pts)' }))));
+	}
 	// Sugerencia por área: { id, motivo } o null (assignmentService)
 	const sugOf = area => (D.sugeridos && D.sugeridos[area]) || null;
 	const otherOf = area => (D.otraArea && D.otraArea[area]) || null;
@@ -416,6 +435,7 @@
 			h('h2', { id: 'dp-title', text: t.asunto }),
 			h('div', { class: 'chips' },
 				h('span', { class: 'pillchip prio ' + t.prioridad }, h('i'), PR[t.prioridad][0]),
+				h('span', { class: 'pillchip', style: 'font-weight:500', title: t.minutosEstimados ? 'Tiempo estimado: ' + fmt(t.minutosEstimados) : null, text: tipoTexto(t) }),
 				h('span', { class: 'pillchip state', style: 'font-weight:500' }, h('i', { class: 's-' + t.estado }), STATE_NAME[t.estado]),
 				t.alerta && ACTIVE.includes(t.estado) ? h('span', { class: 'pillchip red', text: t.alerta }) : null));
 		panel.append(head);
@@ -432,13 +452,17 @@
 			const prioSel = t.prioridad === 'SP' ? h('select', { class: 'field sm', 'aria-label': 'Prioridad al tomarlo' },
 				h('option', { value: '', text: 'Prioridad…' }),
 				['P1', 'P2', 'P3'].map(k => h('option', { value: k, text: PR[k][0] + (t.sugerida === k ? ' (sugerida)' : ''), selected: t.sugerida === k ? true : null }))) : null;
+			// Sin tipo de caso: se elige al tomarlo; sus puntos salen del nivel
+			const tipoSel = !t.nivel ? tipoSelect(t.area, '', null, 'field sm') : null;
 			body.append(h('div', { class: 'sugbox' },
 				h('div', { class: 'row1' }, h('b', { text: 'Tomarlo tú' }), h('span', { text: 'Pasa a En atención a tu nombre' })),
-				h('div', { class: 'row2' }, h('span', { style: 'flex:1;font-size:12px;color:var(--t2)', text: prioSel ? 'Elige su prioridad: suma a tu carga al resolverlo.' : 'Lo trabajas, respondes y resuelves desde Mi panel.' }), prioSel,
+				h('div', { class: 'row2', style: 'flex-wrap:wrap' }, h('span', { style: 'flex:1;min-width:160px;font-size:12px;color:var(--t2)', text: tipoSel ? 'Elige ' + (prioSel ? 'su prioridad y ' : '') + 'su tipo de caso: el nivel da los puntos que suma a tu carga.' : prioSel ? 'Elige su prioridad (urgencia).' : 'Lo trabajas, respondes y resuelves desde Mi panel.' }), prioSel, tipoSel,
 					h('button', { type: 'button', class: 'primary', text: 'Tomar', onclick: e => {
 						if (prioSel && !prioSel.value) { prioSel.focus(); showError(new Error('Elige la prioridad antes de tomarlo')); return; }
+						if (tipoSel && !tipoSel.value) { tipoSel.focus(); showError(new Error('Elige el tipo de caso antes de tomarlo')); return; }
 						e.currentTarget.disabled = true;
-						api('POST', '/api/tickets/' + encodeURIComponent(t.codigo) + '/claim', prioSel ? { prioridad: prioSel.value } : undefined)
+						const cuerpo = Object.assign({}, prioSel ? { prioridad: prioSel.value } : {}, tipoSel ? tipoBody(tipoSel.value) : {});
+						api('POST', '/api/tickets/' + encodeURIComponent(t.codigo) + '/claim', Object.keys(cuerpo).length ? cuerpo : undefined)
 							.then(() => done('Ticket tomado', t.codigo + ' está en tu panel, En atención', 'green'))
 							.catch(err => { e.target.disabled = false; showError(err); });
 					} }))));
@@ -526,7 +550,7 @@
 		const paint = () => box.replaceChildren(...PKEYS.map(k => h('button', {
 			type: 'button', role: 'radio', 'aria-checked': String(get() === k),
 			onclick: () => { set(k); paint(); }
-		}, h('span', {}, h('i', { class: 'mdot', style: 'background:' + PR_DOT[k] }), k === 'SP' ? 'Sin prioridad' : PR[k][0]), h('small', { text: PR[k][1] + ' pts' }))));
+		}, h('span', {}, h('i', { class: 'mdot', style: 'background:' + PR_DOT[k] }), k === 'SP' ? 'Sin prioridad' : PR[k][0]), h('small', { text: PR[k][1] }))));
 		paint();
 		return box;
 	}
@@ -551,14 +575,27 @@
 	}
 
 	function editView(t) {
-		const ed = { asunto: t.asunto, prioridad: t.prioridad, area: t.area, subgrupo: t.subgrupo || '', estadoVe: t.estadoVe };
+		const ed = { asunto: t.asunto, prioridad: t.prioridad, area: t.area, subgrupo: t.subgrupo || '', estadoVe: t.estadoVe, tipo: tipoValor(t) };
 		const input = h('input', { class: 'field', value: t.asunto, oninput: e => { ed.asunto = e.target.value; } });
 		const sgSlot = sgField('dsec', () => ed.area, () => ed.subgrupo, v => { ed.subgrupo = v; });
+		// Tipo de caso: depende del área (si el área cambia, se elige de nuevo)
+		const tipoSlot = h('label', { class: 'dsec' });
+		tipoSlot.repaint = () => {
+			const sel = tipoSelect(ed.area, ed.tipo, t.tipoCaso ? t.tipoCaso + ' · N' + t.nivel + ' (desactivado)' : null);
+			sel.addEventListener('change', e => { ed.tipo = e.target.value; });
+			tipoSlot.replaceChildren(h('b', { text: 'Tipo de caso' }), sel,
+				h('span', { class: 't3', style: 'font-size:12px', text: 'El nivel da los puntos: N1 = 2, N2 = 4, N3 = 8, N4 = 10.' }));
+		};
+		tipoSlot.repaint();
 		const body = h('div', { class: 'dp-body', style: 'gap:18px' },
 			h('label', { class: 'dsec' }, h('b', { text: 'Asunto' }), input),
 			h('div', { class: 'dsec' }, h('b', { text: 'Prioridad' }), prioSeg(() => ed.prioridad, k => { ed.prioridad = k; })),
-			h('div', { class: 'dsec' }, h('b', { text: 'Área' }), combo(() => ({ label: AREA_NAME[ed.area] }), () => areaOpts(ed.area), v => { if (v !== ed.area) ed.subgrupo = ''; ed.area = v; sgSlot.repaint(); })),
+			h('div', { class: 'dsec' }, h('b', { text: 'Área' }), combo(() => ({ label: AREA_NAME[ed.area] }), () => areaOpts(ed.area), v => {
+				if (v !== ed.area) { ed.subgrupo = ''; if (ed.tipo.slice(0, 3) === 'id:') ed.tipo = ''; }
+				ed.area = v; sgSlot.repaint(); tipoSlot.repaint();
+			})),
 			sgSlot,
+			tipoSlot,
 			h('div', { class: 'dsec' }, h('b', { text: 'Estado (mapa del Dashboard)' }), combo(() => estadoVeLabel(ed.estadoVe), () => estadoVeOpts(ed.estadoVe), v => { ed.estadoVe = v; })));
 		const foot = h('div', { class: 'dp-foot' },
 			h('span', { class: 't3', style: 'font-size:12px', text: 'El cambio queda en Auditoría' }),
@@ -572,6 +609,7 @@
 					if (ed.area !== t.area) cambios.area_designada = ed.area;
 					if (ed.subgrupo !== (t.subgrupo || '')) cambios.subgrupo_id = ed.subgrupo || null;
 					if (ed.estadoVe !== t.estadoVe) cambios.estado_ve = ed.estadoVe || null;
+					if (ed.tipo !== tipoValor(t)) Object.assign(cambios, tipoBody(ed.tipo));
 					if (!Object.keys(cambios).length) { openPanel(t.codigo); return; }
 					if (cambios.asunto === '') { toast('Falta el asunto', 'El asunto no puede quedar vacío', 'red'); return; }
 					api('PATCH', '/api/tickets/' + encodeURIComponent(t.codigo), cambios)
@@ -624,7 +662,7 @@
 								const k = M.p || (p0s.length === 1 ? p0s[0] : '');
 								return k ? { label: PR[k][0] + (M.p ? '' : ' (actual)'), dot: PR_DOT[k] } : { label: 'Sin cambio', muted: true };
 							},
-							() => [{ value: '', label: 'Sin cambio', sel: !M.p }].concat(['P1', 'P2', 'P3'].map(k => ({ value: k, label: PR[k][0], hint: PR[k][1] + ' pts', dot: PR_DOT[k], sel: M.p === k }))),
+							() => [{ value: '', label: 'Sin cambio', sel: !M.p }].concat(['P1', 'P2', 'P3'].map(k => ({ value: k, label: PR[k][0], hint: PR[k][1], dot: PR_DOT[k], sel: M.p === k }))),
 							v => { M.p = v; })),
 					h('div', { style: 'display:flex;align-items:baseline;justify-content:space-between;margin-top:4px' },
 						h('span', { style: 'font-size:13px;font-weight:600', text: 'Operador' }),

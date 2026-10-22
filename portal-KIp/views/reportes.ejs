@@ -70,6 +70,7 @@
 			<button type="button" role="tab" data-tab="resumen" aria-selected="true">Resumen</button>
 			<button type="button" role="tab" data-tab="area" aria-selected="false">Por área</button>
 			<button type="button" role="tab" data-tab="op" aria-selected="false">Por operador</button>
+			<button type="button" role="tab" data-tab="casos" aria-selected="false">Casos comunes</button>
 		</div>
 
 		<!-- Resumen -->
@@ -187,7 +188,38 @@
 				</table>
 				<% if (!v.operadores.length) { %><p class="empty" style="padding:16px 24px">No hay operadores registrados.</p><% } %>
 			</div>
-			<div class="t2" style="padding:12px 24px 16px;font-size:12px">Casos = asignados en el periodo · Puntos: P1 = 8, P2 = 5, P3 = 1 · Índice de carga: activos ahora ÷ promedio de su área</div>
+			<div class="t2" style="padding:12px 24px 16px;font-size:12px">Casos = asignados en el periodo · Puntos por nivel de dificultad del caso: N1 = 2, N2 = 4, N3 = 8, N4 = 10 · P1 / P2 / P3 = prioridad (urgencia) · Índice de carga: activos ahora ÷ promedio de su área</div>
+		</section>
+
+		<!-- Casos comunes: ocurrencia por tipo de caso y tiempo real frente al estimado -->
+		<% const cc = v.casos; %>
+		<section data-section="casos" hidden class="glass" aria-labelledby="h-casos" style="display:flex;flex-direction:column;min-width:0;overflow:hidden">
+			<div class="card-head" style="padding:20px 24px 12px">
+				<div style="display:flex;flex-direction:column;flex:1;min-width:220px"><h2 id="h-casos">Casos comunes</h2>
+					<span class="hint"><%= cc.clasificados %> de <%= cc.recibidos %> casos recibidos con tipo<%= cc.sinClasificar ? ' · ' + cc.sinClasificar + ' sin clasificar' : '' %><%= cc.dias > 1 ? ' · ' + cc.dias + ' días' : '' %></span></div>
+			</div>
+			<div class="scroll-x">
+				<table class="rank-table rep-table" style="min-width:900px">
+					<thead><tr><th style="padding-left:24px">Tipo de caso</th><th style="width:70px">Nivel</th><th style="width:200px">Veces</th><th class="r" style="width:70px" title="Promedio de veces por día en el periodo">Por día</th><th style="width:80px" title="Frecuencia declarada en el catálogo">Frecuencia</th><th class="r" style="width:80px">Resueltos</th><th class="r" style="width:90px" title="Tiempo estimado del catálogo">Estimado</th><th class="r" style="width:90px" title="Promedio real desde la llegada del ticket hasta su resolución">Real</th><th class="r" style="width:70px;padding-right:24px">Puntos</th></tr></thead>
+					<tbody>
+						<% cc.filas.forEach((c, i) => { %>
+							<tr>
+								<td style="padding-left:24px"><span style="display:flex;flex-direction:column"><b><%= c.nombre %></b><span class="t2"><%= c.area %></span></span></td>
+								<td class="t2" style="font-weight:600" title="<%= c.puntosNivel %> pts por caso">N<%= c.nivel %></td>
+								<td><div style="display:flex;align-items:center;gap:10px"><span style="width:30px;font-weight:600"><%= c.ocurrencias %></span><div class="track" style="flex:1"><span class="bar-fill bg-blue" style="width:<%= c.ancho %>%;animation-delay:<%= i * 40 %>ms"></span></div><span class="t2" style="width:44px;text-align:right;font-variant-numeric:tabular-nums"><%= coma(c.pct) %>%</span></div></td>
+								<td class="r"><%= coma(c.porDia) %></td>
+								<td class="t2"><%= c.frecuencia || '—' %></td>
+								<td class="r"><%= c.resueltos %></td>
+								<td class="r t2"><%= c.minutosEstimados ? c.estimado : '—' %></td>
+								<td class="r<%= c.sobreEstimado ? ' t-orange' : '' %>" style="font-weight:600"<% if (c.sobreEstimado) { %> title="Tarda más de lo estimado"<% } %>><%= c.tiempoPromedioMin === null ? '—' : c.tiempoPromedio %></td>
+								<td class="r" style="padding-right:24px;font-weight:700"><%= c.puntos %></td>
+							</tr>
+						<% }) %>
+					</tbody>
+				</table>
+				<% if (!cc.filas.length) { %><p class="empty" style="padding:16px 24px">Aún no hay casos con tipo en este periodo. El tipo se elige al tomar el ticket (Administración → Tipos de caso).</p><% } %>
+			</div>
+			<div class="t2" style="padding:12px 24px 16px;font-size:12px">Veces = casos recibidos en el periodo con ese tipo (y % del total con tipo) · Real = promedio desde la llegada hasta la resolución; en naranja si supera el estimado · Puntos = puntos de esos casos (N1 = 2, N2 = 4, N3 = 8, N4 = 10)</div>
 		</section>
 	</main>
 </div>

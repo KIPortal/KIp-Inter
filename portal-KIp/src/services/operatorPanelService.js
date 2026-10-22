@@ -10,18 +10,18 @@
 
 const { getDayBounds, getClosingDate, UTC_OFFSET_HOURS } = require('./metricsService');
 const { AREA_NAMES, subgrupoName } = require('./areaCatalog');
-const { DEFAULT_RULES } = require('./rulesService');
+const { DEFAULT_RULES, prioridadDe } = require('./rulesService');
+const { tipoCasoDeTicket } = require('./tipoCasoService');
 const { fotoUrl } = require('./profileService');
 const { DEFAULT_SCHEDULE, GUARDIA_WEEKDAY, GUARDIA_WEEKEND, caracasClock } = require('./shiftService');
 
 const MINUTE_MS = 60 * 1000;
 const HOUR_MS = 60 * MINUTE_MS;
-const PRIORITY_BY_POINTS = { 8: 'P1', 5: 'P2', 1: 'P3' };
 const ORIGIN_NAMES = { CORREO: 'Correo', LLAMADA: 'Llamada', JEFATURA: 'Jefatura', COORDINADOR: 'Creado por el coordinador' };
 const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 
 const time = value => (value ? new Date(value).getTime() : NaN);
-const priorityOf = points => PRIORITY_BY_POINTS[points] || 'SP';
+const priorityOf = prioridadDe;
 const minutesBetween = (from, now) => {
     const t = time(from);
     return Number.isFinite(t) ? Math.max(0, Math.floor((time(now) - t) / MINUTE_MS)) : 0;
@@ -135,7 +135,7 @@ const QUEUES = [
         k: 'resueltos', label: 'Resueltos', hint: 'Hoy · cierre del coordinador', title: 'Resueltos hoy',
         desc: 'Los cierra el coordinador después de revisarlos',
         color: '#22C55E', glyph: 'M5 12l5 5L19 7', timeH: 'Puntos',
-        emptyT: 'Aún no hay resueltos hoy', emptyS: 'Lo que resuelvas suma puntos según su prioridad'
+        emptyT: 'Aún no hay resueltos hoy', emptyS: 'Lo que resuelvas suma puntos según su nivel de dificultad'
     }
 ];
 
@@ -156,7 +156,7 @@ function byUrgency(a, b) {
  * actualice el tiempo sin recargar.
  */
 function buildRow(ticket, k, { now, myArea, rules, operatorName }) {
-    const p = priorityOf(ticket.puntos_complejidad);
+    const p = priorityOf(ticket);
     const area = ticket.area_designada || 'GENERAL';
     const tag = TAGS[ticket.estado_actual];
     const base = {
@@ -165,6 +165,7 @@ function buildRow(ticket, k, { now, myArea, rules, operatorName }) {
         p,
         pts: ticket.puntos_complejidad || 0,
         sugerida: p === 'SP' ? (ticket.prioridad_sugerida || null) : null,
+        ...tipoCasoDeTicket(ticket),
         estado: ticket.estado_actual,
         cola: k,
         area,
@@ -309,7 +310,10 @@ function buildOperatorPanel({
                 return {
                     code: t.codigo_incidencia,
                     subject: t.asunto || 'Sin asunto',
-                    p: priorityOf(t.puntos_complejidad),
+                    p: priorityOf(t),
+                    pts: t.puntos_complejidad || 0,
+                    ...tipoCasoDeTicket(t),
+                    area,
                     op: mio ? 'Tuyo' : (t.asignado_a?.nombre || 'Sin asignar'),
                     opTono: mio ? 'green' : (t.asignado_a_id ? 'gray' : 'orange'),
                     puedeTomar: t.estado_actual === 'NUEVO' && !t.asignado_a_id && [myArea, 'GENERAL'].includes(area)

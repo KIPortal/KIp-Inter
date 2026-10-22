@@ -10,7 +10,13 @@
 const MARCA_REMITENTE = 'SIMULACION';
 const DOMINIO_DEMO = 'demo.local';
 const PREFIJO_CODIGO = 'SIM-';
-const PUNTOS = { P1: 8, P2: 5, P3: 1, NONE: 0 };
+const { puntosDeNivel } = require('./tipoCasoService');
+// Nivel de dificultad de los casos "Otro" (fuera del catálogo) y de las áreas sin tipos de caso
+const NIVEL_PESO = [[1, 30], [2, 45], [3, 18], [4, 7]];
+// Tasa de ocurrencia: un caso de frecuencia Alta llega 6 veces más que uno de frecuencia Baja
+const FRECUENCIA_PESO = { ALTA: 6, MEDIA: 3, BAJA: 1 };
+// Parte de los casos de un área con catálogo que no está en él (se clasifican como "Otro")
+const PCT_OTRO = 0.1;
 
 // Equipo demo parecido al del diseño: 14 operadores en las 7 áreas.
 // guardia: de guardia esta semana · horario: propio (si no, L–V 08:00–17:00) · estado: operativo
@@ -75,11 +81,21 @@ const emailDe = key => `${key}@${DOMINIO_DEMO}`;
  * @param {number} [o.seed]
  * @param {Date}   [o.ahora]   si la fecha es hoy, nada ocurre después de este instante
  * @param {number} [o.desde]   número del primer código SIM-xxx (para simular varios días)
+ * @param {Array}  [o.tipos]   catálogo de tipos de caso [{ id, nombre, area, nivel, minutos, frecuencia }]
+ *                             (Administración → Tipos de caso). En un área con tipos, cada ticket es uno
+ *                             de ellos, elegido según su frecuencia, y su tiempo sale del estimado.
  */
-function buildSimulation({ fecha, cantidad = 40, seed = 7, ahora = null, desde = 1, sinAsignar = 7 }) {
+function buildSimulation({ fecha, cantidad = 40, seed = 7, ahora = null, desde = 1, sinAsignar = 7, tipos = [] }) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha || '')) throw new Error('fecha inválida (AAAA-MM-DD)');
     const rand = rng(seed);
     const randEstado = rng(seed + 1000); // aparte, para no alterar el resto de la simulación
+    const randTipo = rng(seed + 3000); // igual con el tipo de caso
+    const tiposDe = new Map();
+    (tipos || []).filter(x => x && x.activo !== false && x.nivel).forEach(x => {
+        if (!tiposDe.has(x.area)) tiposDe.set(x.area, []);
+        tiposDe.get(x.area).push([x, FRECUENCIA_PESO[x.frecuencia] || FRECUENCIA_PESO.MEDIA]);
+    });
+    const randNivel = rng(seed + 2000); // igual con el nivel de dificultad
     const dayStart = new Date(`${fecha}T00:00:00-04:00`).getTime();
     const limite = ahora ? new Date(ahora).getTime() : dayStart + 24 * 3600000;
     const min = 60000;
@@ -98,10 +114,17 @@ function buildSimulation({ fecha, cantidad = 40, seed = 7, ahora = null, desde =
         const area = pick(rand, AREA_PESO);
         const prioridad = pick(rand, [['P1', 12], ['P2', 33], ['P3', 45], ['NONE', 10]]);
         const lista = ASUNTOS[area];
+        let asunto = lista[Math.floor(rand() * lista.length)];
+        // Caso común del catálogo del área (según su frecuencia), o "Otro" con un nivel al azar
+        const delArea = tiposDe.get(area);
+        const tipo = delArea && randTipo() >= PCT_OTRO ? pick(randTipo, delArea) : null;
+        const nivel = tipo ? tipo.nivel : pick(randNivel, NIVEL_PESO);
+        if (tipo) asunto = tipo.nombre;
         tickets.push({
             codigo: '',
-            asunto: lista[Math.floor(rand() * lista.length)],
-            area, prioridad, puntos: PUNTOS[prioridad], creado, estadoVe: pick(randEstado, ESTADO_PESO)
+            asunto,
+            area, prioridad, nivel, tipoId: tipo ? tipo.id : null, minutosEstimados: tipo ? tipo.minutos || null : null,
+            puntos: puntosDeNivel(nivel), creado, estadoVe: pick(randEstado, ESTADO_PESO)
         });
     }
     tickets.sort((a, b) => a.creado - b.creado).forEach((t, i) => { t.codigo = `${PREFIJO_CODIGO}${String(desde + i).padStart(3, '0')}`; });
@@ -117,7 +140,8 @@ function buildSimulation({ fecha, cantidad = 40, seed = 7, ahora = null, desde =
         const asignado = t.creado + (3 + Math.floor(rand() * 25)) * min;
         if (asignado >= limite || rand() < sinAsignar / 100) continue; // algunos quedan en la cola del área, sin asignar
         t.operadorKey = elegido.key; t.asignado = asignado; t.estado = 'EN_PROGRESO';
-        const base = { P1: 90, P2: 150, P3: 70, NONE: 100 }[t.prioridad];
+        // Tiempo de trabajo: el estimado del tipo de caso; sin él, según la prioridad
+        const base = t.minutosEstimados || { P1: 90, P2: 150, P3: 70, NONE: 100 }[t.prioridad];
         const resuelto = asignado + Math.max(10, Math.round(base * (0.4 + rand() * 1.4))) * min;
         const quedaAbierto = t.area === 'WAN' && elegido.key === 'wan1' && rand() < 0.55; // acumula carga activa
         if (resuelto < limite && !quedaAbierto) {
@@ -131,6 +155,8 @@ function buildSimulation({ fecha, cantidad = 40, seed = 7, ahora = null, desde =
         }
         if (['EN_PROGRESO', 'EN_PAUSA', 'EN_ESPERA_TERCEROS'].includes(t.estado)) carga.set(t.operadorKey, carga.get(t.operadorKey) + 1);
     }
+    // Los que siguen en la cola sin tomar aún no tienen tipo de caso: lo elige quien los tome
+    tickets.filter(t => !t.operadorKey).forEach(t => { t.nivel = null; t.tipoId = null; t.puntos = 0; });
     const f = ms => (ms == null ? null : new Date(ms));
     return {
         fecha, operadores,
@@ -151,7 +177,7 @@ const ymd = ms => new Date(ms - 4 * 3600000).toISOString().slice(0, 10);
  * @param {number} [o.seed]
  * @param {number} [o.sinAsignar]  % de los tickets de hoy que quedan en la cola del área (por defecto 7)
  */
-function buildDemo({ ahora, porDia = 55, seed = 7, sinAsignar = 7 }) {
+function buildDemo({ ahora, porDia = 55, seed = 7, sinAsignar = 7, tipos = [] }) {
     const nowMs = new Date(ahora).getTime();
     const hoy = ymd(nowMs);
     const ayer = ymd(nowMs - DAY_MS);
@@ -162,9 +188,9 @@ function buildDemo({ ahora, porDia = 55, seed = 7, sinAsignar = 7 }) {
     const llegado = PESO_HORA.reduce((acc, w, h) => acc + w * Math.max(0, Math.min(1, horaActual - h)), 0);
     const cantidadHoy = Math.max(3, Math.round(porDia * llegado / total));
 
-    const diaAyer = buildSimulation({ fecha: ayer, cantidad: porDia, seed, desde: 1 });
+    const diaAyer = buildSimulation({ fecha: ayer, cantidad: porDia, seed, desde: 1, tipos });
     // El % sin asignar solo aplica a hoy: ayer el coordinador ya repartió todo lo que pudo
-    const diaHoy = buildSimulation({ fecha: hoy, cantidad: cantidadHoy, seed: seed + 1, ahora: new Date(nowMs), desde: porDia + 1, sinAsignar });
+    const diaHoy = buildSimulation({ fecha: hoy, cantidad: cantidadHoy, seed: seed + 1, ahora: new Date(nowMs), desde: porDia + 1, sinAsignar, tipos });
 
     // Traspaso de anoche (16:45): pendientes de ayer, que no cambian de operador
     const pendientes = diaAyer.tickets.filter(t => ['NUEVO', 'EN_PROGRESO', 'EN_PAUSA', 'EN_ESPERA_TERCEROS'].includes(t.estado)).map(t => t.codigo);
@@ -205,6 +231,8 @@ function asignarAReales(tickets, reales) {
     return tickets.map(t => {
         const area = porArea.has(t.area) ? t.area : relleno[i++ % relleno.length];
         const out = { ...t, area, operadorId: null, operadorNombre: null, subgrupoId: null };
+        // Si pasó a otra área, su tipo de caso no es de ella: queda como "Otro" con el mismo nivel
+        if (area !== t.area) out.tipoId = null;
         if (t.operadorKey) {
             const ops = porArea.get(area);
             const n = turno.get(area) || 0;
@@ -216,4 +244,15 @@ function asignarAReales(tickets, reales) {
     });
 }
 
-module.exports = { buildSimulation, buildDemo, asignarAReales, MARCA_REMITENTE, DOMINIO_DEMO, PREFIJO_CODIGO, OPERADORES };
+/** Tipos de caso activos de la base, con la forma que usa la simulación ([] si aún no hay tabla). */
+async function cargarTiposCaso(prisma) {
+    try {
+        const filas = await prisma.tipoCaso.findMany({ where: { activo: true } });
+        return filas.map(x => ({ id: x.id, nombre: x.nombre, area: x.area_codigo, nivel: x.nivel, minutos: x.minutos_estimados, frecuencia: x.frecuencia }));
+    } catch (e) {
+        console.error('Sin tipos de caso (¿falta la migración?): se simula con niveles al azar.');
+        return [];
+    }
+}
+
+module.exports = { cargarTiposCaso, buildSimulation, buildDemo, asignarAReales, MARCA_REMITENTE, DOMINIO_DEMO, PREFIJO_CODIGO, OPERADORES };

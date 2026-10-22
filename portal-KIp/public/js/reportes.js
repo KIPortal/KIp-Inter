@@ -1,4 +1,4 @@
-// Reportes: secciones (Resumen / Por área / Por operador), filtro por área, orden y fecha específica.
+// Reportes: secciones (Resumen / Por área / Por operador / Casos comunes), filtro por área, orden y fecha específica.
 (function () {
 	'use strict';
 	const $ = s => document.querySelector(s);
@@ -95,6 +95,6 @@
 		const fecha = $('[data-fecha]');
 		if (fecha) fecha.addEventListener('change', () => { if (fecha.value) fecha.form.submit(); });
 		const [tab, area] = decodeURIComponent(location.hash.slice(1)).split(':');
-		if (['resumen', 'area', 'op'].includes(tab)) { S.area = area || ''; showTab(tab); } else paintOps();
+		if (['resumen', 'area', 'op', 'casos'].includes(tab)) { S.area = area || ''; showTab(tab); } else paintOps();
 	});
 })();

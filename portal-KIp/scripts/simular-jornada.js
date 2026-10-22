@@ -14,7 +14,7 @@
  * Clave de los operadores demo: demo1234 (solo para pruebas locales).
  */
 const prisma = require('../src/config/prisma');
-const { buildSimulation, buildDemo, asignarAReales, MARCA_REMITENTE, PREFIJO_CODIGO } = require('../src/services/simulationService');
+const { buildSimulation, buildDemo, asignarAReales, cargarTiposCaso, MARCA_REMITENTE, PREFIJO_CODIGO } = require('../src/services/simulationService');
 const { ATIENDE_WHERE } = require('../src/services/roleService');
 const { getDayBounds } = require('../src/services/metricsService');
 const { getWeekStart } = require('../src/services/shiftService');
@@ -25,9 +25,11 @@ const arg = (n, d) => { const a = process.argv.find(x => x.startsWith(`--${n}=`)
     const seed = Number(arg('seed', 7));
     const fecha = arg('fecha');
     const sinAsignar = Math.min(Math.max(Number(arg('sin-asignar', 7)) || 0, 0), 100);
+    // Casos comunes del catálogo (Administración → Tipos de caso): cada área con tipos simula sus casos
+    const tipos = await cargarTiposCaso(prisma);
     const sim = fecha
-        ? (s => ({ operadores: s.operadores, tickets: s.tickets, traspaso: null, dias: [{ fecha, tickets: s.tickets }] }))(buildSimulation({ fecha, cantidad: Number(arg('tickets', 40)), seed, sinAsignar }))
-        : buildDemo({ ahora: new Date(), porDia: Number(arg('tickets', 55)), seed, sinAsignar });
+        ? (s => ({ operadores: s.operadores, tickets: s.tickets, traspaso: null, dias: [{ fecha, tickets: s.tickets }] }))(buildSimulation({ fecha, cantidad: Number(arg('tickets', 40)), seed, sinAsignar, tipos }))
+        : buildDemo({ ahora: new Date(), porDia: Number(arg('tickets', 55)), seed, sinAsignar, tipos });
 
     const existentes = await prisma.ticket.count({ where: { ...prisma.INCLUDE_DELETED, codigo_incidencia: { startsWith: PREFIJO_CODIGO } } });
     if (existentes) { console.error('Ya hay una simulación cargada. Ejecute primero: node scripts/limpiar-simulacion.js --confirmar'); process.exit(1); }
@@ -74,7 +76,7 @@ const arg = (n, d) => { const a = process.argv.find(x => x.startsWith(`--${n}=`)
             data: {
                 codigo_incidencia: t.codigo, asunto: t.asunto, remitente: MARCA_REMITENTE,
                 descripcion: 'Ticket generado por la simulación de jornada',
-                estado_actual: t.estado, puntos_complejidad: t.puntos, area_designada: t.area, estado_ve: t.estadoVe ?? null,
+                estado_actual: t.estado, puntos_complejidad: t.puntos, prioridad: t.prioridad === 'NONE' ? null : t.prioridad, nivel: t.nivel, tipo_caso_id: t.tipoId || null, area_designada: t.area, estado_ve: t.estadoVe ?? null,
                 origen_ingesta: 'CORREO', asignado_a_id: reales ? t.operadorId : (t.operadorKey ? ids[t.operadorKey] : null), subgrupo_id: reales ? t.subgrupoId : null,
                 createdAt: t.creado, fecha_asignacion: t.asignado, resueltoEn: t.resuelto, fecha_cierre: t.cierre
             },

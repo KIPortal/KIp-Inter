@@ -78,11 +78,12 @@ function setup(ticket) {
         assert.strictEqual(tk.createdAt, undefined);
         assert(audits[0].detalles.includes('Viejo') && audits[0].detalles.includes('Nuevo'));
     });
-    await t('Editar: prioridad se traduce a puntos (P1=8) y rechaza valores inválidos', async () => {
-        const tk = { id: 't', area_designada: 'GENERAL', eliminado_en: null, asignado_a: null };
+    await t('Editar: la prioridad va en su campo (ya no da puntos) y rechaza valores inválidos', async () => {
+        const tk = { id: 't', area_designada: 'GENERAL', eliminado_en: null, asignado_a: null, puntos_complejidad: 4 };
         setup(tk);
         await ctrl.editTicket(req({ ticketCode: 'INC-001' }, { prioridad: 'P1' }), mockRes());
-        assert.strictEqual(tk.puntos_complejidad, 8);
+        assert.strictEqual(tk.prioridad, 'P1');
+        assert.strictEqual(tk.puntos_complejidad, 4, 'los puntos salen del nivel, no de la prioridad');
         const bad = mockRes();
         await ctrl.editTicket(req({ ticketCode: 'INC-001' }, { prioridad: 'P9' }), bad);
         assert.strictEqual(bad.code, 400);
@@ -292,7 +293,7 @@ function setup(ticket) {
         await ctrl.createTicket(crear({}), res);
         assert.strictEqual(res.code, 201, JSON.stringify(res.body));
         assert.strictEqual(res.body.ticket.codigo_incidencia, 'INC-007');
-        assert.strictEqual(res.body.ticket.puntos_complejidad, 5);
+        assert.deepStrictEqual([res.body.ticket.prioridad, res.body.ticket.puntos_complejidad], ['P2', 0], 'sin tipo de caso aún no suma puntos');
         assert.strictEqual(db.tickets.length, 6);
     });
     await t('Simulación: no reutiliza el código de un ticket en la papelera', async () => {
@@ -319,7 +320,7 @@ function setup(ticket) {
         let res = mockRes();
         await ctrl.assignTicket({ body: { ticketCode: 'INC-001', operatorId: 'op1', prioridad: 'P1' }, user: { id: 'u1' } }, res);
         assert.strictEqual(res.body.success, true);
-        assert.deepStrictEqual([db.tickets[0].asignado_a_id, db.tickets[0].puntos_complejidad], ['op1', 8]);
+        assert.deepStrictEqual([db.tickets[0].asignado_a_id, db.tickets[0].prioridad], ['op1', 'P1']);
         assert.strictEqual(db.viajes, 4, 'asignar = 2 lecturas en paralelo + 1 escritura + auditoría sin esperar (antes eran 5 en serie)');
 
         res = mockRes();

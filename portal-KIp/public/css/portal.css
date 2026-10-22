@@ -44,7 +44,7 @@
 	--seg-track: rgba(0, 0, 0, 0.08);
 	--tip-bg: rgba(28, 28, 30, 0.92);
 	--tip-blue: #38BDF8; --tip-green: #4ADE80; --tip-violet: #A78BFA;
-	--tile-blue: #0A84FF; --tile-orange: #FF9F0A; --tile-red: #FF3B30; --tile-purple: #AF52DE;
+	--tile-blue: #0A84FF; --tile-orange: #FF9F0A; --tile-red: #FF3B30; --tile-purple: #AF52DE; --tile-green: #34C759;
 
 	/* Materiales */
 	--glass-bg: rgba(255, 255, 255, 0.85);

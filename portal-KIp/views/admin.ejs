@@ -15,11 +15,12 @@
 		.concat(coordinadores.map(c => ({ id: c.id, nombre: c.nombre, email: c.email, rol: c.rol || 'COORDINADOR', area: c.area_designada || 'GENERAL', atiende: c.atiende_tickets === true, telefono: c.telefono || '', subgrupo: c.subgrupo_id || '' })))
 		.map(u => Object.assign(u, { activo: true }))
 		.concat(desactivados.map(u => Object.assign({}, u, { activo: false })));
-	const datos = { config, eventos, destinatarios, limites, vistaPrevia, usuarios, areas: areas.map(a => ({ codigo: a.codigo, nombre: a.nombre, activa: a.activa !== false, operadores: a.operadores.length, subgrupos: a.subgrupos || [] })), miId, miRol, daRolesAltos: locals.daRolesAltos === true || miRol === 'GERENTE', minClave };
+	const datos = { config, eventos, destinatarios, limites, vistaPrevia, usuarios, areas: areas.map(a => ({ codigo: a.codigo, nombre: a.nombre, activa: a.activa !== false, operadores: a.operadores.length, subgrupos: a.subgrupos || [] })), miId, miRol, daRolesAltos: locals.daRolesAltos === true || miRol === 'GERENTE', minClave, tiposCaso: locals.tiposCaso || [], niveles: locals.niveles || null };
 	const ini = n => String(n || '?').split(/\s+/).slice(0, 2).map(p => p[0]).join('').toUpperCase();
 	const lapiz = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>';
 	const SECS = [
 		['areas', 'Áreas y equipos', areas.length + ' áreas · ' + totalOps + ' operadores', 'var(--tile-blue)', 'M9 8a3 3 0 1 0 0-.01M3 19a6 6 0 0 1 12 0M16 5a3 3 0 0 1 0 6M18 13a5 5 0 0 1 3 6'],
+		['tipos', 'Tipos de caso', (locals.tiposCaso || []).filter(t => t.activo).length + ' casos comunes · nivel y puntos', 'var(--tile-green)', 'M4 6h16M4 12h10M4 18h7M17 15l2 2 3-4'],
 		['plantillas', 'Plantillas', (config.plantillas.traspaso.length + config.plantillas.cierre.length) + ' textos', 'var(--tile-orange)', 'M5 4h10l4 4v12H5zM9 12h6M9 16h4'],
 		['reglas', 'Reglas de alerta', 'Sobrecarga, antigüedad y sugerencia', 'var(--tile-red)', 'M12 3l10 18H2zM12 10v4M12 17.5v.5'],
 		['avisos', 'Avisos', 'Eventos y destinatarios', 'var(--tile-purple)', 'M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 21h4']
@@ -38,7 +39,7 @@
 		<header class="toolbar">
 			<div style="display:flex;flex-direction:column;margin-right:6px">
 				<h1>Administración</h1>
-				<span class="sub">Áreas, plantillas, reglas de alerta y avisos</span>
+				<span class="sub">Áreas, tipos de caso, plantillas, reglas de alerta y avisos</span>
 			</div>
 			<span class="grow"></span>
 			<span class="dirty" data-dirty hidden><i></i>Cambios sin guardar</span>
@@ -146,6 +147,7 @@
 					</div>
 				</section>
 
+				<section class="glass" data-panel="tipos" hidden aria-label="Tipos de caso" style="display:flex;flex-direction:column;overflow:hidden"></section>
 				<div data-panel="plantillas" hidden style="display:flex;flex-direction:column;gap:16px"></div>
 				<div data-panel="reglas" hidden style="display:flex;flex-direction:column;gap:16px"></div>
 				<section class="glass" data-panel="avisos" hidden style="display:flex;flex-direction:column;overflow:hidden"></section>

@@ -5,7 +5,9 @@ const { buildHandoffView } = require('../services/ticketQueueService');
 const { getNextTicketCode } = require('../services/ticketCodeService');
 const { auditUserId } = require('../services/auditViewService');
 
-const PRIORITY_POINTS = { P1: 8, P2: 5, P3: 1 };
+// La prioridad (urgencia) ya no da puntos: los puntos salen del nivel del tipo de caso
+const PRIORIDADES = new Set(['P1', 'P2', 'P3']);
+const { clasificar, tipoCasoVista } = require('../services/tipoCasoService');
 const { isActiveArea, isValidSubgrupo, subgrupoName } = require('../services/areaCatalog');
 const { parseEstadoVe } = require('../services/estadosVeService');
 // Solo se puede elegir un área activa (las desactivadas conservan su historial)
@@ -16,7 +18,7 @@ const VALID_PRIORITIES = new Set(['NONE', 'P1', 'P2', 'P3']);
 function assignmentValidationError({ operatorId, areaDesignada, prioridad }) {
     if (typeof operatorId !== 'string' || !operatorId.trim()) return 'Falta seleccionar un operador';
     if (areaDesignada && !VALID_AREAS.has(areaDesignada)) return 'Área designada no válida';
-    if (prioridad && !Object.hasOwn(PRIORITY_POINTS, prioridad)) return 'Prioridad no válida';
+    if (prioridad && !PRIORIDADES.has(prioridad)) return 'Prioridad no válida';
     return null;
 }
 
@@ -25,6 +27,33 @@ async function isOperator(operatorId) {
         where: { id: operatorId, activo: true, ...ATIENDE_WHERE },
         select: { id: true, nombre: true, area_designada: true, subgrupo_id: true }
     });
+}
+
+const texto = v => (typeof v === 'string' ? v.trim() : '');
+
+/**
+ * Clasificación pedida en el cuerpo (tipoCasoId, o nivel para "Otro"): null si no
+ * se pidió; si no, { data } con tipo_caso_id, nivel y puntos_complejidad, o { error }.
+ */
+async function clasificacionPedida(body, area) {
+    const tipoCasoId = texto(body?.tipoCasoId);
+    const nivel = body?.nivel;
+    if (!tipoCasoId && (nivel === undefined || nivel === null || nivel === '')) return null;
+    const tipo = tipoCasoId ? await prisma.tipoCaso.findUnique({ where: { id: tipoCasoId } }) : null;
+    return clasificar({ tipoCasoId, nivel, tipo, area });
+}
+
+const describirClasificacion = (data, nombre) => `tipo ${nombre || 'Otro'} (nivel ${data.nivel}, ${data.puntos_complejidad} pts)`;
+
+// Catálogo de tipos de caso activos (para elegirlo al tomar o editar un ticket)
+async function listTiposCaso(req, res) {
+    try {
+        const tipos = await prisma.tipoCaso.findMany({ where: { activo: true }, orderBy: [{ area_codigo: 'asc' }, { nivel: 'asc' }, { nombre: 'asc' }] });
+        return res.json({ success: true, tipos: tipos.map(tipoCasoVista) });
+    } catch (error) {
+        console.error('Error al listar tipos de caso:', error);
+        return res.status(500).json({ success: false, error: 'No se pudieron cargar los tipos de caso' });
+    }
 }
 
 // Si dos coordinadores crean a la vez, el segundo choca con el código (P2002) y reintenta
@@ -63,12 +92,18 @@ async function createTicket(req, res) {
         return res.status(400).json({ success: false, error: 'El subgrupo no es de esa área o está desactivado' });
     }
 
+    // Tipo de caso opcional al crearlo; si no, lo elige quien lo toma
+    const clasif = await clasificacionPedida(body, areaDesignada).catch(() => ({ error: 'No se pudo leer el tipo de caso' }));
+    if (clasif?.error) return res.status(400).json({ success: false, error: clasif.error });
+
     const data = {
         asunto,
         descripcion: descripcion || null,
         remitente: origenIngesta === 'CORREO' ? remitente : null,
         estado_actual: 'NUEVO',
-        puntos_complejidad: PRIORITY_POINTS[prioridad] || 0,
+        prioridad: PRIORIDADES.has(prioridad) ? prioridad : null,
+        puntos_complejidad: 0,
+        ...(clasif ? clasif.data : {}),
         area_designada: areaDesignada,
         estado_ve: estadoVe.valor,
         subgrupo_id: subgrupoId,
@@ -125,7 +160,7 @@ async function assignTicket(req, res) {
             asignado_a_id: operatorId
         };
         if (areaDesignada) dataToUpdate.area_designada = areaDesignada;
-        if (prioridad) dataToUpdate.puntos_complejidad = PRIORITY_POINTS[prioridad];
+        if (prioridad) dataToUpdate.prioridad = prioridad;
         // Subgrupo: se va si el ticket cambia de área; si no tiene, toma el de quien lo recibe (misma área)
         const areaFinal = areaDesignada || existingTicket.area_designada;
         let subgrupo = existingTicket.subgrupo_id && isValidSubgrupo(existingTicket.subgrupo_id, areaFinal) ? existingTicket.subgrupo_id : null;
@@ -175,7 +210,7 @@ async function unassignTicket(req, res) {
                 asignado_a_id: null,
                 estado_actual: 'NUEVO',
                 fecha_asignacion: null,
-                puntos_complejidad: 0
+                prioridad: null // quien lo tome la vuelve a elegir; el tipo de caso se conserva
             }
         });
         if (result.count !== 1) {
@@ -219,7 +254,7 @@ async function batchAssignTickets(req, res) {
             asignado_a_id: operatorId
         };
         if (areaDesignada) updateData.area_designada = areaDesignada;
-        if (prioridad) updateData.puntos_complejidad = PRIORITY_POINTS[prioridad];
+        if (prioridad) updateData.prioridad = prioridad;
 
         const count = await prisma.$transaction(async transaction => {
             const existingTickets = await transaction.ticket.findMany({
@@ -276,24 +311,36 @@ async function claimTicket(req, res) {
     try {
         const ticket = await prisma.ticket.findUnique({
             where: { codigo_incidencia: ticketCode },
-            select: { id: true, estado_actual: true, asignado_a_id: true, area_designada: true, puntos_complejidad: true, prioridad_sugerida: true }
+            select: { id: true, estado_actual: true, asignado_a_id: true, area_designada: true, prioridad: true, nivel: true, prioridad_sugerida: true }
         });
         if (!ticket) return res.status(404).json({ success: false, error: 'Ticket no encontrado' });
         if (ticket.estado_actual !== 'NUEVO' || (ticket.asignado_a_id !== null && ticket.asignado_a_id !== req.user.id)) {
             return res.status(409).json({ success: false, error: 'El ticket ya no está disponible para reclamar' });
         }
-        // Sin prioridad (p. ej. llegó por correo): quien lo toma la elige, partiendo de la sugerida
-        const sinPrioridad = !ticket.puntos_complejidad;
-        const elegida = typeof req.body?.prioridad === 'string' ? req.body.prioridad.trim().toUpperCase() : '';
-        if (sinPrioridad && !Object.hasOwn(PRIORITY_POINTS, elegida)) {
-            return res.status(422).json({ success: false, requierePrioridad: true, sugerida: ticket.prioridad_sugerida || null, error: 'Elige la prioridad del ticket (P1, P2 o P3) antes de tomarlo' });
-        }
-
         const operatorArea = req.user.area_designada || 'GENERAL';
         // El coordinador (y el gerente) ve todas las áreas: puede tomar cualquiera; el jefe, las de su área
         const areas = esSupervisor(req.user) ? areasVisibles(req.user) : [...new Set([operatorArea, 'GENERAL'])];
         if (areas && !areas.includes(ticket.area_designada)) {
             return res.status(403).json({ success: false, error: 'El ticket no pertenece a tu área' });
+        }
+        // Sin prioridad (p. ej. llegó por correo): quien lo toma la elige, partiendo de la sugerida.
+        // Sin tipo de caso: quien lo toma lo elige (o "Otro" con su nivel); de ahí salen sus puntos.
+        const sinPrioridad = !PRIORIDADES.has(ticket.prioridad);
+        const sinTipo = !ticket.nivel;
+        const elegida = typeof req.body?.prioridad === 'string' ? req.body.prioridad.trim().toUpperCase() : '';
+        const falta = { prioridad: sinPrioridad && !PRIORIDADES.has(elegida), tipo: false };
+        let clasif = null;
+        if (sinTipo) {
+            clasif = await clasificacionPedida(req.body, ticket.area_designada);
+            if (clasif?.error && (req.body?.tipoCasoId || req.body?.nivel)) return res.status(400).json({ success: false, error: clasif.error });
+            falta.tipo = !clasif || Boolean(clasif.error);
+        }
+        if (falta.prioridad || falta.tipo) {
+            const que = [falta.prioridad ? 'la prioridad (P1, P2 o P3)' : '', falta.tipo ? 'el tipo de caso' : ''].filter(Boolean).join(' y ');
+            return res.status(422).json({
+                success: false, requierePrioridad: falta.prioridad, requiereTipo: falta.tipo, sugerida: ticket.prioridad_sugerida || null,
+                error: `Elige ${que} antes de tomarlo`
+            });
         }
 
         const result = await prisma.ticket.updateMany({
@@ -310,15 +357,17 @@ async function claimTicket(req, res) {
                 estado_actual: 'EN_PROGRESO',
                 asignado_a_id: req.user.id,
                 fecha_asignacion: new Date(),
-                ...(sinPrioridad ? { puntos_complejidad: PRIORITY_POINTS[elegida] } : {})
+                ...(sinPrioridad ? { prioridad: elegida } : {}),
+                ...(clasif ? clasif.data : {})
             }
         });
         if (result.count !== 1) {
             return res.status(409).json({ success: false, error: 'El ticket ya no está disponible para reclamar' });
         }
-        const clasif = !sinPrioridad ? ''
+        const conPrioridad = !sinPrioridad ? ''
             : ` con prioridad ${elegida}${ticket.prioridad_sugerida ? (ticket.prioridad_sugerida === elegida ? ' (la sugerida)' : ` (sugerida ${ticket.prioridad_sugerida})`) : ''}`;
-        await logAudit(req, 'TICKET_TOMADO', ticket.id, `El operador lo tomó y quedó en progreso${clasif}`);
+        const conTipo = clasif ? `${conPrioridad ? ',' : ' con'} ${describirClasificacion(clasif.data, clasif.nombre)}` : '';
+        await logAudit(req, 'TICKET_TOMADO', ticket.id, `El operador lo tomó y quedó en progreso${conPrioridad}${conTipo}`);
         return await sendTicket(req, res, ticket.id);
     } catch (error) {
         console.error('Error al reclamar ticket:', error);
@@ -382,7 +431,10 @@ async function updateOperatorTicket(req, res, action) {
 async function sendTicket(req, res, ticketId) {
     const ticket = await prisma.ticket.findUnique({
         where: { id: ticketId },
-        include: { asignado_a: { select: { id: true, nombre: true, email: true, rol: true, area_designada: true } } }
+        include: {
+            asignado_a: { select: { id: true, nombre: true, email: true, rol: true, area_designada: true } },
+            tipo_caso: { select: { id: true, nombre: true, nivel: true, minutos_estimados: true } }
+        }
     });
     return res.json({ success: true, ticket });
 }
@@ -491,24 +543,38 @@ async function editTicket(req, res) {
         data.estado_ve = estadoVe.valor;
     }
     if (body.prioridad !== undefined) {
-        if (body.prioridad === 'NONE') data.puntos_complejidad = 0;
-        else if (Object.hasOwn(PRIORITY_POINTS, body.prioridad)) data.puntos_complejidad = PRIORITY_POINTS[body.prioridad];
+        if (body.prioridad === 'NONE' || body.prioridad === null) data.prioridad = null;
+        else if (PRIORIDADES.has(body.prioridad)) data.prioridad = body.prioridad;
         else return res.status(400).json({ success: false, error: 'Prioridad no válida' });
     }
+    // Tipo de caso: { tipoCasoId } del catálogo, { nivel } para "Otro" o { tipoCasoId: null, nivel: null } para quitarlo
+    const tocaTipo = body.tipoCasoId !== undefined || body.nivel !== undefined;
+    const quitaTipo = tocaTipo && !body.tipoCasoId && (body.nivel === null || body.nivel === '' || body.nivel === undefined);
     if (body.subgrupo_id !== undefined) {
         if (body.subgrupo_id !== null && typeof body.subgrupo_id !== 'string') return res.status(400).json({ success: false, error: 'Subgrupo no válido' });
         data.subgrupo_id = (body.subgrupo_id || '').trim() || null;
     }
-    if (Object.keys(data).length === 0) {
+    if (Object.keys(data).length === 0 && !tocaTipo) {
         return res.status(400).json({ success: false, error: 'No hay campos para actualizar' });
     }
 
     try {
         const ticket = await prisma.ticket.findUnique({
             where: { codigo_incidencia: ticketCode },
-            include: { asignado_a: { select: { id: true, nombre: true, area_designada: true } } }
+            include: { asignado_a: { select: { id: true, nombre: true, area_designada: true } }, tipo_caso: { select: { nombre: true } } }
         });
         if (!ticket || ticket.eliminado_en) return res.status(404).json({ success: false, error: 'Ticket no encontrado' });
+
+        // Tipo de caso: debe ser del área final del ticket; sus puntos salen del nivel
+        let nombreTipo = null;
+        if (quitaTipo) Object.assign(data, { tipo_caso_id: null, nivel: null, puntos_complejidad: 0 });
+        else if (tocaTipo) {
+            const clasif = await clasificacionPedida(body, data.area_designada || ticket.area_designada);
+            if (clasif?.error) return res.status(400).json({ success: false, error: clasif.error });
+            Object.assign(data, clasif.data);
+            nombreTipo = clasif.nombre || null;
+        }
+        ['tipo_caso_id', 'nivel', 'puntos_complejidad'].forEach(k => { if (data[k] !== undefined && data[k] === (ticket[k] ?? null)) delete data[k]; });
 
         // Subgrupo: debe ser del área final; si el área cambia y no se eligió otro, se quita
         const areaFinal = data.area_designada || ticket.area_designada;
@@ -532,6 +598,7 @@ async function editTicket(req, res) {
 
         const cambios = Object.keys(data).map(campo => {
             if (campo === 'subgrupo_id') return `subgrupo: ${subgrupoName(ticket.subgrupo_id) || '-'} → ${subgrupoName(data.subgrupo_id) || '-'}`;
+            if (campo === 'tipo_caso_id') return `tipo de caso: ${ticket.tipo_caso?.nombre || (ticket.nivel ? 'Otro' : '-')} → ${nombreTipo || (data.nivel ? 'Otro' : '-')}`;
             const antes = ticket[campo];
             return `${campo}: ${antes === null || antes === undefined ? '-' : String(antes).slice(0, 80)} → ${data[campo] === null ? '-' : String(data[campo]).slice(0, 80)}`;
         });
@@ -757,6 +824,7 @@ async function listTrash(req, res) {
 }
 
 module.exports = {
+    listTiposCaso,
     handoffTickets,
     getActiveHandoff,
     closeHandoff,

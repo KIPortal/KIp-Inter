@@ -240,20 +240,40 @@ async function buildWorkbook(report, { generadoPor = '', generadoEn = new Date()
 
     // ============ 4. Detalle de Tickets ============
     const s4 = wb.addWorksheet('Detalle de Tickets', { pageSetup: PAGE, views: [{ state: 'frozen', xSplit: 1, ySplit: 4, showGridLines: false }] });
-    [12, 17, 17, 17, 17, 13, 13, 9, 14, 24, 20, 22, 48].forEach((w, i) => { s4.getColumn(i + 1).width = w; });
-    title(s4, 13, report, generadoPor, generadoEn, 'DETALLE Y TRAZABILIDAD DE TICKETS');
-    headerRow(s4, 4, ['Ticket', 'Llegada', 'Asignación', 'Resolución', 'Cierre', 'Duración total (min)', 'Duración en horario (min)', 'Puntos', 'Prioridad', 'Operador', 'Área', 'Estado', 'Asunto']);
+    [12, 17, 17, 17, 17, 13, 13, 9, 14, 24, 20, 22, 48, 36, 8].forEach((w, i) => { s4.getColumn(i + 1).width = w; });
+    title(s4, 15, report, generadoPor, generadoEn, 'DETALLE Y TRAZABILIDAD DE TICKETS');
+    headerRow(s4, 4, ['Ticket', 'Llegada', 'Asignación', 'Resolución', 'Cierre', 'Duración total (min)', 'Duración en horario (min)', 'Puntos', 'Prioridad', 'Operador', 'Área', 'Estado', 'Asunto', 'Tipo de caso', 'Nivel']);
     report.detalle.forEach((d, i) => {
-        s4.getRow(5 + i).values = [d.codigo, toCaracas(d.llegada), toCaracas(d.asignacion), toCaracas(d.resolucion), toCaracas(d.cierre), num(d.duracionTotalMin), num(d.duracionHorarioMin), d.puntos, d.prioridad, d.operador, d.area, d.estado, d.asunto];
+        s4.getRow(5 + i).values = [d.codigo, toCaracas(d.llegada), toCaracas(d.asignacion), toCaracas(d.resolucion), toCaracas(d.cierre), num(d.duracionTotalMin), num(d.duracionHorarioMin), d.puntos, d.prioridad, d.operador, d.area, d.estado, d.asunto, d.tipoCaso || '', num(d.nivel)];
     });
     const l4 = 4 + report.detalle.length;
     if (report.detalle.length > 0) {
-        styleBody(s4, 5, l4, 13, { leftCols: [1, 10, 11, 12, 13] });
+        styleBody(s4, 5, l4, 15, { leftCols: [1, 10, 11, 12, 13, 14] });
         for (let rr = 5; rr <= l4; rr++) {
             [2, 3, 4, 5].forEach(c => { s4.getCell(rr, c).numFmt = DATE_FORMAT; });
             [6, 7].forEach(c => { s4.getCell(rr, c).numFmt = MIN_FORMAT; });
         }
-        s4.autoFilter = { from: { row: 4, column: 1 }, to: { row: l4, column: 13 } };
+        s4.autoFilter = { from: { row: 4, column: 1 }, to: { row: l4, column: 15 } };
+    }
+
+    // ============ 5. Casos comunes (ocurrencia por tipo de caso) ============
+    const cc = report.casosComunes || { filas: [], dias: 1, clasificados: 0, recibidos: 0 };
+    const s5 = wb.addWorksheet('Casos Comunes', { pageSetup: PAGE, views: [{ state: 'frozen', xSplit: 1, ySplit: 4, showGridLines: false }] });
+    [44, 20, 8, 10, 10, 10, 12, 11, 14, 14, 10].forEach((w, i) => { s5.getColumn(i + 1).width = w; });
+    title(s5, 11, report, generadoPor, generadoEn, `CASOS COMUNES · ${cc.clasificados} DE ${cc.recibidos} CASOS RECIBIDOS CON TIPO`);
+    headerRow(s5, 4, ['Tipo de caso', 'Área', 'Nivel', 'Veces', '% con tipo', 'Por día', 'Frecuencia', 'Resueltos', 'Estimado (min)', 'Real prom. (min)', 'Puntos']);
+    cc.filas.forEach((f, i) => {
+        s5.getRow(5 + i).values = [f.nombre, f.area, f.nivel, f.ocurrencias, f.participacion, f.porDia, f.frecuencia || '', f.resueltos, num(f.minutosEstimados), num(f.tiempoPromedioMin), f.puntos];
+    });
+    const l5 = 4 + cc.filas.length;
+    if (cc.filas.length > 0) {
+        styleBody(s5, 5, l5, 11, { leftCols: [1, 2, 7] });
+        for (let rr = 5; rr <= l5; rr++) {
+            s5.getCell(rr, 5).numFmt = '0.0%';
+            [9, 10].forEach(c => { s5.getCell(rr, c).numFmt = MIN_FORMAT; });
+            if (cc.filas[rr - 5].sobreEstimado) s5.getCell(rr, 10).font = { bold: true, color: { argb: 'FFB45309' } };
+        }
+        s5.autoFilter = { from: { row: 4, column: 1 }, to: { row: l5, column: 11 } };
     }
 
     return wb.xlsx.writeBuffer();

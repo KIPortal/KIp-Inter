@@ -18,7 +18,8 @@
 		enPapelera,
 		siguienteCodigo,
 		usuario: { id: currentUser.id, nombre: currentUser.nombre || 'Coordinador', atiende: currentUser.atiende_tickets === true },
-		plantillas: typeof plantillas !== 'undefined' && plantillas ? plantillas : null
+		plantillas: typeof plantillas !== 'undefined' && plantillas ? plantillas : null,
+		tiposCaso: locals.tiposCaso || []
 	};
 	const tarjetas = [
 		['Activos', r.activos, ''],
