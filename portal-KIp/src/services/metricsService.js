@@ -20,11 +20,18 @@ const DAY_MS = 24 * HOUR_MS;
 // Un ticket está "activo" (pendiente) mientras no esté cerrado.
 const ACTIVE_STATES = ['NUEVO', 'EN_PROGRESO', 'EN_PAUSA', 'EN_ESPERA_TERCEROS'];
 
-// Sobrecarga: un operador se marca cuando sus tickets activos superan 1.5 veces
-// el promedio de su área y además tiene al menos 3, para no alertar por 1 o 2
-// tickets cuando el promedio del área es casi cero.
+// Sobrecarga: un operador se marca cuando los puntos de sus tickets activos
+// superan 1.5 veces el promedio de su área y además tiene al menos 3 activos,
+// para no alertar por 1 o 2 tickets cuando el promedio del área es casi cero.
 const OVERLOAD_RATIO = 1.5;
 const OVERLOAD_MIN_ACTIVE = 3;
+// Un ticket activo aún sin clasificar pesa como nivel 1 (2 pts): es trabajo aunque no tenga puntos.
+const PESO_SIN_CLASIFICAR = 2;
+
+/** Puntos con que un ticket activo suma a la carga (los suyos, o 2 si aún no tiene). */
+const pesoCarga = t => (t && t.puntos_complejidad > 0 ? t.puntos_complejidad : PESO_SIN_CLASIFICAR);
+/** Puntos acumulados de una lista de tickets activos. */
+const puntosActivos = tickets => (tickets || []).reduce((sum, t) => sum + pesoCarga(t), 0);
 
 /**
  * Inicio (inclusivo) y fin (exclusivo) del día calendario de Caracas que
@@ -85,15 +92,19 @@ function formatMinutes(minutes) {
 }
 
 /**
- * Índice de carga de cada operador frente al promedio de tickets activos de su área.
+ * Índice de carga de cada operador: sus puntos activos acumulados frente al
+ * promedio de puntos activos de su área.
  *
  * - Solo se compara dentro del mismo área.
  * - Los operadores ausentes no entran en el promedio (no pueden tomar trabajo).
  * - Si el área tiene un solo operador no hay con quién comparar: no hay índice
  *   ni alerta.
  *
- * @param {Array<{id: string, area_designada?: string, estado_operativo?: string, cargaActual: number}>} operators
- * @param {{ratio?: number, minimo?: number}} [opciones] umbrales (por defecto 1.5 y 3)
+ * - `cargaActual` son los puntos activos (`puntosActivos`) y `activos` cuántos
+ *   tickets son; el mínimo se mide en tickets (sin `activos`, se usa `cargaActual`).
+ *
+ * @param {Array<{id: string, area_designada?: string, estado_operativo?: string, cargaActual: number, activos?: number}>} operators
+ * @param {{ratio?: number, minimo?: number}} [opciones] umbrales (por defecto 1.5× y 3 activos)
  * @returns {Map<string, {comparable: boolean, promedioArea: number|null, indiceCarga: number|null, sobrecarga: boolean}>}
  */
 function computeOverload(operators, { ratio = OVERLOAD_RATIO, minimo = OVERLOAD_MIN_ACTIVE } = {}) {
@@ -117,12 +128,13 @@ function computeOverload(operators, { ratio = OVERLOAD_RATIO, minimo = OVERLOAD_
                 continue;
             }
             const load = operator.cargaActual || 0;
+            const activos = operator.activos ?? load;
             const index = average > 0 ? load / average : 0;
             result.set(operator.id, {
                 comparable: true,
                 promedioArea: Math.round(average * 100) / 100,
                 indiceCarga: Math.round(index * 100) / 100,
-                sobrecarga: load >= minimo && index > ratio
+                sobrecarga: activos >= minimo && index > ratio
             });
         }
     }
@@ -245,6 +257,8 @@ module.exports = {
     ACTIVE_STATES,
     OVERLOAD_RATIO,
     OVERLOAD_MIN_ACTIVE,
+    pesoCarga,
+    puntosActivos,
     getDayBounds,
     getHourOfDay,
     getClosingDate,

@@ -169,7 +169,7 @@
 			</div>
 			<div class="scroll-x">
 				<table class="rank-table rep-table" style="min-width:900px">
-					<thead><tr><th style="padding-left:24px;width:32px">#</th><th>Operador</th><th class="r" style="width:70px">Casos</th><th class="r" style="width:80px">Resueltos</th><th class="r" style="width:60px">%</th><th class="r" style="width:70px">Prom.</th><th class="r" style="width:110px">P1 / P2 / P3</th><th class="r" style="width:90px" title="Tickets activos ÷ promedio de su área, ahora">Índice de carga</th><th class="r" style="width:70px;padding-right:24px">Puntos</th></tr></thead>
+					<thead><tr><th style="padding-left:24px;width:32px">#</th><th>Operador</th><th class="r" style="width:70px">Casos</th><th class="r" style="width:80px">Resueltos</th><th class="r" style="width:60px">%</th><th class="r" style="width:70px">Prom.</th><th class="r" style="width:110px">P1 / P2 / P3</th><th class="r" style="width:90px" title="Puntos activos ÷ promedio de su área, ahora">Índice de carga</th><th class="r" style="width:70px;padding-right:24px">Puntos</th></tr></thead>
 					<tbody data-op-rows>
 						<% v.operadores.forEach(o => { %>
 							<tr data-op data-area="<%= o.area %>" data-puntos="<%= o.puntos %>" data-resueltos="<%= o.resueltos %>" data-casos="<%= o.casos %>" data-carga="<%= o.indiceCarga === null ? -1 : o.indiceCarga %>">

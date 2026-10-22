@@ -118,19 +118,21 @@ function describeChanges(antes, despues) {
  * y qué tickets superarían la antigüedad. Usa los mismos cálculos del portal.
  */
 function previewRules({ operators = [], tickets = [], rules, now = new Date() }) {
-    const { computeOverload } = require('./metricsService');
+    const { computeOverload, puntosActivos } = require('./metricsService');
     const { agingTickets, formatAge } = require('./dashboardService');
     const { overloadOptions } = require('./rulesService');
     const { AREA_NAMES } = require('./periodReportService');
     const r = mergeRules(rules);
     const carga = o => (o.tickets_asignados || []).length;
-    const ov = computeOverload(operators.map(o => ({ id: o.id, area_designada: o.area_designada, estado_operativo: o.estado_operativo, cargaActual: carga(o) })), overloadOptions(r));
+    const puntos = o => puntosActivos(o.tickets_asignados);
+    const ov = computeOverload(operators.map(o => ({ id: o.id, area_designada: o.area_designada, estado_operativo: o.estado_operativo, cargaActual: puntos(o), activos: carga(o) })), overloadOptions(r));
     const sobrecarga = operators.filter(o => ov.get(o.id)?.sobrecarga).map(o => {
         const x = ov.get(o.id);
         return {
             nombre: o.nombre,
             area: AREA_NAMES[o.area_designada] || o.area_designada,
             carga: carga(o),
+            puntos: puntos(o),
             promedio: Math.round(x.promedioArea * 10) / 10,
             indice: Math.round(x.indiceCarga * 10) / 10
         };

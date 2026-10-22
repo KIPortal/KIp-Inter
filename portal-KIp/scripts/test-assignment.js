@@ -59,9 +59,18 @@ t('Cola de espera: sin asignar y nadie disponible en su área; otra área opcion
     assert.strictEqual(sinOtra.otraArea.SEGURIDAD, null);
 });
 
+t('Sugerencia: a igual elegibilidad, va a quien tiene menos puntos activos', () => {
+    const base = { area_designada: 'WAN', estado_operativo: 'DISPONIBLE', turno: { codigo: 'EN_TURNO', disponible: true } };
+    const ops = [
+        normalizeOperator({ ...base, id: 'a', nombre: 'Ana', tickets_asignados: [{ puntos_complejidad: 10 }] }),
+        normalizeOperator({ ...base, id: 'b', nombre: 'Beto', tickets_asignados: [{ puntos_complejidad: 2 }, { puntos_complejidad: 2 }] })
+    ];
+    assert.strictEqual(suggest(ops, 'WAN', at('10:00')).id, 'b', '2 tickets N1 (4 pts) pesan menos que 1 N4 (10 pts)');
+});
+
 t('normalizeOperator: desde el operador del controlador', () => {
     const n = normalizeOperator({ id: 'a', nombre: 'Ana', area_designada: 'WAN', estado_operativo: 'DISPONIBLE', deGuardia: false, turno: { codigo: 'EN_TURNO', disponible: true }, tickets_asignados: [1, 2] });
-    assert.deepStrictEqual(n, { id: 'a', nombre: 'Ana', area: 'WAN', carga: 2, sobrecarga: false, deGuardia: false, disponible: true, ausente: false });
+    assert.deepStrictEqual(n, { id: 'a', nombre: 'Ana', area: 'WAN', carga: 2, puntosCarga: 4, sobrecarga: false, deGuardia: false, disponible: true, ausente: false });
 });
 
 t('Reglas: valores por defecto y combinación con datos inválidos', () => {

@@ -14,7 +14,8 @@ const {
     getClosingDate,
     getResolutionMinutes,
     getPeriodBounds,
-    computeOverload
+    computeOverload,
+    puntosActivos
 } = require('./metricsService');
 const { AREA_NAMES } = require('./periodReportService');
 const { DEFAULT_RULES, ageLimitFor, overloadOptions, prioridadDe, PRIORIDAD_RANGO } = require('./rulesService');
@@ -186,10 +187,12 @@ function buildCoordinatorPanel({ tickets = [], operators = [], now = new Date(),
             : null
     };
 
-    // ----- Sobrecarga e índice de carga (spec: 1.5× el promedio del área, mínimo 3)
+    // ----- Sobrecarga e índice de carga (spec: puntos activos > 1.5× el promedio del área, mínimo 3 activos)
     const carga = new Map(operators.map(o => [o.id, (o.tickets_asignados || []).length]));
+    const puntosCarga = new Map(operators.map(o => [o.id, puntosActivos(o.tickets_asignados)]));
     const overload = computeOverload(operators.map(o => ({
-        id: o.id, area_designada: o.area_designada, estado_operativo: o.estado_operativo, cargaActual: carga.get(o.id)
+        id: o.id, area_designada: o.area_designada, estado_operativo: o.estado_operativo,
+        cargaActual: puntosCarga.get(o.id), activos: carga.get(o.id)
     })), overloadOptions(rules));
 
     // ----- Cola de espera: sin asignar y nadie disponible en su área (§4)
@@ -233,6 +236,7 @@ function buildCoordinatorPanel({ tickets = [], operators = [], now = new Date(),
             areaNombre: AREA_NAMES[o.area_designada] || o.area_designada || 'General',
             estado: { grupo: shiftGroup(o.turno), etiqueta: o.turno?.etiqueta || 'Fuera de turno' },
             carga: carga.get(o.id) || 0,
+            puntosCarga: puntosCarga.get(o.id) || 0,
             resueltos: r.resueltos,
             puntos: r.puntos,
             p1: r.p1, p2: r.p2, p3: r.p3,
@@ -244,9 +248,8 @@ function buildCoordinatorPanel({ tickets = [], operators = [], now = new Date(),
 
     // ----- Carga por área: saturación = puntos abiertos ÷ capacidad de quienes están en turno.
     // Capacidad = personas en turno o de guardia (no ausentes) × puntos por persona (Reglas).
-    // Un ticket sin prioridad pesa como P3: es trabajo aunque aún no tenga puntos.
+    // Un ticket sin clasificar pesa como nivel 1 (pesoCarga): es trabajo aunque aún no tenga puntos.
     const puntosPorPersona = (rules.capacidad || DEFAULT_RULES.capacidad).puntosPorPersona;
-    const pesoTicket = t => (t.puntos_complejidad > 0 ? t.puntos_complejidad : 1);
     const areaCodes = new Set([
         ...tickets.filter(t => ACTIVE_STATES.includes(t.estado_actual) || inRange(t.createdAt, hoy)).map(t => t.area_designada || 'GENERAL'),
         ...operators.map(o => o.area_designada || 'GENERAL')
@@ -261,7 +264,7 @@ function buildCoordinatorPanel({ tickets = [], operators = [], now = new Date(),
         const ops = operadores.filter(o => o.area === codigo);
         const personas = operators.filter(o => (o.area_designada || 'GENERAL') === codigo
             && o.estado_operativo !== 'AUSENTE' && shiftGroup(o.turno) !== 'fuera').length;
-        const puntos = abiertos.reduce((acc, t) => acc + pesoTicket(t), 0);
+        const puntos = puntosActivos(abiertos);
         const capacidad = personas * puntosPorPersona;
         return {
             codigo,
@@ -306,7 +309,7 @@ function buildCoordinatorPanel({ tickets = [], operators = [], now = new Date(),
         alertas.push({
             tipo: 'sobrecarga',
             titulo: `${o.nombre} · sobrecarga`,
-            detalle: `${o.carga} activos · promedio del área ${String(round1(ov.promedioArea)).replace('.', ',')} · índice`,
+            detalle: `${o.carga} activos · ${o.puntosCarga} pts · promedio del área ${String(round1(ov.promedioArea)).replace('.', ',')} pts · índice`,
             valor: String(round1(ov.indiceCarga)).replace('.', ','),
             nivel: 'rojo'
         });

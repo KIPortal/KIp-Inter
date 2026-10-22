@@ -108,7 +108,7 @@
 					<div class="card-head" style="padding-bottom:6px;gap:14px">
 						<h2 id="h-areas">Carga por área</h2>
 						<span class="hint">Pulsa un área para ver a sus operadores</span>
-						<button type="button" class="info" title="Saturación: puntos de los tickets abiertos del área ÷ capacidad de quienes están en turno o de guardia. P1=8, P2=5, P3 y sin prioridad=1; cada persona aguanta los puntos que fija Administración &gt; Reglas." aria-label="Saturación: puntos de los tickets abiertos del área ÷ capacidad de quienes están en turno o de guardia. P1=8, P2=5, P3 y sin prioridad=1; cada persona aguanta los puntos que fija Administración &gt; Reglas."><%- icono.info %></button>
+						<button type="button" class="info" title="Saturación: puntos de los tickets abiertos del área ÷ capacidad de quienes están en turno o de guardia. N1=2, N2=4, N3=8, N4=10 y sin clasificar=2; cada persona aguanta los puntos que fija Administración &gt; Reglas." aria-label="Saturación: puntos de los tickets abiertos del área ÷ capacidad de quienes están en turno o de guardia. N1=2, N2=4, N3=8, N4=10 y sin clasificar=2; cada persona aguanta los puntos que fija Administración &gt; Reglas."><%- icono.info %></button>
 						<span class="grow"></span>
 						<span class="legend"><i class="bg-blue"></i>Menos de 40 %</span>
 						<span class="legend"><i class="bg-amber"></i>40–59 %</span>
@@ -166,7 +166,7 @@
 													<div class="op-bars">
 														<div>
 															<div class="track"><span class="bar-fill <%= o.sobrecarga ? 'bg-amber' : 'bg-blue' %>" style="width: <%= o.carga / maxV * 100 %>%; animation-delay: <%= j * 60 %>ms"></span></div>
-															<span class="lbl"><strong class="<%= o.sobrecarga ? 't-orange' : 't-accent' %>"><%= o.carga %></strong> activos</span>
+															<span class="lbl"><strong class="<%= o.sobrecarga ? 't-orange' : 't-accent' %>"><%= o.carga %></strong> activos · <%= o.puntosCarga %> pts</span>
 														</div>
 														<div>
 															<div class="track"><span class="bar-fill bg-green" style="width: <%= o.resueltos / maxV * 100 %>%; animation-delay: <%= j * 60 + 120 %>ms"></span></div>
@@ -333,7 +333,7 @@
 				<% } else { %>
 				<table class="rank-table">
 					<thead>
-						<tr><th style="width:20px">#</th><th>Operador</th><th class="r">Puntos</th><th class="r">P1 / P2 / P3</th><th class="r" title="Tickets activos ÷ promedio de su área">Índice de carga</th></tr>
+						<tr><th style="width:20px">#</th><th>Operador</th><th class="r">Puntos</th><th class="r">P1 / P2 / P3</th><th class="r" title="Puntos activos ÷ promedio de su área">Índice de carga</th></tr>
 					</thead>
 					<tbody>
 						<% panel.ranking.forEach((o, i) => { %>

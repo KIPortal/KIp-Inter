@@ -57,10 +57,10 @@ const tickets = [
         const wan = panel.areas.find(a => a.codigo === 'WAN');
         assert.strictEqual(wan.abiertos, 5);
         assert.strictEqual(wan.total, 7 - 1 + 1, '6 recibidos hoy en WAN + 1 de ayer');
-        assert.strictEqual(wan.puntos, 8 + 1 + 1 + 1 + 1, 'sin prioridad pesa como P3');
+        assert.strictEqual(wan.puntos, 8 + 1 + 2 + 2 + 2, 'sin puntos pesa como nivel 1 (2 pts)');
         assert.strictEqual(wan.personas, 3, 'en turno y de guardia');
         assert.strictEqual(wan.capacidad, 3 * 16);
-        assert.strictEqual(wan.porcentaje, Math.round(12 / 48 * 100));
+        assert.strictEqual(wan.porcentaje, Math.round(15 / 48 * 100));
         assert.strictEqual(wan.operadores.length, 3);
         const tel = panel.areas.find(a => a.codigo === 'TELEFONIA');
         assert.ok(tel, 'área con operador aparece aunque no tenga abiertos');

@@ -15,7 +15,8 @@ const {
     getResolutionMinutes,
     getBusinessResolutionMinutes,
     formatMinutes,
-    computeOverload
+    computeOverload,
+    puntosActivos
 } = require('./metricsService');
 
 // Catálogo vivo de áreas (tabla Area); arranca con las 7 originales
@@ -129,19 +130,23 @@ function buildPeriodReport({ tickets, operators, range, area }) {
     // (el bloque por área se arma después de calcular la sobrecarga)
 
     // --- Por operador (carga actual con las reglas de sobrecarga de §7) ---
-    const withLoad = scopedOperators.map(o => ({
-        id: o.id,
-        area_designada: o.area_designada,
-        estado_operativo: o.estado_operativo,
-        cargaActual: scoped.filter(t => t.asignado_a?.id === o.id && ACTIVE_STATES.includes(t.estado_actual)).length
-    }));
-    // La sobrecarga se compara siempre contra su área completa, aunque se filtre
-    const overloadBase = (operators || []).map(o => ({
-        id: o.id,
-        area_designada: o.area_designada,
-        estado_operativo: o.estado_operativo,
-        cargaActual: allTickets.filter(t => t.asignado_a?.id === o.id && ACTIVE_STATES.includes(t.estado_actual)).length
-    }));
+    const activosDe = (list, id) => list.filter(t => t.asignado_a?.id === id && ACTIVE_STATES.includes(t.estado_actual));
+    const withLoad = scopedOperators.map(o => {
+        const activos = activosDe(scoped, o.id);
+        return { id: o.id, activos: activos.length, puntosCarga: puntosActivos(activos) };
+    });
+    // La sobrecarga se compara siempre contra su área completa, aunque se filtre,
+    // y por los puntos activos acumulados (mínimo 3 activos)
+    const overloadBase = (operators || []).map(o => {
+        const activos = activosDe(allTickets, o.id);
+        return {
+            id: o.id,
+            area_designada: o.area_designada,
+            estado_operativo: o.estado_operativo,
+            cargaActual: puntosActivos(activos),
+            activos: activos.length
+        };
+    });
     const overload = computeOverload(overloadBase);
     const porOperador = scopedOperators.map(o => {
         const mine = allTickets.filter(t => t.asignado_a?.id === o.id);
@@ -158,7 +163,8 @@ function buildPeriodReport({ tickets, operators, range, area }) {
             puntos: counts.puntos,
             ptsPorTicket: counts.ptsPorTicket,
             p1: counts.p1, p2: counts.p2, p3: counts.p3, sinPrioridad: counts.sinPrioridad,
-            activos: withLoad.find(w => w.id === o.id)?.cargaActual ?? 0,
+            activos: withLoad.find(w => w.id === o.id)?.activos ?? 0,
+            puntosCarga: withLoad.find(w => w.id === o.id)?.puntosCarga ?? 0,
             ...timeMetrics(counts._resolved),
             indiceCarga: carga.comparable ? Math.round(carga.indiceCarga * 100) / 100 : null,
             sobrecarga: Boolean(carga.sobrecarga),
