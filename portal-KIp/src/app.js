@@ -35,7 +35,9 @@ if (!sessionSecret) {
 
 // Detrás de un túnel (cloudflared, ngrok) o un proxy local, confiar en X-Forwarded-Proto
 // solo cuando la conexión viene de la misma máquina; así la cookie segura de producción funciona con https.
-app.set('trust proxy', 'loopback');
+// En un contenedor detrás del proxy del hosting (Railway, Fly.io) usa TRUST_PROXY=1 (un salto).
+const trustProxy = (process.env.TRUST_PROXY || '').trim();
+app.set('trust proxy', /^\d+$/.test(trustProxy) ? Number(trustProxy) : (trustProxy || 'loopback'));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '..', 'views'));
 // Versión de los archivos estáticos: cambia en cada arranque para que el navegador no use JS/CSS viejos

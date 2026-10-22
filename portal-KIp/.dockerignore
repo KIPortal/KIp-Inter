@@ -1,0 +1,9 @@
+node_modules
+.env
+.env.*
+*.env
+.graph-sesion.json
+.graph-estado.json
+fotos-perfil
+registros
+*.log
