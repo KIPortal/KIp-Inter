@@ -396,8 +396,9 @@
 		});
 	}
 
-	// Tipos de caso del área (Administración): el nivel da los puntos (N1=2, N2=4, N3=8, N4=10)
-	const NIVEL_PTS = { 1: 2, 2: 4, 3: 8, 4: 10 };
+	// Tipos de caso del área (Administración): el nivel da los puntos; puntos y nombres vienen del servidor
+	const NV = DATOS.niveles || { puntos: {}, nombres: {} };
+	const nivelTexto = n => 'nivel ' + n + (NV.nombres[n] ? ' · ' + NV.nombres[n] : '') + ' (' + NV.puntos[n] + ' pts)';
 	const TIPOS = DATOS.tiposCaso || [];
 
 	// Al tomar: sin prioridad (p. ej. llegó por correo) se elige partiendo de la sugerida;
@@ -412,13 +413,13 @@
 			delArea.length ? h('optgroup', { label: 'Casos comunes de tu área' },
 				delArea.map(x => h('option', { value: 'id:' + x.id, text: x.nombre + ' · N' + x.nivel + ' (' + x.puntos + ' pts)' }))) : null,
 			h('optgroup', { label: 'Otro (no está en la lista)' },
-				[1, 2, 3, 4].map(n => h('option', { value: 'n:' + n, text: 'Otro · nivel ' + n + ' (' + NIVEL_PTS[n] + ' pts)' })))) : null;
+				[1, 2, 3, 4].map(n => h('option', { value: 'n:' + n, text: 'Otro · ' + nivelTexto(n) })))) : null;
 		const body = [
 			pideP ? h('span', { class: 'flabel', text: t.sugerida ? 'Prioridad sugerida por palabras clave: ' + t.sugerida + '. Confírmala o cámbiala' : 'Elige la prioridad según la urgencia del caso' }) : null,
 			pideP ? seg([['P1', 'P1 Crítica'], ['P2', 'P2 Media'], ['P3', 'P3 Baja']], elegida, k => { elegida = k; }) : null,
 			pideTipo ? h('span', { class: 'flabel', text: 'Tipo de caso' }) : null,
 			tipoSel,
-			h('span', { class: 't2', style: 'font-size:12px', text: pideTipo ? 'El nivel de dificultad da los puntos que suma a tu carga al resolverlo (N1 = 2, N2 = 4, N3 = 8, N4 = 10). El coordinador puede corregirlo.' : 'El coordinador puede corregirla.' })
+			h('span', { class: 't2', style: 'font-size:12px', text: pideTipo ? 'El nivel de dificultad da los puntos que suma a tu carga al resolverlo (' + [1, 2, 3, 4].map(n => 'N' + n + ' = ' + NV.puntos[n]).join(', ') + '). El coordinador puede corregirlo.' : 'El coordinador puede corregirla.' })
 		];
 		openSheet((t.cola === 'asignados' ? 'Empezar ' : 'Tomar ') + t.code, t.subject, body, t.cola === 'asignados' ? 'Empezar' : 'Tomar', async () => {
 			if (!elegida) throw new Error('Elige una prioridad');

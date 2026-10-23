@@ -7,6 +7,8 @@ const { textoDeCorreo, extraerCorreo, quitarCitado } = require('./conversationSe
 const { loadConfig } = require('./configService');
 const { sugerirPrioridad } = require('./rulesService');
 const graphAuth = require('./graphAuthService');
+const graphWebhook = require('./graphWebhookService');
+const enVivo = require('./liveUpdatesService');
 const { destinoDeBuzon, buzonParaResponder, textoError, partesCarpeta, etiquetaBuzon, BANDEJA_RE } = require('./buzonService');
 
 // Estas variables deben ir en el archivo .env
@@ -23,6 +25,13 @@ const LOTE = 25;
 const LOTES_POR_VUELTA = 4;
 // La última revisión de cada buzón se anota en la tabla cada 5 min, o al cambiar su error
 const ANOTAR_CADA_MS = 5 * 60 * 1000;
+
+// Intentos por correo antes de dejarlo atrás (en memoria: se reinicia al reiniciar el portal)
+const MAX_INTENTOS = 3;
+const fallos = new Map();
+// Si la base no responde, el correo no tiene la culpa: se reintenta sin contar el intento
+const esDeConexion = e => /^P10\d\d$/.test(String(e?.code || '')) || e?.name === 'PrismaClientInitializationError';
+const ASUNTO_VACIO = '(sin asunto)';
 
 const avisados = new Set();
 const avisarUnaVez = (msg) => { if (!avisados.has(msg)) { avisados.add(msg); console.warn(msg); } };
@@ -219,6 +228,7 @@ async function procesarCorreo(message, buzon, cargarReglas, db = prisma) {
 
     // 1. Código de incidencia: el del asunto ("INC-XXX") o uno nuevo
     const match = String(message.subject || '').match(/INC-\d+/i);
+    const asunto = String(message.subject || '').trim() || ASUNTO_VACIO;
     const codigoIncidencia = match ? match[0].toUpperCase() : await getNextTicketCode(db);
 
     // 2. Sumar el correo a la conversación si el ticket ya existe
@@ -242,10 +252,10 @@ async function procesarCorreo(message, buzon, cargarReglas, db = prisma) {
         await db.ticket.create({
             data: {
                 codigo_incidencia: codigoIncidencia,
-                asunto: message.subject,
+                asunto,
                 descripcion: message.bodyPreview,
                 origen_ingesta: 'CORREO',
-                remitente: message.from.emailAddress.address,
+                remitente: message.from?.emailAddress?.address || null,
                 estado_actual: 'NUEVO',
                 area_designada: destino.area_designada,
                 ...(destino.subgrupo_id ? { subgrupo_id: destino.subgrupo_id } : {}),
@@ -302,10 +312,32 @@ async function leerLote(buzon) {
         return reglas;
     };
 
+    let detenido = false; // un correo falló y se reintenta en la próxima vuelta
+
     for (const message of messages.value) {
         if (soloLectura && estado.ids.includes(message.id)) continue; // ya procesado
         console.log(`[Graph API] Procesando correo${buzon.correo ? ` (${etiquetaBuzon(buzon)})` : ''}: ${message.subject}`);
-        await procesarCorreo(message, buzon, cargarReglas);
+        try {
+            await procesarCorreo(message, buzon, cargarReglas);
+            fallos.delete(message.id);
+        } catch (error) {
+            if (esDeConexion(error)) {
+                console.error('❌ [Graph API] La base de datos no responde; se reintenta en la próxima vuelta:', error.message);
+                detenido = true;
+                break;
+            }
+            // Un correo que falla no traba a los demás: se reintenta en las próximas vueltas
+            // y, si sigue fallando, se deja atrás (queda en el registro) para que entren los siguientes
+            const intentos = (fallos.get(message.id) || 0) + 1;
+            if (intentos < MAX_INTENTOS) {
+                fallos.set(message.id, intentos);
+                console.error(`❌ [Graph API] No se pudo procesar "${message.subject || ASUNTO_VACIO}" (intento ${intentos} de ${MAX_INTENTOS}):`, error.message);
+                detenido = true;
+                break;
+            }
+            fallos.delete(message.id);
+            console.error(`❌ [Graph API] Se omite "${message.subject || ASUNTO_VACIO}" (${message.id}) tras ${MAX_INTENTOS} intentos:`, error.message);
+        }
 
         // Que no se vuelva a procesar: avanzar la marca (solo lectura) o marcarlo como leído
         if (soloLectura) {
@@ -317,7 +349,10 @@ async function leerLote(buzon) {
                 .patch({ isRead: true });
         }
     }
-    return messages.value.length;
+    // Las pantallas abiertas se enteran ya, sin esperar su próxima revisión
+    enVivo.avisar();
+    // Si un correo se detuvo para reintentarlo, la vuelta termina aquí
+    return detenido ? 0 : messages.value.length;
 }
 
 /**
@@ -495,6 +530,14 @@ function iniciarIngesta() {
     setInterval(revisarBuzones, cada * 1000);
 }
 
+/** Con el portal ya escuchando: aviso inmediato de Microsoft si GRAPH_WEBHOOK_URL está configurado (buzón del .env). */
+function activarAvisoInmediato() {
+    if (!String(process.env.GRAPH_WEBHOOK_URL || '').trim()) return Promise.resolve(null);
+    const c = conexion(buzonLegado());
+    if (!c) return Promise.resolve(null);
+    return graphWebhook.iniciar({ client: c.client, rutaBuzon: c.ruta, revisar: revisarBuzones });
+}
+
 module.exports = {
     iniciarIngesta,
     procesarCorreosEntrantes,
@@ -505,6 +548,7 @@ module.exports = {
     listarCarpetas,
     buzonDeRespuesta,
     anotarRevision,
+    activarAvisoInmediato,
     intervaloSegundos,
     registrarRespuestaCliente,
     registrarRespuestaOperador,

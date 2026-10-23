@@ -35,7 +35,9 @@ if (!sessionSecret) {
 
 // Detrás de un túnel (cloudflared, ngrok) o un proxy local, confiar en X-Forwarded-Proto
 // solo cuando la conexión viene de la misma máquina; así la cookie segura de producción funciona con https.
-app.set('trust proxy', 'loopback');
+// En un contenedor detrás del proxy del hosting (Railway, Fly.io) usa TRUST_PROXY=1 (un salto).
+const trustProxy = (process.env.TRUST_PROXY || '').trim();
+app.set('trust proxy', /^\d+$/.test(trustProxy) ? Number(trustProxy) : (trustProxy || 'loopback'));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '..', 'views'));
 // Versión de los archivos estáticos: cambia en cada arranque para que el navegador no use JS/CSS viejos
@@ -71,6 +73,14 @@ app.get('/api/cambios', requireAuth, async (req, res) => {
         res.status(500).json({ success: false, error: 'No se pudo revisar si hay cambios' });
     }
 });
+
+// Lo mismo, empujado: el servidor avisa a las pestañas abiertas apenas cambia el sello
+const enVivo = require('./services/liveUpdatesService');
+const difusor = enVivo.configurar(enVivo.crearDifusor({ cargarSello: () => loadStamp(prisma) }));
+app.get('/api/cambios/stream', requireAuth, (req, res) => difusor.suscribir(req, res));
+
+// Aviso de Microsoft Graph cuando llega un correo (solo si GRAPH_WEBHOOK_URL está configurado)
+app.post('/api/graph/notificaciones', require('./services/graphWebhookService').recibir);
 
 app.use('/api/auth', authRoutes);
 app.use('/auth', authRoutes);

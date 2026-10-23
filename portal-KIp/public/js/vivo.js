@@ -1,7 +1,9 @@
-/* Actualización en vivo: si alguien asigna, resuelve o edita algo, la página
- * se recarga sola. Consulta /api/cambios cada 20 s mientras la pestaña está a
- * la vista. Si la persona está escribiendo, tiene una ventana abierta o una
- * selección a medias, no la interrumpe: muestra un aviso para actualizar. */
+/* Actualización en vivo: si alguien asigna, resuelve o edita algo, o llega un
+ * correo, la página se recarga sola. Mientras la pestaña está a la vista escucha
+ * /api/cambios/stream (el servidor avisa apenas cambia algo); si esa conexión no
+ * está disponible, consulta /api/cambios cada 20 s. Si la persona está
+ * escribiendo, tiene una ventana abierta o una selección a medias, no la
+ * interrumpe: muestra un aviso para actualizar. */
 (function () {
 	'use strict';
 	if (!document.body || !document.body.hasAttribute('data-vivo')) return;
@@ -56,20 +58,48 @@
 		document.body.appendChild(aviso);
 	}
 
+	function alSello(nuevo) {
+		if (!nuevo) return;
+		if (sello === null) { sello = nuevo; return; }
+		if (nuevo === sello) return;
+		if (ocupado()) mostrarAviso(); else recargar();
+	}
+
 	async function revisar() {
 		if (document.hidden) return;
 		try {
 			const r = await fetch('/api/cambios', { headers: { Accept: 'application/json' }, cache: 'no-store' });
 			if (!r.ok) return;
 			const j = await r.json();
-			if (!j.success || !j.sello) return;
-			if (sello === null) { sello = j.sello; return; }
-			if (j.sello === sello) return;
-			if (ocupado()) mostrarAviso(); else recargar();
+			if (j.success) alSello(j.sello);
 		} catch (e) { /* sin red: se reintenta en la próxima vuelta */ }
 	}
 
+	// Canal empujado: solo con la pestaña a la vista (el navegador limita las conexiones abiertas)
+	let canal = null;
+	let ultimoEvento = 0;
+	function abrirCanal() {
+		if (canal || !window.EventSource || document.hidden) return;
+		canal = new EventSource('/api/cambios/stream');
+		canal.addEventListener('cambio', ev => {
+			ultimoEvento = Date.now();
+			try { alSello(JSON.parse(ev.data).sello); } catch (e) { /* evento dañado */ }
+		});
+		canal.addEventListener('latido', () => { ultimoEvento = Date.now(); });
+		canal.addEventListener('open', () => { ultimoEvento = Date.now(); });
+	}
+	function cerrarCanal() {
+		if (canal) { canal.close(); canal = null; }
+	}
+	const canalVivo = () => canal && canal.readyState === 1 && Date.now() - ultimoEvento < 60000;
+
 	revisar();
-	setInterval(revisar, CADA);
-	document.addEventListener('visibilitychange', () => { if (!document.hidden) revisar(); });
+	abrirCanal();
+	// Respaldo: si el canal no está conectado, se pregunta como antes
+	setInterval(() => { if (!canalVivo()) revisar(); }, CADA);
+	document.addEventListener('visibilitychange', () => {
+		if (document.hidden) { cerrarCanal(); return; }
+		revisar();
+		abrirCanal();
+	});
 })();

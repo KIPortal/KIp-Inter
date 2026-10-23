@@ -84,11 +84,11 @@ function averageResolutionMinutes(tickets) {
     return count > 0 ? total / count : null;
 }
 
-/** Texto legible: "45 min", "1.5 h" o "N/A". */
+/** Texto legible: "45 min", "1,5 h" o "N/A" (coma decimal, como el resto del portal). */
 function formatMinutes(minutes) {
     if (minutes === null || minutes === undefined || !Number.isFinite(minutes)) return 'N/A';
     const rounded = Math.round(minutes);
-    return rounded >= 60 ? `${(rounded / 60).toFixed(1)} h` : `${rounded} min`;
+    return rounded >= 60 ? `${(rounded / 60).toFixed(1).replace('.', ',')} h` : `${rounded} min`;
 }
 
 /**

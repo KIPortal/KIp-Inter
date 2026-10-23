@@ -14,7 +14,7 @@
 		done: toLen(Math.min(t.fin - t.inicio, ahoraMin - t.inicio)).toFixed(1) + ' ' + CIRC.toFixed(1)
 	};
 	const activos = p.mezcla.total;
-	const datos = { panel: p, usuario: { id: currentUser.id }, tiposCaso: locals.tiposCaso || [] };
+	const datos = { panel: p, usuario: { id: currentUser.id }, tiposCaso: locals.tiposCaso || [], niveles: locals.niveles || null };
 	const PR = { P1: 'var(--red-t)', P2: 'var(--orange-t)', P3: 'var(--t2)', SP: 'var(--t3)' };
 %>
 <!DOCTYPE html>

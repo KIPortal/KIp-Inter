@@ -27,13 +27,18 @@ require.cache[msalPath] = { id: msalPath, filename: msalPath, loaded: true, expo
 
 // Prisma simulado: la ingesta crea tickets en memoria
 const ticketsCreados = [];
+let asuntoQueFalla = null; // simula un correo que la base rechaza
 const prismaPath = require.resolve('../src/config/prisma');
 require.cache[prismaPath] = { id: prismaPath, filename: prismaPath, loaded: true, exports: {
     INCLUDE_DELETED: {},
     ticket: {
         findMany: async () => ticketsCreados.map(t => ({ codigo_incidencia: t.codigo_incidencia })),
         findUnique: async () => null,
-        create: async ({ data }) => { ticketsCreados.push(data); return data; }
+        create: async ({ data }) => {
+            if (data.asunto === asuntoQueFalla) throw new Error('fallo simulado');
+            if (data.asunto === 'Sin base') throw Object.assign(new Error('Can\'t reach database server'), { code: 'P1001' });
+            ticketsCreados.push(data); return data;
+        }
     },
     configuracion: { findMany: async () => [] }
 } };
@@ -215,6 +220,50 @@ const { explicarError } = require('./graph-login');
         assert.deepStrictEqual(graphAuth.leerEstado(archivoEstado), { desde: '2026-10-19T10:07:00.000Z', ids: ['nuevo'] });
         correosSimulados = [];
     });
+    await prueba('Un correo sin asunto ni remitente entra igual, como "(sin asunto)"', async () => {
+        graphAuth.guardarEstado({ desde: '2026-10-19T10:00:00.000Z', ids: [] }, archivoEstado);
+        correosSimulados = [{ id: 'vacio', subject: null, bodyPreview: 'hola', receivedDateTime: '2026-10-19T10:08:00Z' }];
+        ticketsCreados.length = 0;
+        await mail.procesarCorreosEntrantes();
+        assert.deepStrictEqual(ticketsCreados.map(t => [t.asunto, t.remitente]), [['(sin asunto)', null]]);
+        assert.deepStrictEqual(graphAuth.leerEstado(archivoEstado).ids, ['vacio']);
+        correosSimulados = [];
+    });
+    await prueba('Un correo que falla se reintenta 3 veces y luego se deja atrás sin trabar a los siguientes', async () => {
+        graphAuth.guardarEstado({ desde: '2026-10-19T10:00:00.000Z', ids: [] }, archivoEstado);
+        correosSimulados = [
+            { id: 'malo', subject: 'Malo', bodyPreview: '', from: { emailAddress: { address: 'c@x.com' } }, receivedDateTime: '2026-10-19T10:09:00Z' },
+            { id: 'bueno', subject: 'Bueno', bodyPreview: '', from: { emailAddress: { address: 'c@x.com' } }, receivedDateTime: '2026-10-19T10:10:00Z' }
+        ];
+        asuntoQueFalla = 'Malo';
+        ticketsCreados.length = 0;
+        const errorOriginal = console.error;
+        console.error = () => {};
+        try {
+            assert.strictEqual(await mail.procesarCorreosEntrantes(), 0, 'se detiene para reintentar');
+            await mail.procesarCorreosEntrantes();
+            assert.deepStrictEqual(ticketsCreados, [], 'en los dos primeros intentos no salta al siguiente');
+            assert.deepStrictEqual(graphAuth.leerEstado(archivoEstado).ids, [], 'la marca no avanza mientras se reintenta');
+            await mail.procesarCorreosEntrantes();
+        } finally {
+            console.error = errorOriginal;
+            asuntoQueFalla = null;
+        }
+        assert.deepStrictEqual(ticketsCreados.map(t => t.asunto), ['Bueno']);
+        assert.deepStrictEqual(graphAuth.leerEstado(archivoEstado), { desde: '2026-10-19T10:10:00.000Z', ids: ['bueno'] });
+        correosSimulados = [];
+    });
+    await prueba('Si la base no responde, no cuenta como intento: el correo nunca se pierde', async () => {
+        graphAuth.guardarEstado({ desde: '2026-10-19T10:00:00.000Z', ids: [] }, archivoEstado);
+        correosSimulados = [{ id: 'sinbase', subject: 'Sin base', bodyPreview: '', from: { emailAddress: { address: 'c@x.com' } }, receivedDateTime: '2026-10-19T10:11:00Z' }];
+        const errorOriginal = console.error;
+        console.error = () => {};
+        try {
+            for (let i = 0; i < 5; i++) await mail.procesarCorreosEntrantes();
+        } finally { console.error = errorOriginal; }
+        assert.deepStrictEqual(graphAuth.leerEstado(archivoEstado).ids, [], 'la marca no avanza');
+        correosSimulados = [];
+    });
     await prueba('En solo lectura no envía respuestas', async () => {
         llamadas.length = 0;
         const r = await mail.enviarCorreo({ para: 'cliente@x.com', asunto: 'Re', texto: 'Hola' });
@@ -222,6 +271,43 @@ const { explicarError } = require('./graph-login');
         assert.deepStrictEqual(llamadas, []);
     });
     delete process.env.GRAPH_SOLO_LECTURA;
+
+    console.log('\n--- Aviso inmediato de correos nuevos (GRAPH_WEBHOOK_URL) ---');
+    const webhook = require('../src/services/graphWebhookService');
+    await prueba('Solo se activa con una dirección https', () => {
+        assert.strictEqual(webhook.urlNotificaciones({}), null);
+        assert.strictEqual(webhook.urlNotificaciones({ GRAPH_WEBHOOK_URL: 'http://x.com' }), null);
+        assert.strictEqual(webhook.urlNotificaciones({ GRAPH_WEBHOOK_URL: 'https://abc.trycloudflare.com/' }), 'https://abc.trycloudflare.com/api/graph/notificaciones');
+        assert.strictEqual(webhook.recursoBandeja('/me'), "me/mailFolders('inbox')/messages");
+        assert.strictEqual(webhook.recursoBandeja('/users/noc%40x.com'), "users/noc%40x.com/mailFolders('inbox')/messages");
+    });
+    const respuesta = () => ({ code: null, body: null, tipo: null,
+        status(c) { this.code = c; return this; }, type(t) { this.tipo = t; return this; },
+        send(b) { this.body = b; return this; }, sendStatus(c) { this.code = c; return this; } });
+    await prueba('Sin GRAPH_WEBHOOK_URL no pide nada a Microsoft', async () => {
+        llamadas.length = 0;
+        assert.strictEqual(await webhook.iniciar({ client: { api: () => { throw new Error('no debía llamar'); } }, rutaBuzon: '/me', revisar() {}, env: {} }), null);
+    });
+    await prueba('Crea la suscripción, responde la validación y revisa el buzón al recibir un aviso válido', async () => {
+        let pedido = null, revisiones = 0;
+        const client = { api: ruta => ({ post: async b => { pedido = { ruta, b }; return { id: 'sub-1' }; }, patch: async () => {} }) };
+        const sub = await webhook.iniciar({ client, rutaBuzon: '/me', revisar: () => { revisiones++; }, env: { GRAPH_WEBHOOK_URL: 'https://abc.trycloudflare.com' }, timers: { setInterval: () => ({}) } });
+        assert.strictEqual(sub.id, 'sub-1');
+        assert.strictEqual(pedido.ruta, '/subscriptions');
+        assert.strictEqual(pedido.b.changeType, 'created');
+        assert.strictEqual(pedido.b.resource, "me/mailFolders('inbox')/messages");
+        assert.ok(pedido.b.clientState && Date.parse(pedido.b.expirationDateTime) > Date.now());
+        const v = respuesta();
+        webhook.recibir({ query: { validationToken: 'tok 1' } }, v);
+        assert.deepStrictEqual([v.code, v.tipo, v.body], [200, 'text/plain', 'tok 1']);
+        const falso = respuesta();
+        webhook.recibir({ query: {}, body: { value: [{ clientState: 'otro' }] } }, falso);
+        const bueno = respuesta();
+        webhook.recibir({ query: {}, body: { value: [{ clientState: pedido.b.clientState }] } }, bueno);
+        await new Promise(r => setImmediate(r));
+        assert.deepStrictEqual([falso.code, bueno.code], [202, 202]);
+        assert.strictEqual(revisiones, 1, 'solo el aviso con el clientState correcto dispara la revisión');
+    });
 
     console.log('\n--- Mensajes de ayuda del inicio de sesión ---');
     await prueba('Explica los errores comunes en español', () => {

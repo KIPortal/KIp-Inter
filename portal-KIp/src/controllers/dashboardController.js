@@ -11,7 +11,10 @@ const { AREA_NAMES } = require('../services/periodReportService');
 const { MAPA_VIEWBOX, SHAPES: MAPA_SHAPES } = require('../services/mapaVenezuelaShapes');
 const { loadConfig } = require('../services/configService');
 const { getNextTicketCode } = require('../services/ticketCodeService');
-const { tipoCasoVista } = require('../services/tipoCasoService');
+const { tipoCasoVista, NIVEL_PUNTOS, NIVEL_NOMBRE } = require('../services/tipoCasoService');
+
+// Puntos y nombre de cada nivel para las pantallas (una sola fuente: tipoCasoService)
+const NIVELES = { puntos: NIVEL_PUNTOS, nombres: NIVEL_NOMBRE };
 
 const ticketRelations = {
     asignado_a: { select: { id: true, nombre: true, email: true, rol: true, area_designada: true, estado_operativo: true, foto: true } },
@@ -19,11 +22,15 @@ const ticketRelations = {
     tipo_caso: { select: { nombre: true, nivel: true, minutos_estimados: true } }
 };
 
-// Tipos de caso activos para elegirlos al tomar o editar un ticket (vacío si falta la migración)
+// Tipos de caso activos para elegirlos al tomar o editar un ticket (vacío si falta la migración).
+// Se guardan en memoria: cambian solo desde Administración, que llama a olvidarTiposCaso().
+let tiposEnMemoria = null;
+function olvidarTiposCaso() { tiposEnMemoria = null; }
 async function loadTiposCaso() {
     try {
-        const tipos = await prisma.tipoCaso.findMany({ where: { activo: true }, orderBy: [{ area_codigo: 'asc' }, { nivel: 'asc' }, { nombre: 'asc' }] });
-        return tipos.map(tipoCasoVista);
+        if (!tiposEnMemoria) tiposEnMemoria = await prisma.tipoCaso.findMany({ where: { activo: true }, orderBy: [{ area_codigo: 'asc' }, { nivel: 'asc' }, { nombre: 'asc' }] });
+        // La vista se arma en cada carga: el nombre del área puede cambiar
+        return tiposEnMemoria.map(tipoCasoVista);
     } catch (error) {
         console.error('Tipos de caso no disponibles (¿migración pendiente?):', String(error.message).trim().split('\n').pop());
         return [];
@@ -132,7 +139,8 @@ async function renderTickets(req, res) {
             siguienteCodigo,
             enTurno: operadores.filter(o => o.turno?.enTurno).length,
             plantillas: config.plantillas,
-            tiposCaso
+            tiposCaso,
+            niveles: NIVELES
         });
     } catch (error) {
         console.error('Error al cargar tickets:', error);
@@ -202,7 +210,7 @@ async function renderOperatorDashboard(req, res) {
             entrantes, mios, resueltos, turno, horario, deGuardia, traspaso, traspasoTickets,
             rules: config.reglas, now: ahora
         });
-        return res.render('operator-dashboard', { titulo: 'Mi panel', currentUser: req.user, panel, tiposCaso });
+        return res.render('operator-dashboard', { titulo: 'Mi panel', currentUser: req.user, panel, tiposCaso, niveles: NIVELES });
     } catch (error) {
         console.error('Error al cargar el panel del operador:', error);
         return res.status(500).send('Error en el servidor');
@@ -216,4 +224,4 @@ function renderMyPanel(req, res) {
     return renderOperatorDashboard(req, res);
 }
 
-module.exports = { renderDashboard, renderTickets, renderMyPanel, loadOperatorsWithShift };
+module.exports = { renderDashboard, renderTickets, renderMyPanel, loadOperatorsWithShift, olvidarTiposCaso };
