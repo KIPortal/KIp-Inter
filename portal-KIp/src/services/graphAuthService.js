@@ -158,8 +158,17 @@ async function tokenDelegado(pca, scopes = scopesDelegados(), correo = null) {
         e.code = 'SIN_SESION';
         throw e;
     }
-    const r = await pca.acquireTokenSilent({ account: cuentas[0], scopes });
-    return r.accessToken;
+    try {
+        const r = await pca.acquireTokenSilent({ account: cuentas[0], scopes });
+        return r.accessToken;
+    } catch (error) {
+        // La sesión no tiene esos permisos (p. ej. se inició en solo lectura y ahora se pide leer y responder)
+        if (!/AADSTS70000|AADSTS65001|consent_required|interaction_required/i.test(`${error.errorCode || ''} ${error.message || ''}`)) throw error;
+        const login = correo ? `npm run correo:login -- --buzon=${correo}` : 'node scripts/graph-login.js';
+        const e = new Error(`La sesión de ${correo || cuentas[0].username} no tiene los permisos que se piden ahora (¿se inició en solo lectura?): ejecuta "${login} --salir" y luego "${login}" y acepta los permisos`);
+        e.code = 'SIN_PERMISOS';
+        throw e;
+    }
 }
 
 /** Inicio de sesión con código (lo usa scripts/graph-login.js). `mostrar` recibe { verificationUri, userCode, message }. */

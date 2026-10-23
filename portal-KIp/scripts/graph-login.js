@@ -28,6 +28,9 @@ function explicarError(err) {
     if (/AADSTS50020|AADSTS50194|does not exist in tenant/i.test(txt)) {
         return 'La cuenta no es del mismo directorio que la app. Registra la app como "Accounts in any organizational directory and personal Microsoft accounts" y deja GRAPH_TENANT_ID vacío o en "common".';
     }
+    if (/SIN_PERMISOS|no tiene los permisos/i.test(txt)) {
+        return 'Borra la sesión con --salir, vuelve a correr el script y acepta todos los permisos al iniciar sesión.';
+    }
     if (/AADSTS65001|AADSTS90094|consent|admin approval|aprobaci/i.test(txt)) {
         return 'La organización del correo no deja que los usuarios aprueben apps por su cuenta. Hace falta que un administrador de esa organización apruebe la app (no se puede saltar desde aquí).';
     }
