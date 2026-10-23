@@ -124,6 +124,34 @@ const claveCarpeta = (buzon) => `${buzon.correo || ''}|${partesCarpeta(buzon.car
 const olvidarCarpeta = (buzon) => carpetasIds.delete(claveCarpeta(buzon));
 const escaparOData = (v) => String(v).replace(/'/g, "''");
 
+const MAX_CARPETAS = 300;
+
+/**
+ * Árbol de carpetas de una cuenta (hasta 4 niveles y MAX_CARPETAS):
+ * [{ id, nombre, ruta: 'FTTX/Soporte', correos, sinLeer }].
+ */
+async function arbolCarpetas(client, ruta) {
+    const lista = [];
+    async function bajar(api, prefijo, nivel) {
+        const r = await client.api(api).select('id,displayName,childFolderCount,totalItemCount,unreadItemCount').top(100).get();
+        for (const f of (r && r.value) || []) {
+            if (lista.length >= MAX_CARPETAS) return;
+            const rutaF = prefijo ? `${prefijo}/${f.displayName}` : f.displayName;
+            lista.push({ id: f.id, nombre: f.displayName, ruta: rutaF, correos: f.totalItemCount || 0, sinLeer: f.unreadItemCount || 0 });
+            if (f.childFolderCount && nivel < 3) await bajar(`${ruta}/mailFolders/${f.id}/childFolders`, rutaF, nivel + 1);
+        }
+    }
+    await bajar(`${ruta}/mailFolders`, '', 0);
+    return lista;
+}
+
+/** Carpetas de una cuenta para elegir en Administración (usa su sesión o el secreto de la app). */
+async function listarCarpetas(correo) {
+    const c = conexion({ correo, carpeta: '' });
+    if (!c) throw new Error('Falta configurar el correo (Graph) en el .env');
+    return (await arbolCarpetas(c.client, c.ruta)).map(({ ruta, correos, sinLeer }) => ({ ruta, correos, sinLeer }));
+}
+
 /** Id de la carpeta llamada `nombre` dentro de `padre` (o en el primer nivel si `padre` es null), o null. */
 async function buscarCarpeta(client, ruta, padre, nombre) {
     const base = padre ? `${ruta}/mailFolders/${padre}/childFolders` : `${ruta}/mailFolders`;
@@ -148,6 +176,16 @@ async function idCarpeta(client, ruta, buzon) {
     for (const nombre of resto) {
         if (!id) break;
         id = await buscarCarpeta(client, ruta, id, nombre);
+    }
+    if (!id) {
+        // No está en esa ruta: se busca en todo el buzón por su nombre ("SoporteFTTX" encuentra FTTX/SoporteFTTX)
+        const buscada = partes.join('/').toLowerCase();
+        const iguales = (await arbolCarpetas(client, ruta))
+            .filter(f => f.ruta.toLowerCase() === buscada || f.ruta.toLowerCase().endsWith('/' + buscada));
+        if (iguales.length > 1) {
+            throw new Error(`Hay varias carpetas "${buzon.carpeta}" en ${buzon.correo || 'el buzón'}: escribe la ruta completa, por ejemplo ${iguales.map(f => f.ruta).join(' o ')}`);
+        }
+        id = iguales.length ? iguales[0].id : null;
     }
     if (!id) throw new Error(`No existe la carpeta "${buzon.carpeta}" en ${buzon.correo || 'el buzón'}. Revisa el nombre en Outlook.`);
     carpetasIds.set(clave, id);
@@ -464,6 +502,7 @@ module.exports = {
     revisarBuzones,
     revisarBuzon: revisarBuzones,
     buzonesActivos,
+    listarCarpetas,
     buzonDeRespuesta,
     anotarRevision,
     intervaloSegundos,

@@ -17,7 +17,7 @@ const { validateUser, describeUser, MIN_CLAVE } = require('../services/userAdmin
 const { allAreas, refreshAreas, validateAreaName, allSubgrupos, isValidSubgrupo, subgrupoName } = require('../services/areaCatalog');
 const { SUPERVISORES, ROLES_ALTOS, motivoNoGestionar } = require('../services/roleService');
 const { validarTipoCaso, tipoCasoVista, NIVEL_PUNTOS, NIVEL_NOMBRE, FRECUENCIAS } = require('../services/tipoCasoService');
-const { validarBuzon, buzonVista, describirBuzon, etiquetaBuzon, validarMotivo, normalizarCarpeta } = require('../services/buzonService');
+const { validarBuzon, buzonVista, describirBuzon, etiquetaBuzon, validarMotivo, normalizarCarpeta, normalizarCorreo, textoError } = require('../services/buzonService');
 const graphAuth = require('../services/graphAuthService');
 
 // Modo de prueba (delegado): ¿ya inició sesión esa cuenta? (una sesión para todas sus carpetas) Con el secreto de TI no aplica (null).
@@ -466,6 +466,19 @@ async function updateBuzon(req, res) {
     }
 }
 
+// Carpetas reales de una cuenta (para elegir la del buzón sin escribirla mal)
+async function listCarpetasBuzon(req, res) {
+    const correo = normalizarCorreo(req.query?.correo);
+    if (!correo) return res.status(400).json({ success: false, error: 'Correo no válido' });
+    try {
+        // Se carga aquí: la ingesta de correo no hace falta para el resto de Administración
+        const carpetas = await require('../services/emailIngestionService').listarCarpetas(correo);
+        return res.json({ success: true, carpetas });
+    } catch (e) {
+        return res.status(502).json({ success: false, error: textoError(e) });
+    }
+}
+
 // Eliminar = papelera con motivo: deja de leerse y de responder; sus tickets conservan
 // área y subgrupo (las respuestas salen por otro buzón de su área). Se restaura.
 async function deleteBuzon(req, res) {
@@ -500,4 +513,4 @@ async function restoreBuzon(req, res) {
     }
 }
 
-module.exports = { renderAdmin, saveConfig, preview, createUser, updateUser, createArea, updateArea, createSubgrupo, updateSubgrupo, createTipoCaso, updateTipoCaso, createBuzon, updateBuzon, deleteBuzon, restoreBuzon };
+module.exports = { renderAdmin, saveConfig, preview, createUser, updateUser, createArea, updateArea, createSubgrupo, updateSubgrupo, createTipoCaso, updateTipoCaso, createBuzon, updateBuzon, deleteBuzon, restoreBuzon, listCarpetasBuzon };

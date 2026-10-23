@@ -29,7 +29,8 @@ graphLib.Client.initWithMiddleware = () => ({
                 const m = ruta.match(/^\/users\/([^/]+)\/mailFolders(?:\/([^/]+))?(?:\/(childFolders|messages))?$/) || [];
                 const correo = decodeURIComponent(m[1] || '');
                 const nombre = ((pedido.filter || '').match(/^displayName eq '(.*)'$/) || [])[1];
-                const filtrar = lista => (lista || []).filter(f => f.displayName === String(nombre).replace(/''/g, "'"));
+                const conHijos = f => ({ ...f, childFolderCount: (((carpetas[correo] || {}).hijos || {})[f.id] || []).length });
+                const filtrar = lista => (lista || []).filter(f => nombre === undefined || f.displayName === String(nombre).replace(/''/g, "'")).map(conHijos);
                 if (!m[2]) return { value: filtrar((carpetas[correo] || {}).top) };
                 if (m[3] === 'childFolders') return { value: filtrar(((carpetas[correo] || {}).hijos || {})[m[2]]) };
                 const clave = m[2] === 'inbox' ? correo : `${correo}:${m[2]}`;
@@ -309,6 +310,24 @@ const sinReglas = async () => null;
         llamadas.length = 0;
         await mail.revisarBuzones();
         assert.ok(!llamadas.some(l => /childFolders|mailFolders$/.test(l.get)), 'no vuelve a buscar las carpetas');
+    });
+    await t('Solo el nombre de una subcarpeta ("SoporteFTTX") la encuentra en todo el buzón; repetida pide la ruta', async () => {
+        const C = 'ippruebas@outlook.com';
+        const db = baseSimulada({ buzones: [
+            { id: 'bz-s1', correo: C, carpeta: 'SoporteFTTX', area_codigo: 'REDES_FTTH', subgrupo_id: 'sg-soporte', activo: true },
+            { id: 'bz-s2', correo: C, carpeta: 'Cabecera', area_codigo: 'REDES_FTTH', subgrupo_id: 'sg-cabecera', activo: true }
+        ] });
+        usar(db);
+        carpetas = { [C]: {
+            top: [{ id: 'f-fttx', displayName: 'FTTX' }, { id: 'f-wan', displayName: 'WAN' }],
+            hijos: { 'f-fttx': [{ id: 'f-sop', displayName: 'SoporteFTTX' }, { id: 'f-cab1', displayName: 'Cabecera' }], 'f-wan': [{ id: 'f-cab2', displayName: 'Cabecera' }] }
+        } };
+        bandejas = { [`${C}:f-sop`]: [correo('s1', 'ONU sin señal')] };
+        await mail.revisarBuzones();
+        assert.deepStrictEqual(db.tickets.map(x => [x.asunto, x.subgrupo_id]), [['ONU sin señal', 'sg-soporte']]);
+        assert.strictEqual(db.buzones[0].ultimo_error, null);
+        assert.match(db.buzones[1].ultimo_error, /Hay varias carpetas "Cabecera".*FTTX\/Cabecera o WAN\/Cabecera/);
+        assert.deepStrictEqual((await mail.listarCarpetas(C)).map(f => f.ruta), ['FTTX', 'FTTX/SoporteFTTX', 'FTTX/Cabecera', 'WAN', 'WAN/Cabecera']);
     });
     await t('Carpeta que no existe: error claro en ese buzón; los demás se leen igual', async () => {
         const db = baseSimulada({ buzones: [

@@ -663,6 +663,24 @@
 		paintSubgrupos();
 		const areaSel = h('select', { class: 'field', 'aria-label': 'Área', onchange: e => { M.area = e.target.value; paintSubgrupos(); } },
 			areas.map(a => h('option', { value: a.codigo, selected: a.codigo === M.area, text: a.nombre + (a.activa ? '' : ' (desactivada)') })));
+		// Carpetas reales de la cuenta: se sugieren al escribir (con cuántos correos sin leer tienen)
+		const AYUDA_CARPETA = 'Como se llama en Outlook (una regla de Outlook la llena). Para una subcarpeta: FTTX/Soporte.';
+		const carpetasLista = h('datalist', { id: 'buzon-carpetas' });
+		const carpetasNota = h('span', { class: 't3', style: 'font-size:12px', text: AYUDA_CARPETA });
+		const cargarCarpetas = async () => {
+			const c = String(b ? b.correo : M.correo).trim();
+			if (!c.includes('@')) return;
+			carpetasNota.textContent = 'Buscando las carpetas de ' + c + '…';
+			try {
+				const res = await fetch('/api/admin/buzones/carpetas?correo=' + encodeURIComponent(c));
+				const j = await res.json().catch(() => ({}));
+				if (!res.ok || !j.success) throw new Error(j.error || 'Error ' + res.status);
+				carpetasLista.replaceChildren(...j.carpetas.map(f => h('option', { value: f.ruta, text: f.sinLeer + ' sin leer de ' + f.correos })));
+				carpetasNota.textContent = j.carpetas.length + ' carpetas en la cuenta: escribe o elige una. ' + AYUDA_CARPETA;
+			} catch (e) {
+				carpetasNota.textContent = 'No se pudieron ver las carpetas (' + e.message + '). ' + AYUDA_CARPETA;
+			}
+		};
 		const toggle = (key, titulo, detalle) => h('div', { class: 'rule-row', style: 'min-height:40px;border:0' },
 			h('span', { class: 'lbl', style: 'flex:1' }, h('b', { text: titulo }), h('span', { text: detalle })),
 			sw(M[key], e => { M[key] = !M[key]; e.currentTarget.setAttribute('aria-checked', String(M[key])); }, titulo));
@@ -670,11 +688,11 @@
 			h('div', { class: 'dlg-head' }, h('h2', { text: b ? 'Editar buzón' : hermano ? 'Otra carpeta' : 'Nuevo buzón' }), b || correo ? h('span', { text: b ? b.correo : correo }) : null),
 			h('div', { class: 'dlg-body', style: 'gap:14px' },
 				b || correo ? null : h('label', { class: 'dsec' }, h('b', { text: 'Correo del buzón' }),
-					h('input', { class: 'field', type: 'email', maxlength: 180, placeholder: 'Ej. fttx@empresa.com', oninput: e => { M.correo = e.target.value; } }),
+					h('input', { class: 'field', type: 'email', maxlength: 180, placeholder: 'Ej. fttx@empresa.com', oninput: e => { M.correo = e.target.value; }, onchange: () => cargarCarpetas() }),
 					h('span', { class: 't3', style: 'font-size:12px', text: 'No se puede cambiar después: para otro correo, crea otro buzón.' })),
 				h('label', { class: 'dsec' }, h('b', { text: 'Carpeta (opcional)' }),
-					h('input', { class: 'field', maxlength: 120, value: M.carpeta, placeholder: 'Vacía = Bandeja de entrada. Ej. Soporte', oninput: e => { M.carpeta = e.target.value; } }),
-					h('span', { class: 't3', style: 'font-size:12px', text: 'Como se llama en Outlook (una regla de Outlook la llena). Para una subcarpeta: Soporte/Urgente.' })),
+					h('input', { class: 'field', maxlength: 120, value: M.carpeta, list: 'buzon-carpetas', autocomplete: 'off', placeholder: 'Vacía = Bandeja de entrada. Ej. FTTX/Soporte', oninput: e => { M.carpeta = e.target.value; } }),
+					carpetasLista, carpetasNota),
 				h('label', { class: 'dsec' }, h('b', { text: 'Área de sus tickets' }), areaSel),
 				sgBox,
 				toggle('soloLectura', 'Solo lectura', 'Solo lee: no marca los correos como leídos ni envía respuestas.'),
@@ -699,6 +717,7 @@
 		});
 		document.body.append(ov);
 		setTimeout(() => { const f = box.querySelector('input, select'); if (f) f.focus(); }, 30);
+		if (b || correo) cargarCarpetas();
 	}
 
 	function openEliminarBuzon(id) {
