@@ -15,7 +15,7 @@
 		.concat(coordinadores.map(c => ({ id: c.id, nombre: c.nombre, email: c.email, rol: c.rol || 'COORDINADOR', area: c.area_designada || 'GENERAL', atiende: c.atiende_tickets === true, telefono: c.telefono || '', subgrupo: c.subgrupo_id || '' })))
 		.map(u => Object.assign(u, { activo: true }))
 		.concat(desactivados.map(u => Object.assign({}, u, { activo: false })));
-	const datos = { config, eventos, destinatarios, limites, vistaPrevia, usuarios, areas: areas.map(a => ({ codigo: a.codigo, nombre: a.nombre, activa: a.activa !== false, operadores: a.operadores.length, subgrupos: a.subgrupos || [] })), miId, miRol, daRolesAltos: locals.daRolesAltos === true || miRol === 'GERENTE', minClave, tiposCaso: locals.tiposCaso || [], niveles: locals.niveles || null, buzones: locals.buzones || [], correoModo: locals.correoModo || 'aplicacion' };
+	const datos = { config, eventos, destinatarios, limites, vistaPrevia, usuarios, areas: areas.map(a => ({ codigo: a.codigo, nombre: a.nombre, activa: a.activa !== false, operadores: a.operadores.length, subgrupos: a.subgrupos || [] })), miId, miRol, daRolesAltos: locals.daRolesAltos === true || miRol === 'GERENTE', minClave, tiposCaso: locals.tiposCaso || [], niveles: locals.niveles || null, buzones: locals.buzones || [], correoModo: locals.correoModo || 'aplicacion', correoEnv: locals.correoEnv || null };
 	const ini = n => String(n || '?').split(/\s+/).slice(0, 2).map(p => p[0]).join('').toUpperCase();
 	const lapiz = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>';
 	const SECS = [

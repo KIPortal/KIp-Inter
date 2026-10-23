@@ -59,6 +59,30 @@ function archivoSesion(env = process.env) {
     return env.GRAPH_SESION_ARCHIVO ? path.resolve(env.GRAPH_SESION_ARCHIVO) : SESION_POR_DEFECTO;
 }
 
+/** Correo (en minúsculas) de la cuenta guardada en un archivo de sesión de MSAL, o null. */
+function cuentaDeSesion(archivo, fsMod = fs) {
+    try {
+        const cache = JSON.parse(fsMod.readFileSync(archivo, 'utf8'));
+        const cuenta = Object.values(cache.Account || {})[0];
+        return cuenta && cuenta.username ? String(cuenta.username).trim().toLowerCase() : null;
+    } catch (_) {
+        return null;
+    }
+}
+
+/**
+ * Sesión que usa una cuenta de la tabla Buzon: la suya (.graph-sesiones/<correo>.json)
+ * o, si aún no tiene, la de graph-login.js sin --buzon cuando es de esa misma cuenta
+ * (así no hay que volver a iniciar sesión al pasar el buzón del .env a la lista).
+ * null si no hay ninguna.
+ */
+function sesionDeCuenta(correo, env = process.env, fsMod = fs) {
+    const propia = archivoSesionBuzon(correo, env);
+    if (fsMod.existsSync(propia)) return propia;
+    const general = archivoSesion(env);
+    return cuentaDeSesion(general, fsMod) === String(correo || '').trim().toLowerCase() ? general : null;
+}
+
 /** Ruta del buzón en Graph: el propio (/me) en modo delegado; el configurado en modo aplicación. */
 function rutaBuzon(env = process.env) {
     if (modo(env) === 'delegado') return '/me';
@@ -158,6 +182,8 @@ module.exports = {
     avanzarEstado,
     archivoSesion,
     archivoSesionBuzon,
+    cuentaDeSesion,
+    sesionDeCuenta,
     archivoEstadoBuzon,
     rutaBuzon,
     pluginArchivo,

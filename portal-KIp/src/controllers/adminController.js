@@ -19,10 +19,13 @@ const { SUPERVISORES, ROLES_ALTOS, motivoNoGestionar } = require('../services/ro
 const { validarTipoCaso, tipoCasoVista, NIVEL_PUNTOS, NIVEL_NOMBRE, FRECUENCIAS } = require('../services/tipoCasoService');
 const { validarBuzon, buzonVista, describirBuzon, etiquetaBuzon, validarMotivo, normalizarCarpeta } = require('../services/buzonService');
 const graphAuth = require('../services/graphAuthService');
-const fs = require('fs');
 
 // Modo de prueba (delegado): ¿ya inició sesión esa cuenta? (una sesión para todas sus carpetas) Con el secreto de TI no aplica (null).
-const sesionDe = correo => (graphAuth.modo() === 'delegado' ? fs.existsSync(graphAuth.archivoSesionBuzon(correo)) : null);
+const sesionDe = correo => (graphAuth.modo() === 'delegado' ? graphAuth.sesionDeCuenta(correo) !== null : null);
+// Buzón que se lee mientras la lista está vacía: la cuenta de graph-login.js (prueba) o GRAPH_NOC_MAILBOX
+const correoDelEnv = () => (graphAuth.modo() === 'delegado'
+    ? graphAuth.cuentaDeSesion(graphAuth.archivoSesion())
+    : String(process.env.GRAPH_NOC_MAILBOX || '').trim().toLowerCase() || null);
 const vistaBuzon = b => buzonVista(b, { sesion: sesionDe(b.correo) });
 
 // ¿Hay algún gerente activo? Sin gerente, el coordinador puede nombrar al primero.
@@ -95,6 +98,7 @@ async function renderAdmin(req, res) {
             tiposCaso: tiposCaso.map(tipoCasoVista),
             buzones: buzones.map(vistaBuzon),
             correoModo: graphAuth.modo(),
+            correoEnv: correoDelEnv(),
             niveles: { puntos: NIVEL_PUNTOS, nombres: NIVEL_NOMBRE, frecuencias: FRECUENCIAS },
             eventos: EVENTOS,
             destinatarios: DESTINATARIOS,

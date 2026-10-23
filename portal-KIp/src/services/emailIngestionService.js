@@ -82,7 +82,10 @@ const archivoEstadoDe = (buzon) => (buzon.legado ? graphAuth.archivoEstado() : g
 /** Cliente de Graph y ruta de un buzón: { client, ruta }, o null si falta configurar. */
 function conexion(buzon) {
     if (graphAuth.modo() === 'delegado') {
-        const archivo = buzon.legado ? graphAuth.archivoSesion() : graphAuth.archivoSesionBuzon(buzon.correo);
+        // Una sesión por cuenta (la comparten sus carpetas); sirve la de graph-login.js sin --buzon si es de esa cuenta
+        const archivo = buzon.legado
+            ? graphAuth.archivoSesion()
+            : graphAuth.sesionDeCuenta(buzon.correo) || graphAuth.archivoSesionBuzon(buzon.correo);
         const client = clienteDelegado(archivo, { soloLectura: soloLecturaDe(buzon), correo: buzon.legado ? null : buzon.correo });
         return client ? { client, ruta: '/me' } : null;
     }

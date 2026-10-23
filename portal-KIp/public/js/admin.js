@@ -589,8 +589,15 @@
 				h('button', { type: 'button', class: 'primary', style: 'height:30px;padding:0 14px;font-size:12px', text: '＋ Nuevo buzón', onclick: () => openBuzon(null) })),
 			delegado ? h('p', { class: 't2', style: 'padding:0 24px 12px;margin:0;font-size:12px' },
 				'Modo de prueba: cada cuenta inicia sesión una vez en el servidor con ', h('code', { text: 'npm run correo:login -- --buzon=<correo>' }), '; sirve para todas sus carpetas.') : null,
+			// Buzón del .env (o de graph-login.js sin --buzon): se lee solo mientras la lista está vacía
+			D.correoEnv && !buzones.length ? h('div', { class: 'warnbox', style: 'margin:0 24px 12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap' },
+				h('span', { style: 'flex:1;min-width:220px;font-size:13px' }, 'Ahora se lee ', h('b', { text: D.correoEnv }),
+					' (configurado en el .env): sus correos de la Bandeja de entrada entran a General. Agrégalo a la lista para elegir su área y sus carpetas; su sesión se reutiliza.'),
+				h('button', { type: 'button', class: 'primary', style: 'height:30px;padding:0 14px;font-size:12px', text: 'Agregar a la lista', onclick: () => openBuzon(null, { correo: D.correoEnv }) })) : null,
+			D.correoEnv && buzones.length && !buzones.some(b => b.correo === D.correoEnv)
+				? h('p', { class: 't3', style: 'padding:0 24px 12px;margin:0;font-size:12px', text: 'El buzón del .env (' + D.correoEnv + ') ya no se lee: con buzones en la lista solo se leen los de la lista.' }) : null,
 			!buzones.length
-				? h('p', { class: 'empty', style: 'padding:4px 24px 16px', text: 'Aún no hay buzones. Mientras tanto se lee el buzón del .env (GRAPH_NOC_MAILBOX) y sus correos entran a General.' })
+				? h('p', { class: 'empty', style: 'padding:4px 24px 16px', text: D.correoEnv ? 'Aún no hay buzones en la lista.' : 'Aún no hay buzones. Mientras tanto se lee el buzón del .env (GRAPH_NOC_MAILBOX) y sus correos entran a General.' })
 				: h('div', { class: 'scroll-x' }, h('table', { class: 'rank-table' },
 					h('thead', {}, h('tr', {},
 						h('th', { style: 'padding-left:24px', text: 'Buzón' }),
@@ -660,7 +667,7 @@
 			h('span', { class: 'lbl', style: 'flex:1' }, h('b', { text: titulo }), h('span', { text: detalle })),
 			sw(M[key], e => { M[key] = !M[key]; e.currentTarget.setAttribute('aria-checked', String(M[key])); }, titulo));
 		box.append(
-			h('div', { class: 'dlg-head' }, h('h2', { text: b ? 'Editar buzón' : correo ? 'Otra carpeta' : 'Nuevo buzón' }), b || correo ? h('span', { text: b ? b.correo : correo }) : null),
+			h('div', { class: 'dlg-head' }, h('h2', { text: b ? 'Editar buzón' : hermano ? 'Otra carpeta' : 'Nuevo buzón' }), b || correo ? h('span', { text: b ? b.correo : correo }) : null),
 			h('div', { class: 'dlg-body', style: 'gap:14px' },
 				b || correo ? null : h('label', { class: 'dsec' }, h('b', { text: 'Correo del buzón' }),
 					h('input', { class: 'field', type: 'email', maxlength: 180, placeholder: 'Ej. fttx@empresa.com', oninput: e => { M.correo = e.target.value; } }),

@@ -79,7 +79,10 @@ async function main() {
     loadEnvVariables();
     const op = opciones();
     if (op.buzonDado && !op.buzon) throw new Error('El correo de --buzon= no es válido. Ej.: --buzon=soporte@outlook.com');
-    const archivo = op.buzon ? graphAuth.archivoSesionBuzon(op.buzon) : graphAuth.archivoSesion();
+    // Con --buzon: la sesión de esa cuenta (o la general si ya es de esa cuenta: no hay que volver a entrar)
+    const archivo = op.buzon
+        ? graphAuth.sesionDeCuenta(op.buzon) || graphAuth.archivoSesionBuzon(op.buzon)
+        : graphAuth.archivoSesion();
     const salir = op.buzon ? `npm run correo:login -- --buzon=${op.buzon} --salir` : 'node scripts/graph-login.js --salir';
 
     if (op.salir) {

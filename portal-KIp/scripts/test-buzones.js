@@ -200,6 +200,22 @@ const sinReglas = async () => null;
         assert.strictEqual(path.basename(graphAuth.archivoEstadoBuzon('a@b.com', 'Soporte/Urgente', {})), 'a@b.com__soporte_urgente.json', 'estado por carpeta');
         assert.deepStrictEqual(graphAuth.scopesDelegados({}, { soloLectura: true }), ['Mail.Read', 'offline_access']);
     });
+    await t('Al pasar el buzón del .env a la lista se reutiliza su sesión si es de esa cuenta', () => {
+        const fs = require('fs');
+        const dir = fs.mkdtempSync(path.join(require('os').tmpdir(), 'sesiones-'));
+        const env = { GRAPH_SESION_ARCHIVO: path.join(dir, 'general.json'), GRAPH_SESIONES_DIR: path.join(dir, 'por-cuenta') };
+        assert.strictEqual(graphAuth.sesionDeCuenta('ippruebas@outlook.com', env), null, 'sin sesiones');
+        fs.writeFileSync(env.GRAPH_SESION_ARCHIVO, JSON.stringify({ Account: { k: { username: 'IPpruebas@outlook.com' } } }));
+        assert.strictEqual(graphAuth.cuentaDeSesion(env.GRAPH_SESION_ARCHIVO), 'ippruebas@outlook.com');
+        assert.strictEqual(graphAuth.sesionDeCuenta('ippruebas@outlook.com', env), env.GRAPH_SESION_ARCHIVO, 'usa la general');
+        assert.strictEqual(graphAuth.sesionDeCuenta('otra@outlook.com', env), null, 'no la de otra cuenta');
+        const propia = graphAuth.archivoSesionBuzon('ippruebas@outlook.com', env);
+        fs.mkdirSync(path.dirname(propia), { recursive: true });
+        fs.writeFileSync(propia, '{}');
+        assert.strictEqual(graphAuth.sesionDeCuenta('ippruebas@outlook.com', env), propia, 'la propia tiene prioridad');
+        fs.writeFileSync(env.GRAPH_SESION_ARCHIVO, 'dañado');
+        assert.strictEqual(graphAuth.cuentaDeSesion(env.GRAPH_SESION_ARCHIVO), null);
+    });
     await t('graph-login: --buzon=, --salir, --solo-lectura; la cuenta tiene que ser la del buzón', () => {
         assert.deepStrictEqual(opciones(['node', 'x', '--buzon=Soporte@Outlook.com', '--salir']), { buzon: 'soporte@outlook.com', buzonDado: true, salir: true, soloLectura: false });
         assert.strictEqual(opciones(['node', 'x', '--buzon=nada']).buzon, null);
