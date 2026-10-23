@@ -7,7 +7,7 @@ const { textoDeCorreo, extraerCorreo, quitarCitado } = require('./conversationSe
 const { loadConfig } = require('./configService');
 const { sugerirPrioridad } = require('./rulesService');
 const graphAuth = require('./graphAuthService');
-const { destinoDeBuzon, buzonParaResponder, textoError } = require('./buzonService');
+const { destinoDeBuzon, buzonParaResponder, textoError, partesCarpeta, etiquetaBuzon, BANDEJA_RE } = require('./buzonService');
 
 // Estas variables deben ir en el archivo .env
 const TENANT_ID = process.env.GRAPH_TENANT_ID;
@@ -77,7 +77,7 @@ function buzonLegado(env = process.env) {
 }
 
 const soloLecturaDe = (buzon) => graphAuth.soloLectura() || buzon.solo_lectura === true;
-const archivoEstadoDe = (buzon) => (buzon.legado ? graphAuth.archivoEstado() : graphAuth.archivoEstadoBuzon(buzon.correo));
+const archivoEstadoDe = (buzon) => (buzon.legado ? graphAuth.archivoEstado() : graphAuth.archivoEstadoBuzon(buzon.correo, buzon.carpeta));
 
 /** Cliente de Graph y ruta de un buzón: { client, ruta }, o null si falta configurar. */
 function conexion(buzon) {
@@ -91,12 +91,18 @@ function conexion(buzon) {
     return client && ruta ? { client, ruta } : null;
 }
 
-/** Buzones a revisar: los activos de la tabla; si la tabla está vacía (o aún no existe), el del .env. */
+// Buzones que cuentan: los que no están en la papelera
+const FUERA_DE_PAPELERA = { eliminado_en: null };
+
+/**
+ * Buzones a revisar: los activos de la tabla (fuera de la papelera); si no hay
+ * ninguno fuera de la papelera (o la tabla aún no existe), el del .env.
+ */
 async function buzonesActivos(db = prisma) {
     try {
-        const lista = await db.buzon.findMany({ where: { activo: true }, orderBy: { correo: 'asc' } });
+        const lista = await db.buzon.findMany({ where: { activo: true, ...FUERA_DE_PAPELERA }, orderBy: [{ correo: 'asc' }, { carpeta: 'asc' }] });
         if (lista.length) return lista;
-        if (await db.buzon.count()) return []; // todos desactivados: no se lee ninguno
+        if (await db.buzon.count({ where: FUERA_DE_PAPELERA })) return []; // todos desactivados: no se lee ninguno
     } catch (_) {
         avisarUnaVez('⚠️ Tabla Buzon no disponible (¿migración pendiente?): se usa el buzón del .env.');
     }
@@ -106,7 +112,43 @@ async function buzonesActivos(db = prisma) {
 /** Solo lectura, primera vez: se toman los correos que lleguen desde ahora (no se importa lo viejo). */
 function marcarInicioLectura(archivo = graphAuth.archivoEstado(), buzon = null) {
     graphAuth.guardarEstado({ desde: new Date().toISOString(), ids: [] }, archivo);
-    console.log(`[Graph API] Solo lectura${buzon && buzon.correo ? ` (${buzon.correo})` : ''}: se tomarán los correos que lleguen desde ahora.`);
+    console.log(`[Graph API] Solo lectura${buzon && buzon.correo ? ` (${etiquetaBuzon(buzon)})` : ''}: se tomarán los correos que lleguen desde ahora.`);
+}
+
+// Id de Graph de cada carpeta ("correo|carpeta" → id): se busca por nombre una vez
+const carpetasIds = new Map();
+const claveCarpeta = (buzon) => `${buzon.correo || ''}|${partesCarpeta(buzon.carpeta).join('/')}`;
+const olvidarCarpeta = (buzon) => carpetasIds.delete(claveCarpeta(buzon));
+const escaparOData = (v) => String(v).replace(/'/g, "''");
+
+/** Id de la carpeta llamada `nombre` dentro de `padre` (o en el primer nivel si `padre` es null), o null. */
+async function buscarCarpeta(client, ruta, padre, nombre) {
+    const base = padre ? `${ruta}/mailFolders/${padre}/childFolders` : `${ruta}/mailFolders`;
+    const r = await client.api(base).filter(`displayName eq '${escaparOData(nombre)}'`).select('id,displayName').get();
+    return r && r.value && r.value[0] ? r.value[0].id : null;
+}
+
+/**
+ * Carpeta de Graph de un buzón: 'inbox' si no tiene. Si no, se busca por nombre:
+ * la primera parte dentro de la Bandeja de entrada y, si no está, en el primer
+ * nivel; las siguientes ("Soporte/Urgente"), dentro de la anterior.
+ */
+async function idCarpeta(client, ruta, buzon) {
+    const partes = partesCarpeta(buzon.carpeta);
+    if (!partes.length) return 'inbox';
+    const clave = claveCarpeta(buzon);
+    if (carpetasIds.has(clave)) return carpetasIds.get(clave);
+    const [primera, ...resto] = partes;
+    let id = BANDEJA_RE.test(primera)
+        ? 'inbox'
+        : (await buscarCarpeta(client, ruta, 'inbox', primera)) || (await buscarCarpeta(client, ruta, null, primera));
+    for (const nombre of resto) {
+        if (!id) break;
+        id = await buscarCarpeta(client, ruta, id, nombre);
+    }
+    if (!id) throw new Error(`No existe la carpeta "${buzon.carpeta}" en ${buzon.correo || 'el buzón'}. Revisa el nombre en Outlook.`);
+    carpetasIds.set(clave, id);
+    return id;
 }
 
 /** internetMessageId del correo (igual en todos los buzones que lo reciben), o null. */
@@ -187,20 +229,27 @@ async function leerLote(buzon) {
 
     const soloLectura = soloLecturaDe(buzon);
     const archivoEstado = archivoEstadoDe(buzon);
-    let consulta = client.api(`${ruta}/mailFolders/inbox/messages`);
     let estado = null;
     if (soloLectura) {
         // Solo lectura: no se marca nada en el buzón; se recuerda hasta qué correo se leyó
         estado = graphAuth.leerEstado(archivoEstado);
         if (!estado) { marcarInicioLectura(archivoEstado, buzon); return 0; }
-        consulta = consulta.filter(`receivedDateTime ge ${estado.desde}`).orderby('receivedDateTime asc');
-    } else {
-        consulta = consulta.filter('isRead eq false');
     }
-    const messages = await consulta
-        .top(LOTE)
-        .select('id,internetMessageId,subject,body,bodyPreview,from,toRecipients,receivedDateTime')
-        .get();
+    let consulta = client.api(`${ruta}/mailFolders/${await idCarpeta(client, ruta, buzon)}/messages`);
+    consulta = soloLectura
+        ? consulta.filter(`receivedDateTime ge ${estado.desde}`).orderby('receivedDateTime asc')
+        : consulta.filter('isRead eq false');
+    let messages;
+    try {
+        messages = await consulta
+            .top(LOTE)
+            .select('id,internetMessageId,subject,body,bodyPreview,from,toRecipients,receivedDateTime')
+            .get();
+    } catch (error) {
+        // La carpeta se borró o renombró en Outlook: se vuelve a buscar en la próxima vuelta
+        if (error.statusCode === 404) olvidarCarpeta(buzon);
+        throw error;
+    }
 
     if (!messages.value || messages.value.length === 0) {
         return 0; // No hay correos nuevos
@@ -214,7 +263,7 @@ async function leerLote(buzon) {
 
     for (const message of messages.value) {
         if (soloLectura && estado.ids.includes(message.id)) continue; // ya procesado
-        console.log(`[Graph API] Procesando correo${buzon.correo ? ` (${buzon.correo})` : ''}: ${message.subject}`);
+        console.log(`[Graph API] Procesando correo${buzon.correo ? ` (${etiquetaBuzon(buzon)})` : ''}: ${message.subject}`);
         await procesarCorreo(message, buzon, cargarReglas);
 
         // Que no se vuelva a procesar: avanzar la marca (solo lectura) o marcarlo como leído
@@ -271,7 +320,7 @@ async function revisarUno(buzon) {
         }
         return null;
     } catch (error) {
-        console.error(`❌ Error al procesar correos de ${buzon.correo || 'el buzón'}:`, error.message);
+        console.error(`❌ Error al procesar correos de ${buzon.correo ? etiquetaBuzon(buzon) : 'el buzón'}:`, error.message);
         return error;
     }
 }
@@ -357,8 +406,8 @@ async function registrarRespuestaCliente(ticket, message, db = prisma) {
 /** Buzón desde el que se responde un ticket (ver buzonParaResponder); sin buzones en la tabla, el del .env. */
 async function buzonDeRespuesta(ticket, db = prisma) {
     try {
-        if (await db.buzon.count() === 0) return buzonLegado();
-        return buzonParaResponder(ticket, await db.buzon.findMany({ where: { activo: true } }));
+        if (await db.buzon.count({ where: FUERA_DE_PAPELERA }) === 0) return buzonLegado();
+        return buzonParaResponder(ticket, await db.buzon.findMany({ where: { activo: true, ...FUERA_DE_PAPELERA } }));
     } catch (_) {
         return buzonLegado(); // tabla Buzon aún sin migrar
     }

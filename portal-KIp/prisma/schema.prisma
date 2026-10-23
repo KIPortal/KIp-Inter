@@ -335,11 +335,13 @@ model RegistroJornada {
   cerradoEn  DateTime @default(now())
 }
 
-// Buzón de correo: los correos que llegan a él crean tickets en su área (y subgrupo).
-// Se configura en Administración → Buzones; se desactiva, no se borra. Ver buzonService.
+// Buzón de correo: los correos que llegan a él (a su carpeta) crean tickets en su área (y subgrupo).
+// Una cuenta puede tener varios buzones, uno por carpeta (Soporte, Cabecera...), con una sola sesión.
+// Se configura en Administración → Buzones; eliminar = papelera (se restaura). Ver buzonService.
 model Buzon {
   id              String    @id @default(uuid())
-  correo          String    @unique @db.VarChar(180) // en minúsculas; no cambia una vez creado
+  correo          String    @db.VarChar(180) // en minúsculas; no cambia una vez creado
+  carpeta         String    @default("") @db.VarChar(120) // "" = Bandeja de entrada; "Soporte" o "Bandeja de entrada/Soporte"
   area_codigo     String    @db.VarChar(40)
   area            Area      @relation(fields: [area_codigo], references: [codigo])
   subgrupo_id     String?
@@ -348,7 +350,11 @@ model Buzon {
   solo_lectura    Boolean   @default(false) // solo lee: no marca leídos ni envía respuestas
   ultima_revision DateTime? // última vez que se revisó (se anota cada pocos minutos)
   ultimo_error    String?   @db.VarChar(300) // error de la última revisión (null = bien)
+  eliminado_en       DateTime? // en la papelera: no se lee ni responde
+  motivo_eliminacion String?   @db.VarChar(300)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   tickets         Ticket[]
+
+  @@unique([correo, carpeta])
 }

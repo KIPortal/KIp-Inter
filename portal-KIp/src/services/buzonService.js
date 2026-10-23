@@ -5,17 +5,24 @@
  * (ver scripts/test-buzones.js).
  *
  * Cada buzón crea sus tickets en un área y, si se elige, un subgrupo (p. ej. el
- * de FTTx/Soporte cae en Entrantes de Soporte). La respuesta desde el portal sale
- * por el buzón donde llegó el ticket. Se configuran en Administración → Buzones;
- * se desactivan, no se borran. Sin buzones en la tabla, la ingesta usa
- * GRAPH_NOC_MAILBOX del .env y todo entra a General.
+ * de FTTx/Soporte cae en Entrantes de Soporte). Una misma cuenta puede tener
+ * varios buzones, uno por carpeta (las reglas de Outlook reparten los correos:
+ * Bandeja de entrada → FTTx, Soporte → FTTx · Soporte, Cabecera → FTTx · Cabecera),
+ * con una sola sesión. La respuesta desde el portal sale por el buzón donde
+ * llegó el ticket. Se configuran en Administración → Buzones; eliminar uno lo
+ * manda a la papelera (se restaura). Sin buzones (fuera de la papelera), la
+ * ingesta usa GRAPH_NOC_MAILBOX del .env y todo entra a General.
  */
 
 const { isActiveArea, isValidSubgrupo, AREA_NAMES, subgrupoName } = require('./areaCatalog');
 
 const MAX_CORREO = 180;
+const MAX_CARPETA = 120;
 const MAX_ERROR = 300;
+const MOTIVO = Object.freeze([3, 300]);
 const CORREO_RE = /^[^\s@<>()",;:]+@[^\s@<>()",;:]+\.[^\s@<>()",;:]+$/;
+// La Bandeja de entrada se puede escribir así (o dejar la carpeta vacía)
+const BANDEJA_RE = /^(inbox|bandeja de entrada)$/i;
 
 const texto = v => (typeof v === 'string' ? v.replace(/\s+/g, ' ').trim() : '');
 const esBool = v => v === true || v === false;
@@ -26,10 +33,38 @@ function normalizarCorreo(v) {
     return c && c.length <= MAX_CORREO && CORREO_RE.test(c) ? c : null;
 }
 
+/** Partes de la ruta de una carpeta ("Bandeja de entrada/Soporte" → ['Bandeja de entrada', 'Soporte']); acepta / o \. */
+const partesCarpeta = v => String(v || '').split(/[\\/]+/).map(texto).filter(Boolean);
+
+/**
+ * Carpeta normalizada: "" para la Bandeja de entrada (vacía, "inbox" o
+ * "Bandeja de entrada"); si no, sus partes unidas con "/". null si es muy larga.
+ */
+function normalizarCarpeta(v) {
+    const partes = partesCarpeta(v);
+    if (partes.length === 1 && BANDEJA_RE.test(partes[0])) return '';
+    const c = partes.join('/');
+    return c.length <= MAX_CARPETA ? c : null;
+}
+
+/** Nombre para mostrar de una carpeta. */
+const nombreCarpeta = c => c || 'Bandeja de entrada';
+
+/** "correo" o "correo · carpeta" (para Auditoría y avisos). */
+const etiquetaBuzon = b => (b.carpeta ? `${b.correo} · ${b.carpeta}` : b.correo);
+
+/** Motivo para mandar un buzón a la papelera: { motivo } o { error }. */
+function validarMotivo(v) {
+    const m = texto(v);
+    if (m.length < MOTIVO[0]) return { error: `Escribe el motivo (mínimo ${MOTIVO[0]} caracteres)` };
+    return { motivo: m.slice(0, MOTIVO[1]) };
+}
+
 /**
  * Valida un buzón para crear (`parcial` false) o editar (`parcial` true).
- * El correo solo se da al crear. Al cambiar de área el subgrupo se vuelve a
- * validar (y queda vacío si no se manda). Devuelve { data } o { error }.
+ * El correo solo se da al crear; la carpeta se puede cambiar (si se renombró en
+ * Outlook). Al cambiar de área el subgrupo se vuelve a validar (y queda vacío si
+ * no se manda). Devuelve { data } o { error }.
  */
 function validarBuzon(body, { parcial = false } = {}) {
     const b = body && typeof body === 'object' ? body : {};
@@ -40,6 +75,11 @@ function validarBuzon(body, { parcial = false } = {}) {
         const correo = normalizarCorreo(b.correo);
         if (!correo) return { error: 'Escribe un correo válido para el buzón' };
         data.correo = correo;
+    }
+    if (!parcial || has('carpeta')) {
+        const carpeta = normalizarCarpeta(b.carpeta);
+        if (carpeta === null) return { error: `La carpeta no puede superar ${MAX_CARPETA} caracteres` };
+        data.carpeta = carpeta;
     }
     if (!parcial || has('area')) {
         if (!isActiveArea(b.area)) return { error: 'Área no válida' };
@@ -73,12 +113,13 @@ function destinoDeBuzon(buzon) {
 }
 
 /**
- * Buzón (activo) desde el que se responde un ticket: el suyo; si no tiene o se
- * desactivó, uno de su área (primero el de su subgrupo, luego el del área sin
- * subgrupo, luego cualquiera del área). null si ninguno sirve.
+ * Buzón (activo, fuera de la papelera) desde el que se responde un ticket: el
+ * suyo; si no tiene, se desactivó o se eliminó, uno de su área (primero el de su
+ * subgrupo, luego el del área sin subgrupo, luego cualquiera del área). null si
+ * ninguno sirve. Todas las carpetas de una cuenta envían desde esa cuenta.
  */
 function buzonParaResponder(ticket, buzones) {
-    const activos = (buzones || []).filter(b => b && b.activo !== false);
+    const activos = (buzones || []).filter(b => b && b.activo !== false && !b.eliminado_en);
     if (!ticket || !activos.length) return null;
     const propio = ticket.buzon_id && activos.find(b => b.id === ticket.buzon_id);
     if (propio) return propio;
@@ -101,6 +142,10 @@ function buzonVista(b, { sesion = null } = {}) {
     return {
         id: b.id,
         correo: b.correo,
+        carpeta: b.carpeta || '',
+        carpetaNombre: nombreCarpeta(b.carpeta),
+        eliminadoEn: b.eliminado_en ? new Date(b.eliminado_en).toISOString() : null,
+        motivoEliminacion: b.motivo_eliminacion || null,
         area: b.area_codigo,
         areaNombre: AREA_NAMES[b.area_codigo] || b.area_codigo,
         subgrupo: b.subgrupo_id || '',
@@ -117,6 +162,7 @@ function buzonVista(b, { sesion = null } = {}) {
 function describirBuzon(d) {
     return [
         d.correo !== undefined ? d.correo : '',
+        d.carpeta !== undefined ? `carpeta: ${nombreCarpeta(d.carpeta)}` : '',
         d.area_codigo !== undefined ? `área: ${AREA_NAMES[d.area_codigo] || d.area_codigo}` : '',
         d.subgrupo_id !== undefined ? `subgrupo: ${subgrupoName(d.subgrupo_id) || '-'}` : '',
         d.solo_lectura !== undefined ? (d.solo_lectura ? 'solo lectura' : 'lee y responde') : '',
@@ -126,7 +172,14 @@ function describirBuzon(d) {
 
 module.exports = {
     MAX_CORREO,
+    MAX_CARPETA,
     normalizarCorreo,
+    normalizarCarpeta,
+    partesCarpeta,
+    nombreCarpeta,
+    etiquetaBuzon,
+    validarMotivo,
+    BANDEJA_RE,
     validarBuzon,
     destinoDeBuzon,
     buzonParaResponder,

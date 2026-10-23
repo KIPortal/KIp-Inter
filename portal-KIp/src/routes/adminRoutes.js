@@ -18,5 +18,7 @@ api.post('/tipos-caso', adminController.createTipoCaso);
 api.patch('/tipos-caso/:id', adminController.updateTipoCaso);
 api.post('/buzones', adminController.createBuzon);
 api.patch('/buzones/:id', adminController.updateBuzon);
+api.delete('/buzones/:id', adminController.deleteBuzon);
+api.post('/buzones/:id/restaurar', adminController.restoreBuzon);
 
 module.exports = { page, api };

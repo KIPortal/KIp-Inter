@@ -42,16 +42,17 @@ function scopesDelegados(env = process.env, { soloLectura: buzonSoloLectura = fa
 /** Nombre de archivo seguro para un buzón: su correo en minúsculas. */
 const archivoDeCorreo = correo => String(correo || '').trim().toLowerCase().replace(/[^a-z0-9@._-]/g, '_') + '.json';
 
-/** Sesión del modo delegado de un buzón de la tabla Buzon. */
+/** Sesión del modo delegado de una cuenta de la tabla Buzon (la comparten todas sus carpetas). */
 function archivoSesionBuzon(correo, env = process.env) {
     const dir = env.GRAPH_SESIONES_DIR ? path.resolve(env.GRAPH_SESIONES_DIR) : SESIONES_POR_DEFECTO;
     return path.join(dir, archivoDeCorreo(correo));
 }
 
-/** Estado de solo lectura de un buzón de la tabla Buzon. */
-function archivoEstadoBuzon(correo, env = process.env) {
+/** Estado de solo lectura de un buzón de la tabla Buzon (uno por carpeta: "correo__carpeta.json"). */
+function archivoEstadoBuzon(correo, carpeta = '', env = process.env) {
     const dir = env.GRAPH_ESTADOS_DIR ? path.resolve(env.GRAPH_ESTADOS_DIR) : ESTADOS_POR_DEFECTO;
-    return path.join(dir, archivoDeCorreo(correo));
+    const sufijo = carpeta ? '__' + String(carpeta).trim().toLowerCase().replace(/[^a-z0-9]+/g, '_') : '';
+    return path.join(dir, archivoDeCorreo(String(correo || '').trim() + sufijo));
 }
 
 function archivoSesion(env = process.env) {

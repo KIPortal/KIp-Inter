@@ -14,6 +14,10 @@ Cada buzón crea sus tickets en su área y, si se elige, su subgrupo (p. ej. `so
   ```
   La sesión queda en `portal-KIp/.graph-sesiones/<correo>.json` (no se sube a git). Si se entra con otra cuenta, el script no la guarda. Para borrarla: agrega `--salir`. Para un buzón en solo lectura: `--solo-lectura`.
 - En Administración se ve, por buzón, si falta iniciar sesión, la última revisión y el último error.
+- **Varias carpetas de una misma cuenta:** cada buzón es correo + carpeta. Ejemplo con reglas de Outlook que mueven los correos:
+  `fttx@…` Bandeja de entrada → FTTx · `fttx@…` carpeta `Soporte` → FTTx · Soporte · `fttx@…` carpeta `Cabecera` → FTTx · Cabecera.
+  La carpeta se busca por su nombre, primero dentro de la Bandeja de entrada y luego en el primer nivel; para una subcarpeta: `Soporte/Urgente`. Vacía (o `inbox`) = Bandeja de entrada. **Una sola sesión por cuenta** sirve para todas sus carpetas. En la lista, el botón ＋ de un buzón agrega otra carpeta de ese correo.
+- **Eliminar** un buzón lo manda a la papelera de buzones (con motivo, queda en Auditoría): deja de leerse y de responder; sus tickets conservan área y subgrupo y sus respuestas salen por otro buzón de su área. Se restaura desde la misma sección. La sesión de la cuenta se conserva.
 
 ---
 

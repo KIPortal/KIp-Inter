@@ -16,6 +16,8 @@ delete process.env.GRAPH_SOLO_LECTURA;
 // Graph simulado: cada buzón (/users/<correo>) devuelve sus correos o falla
 const llamadas = [];
 let bandejas = {};
+// Carpetas de cada cuenta: { top: [...], hijos: { <id padre>: [...] } } (la Bandeja de entrada es 'inbox')
+let carpetas = {};
 const graphLib = require('@microsoft/microsoft-graph-client');
 graphLib.Client.initWithMiddleware = () => ({
     api(ruta) {
@@ -23,12 +25,18 @@ graphLib.Client.initWithMiddleware = () => ({
         const q = {
             filter(f) { pedido.filter = f; return q; }, orderby() { return q; }, top() { return q; }, select() { return q; },
             async get() {
-                llamadas.push({ get: ruta });
-                const correo = decodeURIComponent((ruta.match(/^\/users\/([^/]+)/) || [])[1] || '');
-                const b = bandejas[correo];
+                llamadas.push({ get: ruta, filter: pedido.filter });
+                const m = ruta.match(/^\/users\/([^/]+)\/mailFolders(?:\/([^/]+))?(?:\/(childFolders|messages))?$/) || [];
+                const correo = decodeURIComponent(m[1] || '');
+                const nombre = ((pedido.filter || '').match(/^displayName eq '(.*)'$/) || [])[1];
+                const filtrar = lista => (lista || []).filter(f => f.displayName === String(nombre).replace(/''/g, "'"));
+                if (!m[2]) return { value: filtrar((carpetas[correo] || {}).top) };
+                if (m[3] === 'childFolders') return { value: filtrar(((carpetas[correo] || {}).hijos || {})[m[2]]) };
+                const clave = m[2] === 'inbox' ? correo : `${correo}:${m[2]}`;
+                const b = bandejas[clave];
                 if (b instanceof Error) throw b;
                 const lista = b || [];
-                bandejas[correo] = []; // ya leídos
+                bandejas[clave] = []; // ya leídos
                 return { value: lista };
             },
             async patch() { llamadas.push({ patch: ruta }); },
@@ -74,17 +82,22 @@ function baseSimulada({ buzones = [], tickets = [], mensajes = [] } = {}) {
         INCLUDE_DELETED: prisma.INCLUDE_DELETED,
         buzones, tickets, mensajes, auditorias: [], anotaciones: [],
         buzon: {
-            findMany: async ({ where } = {}) => buzones.filter(b => !where || where.activo === undefined || b.activo === where.activo),
-            count: async () => buzones.length,
+            findMany: async ({ where = {} } = {}) => buzones.filter(b => (where.activo === undefined || b.activo === where.activo)
+                && (where.eliminado_en !== null || !b.eliminado_en)),
+            count: async ({ where = {} } = {}) => buzones.filter(b => where.eliminado_en !== null || !b.eliminado_en).length,
             findUnique: async ({ where }) => buzones.find(b => b.id === where.id) || null,
+            findFirst: async ({ where }) => buzones.find(b => b.correo === where.correo && (b.carpeta || '') === where.carpeta) || null,
             create: async ({ data }) => {
-                if (buzones.some(b => b.correo === data.correo)) throw Object.assign(new Error('único'), { code: 'P2002' });
-                const b = { id: 'bz-' + (buzones.length + 1), activo: true, solo_lectura: false, ...data };
+                if (buzones.some(b => b.correo === data.correo && (b.carpeta || '') === data.carpeta)) throw Object.assign(new Error('único'), { code: 'P2002' });
+                const b = { id: 'bz-' + (buzones.length + 1), activo: true, solo_lectura: false, eliminado_en: null, ...data };
                 buzones.push(b);
                 return b;
             },
             update: async ({ where, data }) => {
                 const b = buzones.find(x => x.id === where.id);
+                if (data.carpeta !== undefined && buzones.some(x => x !== b && x.correo === b.correo && (x.carpeta || '') === data.carpeta)) {
+                    throw Object.assign(new Error('único'), { code: 'P2002' });
+                }
                 Object.assign(b, data);
                 db.anotaciones.push({ id: where.id, ...data });
                 return b;
@@ -121,7 +134,7 @@ const sinReglas = async () => null;
     console.log('--- Validación ---');
     await t('Crear: correo en minúsculas, área y subgrupo; solo lectura apagada por defecto', () => {
         const v = bz.validarBuzon({ correo: '  Soporte@Outlook.com ', area: 'REDES_FTTH', subgrupo: 'sg-soporte' });
-        assert.deepStrictEqual(v.data, { correo: 'soporte@outlook.com', area_codigo: 'REDES_FTTH', subgrupo_id: 'sg-soporte', solo_lectura: false });
+        assert.deepStrictEqual(v.data, { correo: 'soporte@outlook.com', carpeta: '', area_codigo: 'REDES_FTTH', subgrupo_id: 'sg-soporte', solo_lectura: false });
     });
     await t('Rechaza correo inválido, área desactivada y subgrupo de otra área o desactivado', () => {
         assert.match(bz.validarBuzon({ correo: 'no-es-correo', area: 'WAN' }).error, /correo/);
@@ -133,6 +146,24 @@ const sinReglas = async () => null;
     await t('Editar: no toca el correo; al cambiar de área el subgrupo se vuelve a validar', () => {
         assert.deepStrictEqual(bz.validarBuzon({ correo: 'otro@x.com', activo: false }, { parcial: true }).data, { activo: false });
         assert.deepStrictEqual(bz.validarBuzon({ area: 'WAN' }, { parcial: true }).data, { area_codigo: 'WAN', subgrupo_id: null });
+    });
+
+    await t('Carpeta: vacía, "inbox" o "Bandeja de entrada" = Bandeja de entrada; acepta / o \\ para subcarpetas', () => {
+        assert.strictEqual(bz.normalizarCarpeta(''), '');
+        assert.strictEqual(bz.normalizarCarpeta(' Inbox '), '');
+        assert.strictEqual(bz.normalizarCarpeta('bandeja de entrada'), '');
+        assert.strictEqual(bz.normalizarCarpeta(' Soporte '), 'Soporte');
+        assert.strictEqual(bz.normalizarCarpeta('Inbox\\Soporte//Urgente'), 'Inbox/Soporte/Urgente');
+        assert.strictEqual(bz.normalizarCarpeta('x'.repeat(121)), null);
+        assert.strictEqual(bz.validarBuzon({ correo: 'a@b.com', area: 'WAN', carpeta: 'Soporte' }).data.carpeta, 'Soporte');
+        assert.match(bz.validarBuzon({ carpeta: 'x'.repeat(200) }, { parcial: true }).error, /carpeta/);
+        assert.strictEqual(bz.etiquetaBuzon({ correo: 'a@b.com', carpeta: 'Soporte' }), 'a@b.com · Soporte');
+        assert.strictEqual(bz.nombreCarpeta(''), 'Bandeja de entrada');
+    });
+    await t('Eliminar pide motivo de al menos 3 caracteres', () => {
+        assert.match(bz.validarMotivo('  x ').error, /motivo/);
+        assert.deepStrictEqual(bz.validarMotivo('  Se cerró la cuenta '), { motivo: 'Se cerró la cuenta' });
+        assert.strictEqual(bz.validarMotivo('y'.repeat(400)).motivo.length, 300);
     });
 
     console.log('\n--- Destino y respuesta ---');
@@ -152,6 +183,7 @@ const sinReglas = async () => null;
         assert.strictEqual(bz.buzonParaResponder({ area_designada: 'REDES_FTTH', subgrupo_id: 'sg-cabecera' }, lista), FTTX);
         assert.strictEqual(bz.buzonParaResponder({ buzon_id: 'bz-x', area_designada: 'GENERAL' }, lista), null);
         assert.strictEqual(bz.buzonParaResponder({ buzon_id: 'bz-wan', area_designada: 'WAN' }, [{ ...WAN, activo: false }]), null);
+        assert.strictEqual(bz.buzonParaResponder({ buzon_id: 'bz-wan', area_designada: 'WAN' }, [{ ...WAN, eliminado_en: new Date() }]), null, 'en la papelera no responde');
     });
     await t('El error que se guarda es corto (primera frase, máx. 300)', () => {
         assert.strictEqual(bz.textoError(new Error('Access is denied. Check credentials and try again.')), 'Access is denied.');
@@ -163,8 +195,9 @@ const sinReglas = async () => null;
     await t('Cada buzón guarda su sesión y su estado en su archivo', () => {
         assert.strictEqual(path.basename(graphAuth.archivoSesionBuzon('Soporte@Outlook.com', {})), 'soporte@outlook.com.json');
         assert.strictEqual(path.basename(path.dirname(graphAuth.archivoSesionBuzon('a@b.com', {}))), '.graph-sesiones');
-        assert.strictEqual(path.basename(path.dirname(graphAuth.archivoEstadoBuzon('a@b.com', {}))), '.graph-estados');
+        assert.strictEqual(path.basename(path.dirname(graphAuth.archivoEstadoBuzon('a@b.com', '', {}))), '.graph-estados');
         assert.strictEqual(path.basename(graphAuth.archivoSesionBuzon('../x@b.com', {})), '.._x@b.com.json', 'sin barras en el nombre');
+        assert.strictEqual(path.basename(graphAuth.archivoEstadoBuzon('a@b.com', 'Soporte/Urgente', {})), 'a@b.com__soporte_urgente.json', 'estado por carpeta');
         assert.deepStrictEqual(graphAuth.scopesDelegados({}, { soloLectura: true }), ['Mail.Read', 'offline_access']);
     });
     await t('graph-login: --buzon=, --salir, --solo-lectura; la cuenta tiene que ser la del buzón', () => {
@@ -239,6 +272,46 @@ const sinReglas = async () => null;
         assert.strictEqual(db.buzones.find(b => b.id === 'bz-soporte').ultimo_error, 'Mailbox not found.');
         assert.strictEqual(db.buzones.find(b => b.id === 'bz-wan').ultimo_error, null);
     });
+    await t('Una cuenta con carpetas: cada carpeta va a su subgrupo, con una sola cuenta', async () => {
+        const FTTX = 'fttx@outlook.com';
+        const db = baseSimulada({ buzones: [
+            { id: 'bz-in', correo: FTTX, carpeta: '', area_codigo: 'REDES_FTTH', subgrupo_id: null, activo: true },
+            { id: 'bz-sop', correo: FTTX, carpeta: 'Soporte', area_codigo: 'REDES_FTTH', subgrupo_id: 'sg-soporte', activo: true },
+            { id: 'bz-cab', correo: FTTX, carpeta: 'Clientes/Cabecera', area_codigo: 'REDES_FTTH', subgrupo_id: 'sg-cabecera', activo: true }
+        ] });
+        usar(db);
+        // Soporte está dentro de la Bandeja de entrada; Clientes en el primer nivel y Cabecera dentro de Clientes
+        carpetas = { [FTTX]: { top: [{ id: 'f-cli', displayName: 'Clientes' }], hijos: { inbox: [{ id: 'f-sop', displayName: 'Soporte' }], 'f-cli': [{ id: 'f-cab', displayName: 'Cabecera' }] } } };
+        bandejas = { [FTTX]: [correo('c-in', 'General')], [`${FTTX}:f-sop`]: [correo('c-sop', 'ONU sin señal')], [`${FTTX}:f-cab`]: [correo('c-cab', 'OLT caída')] };
+        llamadas.length = 0;
+        await mail.revisarBuzones();
+        assert.deepStrictEqual(db.tickets.map(x => [x.asunto, x.subgrupo_id || null, x.buzon_id]).sort(), [
+            ['General', null, 'bz-in'], ['OLT caída', 'sg-cabecera', 'bz-cab'], ['ONU sin señal', 'sg-soporte', 'bz-sop']
+        ].sort());
+        assert.ok(db.buzones.every(b => b.ultimo_error === null), 'sin errores');
+        // El id de la carpeta se busca una vez y se recuerda
+        llamadas.length = 0;
+        await mail.revisarBuzones();
+        assert.ok(!llamadas.some(l => /childFolders|mailFolders$/.test(l.get)), 'no vuelve a buscar las carpetas');
+    });
+    await t('Carpeta que no existe: error claro en ese buzón; los demás se leen igual', async () => {
+        const db = baseSimulada({ buzones: [
+            { id: 'bz-mal', correo: 'x@outlook.com', carpeta: 'NoExiste', area_codigo: 'WAN', subgrupo_id: null, activo: true },
+            { id: 'bz-ok', correo: 'y@outlook.com', carpeta: '', area_codigo: 'WAN', subgrupo_id: null, activo: true }
+        ] });
+        usar(db);
+        carpetas = {};
+        bandejas = { 'y@outlook.com': [correo('y1', 'Hola')] };
+        await mail.revisarBuzones();
+        assert.match(db.buzones[0].ultimo_error, /No existe la carpeta "NoExiste" en x@outlook\.com\./);
+        assert.strictEqual(db.tickets.length, 1);
+    });
+    await t('Un buzón en la papelera no se lee; si todos están en la papelera vuelve el del .env', async () => {
+        const db = baseSimulada({ buzones: [{ ...WAN, eliminado_en: new Date() }, { ...SOPORTE }] });
+        assert.deepStrictEqual((await mail.buzonesActivos(db)).map(b => b.id), ['bz-soporte']);
+        const [legado] = await mail.buzonesActivos(baseSimulada({ buzones: [{ ...WAN, eliminado_en: new Date() }] }));
+        assert.ok(legado.legado);
+    });
     await t('Un buzón en solo lectura no marca leídos (la primera vez solo guarda la hora de inicio)', async () => {
         const os = require('os');
         process.env.GRAPH_ESTADOS_DIR = require('fs').mkdtempSync(path.join(os.tmpdir(), 'buzon-estado-'));
@@ -309,6 +382,57 @@ const sinReglas = async () => null;
         r = res();
         await admin.updateBuzon({ params: { id: 'nada' }, body: {}, user: { id: 'u1' } }, r);
         assert.strictEqual(r.code, 404);
+    });
+
+    await t('Mismo correo con otra carpeta se puede; correo y carpeta repetidos → 409 (y avisa si está en la papelera)', async () => {
+        const db = baseSimulada({ buzones: [{ ...SOPORTE, carpeta: '' }, { ...WAN, carpeta: 'Viejos', eliminado_en: new Date() }] });
+        usar(db);
+        let r = res();
+        await admin.createBuzon({ body: { correo: 'soporte@outlook.com', carpeta: 'Cabecera', area: 'REDES_FTTH', subgrupo: 'sg-cabecera' }, user: { id: 'u1' } }, r);
+        assert.strictEqual(r.code, 201);
+        assert.strictEqual(r.body.buzon.carpetaNombre, 'Cabecera');
+        r = res();
+        await admin.createBuzon({ body: { correo: 'soporte@outlook.com', carpeta: 'inbox', area: 'WAN' }, user: { id: 'u1' } }, r);
+        assert.strictEqual(r.code, 409, '"inbox" es la Bandeja de entrada, ya existe');
+        assert.match(r.body.error, /Ya hay un buzón/);
+        r = res();
+        await admin.createBuzon({ body: { correo: 'wan@outlook.com', carpeta: 'Viejos', area: 'WAN' }, user: { id: 'u1' } }, r);
+        assert.strictEqual(r.code, 409);
+        assert.match(r.body.error, /papelera/);
+    });
+    await t('Eliminar: pide motivo, va a la papelera y queda en Auditoría; no se edita ni se elimina dos veces; se restaura', async () => {
+        const db = baseSimulada({ buzones: [{ ...SOPORTE, eliminado_en: null }] });
+        usar(db);
+        const req = (body = {}) => ({ params: { id: 'bz-soporte' }, body, user: { id: 'u1' } });
+        let r = res();
+        await admin.deleteBuzon(req({ motivo: 'x' }), r);
+        assert.strictEqual(r.code, 400);
+        r = res();
+        await admin.deleteBuzon(req({ motivo: 'Se cambió de cuenta' }), r);
+        assert.strictEqual(r.code, 200);
+        assert.ok(r.body.buzon.eliminadoEn);
+        assert.strictEqual(r.body.buzon.motivoEliminacion, 'Se cambió de cuenta');
+        assert.strictEqual(db.auditorias.pop().accion, 'BUZON_ELIMINADO');
+        r = res();
+        await admin.deleteBuzon(req({ motivo: 'otra vez' }), r);
+        assert.strictEqual(r.code, 409);
+        r = res();
+        await admin.updateBuzon(req({ soloLectura: true }), r);
+        assert.strictEqual(r.code, 409, 'en la papelera no se edita');
+        r = res();
+        await admin.restoreBuzon(req(), r);
+        assert.strictEqual(r.code, 200);
+        assert.strictEqual(r.body.buzon.eliminadoEn, null);
+        assert.strictEqual(db.auditorias.pop().accion, 'BUZON_RESTAURADO');
+        r = res();
+        await admin.restoreBuzon(req(), r);
+        assert.strictEqual(r.code, 409);
+    });
+    await t('La respuesta de un ticket cuyo buzón está en la papelera sale por otro buzón de su área', async () => {
+        usar(baseSimulada({ buzones: [{ ...SOPORTE, eliminado_en: new Date() }, { id: 'bz-fttx', correo: 'fttx@outlook.com', carpeta: '', area_codigo: 'REDES_FTTH', subgrupo_id: null, activo: true }] }));
+        llamadas.length = 0;
+        await mail.enviarCorreo({ para: 'c@x.com', asunto: 'Re', texto: 'Hola', ticket: { buzon_id: 'bz-soporte', area_designada: 'REDES_FTTH', subgrupo_id: 'sg-soporte' } });
+        assert.strictEqual(llamadas[0].post, '/users/fttx%40outlook.com/sendMail');
     });
 
     console.log(`\nResultado: ${passed}/${total} pruebas pasaron`);

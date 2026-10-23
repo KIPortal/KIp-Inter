@@ -17,11 +17,11 @@ const { validateUser, describeUser, MIN_CLAVE } = require('../services/userAdmin
 const { allAreas, refreshAreas, validateAreaName, allSubgrupos, isValidSubgrupo, subgrupoName } = require('../services/areaCatalog');
 const { SUPERVISORES, ROLES_ALTOS, motivoNoGestionar } = require('../services/roleService');
 const { validarTipoCaso, tipoCasoVista, NIVEL_PUNTOS, NIVEL_NOMBRE, FRECUENCIAS } = require('../services/tipoCasoService');
-const { validarBuzon, buzonVista, describirBuzon } = require('../services/buzonService');
+const { validarBuzon, buzonVista, describirBuzon, etiquetaBuzon, validarMotivo, normalizarCarpeta } = require('../services/buzonService');
 const graphAuth = require('../services/graphAuthService');
 const fs = require('fs');
 
-// Modo de prueba (delegado): ¿ya inició sesión ese buzón? Con el secreto de TI no aplica (null).
+// Modo de prueba (delegado): ¿ya inició sesión esa cuenta? (una sesión para todas sus carpetas) Con el secreto de TI no aplica (null).
 const sesionDe = correo => (graphAuth.modo() === 'delegado' ? fs.existsSync(graphAuth.archivoSesionBuzon(correo)) : null);
 const vistaBuzon = b => buzonVista(b, { sesion: sesionDe(b.correo) });
 
@@ -53,7 +53,7 @@ async function renderAdmin(req, res) {
                 console.error('Tipos de caso no disponibles (¿migración pendiente?):', String(error.message).trim().split('\n').pop());
                 return [];
             }),
-            prisma.buzon.findMany({ orderBy: { correo: 'asc' } }).catch(error => {
+            prisma.buzon.findMany({ orderBy: [{ correo: 'asc' }, { carpeta: 'asc' }] }).catch(error => {
                 console.error('Buzones no disponibles (¿migración pendiente?):', String(error.message).trim().split('\n').pop());
                 return [];
             })
@@ -423,17 +423,27 @@ async function createBuzon(req, res) {
         await auditUser(req, 'BUZON_CREADO', describirBuzon(v.data));
         return res.status(201).json({ success: true, buzon: vistaBuzon(buzon) });
     } catch (e) {
-        if (e.code === 'P2002') return res.status(409).json({ success: false, error: 'Ya hay un buzón con ese correo' });
+        if (e.code === 'P2002') return res.status(409).json({ success: false, error: await mensajeRepetido(v.data.correo, v.data.carpeta) });
         console.error('Error al crear buzón:', e);
         return res.status(500).json({ success: false, error: 'No se pudo crear el buzón' });
     }
 }
 
+// Mismo correo y carpeta que otro buzón: dice si ese otro está en la papelera
+async function mensajeRepetido(correo, carpeta) {
+    const otro = await prisma.buzon.findFirst({ where: { correo, carpeta } }).catch(() => null);
+    return otro && otro.eliminado_en
+        ? 'Ese correo con esa carpeta está en la papelera de buzones: restáuralo'
+        : 'Ya hay un buzón con ese correo y esa carpeta';
+}
+
 async function updateBuzon(req, res) {
     const id = String(req.params.id || '').trim();
+    let antes = null;
     try {
-        const antes = await prisma.buzon.findUnique({ where: { id } });
+        antes = await prisma.buzon.findUnique({ where: { id } });
         if (!antes) return res.status(404).json({ success: false, error: 'Buzón no encontrado' });
+        if (antes.eliminado_en) return res.status(409).json({ success: false, error: 'El buzón está en la papelera: restáuralo antes de editarlo' });
         // El correo no cambia; el subgrupo se valida contra el área nueva (o la que ya tenía)
         const body = req.body || {};
         const v = validarBuzon({ ...body, area: body.area !== undefined ? body.area : antes.area_codigo }, { parcial: true });
@@ -443,12 +453,47 @@ async function updateBuzon(req, res) {
         Object.keys(v.data).forEach(k => { if (v.data[k] === antes[k]) delete v.data[k]; });
         if (!Object.keys(v.data).length) return res.json({ success: true, buzon: vistaBuzon(antes) });
         const buzon = await prisma.buzon.update({ where: { id }, data: v.data });
-        await auditUser(req, 'BUZON_EDITADO', `${antes.correo}: ${describirBuzon(v.data)}`);
+        await auditUser(req, 'BUZON_EDITADO', `${etiquetaBuzon(antes)}: ${describirBuzon(v.data)}`);
         return res.json({ success: true, buzon: vistaBuzon(buzon) });
     } catch (e) {
+        if (e.code === 'P2002') return res.status(409).json({ success: false, error: await mensajeRepetido(antes.correo, normalizarCarpeta(req.body?.carpeta)) });
         console.error('Error al editar buzón:', e);
         return res.status(500).json({ success: false, error: 'No se pudo guardar el buzón' });
     }
 }
 
-module.exports = { renderAdmin, saveConfig, preview, createUser, updateUser, createArea, updateArea, createSubgrupo, updateSubgrupo, createTipoCaso, updateTipoCaso, createBuzon, updateBuzon };
+// Eliminar = papelera con motivo: deja de leerse y de responder; sus tickets conservan
+// área y subgrupo (las respuestas salen por otro buzón de su área). Se restaura.
+async function deleteBuzon(req, res) {
+    const id = String(req.params.id || '').trim();
+    const m = validarMotivo(req.body?.motivo);
+    if (m.error) return res.status(400).json({ success: false, error: m.error });
+    try {
+        const antes = await prisma.buzon.findUnique({ where: { id } });
+        if (!antes) return res.status(404).json({ success: false, error: 'Buzón no encontrado' });
+        if (antes.eliminado_en) return res.status(409).json({ success: false, error: 'El buzón ya está en la papelera' });
+        const buzon = await prisma.buzon.update({ where: { id }, data: { eliminado_en: new Date(), motivo_eliminacion: m.motivo } });
+        await auditUser(req, 'BUZON_ELIMINADO', `${etiquetaBuzon(antes)} (${AREA_NAMES[antes.area_codigo] || antes.area_codigo}). Motivo: ${m.motivo}`);
+        return res.json({ success: true, buzon: vistaBuzon(buzon) });
+    } catch (e) {
+        console.error('Error al eliminar buzón:', e);
+        return res.status(500).json({ success: false, error: 'No se pudo eliminar el buzón' });
+    }
+}
+
+async function restoreBuzon(req, res) {
+    const id = String(req.params.id || '').trim();
+    try {
+        const antes = await prisma.buzon.findUnique({ where: { id } });
+        if (!antes) return res.status(404).json({ success: false, error: 'Buzón no encontrado' });
+        if (!antes.eliminado_en) return res.status(409).json({ success: false, error: 'El buzón no está en la papelera' });
+        const buzon = await prisma.buzon.update({ where: { id }, data: { eliminado_en: null, motivo_eliminacion: null, ultimo_error: null } });
+        await auditUser(req, 'BUZON_RESTAURADO', etiquetaBuzon(antes));
+        return res.json({ success: true, buzon: vistaBuzon(buzon) });
+    } catch (e) {
+        console.error('Error al restaurar buzón:', e);
+        return res.status(500).json({ success: false, error: 'No se pudo restaurar el buzón' });
+    }
+}
+
+module.exports = { renderAdmin, saveConfig, preview, createUser, updateUser, createArea, updateArea, createSubgrupo, updateSubgrupo, createTipoCaso, updateTipoCaso, createBuzon, updateBuzon, deleteBuzon, restoreBuzon };

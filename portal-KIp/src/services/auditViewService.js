@@ -36,6 +36,10 @@ const ACCIONES = Object.freeze({
     SUBGRUPO_EDITADO: ['Editó subgrupo', 'azul'],
     TIPO_CASO_CREADO: ['Creó tipo de caso', 'verde'],
     TIPO_CASO_EDITADO: ['Editó tipo de caso', 'azul'],
+    BUZON_CREADO: ['Creó buzón', 'verde'],
+    BUZON_EDITADO: ['Editó buzón', 'azul'],
+    BUZON_ELIMINADO: ['Eliminó buzón', 'rojo'],
+    BUZON_RESTAURADO: ['Restauró buzón', 'verde'],
     JORNADA_CERRADA: ['Cerró jornada', 'verde']
 });
 

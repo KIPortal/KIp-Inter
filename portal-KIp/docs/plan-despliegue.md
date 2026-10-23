@@ -83,6 +83,7 @@ Diseño propuesto:
 1. (Jacu) Crear 2 cuentas Outlook.com de prueba: una para **FTTx/Soporte** y otra para otra área (p. ej. WAN), para probar el reparto entre buzones.
 2. (Jacu) Registrar **una** app `KIp-Portal-Prueba` según `docs/GRAPH_API_SETUP.md` (Escenario 2); sirve para todos los buzones.
 3. ✅ (Claude, rama `feat/buzones`, 2026-10-23) Migración `20261023120000_buzones` (`Buzon`, `Ticket.buzon_id`, `correo_id` en `Ticket` y `Mensaje`); ingesta por buzón (uno con error no detiene a los demás); respuesta desde el buzón de origen; Administración → Buzones de correo (estado, última revisión, error, sesión); `correo:login -- --buzon=`. Pruebas: `test:buzones`.
+   ✅ Migración `20261023150000_buzon_carpetas`: varios buzones por cuenta (uno por carpeta, cada uno con su subgrupo) y papelera de buzones (eliminar con motivo, restaurar).
 4. (Jacu) `npx prisma migrate deploy`, `npx prisma generate`, dar de alta los buzones en Administración y `npm run correo:login -- --buzon=...` por cada uno.
 5. (Claude, después; no es necesario para detectar correos) Script `node scripts/rafaga-correos.js --buzon=... --n=10`: envía N correos variados a ese buzón para ver cómo se refrescan las pantallas en vivo (`vivo.js`) al llegar varios.
 6. Probar a mano: correos desde 2–3 cuentas distintas, uno en copia a los dos buzones (no debe duplicar), y respuestas a un `INC-xxx`.
