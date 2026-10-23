@@ -106,6 +106,9 @@ model Ticket {
   area               Area          @relation(fields: [area_designada], references: [codigo])
   subgrupo_id        String?
   subgrupo           Subgrupo?     @relation(fields: [subgrupo_id], references: [id], onDelete: SetNull)
+  buzon_id           String?       // Buzón por el que llegó (la respuesta sale desde ese mismo buzón)
+  buzon              Buzon?        @relation(fields: [buzon_id], references: [id], onDelete: SetNull)
+  correo_id          String?       @unique @db.VarChar(250) // internetMessageId del correo que lo creó (evita duplicados)
   
   // Relación: Quién reportó o creó el ticket (Opcional, si viene de correo automático puede ser nulo)
   creado_por_id      String?
@@ -171,6 +174,7 @@ model Mensaje {
   de         String?     @db.VarChar(180) // Remitente del correo recibido
   para       String?     @db.VarChar(180) // Destinatario de la respuesta
   enviado    Boolean     @default(false) // SALIENTE: true si el correo salió por Graph
+  correo_id  String?     @unique @db.VarChar(250) // internetMessageId del correo recibido (evita duplicados)
   adjuntos   Adjunto[]
   createdAt  DateTime    @default(now())
 
@@ -276,6 +280,7 @@ model Area {
   tickets   Ticket[]
   subgrupos Subgrupo[]
   tipos_caso TipoCaso[]
+  buzones   Buzon[]
 }
 
 // Subgrupo de un área (FTTx: Soporte y Cabecera). Se desactiva, no se borra.
@@ -290,6 +295,7 @@ model Subgrupo {
   usuarios    User[]
   tickets     Ticket[]
   tipos_caso  TipoCaso[]
+  buzones     Buzon[]
 
   @@unique([area_codigo, nombre])
 }
@@ -327,4 +333,22 @@ model RegistroJornada {
   origen     String   @db.VarChar(12) // 'AUTOMATICO' | 'MANUAL' | 'RECUPERADO'
   cerradoPor String?  @db.VarChar(120)
   cerradoEn  DateTime @default(now())
+}
+
+// Buzón de correo: los correos que llegan a él crean tickets en su área (y subgrupo).
+// Se configura en Administración → Buzones; se desactiva, no se borra. Ver buzonService.
+model Buzon {
+  id              String    @id @default(uuid())
+  correo          String    @unique @db.VarChar(180) // en minúsculas; no cambia una vez creado
+  area_codigo     String    @db.VarChar(40)
+  area            Area      @relation(fields: [area_codigo], references: [codigo])
+  subgrupo_id     String?
+  subgrupo        Subgrupo? @relation(fields: [subgrupo_id], references: [id], onDelete: SetNull)
+  activo          Boolean   @default(true)
+  solo_lectura    Boolean   @default(false) // solo lee: no marca leídos ni envía respuestas
+  ultima_revision DateTime? // última vez que se revisó (se anota cada pocos minutos)
+  ultimo_error    String?   @db.VarChar(300) // error de la última revisión (null = bien)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  tickets         Ticket[]
 }

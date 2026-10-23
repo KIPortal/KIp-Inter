@@ -556,6 +556,109 @@
 		setTimeout(() => box.querySelector('input').focus(), 30);
 	}
 
+	// ---------- Buzones de correo: cada uno crea sus tickets en su área y subgrupo ----------
+	const haceCuanto = iso => {
+		const min = Math.round((Date.now() - Date.parse(iso)) / 60000);
+		return min < 1 ? 'hace un momento' : min < 60 ? 'hace ' + min + ' min' : min < 1440 ? 'hace ' + Math.round(min / 60) + ' h' : 'hace ' + Math.round(min / 1440) + ' d';
+	};
+	function estadoBuzon(b) {
+		if (!b.activo) return h('span', { class: 'tag gray', text: 'Desactivado' });
+		if (b.ultimoError) return h('span', { class: 'tag red', title: b.ultimoError, text: 'Error' });
+		if (b.sesion === false) return h('span', { class: 'tag red', title: 'npm run correo:login -- --buzon=' + b.correo, text: 'Falta iniciar sesión' });
+		if (b.ultimaRevision) return h('span', { class: 'tag green', text: 'Revisado ' + haceCuanto(b.ultimaRevision) });
+		return h('span', { class: 'tag gray', text: 'Sin revisar aún' });
+	}
+	function renderBuzones() {
+		const box = $('[data-panel="buzones"]');
+		if (!box) return;
+		const buzones = (D.buzones || []).slice().sort((a, b) => (b.activo - a.activo) || a.correo.localeCompare(b.correo));
+		const delegado = D.correoModo === 'delegado';
+		box.replaceChildren(
+			h('div', { class: 'card-head', style: 'padding:18px 24px 14px;flex-wrap:wrap;gap:10px' },
+				h('div', { style: 'display:flex;flex-direction:column;flex:1;min-width:220px' }, h('h2', { text: 'Buzones de correo' }),
+					h('span', { class: 'hint', text: 'Los correos que llegan a cada buzón crean tickets en su área y subgrupo. La respuesta desde el portal sale por el mismo buzón.' })),
+				h('button', { type: 'button', class: 'primary', style: 'height:30px;padding:0 14px;font-size:12px', text: '＋ Nuevo buzón', onclick: () => openBuzon(null) })),
+			delegado ? h('p', { class: 't2', style: 'padding:0 24px 12px;margin:0;font-size:12px' },
+				'Modo de prueba: cada buzón inicia sesión una vez en el servidor con ', h('code', { text: 'npm run correo:login -- --buzon=<correo>' }), '.') : null,
+			!buzones.length
+				? h('p', { class: 'empty', style: 'padding:4px 24px 16px', text: 'Aún no hay buzones. Mientras tanto se lee el buzón del .env (GRAPH_NOC_MAILBOX) y sus correos entran a General.' })
+				: h('div', { class: 'scroll-x' }, h('table', { class: 'rank-table' },
+					h('thead', {}, h('tr', {},
+						h('th', { style: 'padding-left:24px', text: 'Buzón' }),
+						h('th', { text: 'Sus tickets van a' }),
+						h('th', { style: 'width:170px', text: 'Estado' }),
+						h('th', { style: 'width:56px;padding-right:24px' }, h('span', { class: 'sr-only', text: 'Acciones' })))),
+					h('tbody', {}, buzones.map(b => h('tr', { class: 'row', style: b.activo ? null : 'opacity:.55' },
+						h('td', { style: 'padding:10px 8px 10px 24px' }, h('span', { style: 'display:flex;flex-direction:column' },
+							h('b', { style: 'font-size:13px' }, b.correo, b.soloLectura ? [' ', h('span', { class: 'tag purple', text: 'Solo lectura' })] : null),
+							b.ultimoError && b.activo ? h('span', { class: 't2', style: 'font-size:12px', text: b.ultimoError }) : null)),
+						h('td', { class: 't2', text: b.areaNombre + (b.subgrupoNombre ? ' · ' + b.subgrupoNombre : '') }),
+						h('td', {}, estadoBuzon(b)),
+						h('td', { style: 'padding-right:24px;text-align:right' }, h('button', { type: 'button', class: 'ico', title: 'Editar', 'aria-label': 'Editar ' + b.correo, html: ICON.edit, onclick: () => openBuzon(b.id) }))))))),
+			h('span', { class: 't3', style: 'padding:12px 24px 16px;font-size:12px', text: 'Un buzón desactivado deja de leerse; sus tickets conservan el área. Si un correo llega a dos buzones (en copia) se crea un solo ticket. Con buzones en la lista ya no se lee el del .env.' }));
+		const sub = $('[data-sec-sub="buzones"]');
+		if (sub) sub.textContent = (D.buzones || []).filter(b => b.activo).length + ' activos · área de cada buzón';
+	}
+
+	function openBuzon(id) {
+		const b = id ? (D.buzones || []).find(x => x.id === id) : null;
+		const areas = D.areas.filter(a => a.activa || (b && a.codigo === b.area));
+		const M = { correo: '', area: b ? b.area : ((areas.find(a => a.codigo !== 'GENERAL') || areas[0] || {}).codigo || ''), subgrupo: b ? b.subgrupo : '', soloLectura: b ? b.soloLectura : false, activo: b ? b.activo : true };
+		const ov = h('div', { class: 'overlay', onclick: e => { if (e.target === ov) ov.remove(); } });
+		const box = h('div', { class: 'dialog', role: 'dialog', 'aria-modal': 'true', style: 'width:520px' });
+		ov.append(box);
+		const err = h('div', { class: 'warnbox', hidden: true });
+		const ok = h('button', { type: 'button', class: 'primary', text: b ? 'Guardar' : 'Crear buzón' });
+		const sgBox = h('label', { class: 'dsec' });
+		const paintSubgrupos = () => {
+			const info = D.areas.find(a => a.codigo === M.area) || { subgrupos: [] };
+			const subgrupos = (info.subgrupos || []).filter(g => g.activo || g.id === M.subgrupo);
+			if (!subgrupos.some(g => g.id === M.subgrupo)) M.subgrupo = '';
+			sgBox.hidden = !subgrupos.length;
+			sgBox.replaceChildren(h('b', { text: 'Subgrupo' }), h('select', { class: 'field', 'aria-label': 'Subgrupo', onchange: e => { M.subgrupo = e.target.value; } },
+				h('option', { value: '', selected: !M.subgrupo, text: 'Todo el área' }),
+				subgrupos.map(g => h('option', { value: g.id, selected: g.id === M.subgrupo, text: g.nombre + (g.activo ? '' : ' (desactivado)') }))),
+				h('span', { class: 't3', style: 'font-size:12px', text: 'Sus tickets aparecen en Entrantes de ese subgrupo.' }));
+		};
+		paintSubgrupos();
+		const areaSel = h('select', { class: 'field', 'aria-label': 'Área', onchange: e => { M.area = e.target.value; paintSubgrupos(); } },
+			areas.map(a => h('option', { value: a.codigo, selected: a.codigo === M.area, text: a.nombre + (a.activa ? '' : ' (desactivada)') })));
+		const toggle = (key, titulo, detalle) => h('div', { class: 'rule-row', style: 'min-height:40px;border:0' },
+			h('span', { class: 'lbl', style: 'flex:1' }, h('b', { text: titulo }), h('span', { text: detalle })),
+			sw(M[key], e => { M[key] = !M[key]; e.currentTarget.setAttribute('aria-checked', String(M[key])); }, titulo));
+		box.append(
+			h('div', { class: 'dlg-head' }, h('h2', { text: b ? 'Editar buzón' : 'Nuevo buzón' }), b ? h('span', { text: b.correo }) : null),
+			h('div', { class: 'dlg-body', style: 'gap:14px' },
+				b ? null : h('label', { class: 'dsec' }, h('b', { text: 'Correo del buzón' }),
+					h('input', { class: 'field', type: 'email', maxlength: 180, placeholder: 'Ej. soporte-fttx@empresa.com', oninput: e => { M.correo = e.target.value; } }),
+					h('span', { class: 't3', style: 'font-size:12px', text: 'No se puede cambiar después: para otro correo, crea otro buzón.' })),
+				h('label', { class: 'dsec' }, h('b', { text: 'Área de sus tickets' }), areaSel),
+				sgBox,
+				toggle('soloLectura', 'Solo lectura', 'Solo lee: no marca los correos como leídos ni envía respuestas.'),
+				b ? toggle('activo', 'Buzón activo', 'Desactivado deja de leerse; sus tickets conservan el área.') : null,
+				err),
+			h('div', { class: 'dlg-foot' }, h('span', { class: 'note', text: 'El cambio queda en Auditoría' }), h('span', { class: 'grow' }),
+				h('button', { type: 'button', class: 'pill pillbtn plain', text: 'Cancelar', onclick: () => ov.remove() }), ok));
+		ok.addEventListener('click', async () => {
+			const body = { area: M.area, subgrupo: M.subgrupo || null, soloLectura: M.soloLectura };
+			if (b) body.activo = M.activo; else body.correo = M.correo;
+			ok.disabled = true;
+			try {
+				const j = await send(b ? 'PATCH' : 'POST', b ? '/api/admin/buzones/' + encodeURIComponent(b.id) : '/api/admin/buzones', body);
+				D.buzones = (D.buzones || []).filter(x => x.id !== j.buzon.id).concat(j.buzon);
+				ov.remove();
+				renderBuzones();
+				toast(b ? 'Buzón actualizado' : 'Buzón creado', j.buzon.correo + ' → ' + j.buzon.areaNombre + (j.buzon.subgrupoNombre ? ' · ' + j.buzon.subgrupoNombre : ''), true);
+			} catch (e) {
+				ok.disabled = false;
+				err.textContent = e.message;
+				err.hidden = false;
+			}
+		});
+		document.body.append(ov);
+		setTimeout(() => { const f = box.querySelector('input, select'); if (f) f.focus(); }, 30);
+	}
+
 	// ---------- Secciones ----------
 	function showSection(key) {
 		$$('[data-sec]').forEach(b => b.setAttribute('aria-current', b.dataset.sec === key ? 'page' : 'false'));
@@ -599,8 +702,9 @@
 		renderReglas();
 		renderAvisos();
 		renderTipos();
+		renderBuzones();
 		const hash = window.location.hash.slice(1);
-		if (['areas', 'tipos', 'plantillas', 'reglas', 'avisos'].includes(hash)) showSection(hash);
+		if (['areas', 'tipos', 'buzones', 'plantillas', 'reglas', 'avisos'].includes(hash)) showSection(hash);
 		paintDirty();
 		try {
 			const t = JSON.parse(sessionStorage.getItem('kip.toast') || 'null');

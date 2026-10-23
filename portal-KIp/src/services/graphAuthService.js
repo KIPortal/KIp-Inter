@@ -11,6 +11,10 @@
  * GRAPH_SOLO_LECTURA="si" (en cualquier modo): solo lee (permiso Mail.Read). No marca
  * correos como leídos ni envía respuestas; recuerda hasta qué correo leyó en
  * GRAPH_ESTADO_ARCHIVO y la primera vez empieza desde ese momento (no importa lo viejo).
+ *
+ * Con varios buzones (tabla Buzon, Administración → Buzones), cada uno guarda su
+ * sesión del modo delegado y su estado de solo lectura en su propio archivo
+ * (GRAPH_SESIONES_DIR y GRAPH_ESTADOS_DIR, por defecto .graph-sesiones/ y .graph-estados/).
  */
 const fs = require('fs');
 const path = require('path');
@@ -19,6 +23,8 @@ const SCOPES_DELEGADOS = ['Mail.ReadWrite', 'Mail.Send', 'offline_access'];
 const SCOPES_SOLO_LECTURA = ['Mail.Read', 'offline_access'];
 const SESION_POR_DEFECTO = path.resolve(__dirname, '../../.graph-sesion.json');
 const ESTADO_POR_DEFECTO = path.resolve(__dirname, '../../.graph-estado.json');
+const SESIONES_POR_DEFECTO = path.resolve(__dirname, '../../.graph-sesiones');
+const ESTADOS_POR_DEFECTO = path.resolve(__dirname, '../../.graph-estados');
 
 function modo(env = process.env) {
     return String(env.GRAPH_MODO || '').trim().toLowerCase() === 'delegado' ? 'delegado' : 'aplicacion';
@@ -28,8 +34,24 @@ function soloLectura(env = process.env) {
     return ['si', 'sí', 'true', '1'].includes(String(env.GRAPH_SOLO_LECTURA || '').trim().toLowerCase());
 }
 
-function scopesDelegados(env = process.env) {
-    return soloLectura(env) ? SCOPES_SOLO_LECTURA : SCOPES_DELEGADOS;
+/** Permisos del modo delegado; `soloLectura` true pide solo lectura aunque el .env no lo diga (buzón en solo lectura). */
+function scopesDelegados(env = process.env, { soloLectura: buzonSoloLectura = false } = {}) {
+    return soloLectura(env) || buzonSoloLectura ? SCOPES_SOLO_LECTURA : SCOPES_DELEGADOS;
+}
+
+/** Nombre de archivo seguro para un buzón: su correo en minúsculas. */
+const archivoDeCorreo = correo => String(correo || '').trim().toLowerCase().replace(/[^a-z0-9@._-]/g, '_') + '.json';
+
+/** Sesión del modo delegado de un buzón de la tabla Buzon. */
+function archivoSesionBuzon(correo, env = process.env) {
+    const dir = env.GRAPH_SESIONES_DIR ? path.resolve(env.GRAPH_SESIONES_DIR) : SESIONES_POR_DEFECTO;
+    return path.join(dir, archivoDeCorreo(correo));
+}
+
+/** Estado de solo lectura de un buzón de la tabla Buzon. */
+function archivoEstadoBuzon(correo, env = process.env) {
+    const dir = env.GRAPH_ESTADOS_DIR ? path.resolve(env.GRAPH_ESTADOS_DIR) : ESTADOS_POR_DEFECTO;
+    return path.join(dir, archivoDeCorreo(correo));
 }
 
 function archivoSesion(env = process.env) {
@@ -59,6 +81,7 @@ function leerEstado(archivo = archivoEstado(), fsMod = fs) {
 }
 
 function guardarEstado(estado, archivo = archivoEstado(), fsMod = fs) {
+    fsMod.mkdirSync(path.dirname(archivo), { recursive: true });
     fsMod.writeFileSync(archivo, JSON.stringify(estado));
 }
 
@@ -78,20 +101,22 @@ function pluginArchivo(archivo, fsMod = fs) {
             if (fsMod.existsSync(archivo)) ctx.tokenCache.deserialize(fsMod.readFileSync(archivo, 'utf8'));
         },
         async afterCacheAccess(ctx) {
-            if (ctx.cacheHasChanged) fsMod.writeFileSync(archivo, ctx.tokenCache.serialize(), { mode: 0o600 });
+            if (!ctx.cacheHasChanged) return;
+            fsMod.mkdirSync(path.dirname(archivo), { recursive: true });
+            fsMod.writeFileSync(archivo, ctx.tokenCache.serialize(), { mode: 0o600 });
         }
     };
 }
 
-/** Cliente MSAL público (sin secreto) para el modo delegado. */
-function crearClientePublico(env = process.env) {
+/** Cliente MSAL público (sin secreto) para el modo delegado; `archivo` es donde guarda la sesión. */
+function crearClientePublico(env = process.env, archivo = archivoSesion(env)) {
     const { PublicClientApplication } = require('@azure/msal-node');
     if (!env.GRAPH_CLIENT_ID) throw new Error('Falta GRAPH_CLIENT_ID en el .env');
     // "common" acepta cuentas personales y de organización; con un tenant fijo, solo ese
     const tenant = (env.GRAPH_TENANT_ID || 'common').trim();
     return new PublicClientApplication({
         auth: { clientId: env.GRAPH_CLIENT_ID.trim(), authority: `https://login.microsoftonline.com/${tenant}` },
-        cache: { cachePlugin: pluginArchivo(archivoSesion(env)) }
+        cache: { cachePlugin: pluginArchivo(archivo) }
     });
 }
 
@@ -99,21 +124,23 @@ function crearClientePublico(env = process.env) {
  * Token del modo delegado sin pedir nada a nadie (usa el token de renovación guardado).
  * Lanza un error claro si nadie ha iniciado sesión todavía.
  */
-async function tokenDelegado(pca) {
+async function tokenDelegado(pca, scopes = scopesDelegados(), correo = null) {
     const cuentas = await pca.getTokenCache().getAllAccounts();
     if (!cuentas.length) {
-        const e = new Error('No hay sesión de correo: ejecuta "node scripts/graph-login.js" e inicia sesión con el buzón');
+        const e = new Error(correo
+            ? `No hay sesión de correo para ${correo}: ejecuta "npm run correo:login -- --buzon=${correo}" e inicia sesión con ese buzón`
+            : 'No hay sesión de correo: ejecuta "node scripts/graph-login.js" e inicia sesión con el buzón');
         e.code = 'SIN_SESION';
         throw e;
     }
-    const r = await pca.acquireTokenSilent({ account: cuentas[0], scopes: scopesDelegados() });
+    const r = await pca.acquireTokenSilent({ account: cuentas[0], scopes });
     return r.accessToken;
 }
 
 /** Inicio de sesión con código (lo usa scripts/graph-login.js). `mostrar` recibe { verificationUri, userCode, message }. */
-async function iniciarSesionConCodigo(pca, mostrar = (r) => console.log(r.message)) {
+async function iniciarSesionConCodigo(pca, mostrar = (r) => console.log(r.message), scopes = scopesDelegados()) {
     return pca.acquireTokenByDeviceCode({
-        scopes: scopesDelegados(),
+        scopes,
         deviceCodeCallback: mostrar
     });
 }
@@ -129,6 +156,8 @@ module.exports = {
     guardarEstado,
     avanzarEstado,
     archivoSesion,
+    archivoSesionBuzon,
+    archivoEstadoBuzon,
     rutaBuzon,
     pluginArchivo,
     crearClientePublico,

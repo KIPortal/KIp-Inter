@@ -97,7 +97,7 @@ async function postMessage(req, res) {
                 const adjuntos = await Promise.all(files.map(async f => ({
                     nombre: f.originalname, mimetype: f.mimetype, contenido: await fs.promises.readFile(f.path)
                 })));
-                const r = await mail.enviarCorreo({ para, asunto: conv.asuntoRespuesta(ticket), texto: datos.texto, adjuntos });
+                const r = await mail.enviarCorreo({ para, asunto: conv.asuntoRespuesta(ticket), texto: datos.texto, adjuntos, ticket });
                 enviado = r.enviado;
                 if (r.soloLectura) aviso = 'Guardado sin enviar: el correo está en modo solo lectura';
                 else if (!r.configurado) aviso = 'Guardado sin enviar: falta configurar el envío de correo';

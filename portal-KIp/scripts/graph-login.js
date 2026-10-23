@@ -7,11 +7,17 @@
  *
  *   node scripts/graph-login.js           inicia sesión (o muestra la sesión actual) y prueba el buzón
  *   node scripts/graph-login.js --salir   borra la sesión guardada
+ *
+ * Con varios buzones (Administración → Buzones), una sesión por buzón en .graph-sesiones/:
+ *   npm run correo:login -- --buzon=soporte@outlook.com           inicia sesión con ese buzón
+ *   npm run correo:login -- --buzon=soporte@outlook.com --salir   borra su sesión
+ *   --solo-lectura   pide solo Mail.Read (para un buzón en solo lectura)
  */
 const fs = require('fs');
 const { Client } = require('@microsoft/microsoft-graph-client');
 const { loadEnvVariables } = require('./diagnose-azure');
 const graphAuth = require('../src/services/graphAuthService');
+const { normalizarCorreo } = require('../src/services/buzonService');
 
 /** Explica en español los errores más comunes del inicio de sesión delegado. */
 function explicarError(err) {
@@ -42,13 +48,27 @@ function explicarError(err) {
     return null;
 }
 
-async function probarBuzon(pca) {
+/** Opciones de la línea de comandos: { buzon, salir, soloLectura }. `buzon` es null si no se dio o no es un correo. */
+function opciones(argv = process.argv) {
+    const arg = argv.find(a => a.startsWith('--buzon='));
+    return {
+        buzon: arg ? normalizarCorreo(arg.slice('--buzon='.length)) : null,
+        buzonDado: Boolean(arg),
+        salir: argv.includes('--salir'),
+        soloLectura: argv.includes('--solo-lectura')
+    };
+}
+
+/** ¿La cuenta con la que se inició sesión es la del buzón? (sin --buzon, cualquiera sirve) */
+const esCuentaDelBuzon = (username, buzon) => !buzon || String(username || '').trim().toLowerCase() === buzon;
+
+async function probarBuzon(pca, scopes, soloLectura) {
     const client = Client.init({
-        authProvider: (done) => graphAuth.tokenDelegado(pca).then(t => done(null, t), e => done(e, null))
+        authProvider: (done) => graphAuth.tokenDelegado(pca, scopes).then(t => done(null, t), e => done(e, null))
     });
     const inbox = await client.api('/me/mailFolders/inbox').select('totalItemCount,unreadItemCount').get();
     console.log(`📬 Bandeja de entrada: ${inbox.totalItemCount} correos, ${inbox.unreadItemCount} sin leer.`);
-    if (graphAuth.soloLectura()) {
+    if (soloLectura) {
         console.log('   Solo lectura: el portal no marca ni envía nada; toma los correos que lleguen desde que se enciende.');
     } else {
         console.log('   Ojo: al encender el portal, los no leídos se convierten en tickets y quedan marcados como leídos.');
@@ -57,11 +77,14 @@ async function probarBuzon(pca) {
 
 async function main() {
     loadEnvVariables();
-    const archivo = graphAuth.archivoSesion();
+    const op = opciones();
+    if (op.buzonDado && !op.buzon) throw new Error('El correo de --buzon= no es válido. Ej.: --buzon=soporte@outlook.com');
+    const archivo = op.buzon ? graphAuth.archivoSesionBuzon(op.buzon) : graphAuth.archivoSesion();
+    const salir = op.buzon ? `npm run correo:login -- --buzon=${op.buzon} --salir` : 'node scripts/graph-login.js --salir';
 
-    if (process.argv.includes('--salir')) {
+    if (op.salir) {
         if (fs.existsSync(archivo)) fs.unlinkSync(archivo);
-        console.log('Sesión de correo borrada.');
+        console.log(`Sesión de correo${op.buzon ? ` de ${op.buzon}` : ''} borrada.`);
         return;
     }
 
@@ -70,21 +93,29 @@ async function main() {
         console.log('   Pon GRAPH_MODO="delegado" para que el portal use esta sesión.\n');
     }
 
-    const pca = graphAuth.crearClientePublico();
+    const soloLectura = graphAuth.soloLectura() || op.soloLectura;
+    const scopes = graphAuth.scopesDelegados(process.env, { soloLectura });
+    const pca = graphAuth.crearClientePublico(process.env, archivo);
     const cuentas = await pca.getTokenCache().getAllAccounts();
     if (cuentas.length) {
-        console.log(`Ya hay una sesión guardada: ${cuentas[0].username}. (Para cambiarla: node scripts/graph-login.js --salir)`);
+        console.log(`Ya hay una sesión guardada: ${cuentas[0].username}. (Para cambiarla: ${salir})`);
     } else {
         const r = await graphAuth.iniciarSesionConCodigo(pca, (d) => {
             if (!d || !d.userCode) return; // Microsoft no dio código: el error llega después
             console.log(`1. Abre ${d.verificationUri} en el navegador.`);
             console.log(`2. Escribe el código: ${d.userCode}`);
-            console.log('3. Inicia sesión con el correo del buzón y acepta los permisos.');
+            console.log(`3. Inicia sesión con ${op.buzon || 'el correo del buzón'} y acepta los permisos.`);
             console.log('   (El código dura unos 15 minutos; esta ventana espera sola.)\n');
-        });
-        console.log(`\n✅ Sesión iniciada como ${r.account && r.account.username}. Guardada en ${archivo}`);
+        }, scopes);
+        const usuario = r.account && r.account.username;
+        if (!esCuentaDelBuzon(usuario, op.buzon)) {
+            // Con otra cuenta el portal leería el buzón equivocado: no se guarda
+            if (fs.existsSync(archivo)) fs.unlinkSync(archivo);
+            throw new Error(`Iniciaste sesión como ${usuario}, pero el buzón es ${op.buzon}. Vuelve a correr el script y entra con ${op.buzon} (si es un alias, usa en Administración el correo principal de la cuenta).`);
+        }
+        console.log(`\n✅ Sesión iniciada como ${usuario}. Guardada en ${archivo}`);
     }
-    await probarBuzon(pca);
+    await probarBuzon(pca, scopes, soloLectura);
 }
 
 if (require.main === module) {
@@ -96,4 +127,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { explicarError };
+module.exports = { explicarError, opciones, esCuentaDelBuzon };

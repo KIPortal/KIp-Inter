@@ -17,6 +17,13 @@ const { validateUser, describeUser, MIN_CLAVE } = require('../services/userAdmin
 const { allAreas, refreshAreas, validateAreaName, allSubgrupos, isValidSubgrupo, subgrupoName } = require('../services/areaCatalog');
 const { SUPERVISORES, ROLES_ALTOS, motivoNoGestionar } = require('../services/roleService');
 const { validarTipoCaso, tipoCasoVista, NIVEL_PUNTOS, NIVEL_NOMBRE, FRECUENCIAS } = require('../services/tipoCasoService');
+const { validarBuzon, buzonVista, describirBuzon } = require('../services/buzonService');
+const graphAuth = require('../services/graphAuthService');
+const fs = require('fs');
+
+// Modo de prueba (delegado): ¿ya inició sesión ese buzón? Con el secreto de TI no aplica (null).
+const sesionDe = correo => (graphAuth.modo() === 'delegado' ? fs.existsSync(graphAuth.archivoSesionBuzon(correo)) : null);
+const vistaBuzon = b => buzonVista(b, { sesion: sesionDe(b.correo) });
 
 // ¿Hay algún gerente activo? Sin gerente, el coordinador puede nombrar al primero.
 // Solo se consulta cuando el cambio toca a jefes o gerentes.
@@ -38,12 +45,16 @@ async function renderAdmin(req, res) {
     try {
         const ahora = new Date();
         await refreshAreas(prisma, { force: true });
-        const [config, operadores, tickets, coordinadores, desactivados, tiposCaso] = await Promise.all([
+        const [config, operadores, tickets, coordinadores, desactivados, tiposCaso, buzones] = await Promise.all([
             loadConfig(prisma), loadOperatorsWithShift(ahora), activeTickets(),
             prisma.user.findMany({ where: { rol: { in: SUPERVISORES }, activo: true }, select: { id: true, nombre: true, email: true, rol: true, area_designada: true, atiende_tickets: true, telefono: true, subgrupo_id: true }, orderBy: { nombre: 'asc' } }),
             prisma.user.findMany({ where: { activo: false }, select: { id: true, nombre: true, email: true, rol: true, area_designada: true, telefono: true }, orderBy: { nombre: 'asc' } }),
             prisma.tipoCaso.findMany({ orderBy: [{ area_codigo: 'asc' }, { nivel: 'asc' }, { nombre: 'asc' }] }).catch(error => {
                 console.error('Tipos de caso no disponibles (¿migración pendiente?):', String(error.message).trim().split('\n').pop());
+                return [];
+            }),
+            prisma.buzon.findMany({ orderBy: { correo: 'asc' } }).catch(error => {
+                console.error('Buzones no disponibles (¿migración pendiente?):', String(error.message).trim().split('\n').pop());
                 return [];
             })
         ]);
@@ -82,6 +93,8 @@ async function renderAdmin(req, res) {
             daRolesAltos: req.user?.rol === 'GERENTE' || !coordinadores.some(c => c.rol === 'GERENTE'),
             minClave: MIN_CLAVE,
             tiposCaso: tiposCaso.map(tipoCasoVista),
+            buzones: buzones.map(vistaBuzon),
+            correoModo: graphAuth.modo(),
             niveles: { puntos: NIVEL_PUNTOS, nombres: NIVEL_NOMBRE, frecuencias: FRECUENCIAS },
             eventos: EVENTOS,
             destinatarios: DESTINATARIOS,
@@ -400,4 +413,42 @@ async function updateTipoCaso(req, res) {
     }
 }
 
-module.exports = { renderAdmin, saveConfig, preview, createUser, updateUser, createArea, updateArea, createSubgrupo, updateSubgrupo, createTipoCaso, updateTipoCaso };
+// ---------- Buzones de correo (cada uno crea sus tickets en su área y subgrupo) ----------
+
+async function createBuzon(req, res) {
+    const v = validarBuzon(req.body);
+    if (v.error) return res.status(400).json({ success: false, error: v.error });
+    try {
+        const buzon = await prisma.buzon.create({ data: v.data });
+        await auditUser(req, 'BUZON_CREADO', describirBuzon(v.data));
+        return res.status(201).json({ success: true, buzon: vistaBuzon(buzon) });
+    } catch (e) {
+        if (e.code === 'P2002') return res.status(409).json({ success: false, error: 'Ya hay un buzón con ese correo' });
+        console.error('Error al crear buzón:', e);
+        return res.status(500).json({ success: false, error: 'No se pudo crear el buzón' });
+    }
+}
+
+async function updateBuzon(req, res) {
+    const id = String(req.params.id || '').trim();
+    try {
+        const antes = await prisma.buzon.findUnique({ where: { id } });
+        if (!antes) return res.status(404).json({ success: false, error: 'Buzón no encontrado' });
+        // El correo no cambia; el subgrupo se valida contra el área nueva (o la que ya tenía)
+        const body = req.body || {};
+        const v = validarBuzon({ ...body, area: body.area !== undefined ? body.area : antes.area_codigo }, { parcial: true });
+        if (v.error) return res.status(400).json({ success: false, error: v.error });
+        if (body.area === undefined) delete v.data.area_codigo;
+        if (body.area === undefined && body.subgrupo === undefined) delete v.data.subgrupo_id;
+        Object.keys(v.data).forEach(k => { if (v.data[k] === antes[k]) delete v.data[k]; });
+        if (!Object.keys(v.data).length) return res.json({ success: true, buzon: vistaBuzon(antes) });
+        const buzon = await prisma.buzon.update({ where: { id }, data: v.data });
+        await auditUser(req, 'BUZON_EDITADO', `${antes.correo}: ${describirBuzon(v.data)}`);
+        return res.json({ success: true, buzon: vistaBuzon(buzon) });
+    } catch (e) {
+        console.error('Error al editar buzón:', e);
+        return res.status(500).json({ success: false, error: 'No se pudo guardar el buzón' });
+    }
+}
+
+module.exports = { renderAdmin, saveConfig, preview, createUser, updateUser, createArea, updateArea, createSubgrupo, updateSubgrupo, createTipoCaso, updateTipoCaso, createBuzon, updateBuzon };
