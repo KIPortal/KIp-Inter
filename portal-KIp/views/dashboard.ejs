@@ -108,7 +108,7 @@
 					<div class="card-head" style="padding-bottom:6px;gap:14px">
 						<h2 id="h-areas">Carga por área</h2>
 						<span class="hint">Pulsa un área para ver a sus operadores</span>
-						<button type="button" class="info" title="Saturación: puntos de los tickets abiertos del área ÷ capacidad de quienes están en turno o de guardia. N1=2, N2=4, N3=8, N4=10 y sin clasificar=2; cada persona aguanta los puntos que fija Administración &gt; Reglas." aria-label="Saturación: puntos de los tickets abiertos del área ÷ capacidad de quienes están en turno o de guardia. N1=2, N2=4, N3=8, N4=10 y sin clasificar=2; cada persona aguanta los puntos que fija Administración &gt; Reglas."><%- icono.info %></button>
+						<button type="button" class="info" title="Saturación: puntos acumulados de la jornada (abiertos más resueltos hoy) ÷ capacidad de quienes están en turno o de guardia (fuera de turno, de todo el área). N1=2, N2=4, N3=8, N4=10 y sin clasificar=2; cada persona aguanta los puntos que fija Administración &gt; Reglas." aria-label="Saturación: puntos acumulados de la jornada (abiertos más resueltos hoy) ÷ capacidad de quienes están en turno o de guardia (fuera de turno, de todo el área). N1=2, N2=4, N3=8, N4=10 y sin clasificar=2; cada persona aguanta los puntos que fija Administración &gt; Reglas."><%- icono.info %></button>
 						<span class="grow"></span>
 						<span class="legend"><i class="bg-blue"></i>Menos de 40 %</span>
 						<span class="legend"><i class="bg-amber"></i>40–59 %</span>
@@ -120,12 +120,12 @@
 					<div class="scroll-x">
 						<div style="min-width:620px">
 							<div class="area-grid area-headrow">
-								<span>Área</span><span>Saturación</span><span style="text-align:right">%</span><span style="text-align:right">Abiertos</span><span style="text-align:right" title="Puntos abiertos / capacidad de quienes están en turno">Puntos</span><span></span>
+								<span>Área</span><span>Saturación</span><span style="text-align:right">%</span><span style="text-align:right">Abiertos</span><span style="text-align:right" title="Puntos acumulados de la jornada (abiertos + resueltos hoy) / capacidad">Puntos</span><span></span>
 							</div>
 							<% panel.areas.forEach((a, i) => { const abierta = a.codigo === areaInicial; %>
 								<button type="button" class="area-row area-grid" data-area="<%= a.codigo %>" aria-pressed="<%= abierta %>" aria-controls="ops-<%= a.codigo %>" aria-label="Ver operadores de <%= a.nombre %>">
 									<span class="name"><%= a.nombre %></span>
-									<div class="track" title="<%= a.porcentaje %> % de saturación · <%= a.puntos %> de <%= a.capacidad %> puntos · <%= a.personas %> en turno">
+									<div class="track" title="<%= a.porcentaje %> % de saturación · <%= a.puntos %> de <%= a.capacidad %> puntos (<%= a.puntosAbiertos %> abiertos + <%= a.puntosResueltos %> resueltos hoy) · <%= a.personas %> en turno">
 										<span class="bar-fill bg-<%= nivel(a.porcentaje) %>" style="width: <%= Math.min(a.porcentaje, 100) %>%; animation-delay: <%= i * 70 %>ms"></span>
 										<span class="tick" style="left:40%"></span><span class="tick" style="left:60%"></span>
 									</div>
