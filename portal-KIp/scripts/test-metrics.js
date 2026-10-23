@@ -118,8 +118,8 @@ runTest('Promedio: sin datos devuelve null (no 0)', () => {
 runTest('Formato: min, h y N/A', () => {
     assert.strictEqual(formatMinutes(null), 'N/A');
     assert.strictEqual(formatMinutes(45), '45 min');
-    assert.strictEqual(formatMinutes(90), '1.5 h');
-    assert.strictEqual(formatMinutes(59.6), '1.0 h');
+    assert.strictEqual(formatMinutes(90), '1,5 h');
+    assert.strictEqual(formatMinutes(59.6), '1,0 h');
     assert.strictEqual(formatMinutes(0), '0 min');
 });
 

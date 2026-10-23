@@ -436,9 +436,10 @@
 
 	// ---------- Tipos de caso: casos comunes de cada área con su nivel de dificultad ----------
 	// Los puntos de un ticket salen del nivel (N1=2, N2=4, N3=8, N4=10); la prioridad solo marca urgencia.
-	const NV = D.niveles || { puntos: { 1: 2, 2: 4, 3: 8, 4: 10 }, nombres: { 1: 'Sencillo', 2: 'Moderado', 3: 'Complejo', 4: 'Muy complejo' }, frecuencias: ['ALTA', 'MEDIA', 'BAJA'] };
+	const NV = D.niveles || { puntos: {}, nombres: {}, frecuencias: [] };
 	const FREC = { ALTA: 'Alta', MEDIA: 'Media', BAJA: 'Baja' };
-	const NIVEL_TONO = { 1: 'green', 2: 'gray', 3: 'purple', 4: 'red' };
+	// Escala que sube con la dificultad (el gris queda para "Desactivado")
+	const NIVEL_TONO = { 1: 'green', 2: 'blue', 3: 'orange', 4: 'red' };
 	const tiposFiltro = { area: '' };
 	const send = async (method, url, body) => {
 		const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -487,7 +488,7 @@
 						h('td', { style: 'padding-right:24px;text-align:right' }, h('button', { type: 'button', class: 'ico', title: 'Editar', 'aria-label': 'Editar ' + t.nombre, html: ICON.edit, onclick: () => openTipo(t.id) }))))))),
 			h('span', { class: 't3', style: 'padding:12px 24px 16px;font-size:12px', text: 'Un tipo desactivado ya no se puede elegir; los tickets que lo tienen lo conservan. El tiempo estimado se compara en Reportes con el promedio real (desde la llegada del ticket).' }));
 		const sub = $('[data-sec-sub="tipos"]');
-		if (sub) sub.textContent = tipos.filter(t => t.activo).length + ' casos comunes · nivel y puntos';
+		if (sub) sub.textContent = tipos.filter(t => t.activo).length + ' casos comunes';
 	}
 
 	function openTipo(id) {

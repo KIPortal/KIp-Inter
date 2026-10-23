@@ -41,10 +41,10 @@
 	D.operadores.forEach(o => { OPS[o.id] = o; });
 	const BY_CODE = {};
 	D.tickets.forEach(t => { BY_CODE[t.codigo] = t; });
-	// Tipos de caso (Administración → Tipos de caso): nivel 1-4 → N1=2, N2=4, N3=8, N4=10 pts
-	const NIVEL_PTS = { 1: 2, 2: 4, 3: 8, 4: 10 };
+	// Tipos de caso (Administración → Tipos de caso): el nivel 1-4 da los puntos; puntos y nombres vienen del servidor
+	const NV = D.niveles || { puntos: {}, nombres: {} };
 	const TIPOS = D.tiposCaso || [];
-	const tipoTexto = t => (t.nivel ? (t.tipoCaso || 'Otro') + ' · N' + t.nivel + ' · ' + NIVEL_PTS[t.nivel] + ' pts' : 'Sin tipo de caso');
+	const tipoTexto = t => (t.nivel ? (t.tipoCaso || 'Otro') + ' · N' + t.nivel + ' · ' + NV.puntos[t.nivel] + ' pts' : 'Sin tipo de caso');
 	// Valor del selector: 'id:<tipo>' (del catálogo) o 'n:<nivel>' (Otro); '' sin elegir
 	const tipoValor = t => (t.tipoCasoId ? 'id:' + t.tipoCasoId : t.nivel ? 'n:' + t.nivel : '');
 	const tipoBody = v => (v.slice(0, 3) === 'id:' ? { tipoCasoId: v.slice(3) } : v.slice(0, 2) === 'n:' ? { nivel: Number(v.slice(2)) } : { tipoCasoId: null, nivel: null });
@@ -57,7 +57,7 @@
 			delArea.length ? h('optgroup', { label: 'Casos comunes de ' + (AREA_NAME[area] || area) },
 				delArea.map(x => h('option', { value: 'id:' + x.id, selected: cur === 'id:' + x.id ? true : null, text: x.nombre + ' · N' + x.nivel + ' (' + x.puntos + ' pts)' }))) : null,
 			h('optgroup', { label: 'Otro (no está en la lista)' },
-				[1, 2, 3, 4].map(n => h('option', { value: 'n:' + n, selected: cur === 'n:' + n ? true : null, text: 'Otro · nivel ' + n + ' (' + NIVEL_PTS[n] + ' pts)' }))));
+				[1, 2, 3, 4].map(n => h('option', { value: 'n:' + n, selected: cur === 'n:' + n ? true : null, text: 'Otro · nivel ' + n + (NV.nombres[n] ? ' · ' + NV.nombres[n] : '') + ' (' + NV.puntos[n] + ' pts)' }))));
 	}
 	// Sugerencia por área: { id, motivo } o null (assignmentService)
 	const sugOf = area => (D.sugeridos && D.sugeridos[area]) || null;
@@ -584,7 +584,7 @@
 			const sel = tipoSelect(ed.area, ed.tipo, t.tipoCaso ? t.tipoCaso + ' · N' + t.nivel + ' (desactivado)' : null);
 			sel.addEventListener('change', e => { ed.tipo = e.target.value; });
 			tipoSlot.replaceChildren(h('b', { text: 'Tipo de caso' }), sel,
-				h('span', { class: 't3', style: 'font-size:12px', text: 'El nivel da los puntos: N1 = 2, N2 = 4, N3 = 8, N4 = 10.' }));
+				h('span', { class: 't3', style: 'font-size:12px', text: 'El nivel da los puntos: ' + [1, 2, 3, 4].map(n => 'N' + n + ' = ' + NV.puntos[n]).join(', ') + '.' }));
 		};
 		tipoSlot.repaint();
 		const body = h('div', { class: 'dp-body', style: 'gap:18px' },

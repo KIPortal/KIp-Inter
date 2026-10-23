@@ -12,7 +12,7 @@ const { AREA_NAMES } = require('../services/periodReportService');
 const { loadConfig, mergeConfig, describeChanges, previewRules, EVENTOS, DESTINATARIOS, MAX_PLANTILLAS, MAX_TEXTO } = require('../services/configService');
 const { LIMITS } = require('../services/rulesService');
 const { auditUserId } = require('../services/auditViewService');
-const { loadOperatorsWithShift } = require('./dashboardController');
+const { loadOperatorsWithShift, olvidarTiposCaso } = require('./dashboardController');
 const { validateUser, describeUser, MIN_CLAVE } = require('../services/userAdminService');
 const { allAreas, refreshAreas, validateAreaName, allSubgrupos, isValidSubgrupo, subgrupoName } = require('../services/areaCatalog');
 const { SUPERVISORES, ROLES_ALTOS, motivoNoGestionar } = require('../services/roleService');
@@ -370,6 +370,7 @@ async function createTipoCaso(req, res) {
     if (v.error) return res.status(400).json({ success: false, error: v.error });
     try {
         const tipo = await prisma.tipoCaso.create({ data: v.data });
+        olvidarTiposCaso();
         await auditUser(req, 'TIPO_CASO_CREADO', `${AREA_NAMES[tipo.area_codigo] || tipo.area_codigo} · ${describirTipo(v.data)}`);
         return res.status(201).json({ success: true, tipo: tipoCasoVista(tipo) });
     } catch (e) {
@@ -391,6 +392,7 @@ async function updateTipoCaso(req, res) {
         Object.keys(v.data).forEach(k => { if (v.data[k] === antes[k]) delete v.data[k]; });
         if (!Object.keys(v.data).length) return res.json({ success: true, tipo: tipoCasoVista(antes) });
         const tipo = await prisma.tipoCaso.update({ where: { id }, data: v.data });
+        olvidarTiposCaso();
         await auditUser(req, 'TIPO_CASO_EDITADO', `${AREA_NAMES[antes.area_codigo] || antes.area_codigo} · ${antes.nombre}: ${describirTipo(v.data)}`);
         return res.json({ success: true, tipo: tipoCasoVista(tipo) });
     } catch (e) {
