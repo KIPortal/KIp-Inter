@@ -3,6 +3,7 @@
 	// Solo dibuja lo que entrega dashboardService.buildCoordinatorPanel.
 	const k = panel.kpis;
 	const coma = n => String(n).replace('.', ',');
+	const coma1 = n => coma(Math.round(n * 10) / 10);
 	const nivel = pct => pct >= 60 ? 'red' : (pct >= 40 ? 'amber' : 'blue');
 	const nivelTexto = pct => pct >= 60 ? 't-red' : (pct >= 40 ? 't-orange' : '');
 	const enTurno = panel.turno.grupos.filter(g => g.clave !== 'fuera').reduce((n, g) => n + g.personas.length, 0);
@@ -124,7 +125,8 @@
 							</div>
 							<% panel.areas.forEach((a, i) => { const abierta = a.codigo === areaInicial; %>
 								<button type="button" class="area-row area-grid" data-area="<%= a.codigo %>" aria-pressed="<%= abierta %>" aria-controls="ops-<%= a.codigo %>" aria-label="Ver operadores de <%= a.nombre %>">
-									<span class="name"><%= a.nombre %></span>
+									<% const nSobre = a.operadores.filter(o => o.sobrecarga).length; %>
+									<span class="name"><%= a.nombre %><% if (nSobre) { %> <span class="over-pill" title="<%= nSobre %> <%= nSobre === 1 ? 'operador' : 'operadores' %> en sobrecarga"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0"/></svg><%= nSobre %></span><% } %></span>
 									<div class="track" title="<%= a.porcentaje %> % de saturación · <%= a.puntos %> de <%= a.capacidad %> puntos (<%= a.puntosAbiertos %> abiertos + <%= a.puntosResueltos %> resueltos hoy) · <%= a.personas %> en turno">
 										<span class="bar-fill bg-<%= nivel(a.porcentaje) %>" style="width: <%= Math.min(a.porcentaje, 100) %>%; animation-delay: <%= i * 70 %>ms"></span>
 										<span class="tick" style="left:40%"></span><span class="tick" style="left:60%"></span>
@@ -135,16 +137,27 @@
 									<%- icono.chev %>
 								</button>
 								<%
-									const maxV = Math.max(1, ...a.operadores.map(o => Math.max(o.carga, o.resueltos)));
-									const ordenados = a.operadores.slice().sort((x, y) => (y.carga - x.carga) || (y.resueltos - x.resueltos));
+									const ordenados = a.operadores.slice().sort((x, y) => (y.puntosCarga - x.puntosCarga) || (y.carga - x.carga) || (y.resueltos - x.resueltos));
+									const ref = a.operadores.find(o => o.promedioArea !== null) || null;
+									const escala = Math.max(1, ...a.operadores.map(o => o.puntosCarga), ref && ref.limiteCarga ? ref.limiteCarga : 0) * 1.12;
+									const estadoCarga = o => {
+										if (o.estado.grupo === 'fuera' && !o.carga) return ['off', 'Fuera de turno'];
+										if (o.promedioArea === null) return ['off', 'Sin comparación'];
+										if (o.sobrecarga) return ['over', 'Sobrecarga ×' + coma1(o.indiceCarga)];
+										if (!o.carga) return ['free', 'Libre'];
+										if (o.puntosCarga > o.promedioArea) return ['high', 'Sobre el promedio'];
+										return ['ok', 'Carga normal'];
+									};
 								%>
 								<div class="area-ops" id="ops-<%= a.codigo %>" data-ops="<%= a.codigo %>"<% if (!abierta) { %> hidden<% } %>>
 									<div class="ops-head">
 										<span class="summary">
-											<%= a.operadores.length %> <%= a.operadores.length === 1 ? 'operador' : 'operadores' %> · <%= a.abiertos %> activos<% if (a.sinAsignar) { %> (<%= a.sinAsignar %> sin asignar)<% } %> · <%= a.resueltos %> resueltos <%= panel.periodo === 'semana' ? 'esta semana' : 'hoy' %> · <%= a.personas %> en turno · <%= a.porcentaje %>% de saturación
+											<%= a.operadores.length %> <%= a.operadores.length === 1 ? 'operador' : 'operadores' %><% if (ref) { %> · promedio <%= coma1(ref.promedioArea) %> pts activos por persona<% if (ref.limiteCarga) { %> · sobrecarga desde <%= coma1(ref.limiteCarga) %> pts<% } %><% } %><% if (a.sinAsignar) { %> · <%= a.sinAsignar %> sin asignar<% } %>
 										</span>
-										<span class="legend"><i class="bg-blue"></i>Carga actual</span>
-										<span class="legend"><i class="bg-green"></i>Resueltos</span>
+										<% if (ref) { %>
+											<span class="legend"><i class="mk-avg"></i>Promedio del área</span>
+											<% if (ref.limiteCarga) { %><span class="legend"><i class="mk-lim"></i>Límite de sobrecarga</span><% } %>
+										<% } %>
 										<div role="tablist" class="sm" aria-label="Ordenar operadores">
 											<button type="button" role="tab" data-sort="carga" aria-selected="true">Más carga</button>
 											<button type="button" role="tab" data-sort="resueltos" aria-selected="false">Más resueltos</button>
@@ -155,26 +168,28 @@
 									<% } else { %>
 									<div class="scroll-x">
 										<div style="min-width:640px;display:flex;flex-direction:column" data-op-list>
-											<div class="ops-grid hd"><span>Operador</span><span>Carga actual / Resueltos</span><span style="text-align:right">Prom.</span><span style="text-align:right">Puntos</span></div>
-											<% ordenados.forEach((o, j) => { %>
-												<div class="ops-grid op-row" data-carga="<%= o.carga %>" data-resueltos="<%= o.resueltos %>">
+											<div class="ops-grid hd"><span>Operador</span><span>Carga activa (pts)</span><span>Estado</span><span style="text-align:right">Resueltos</span><span style="text-align:right">Prom.</span><span style="text-align:right">Puntos</span></div>
+											<% ordenados.forEach((o, j) => { const ec = estadoCarga(o); %>
+												<div class="ops-grid op-row" data-carga="<%= o.puntosCarga %>" data-resueltos="<%= o.resueltos %>">
 													<div class="op-who">
 														<span class="pos" data-pos><%= j + 1 %></span>
-														<span class="avatar"><% if (o.foto) { %><img src="<%= o.foto %>" alt="" loading="lazy"><% } else { %><%= o.iniciales %><% } %><span class="st st-<%= o.estado.grupo %>"></span></span>
+														<span class="avatar<%= ec[0] === 'over' ? ' over' : '' %>"><% if (o.foto) { %><img src="<%= o.foto %>" alt="" loading="lazy"><% } else { %><%= o.iniciales %><% } %><span class="st st-<%= o.estado.grupo %>"></span></span>
 														<div class="nm"><b><%= o.nombre %></b><span><%= o.estado.etiqueta %></span></div>
 													</div>
-													<div class="op-bars">
-														<div>
-															<div class="track"><span class="bar-fill <%= o.sobrecarga ? 'bg-amber' : 'bg-blue' %>" style="width: <%= o.carga / maxV * 100 %>%; animation-delay: <%= j * 60 %>ms"></span></div>
-															<span class="lbl"><strong class="<%= o.sobrecarga ? 't-orange' : 't-accent' %>"><%= o.carga %></strong> activos · <%= o.puntosCarga %> pts</span>
+													<div class="op-load" title="<%= o.puntosCarga %> pts activos en <%= o.carga %> <%= o.carga === 1 ? 'ticket' : 'tickets' %><% if (o.promedioArea !== null) { %> · promedio del área <%= coma1(o.promedioArea) %> pts<% if (o.limiteCarga) { %> · límite <%= coma1(o.limiteCarga) %> pts<% } %><% } %>">
+														<div class="ld-track">
+															<span class="bar-fill ld-<%= ec[0] %>" style="width: <%= Math.min(o.puntosCarga / escala * 100, 100) %>%; animation-delay: <%= j * 60 %>ms"></span>
+															<% if (o.promedioArea !== null) { %>
+																<span class="ld-avg" style="left: <%= Math.min(o.promedioArea / escala * 100, 100) %>%"></span>
+																<% if (o.limiteCarga) { %><span class="ld-lim" style="left: <%= Math.min(o.limiteCarga / escala * 100, 100) %>%"></span><% } %>
+															<% } %>
 														</div>
-														<div>
-															<div class="track"><span class="bar-fill bg-green" style="width: <%= o.resueltos / maxV * 100 %>%; animation-delay: <%= j * 60 + 120 %>ms"></span></div>
-															<span class="lbl"><strong class="t-green"><%= o.resueltos %></strong> resueltos</span>
-														</div>
+														<span class="ld-num<%= ec[0] === 'over' ? ' t-red' : '' %>"><strong><%= o.puntosCarga %></strong> pts</span>
 													</div>
+													<span class="load-chip lc-<%= ec[0] %>"><i></i><%= ec[1] %></span>
+													<span class="t-green" style="font-size:13px;text-align:right;font-weight:600"><%= o.resueltos %></span>
 													<span class="t2" style="font-size:12px;text-align:right"><%= o.promedioHoras === null ? '—' : coma(o.promedioHoras) + ' h' %></span>
-													<span style="font-size:12px;text-align:right;font-weight:700"><%= o.puntos %></span>
+													<span style="font-size:13px;text-align:right;font-weight:700"><%= o.puntos %></span>
 												</div>
 											<% }) %>
 										</div>

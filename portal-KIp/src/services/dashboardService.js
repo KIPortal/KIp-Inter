@@ -242,7 +242,10 @@ function buildCoordinatorPanel({ tickets = [], operators = [], now = new Date(),
             p1: r.p1, p2: r.p2, p3: r.p3,
             promedioHoras: avgHours(r.tickets),
             indiceCarga: ov.indiceCarga ?? null,
-            sobrecarga: Boolean(ov.sobrecarga)
+            sobrecarga: Boolean(ov.sobrecarga),
+            // Para dibujar la barra de carga con las marcas del área (sin comparación: null)
+            promedioArea: ov.comparable ? ov.promedioArea : null,
+            limiteCarga: ov.comparable && Number.isFinite(overloadOptions(rules).ratio) ? Math.round(ov.promedioArea * overloadOptions(rules).ratio * 100) / 100 : null
         };
     });
 

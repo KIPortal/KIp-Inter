@@ -25,32 +25,31 @@ Guía para pasar el diseño aprobado en el canvas a código usando **Claude Code
 
 **Tema:** `data-theme="light|dark"` en el contenedor raíz. Todo color sale de variables CSS; nunca se escribe un hex en línea para texto o superficies.
 
-| Token | Claro | Oscuro (colores del sistema macOS) | Uso |
+| Token | Claro | Oscuro (sobria pastel) | Uso |
 |---|---|---|---|
-| `--t1` / `--t2` / `--t3` | `#1D1D1F` / `#556070` / `#7C7C82` | `rgba(255,255,255,.86)` / `rgba(255,255,255,.56)` / `rgba(255,255,255,.36)` | Texto principal, secundario y terciario |
-| `--accent-t` | `#0369A1` | `#409CFF` | Enlaces, acentos |
-| `--green-t` | `#15803D` | `#30D158` | En turno, resueltos |
-| `--orange-t` | `#B45309` | `#FF9F0A` | P2, sin asignar, 40–59 % |
-| `--red-t` | `#B91C1C` | `#FF6961` | P1, sobrecarga, cola de espera |
-| `--purple-t` | `#6D28D9` | `#DA8FFF` | De guardia |
-| `--solid` | `#0284C7` | `#0A84FF` | Botón principal, selección de menú |
-| `--*-bg` / `--*-ring` | tintes suaves | tintes al 16–20 % / 34–40 % | Fondos de etiquetas y anillos |
+| `--t1` / `--t2` / `--t3` | `#1D1D1F` / `#556070` / `#6E6E73` | `rgba(255,255,255,.90)` / `rgba(255,255,255,.70)` / `rgba(255,255,255,.52)` | Texto principal, secundario y terciario |
+| `--accent-t` | `#0369A1` | `#8AB4F8` | Enlaces, acentos |
+| `--green-t` | `#15803D` | `#81C995` | En turno, resueltos |
+| `--orange-t` | `#B45309` | `#FDC774` | P2, sin asignar, 40–59 % |
+| `--red-t` | `#B91C1C` | `#F28B82` | P1, sobrecarga, cola de espera |
+| `--purple-t` | `#6D28D9` | `#C58AF9` | De guardia |
+| `--solid` | `#0270AE` | `#3A6BB0` | Botón principal, selección de menú (texto blanco ≥ 5:1) |
+| `--*-bg` / `--*-ring` | tintes suaves | tintes al 14–16 % / 32–34 % | Fondos de etiquetas y anillos |
 | `--sep` / `--sep2` | `#E2E8F0` / `#F1F5F9` | blanco al 10 % / 6 % | Líneas |
-| `--well` / `--fill` / `--control` | | blanco al 5 % / 8 % / 10 % | Recuadros internos, controles |
-| `--track` / `--grid` | | blanco al 10 % | Fondo de barras y cuadrícula de gráficas |
+| `--well` / `--fill` / `--control` | | blanco al 6 % / 5 % / 8 % | Recuadros internos, controles |
+| `--track` / `--grid` | | blanco al 9 % / 8 % | Fondo de barras y cuadrícula de gráficas |
 | `--dialog` / `--rim` | | | Ventanas y su borde |
 
-**Colores de gráficas y estados (`--c-*`):** en claro se mantienen los actuales; en oscuro se usan los colores del sistema de macOS, **sin filtros** (ya no se aplica `saturate`):
+**Colores de gráficas y estados (`--c-*`):** en claro se mantienen los actuales; en oscuro son tonos pastel sobrios (legibles sobre el fondo Golden Gate, sin verse eléctricos), **sin filtros** (`--chart-filter: none`):
 
 | Variable | Claro | Oscuro |
 |---|---|---|
-| `--c-blue` | `#0EA5E9` | `#0A84FF` |
-| `--c-green` | `#22C55E` | `#30D158` |
-| `--c-orange` | `#F59E0B` | `#FF9F0A` |
-| `--c-red` | `#EF4444` | `#FF453A` |
-| `--c-indigo` | `#8B5CF6` | `#5E5CE6` |
-| `--c-purple` | `#A855F7` | `#BF5AF2` |
-| `--c-gray` | `#94A3B8` | `#98989D` |
+| `--c-blue` | `#0EA5E9` | `#8AB4F8` |
+| `--c-green` | `#22C55E` | `#81C995` |
+| `--c-amber` | `#F59E0B` | `#FDC774` |
+| `--c-red` | `#EF4444` | `#F28B82` |
+| `--c-violet` / `--c-purple` | `#8B5CF6` / `#A855F7` | `#C58AF9` |
+| `--c-slate` | `#94A3B8` | `#9AA0A6` |
 
 En el código, barras, líneas, puntos e íconos usan estas variables; nada de hex en línea.
 
@@ -191,7 +190,7 @@ Lee docs/rediseno/IMPLEMENTACION.md y revisa views/, src/routes y src/controller
 
 **Fase 1 — Base visual compartida**
 ```
-Crea public/css/portal.css a partir de docs/rediseno/estilos-referencia.css: tokens claro/oscuro con la paleta oscura de colores del sistema macOS (sección 1, variables --c-* para gráficas, sin filtros saturate), fondos, materiales (.glass, .bento, .pill, .side, .notif), controles (.popup, .combo, .mmenu/.mitem, .ico, .primary, .linkbtn, .field, .switch, .stepper), gráficas (.track, .bar-fill, .tick, .reveal) y animaciones con prefers-reduced-motion. Elimina reglas duplicadas. Carga IBM Plex Sans/Mono. Crea un partial views/partials/sidebar.ejs (sticky, minimizable con localStorage 'kip.sidebar', usuario arriba, secciones Coordinación y Control, título en cada enlace) y views/partials/head.ejs. Aplica data-theme según la preferencia guardada. No toques todavía el contenido de las pantallas.
+Crea public/css/portal.css a partir de docs/rediseno/estilos-referencia.css: tokens claro/oscuro con la paleta oscura sobria pastel (sección 1, variables --c-* para gráficas, sin filtros saturate), fondos, materiales (.glass, .bento, .pill, .side, .notif), controles (.popup, .combo, .mmenu/.mitem, .ico, .primary, .linkbtn, .field, .switch, .stepper), gráficas (.track, .bar-fill, .tick, .reveal) y animaciones con prefers-reduced-motion. Elimina reglas duplicadas. Carga IBM Plex Sans/Mono. Crea un partial views/partials/sidebar.ejs (sticky, minimizable con localStorage 'kip.sidebar', usuario arriba, secciones Coordinación y Control, título en cada enlace) y views/partials/head.ejs. Aplica data-theme según la preferencia guardada. No toques todavía el contenido de las pantallas.
 ```
 
 **Fase 2 — Dashboard General**

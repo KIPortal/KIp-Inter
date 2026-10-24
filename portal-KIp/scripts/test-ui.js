@@ -84,7 +84,7 @@ const html = {};
     await t('CSS: contraste AA, modo oscuro, movimiento reducido y [hidden]', () => {
         const css = fs.readFileSync(path.join(root, 'public', 'css', 'portal.css'), 'utf8');
         assert.ok(css.includes('--t3: #6E6E73'), 't3 claro con 5,0:1');
-        assert.ok(css.includes('--solid: #0270AE') && css.includes('--solid: #2F6FB8'), 'botón principal AA en claro y oscuro');
+        assert.ok(css.includes('--solid: #0270AE') && css.includes('--solid: #3A6BB0'), 'botón principal AA en claro y oscuro (#3A6BB0: 5,4:1)');
         assert.ok(css.includes('[data-theme=dark]') && css.includes('color-scheme: dark'));
         assert.ok(/@media \(prefers-reduced-motion: reduce\)/.test(css));
         assert.ok(css.includes('[hidden] { display: none !important; }'));

@@ -223,6 +223,20 @@ const tickets = [
         }
     });
 
+    await t('Carga por área: promedio y límite de sobrecarga por operador para dibujar la barra', async () => {
+        const p = buildCoordinatorPanel({ tickets, operators, now: NOW });
+        const ana = p.areas.find(x => x.codigo === 'WAN').operadores.find(o => o.nombre === 'Ana Pérez');
+        assert.ok(ana.promedioArea > 0, 'WAN tiene con quién comparar');
+        assert.strictEqual(ana.limiteCarga, Math.round(ana.promedioArea * 1.5 * 100) / 100);
+        const dani = p.areas.find(x => x.codigo === 'TELEFONIA').operadores.find(o => o.nombre === 'Dani Soto');
+        assert.strictEqual(dani.promedioArea, null, 'un solo operador: sin comparación');
+        assert.strictEqual(dani.limiteCarga, null);
+        const sinSobre = buildCoordinatorPanel({ tickets, operators, now: NOW, rules: mergeRules({ sobrecarga: { activa: false } }) });
+        assert.strictEqual(sinSobre.areas.find(x => x.codigo === 'WAN').operadores[0].limiteCarga, null, 'sobrecarga apagada: sin límite');
+        const html = await ejs.renderFile(path.join(__dirname, '..', 'views', 'dashboard.ejs'), { currentUser: { nombre: 'C', rol: 'COORDINADOR' }, panel: p, mapaViewBox: MAPA_VIEWBOX, mapaShapes: SHAPES });
+        assert.ok(html.includes('class="ld-avg"') && html.includes('class="ld-lim"') && html.includes('load-chip'));
+    });
+
     console.log(`\n   RESUMEN: ${passed}/${total} pruebas pasaron correctamente\n`);
     if (passed !== total) process.exit(1);
 })();
