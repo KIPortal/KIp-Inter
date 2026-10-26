@@ -58,13 +58,19 @@ En el código, barras, líneas, puntos e íconos usan estas variables; nada de h
 
 **Materiales (macOS 27, Liquid Glass):**
 
-| Material | Claro | Uso |
-|---|---|---|
-| `.glass` / `.bento` | blanco al 85 %, blur 24, radio 24. Oscuro: gris neutro translúcido ("Regular"), gradiente `rgba(66,66,76,.50)` → `rgba(32,32,38,.58)`, blur 40, borde de luz arriba | Tarjetas y secciones |
-| `.side` | blur 40, radio 18 | Barra lateral |
-| `.pill` | blanco al 72 %, borde fino, radio completo | Grupos de botones y buscador |
-| `.notif` | blur 30, radio 20 | Avisos y alertas |
-| `--dialog` | | Ventanas, panel lateral y menús |
+> **Regla (2026-10-26): Liquid Glass solo en la capa que flota sobre el contenido** (barra lateral, menús desplegables, avisos, píldoras). El contenido (tarjetas del Dashboard, tablas, ventanas con formularios) va en neutro casi opaco para que se lea bien. Referencia de colores del oscuro: `docs/macos_27_dark_mode_design_system.md` (guía literal con ajustes de contraste AA). Los valores vigentes están en el bloque `[data-theme=dark]` de `public/css/portal.css`; si esta tabla y el CSS no coinciden, manda el CSS.
+
+| Material | Claro | Oscuro | Uso |
+|---|---|---|---|
+| `.glass` / `.bento` (contenido) | blanco al 85 %, blur 24, radio 24 | `#161B22` al 80 %, borde blanco al 10 % | Tarjetas y secciones |
+| `--dialog` (contenido) | | `#1F242D` al 90 % | Ventanas y panel lateral de detalle |
+| `--control` (contenido) | | `#0D1117` al 60 %, sombra interior (campo hundido) | Campos y desplegables |
+| `.side` (flota) | blur 40, radio 18 | Liquid Glass: degradado `#282E39` 56 % → `#181C24` 66 %, blur 40 saturate 180, borde de luz arriba | Barra lateral |
+| `.mmenu` (flota) | | Liquid Glass: `#1F242D` al 70 %, blur 30 saturate 200, borde de luz | Menús desplegables |
+| `.pill` (flota) | blanco al 72 %, borde fino, radio completo | Liquid Glass: blanco 12 % → 5 %, borde de luz | Grupos de botones y buscador |
+| `.notif` (flota) | blur 30, radio 20 | Liquid Glass: degradado neutro 62 % → 66 % | Avisos y alertas |
+
+Botones sólidos en oscuro con texto blanco AA: principal `#0A6CD9`, peligro `#D0342C`, confirmar (detalle del ticket) `#1C7F3D`. Los colores `#0A84FF` / `#FF453A` puros solo para texto, puntos y gráficas.
 
 ---
 
