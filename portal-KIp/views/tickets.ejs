@@ -73,13 +73,13 @@
 		</header>
 
 		<!-- Tarjetas fijas: total de la operación, no cambian con los filtros -->
-		<section class="glass kpis" aria-label="Total de la operación">
+		<section class="glass tk-kpis" aria-label="Total de la operación">
 			<% [['Por atender', porAtender, 'act'], ['Panorama', panorama, 'pano']].forEach(([titulo, lista, cls]) => { %>
-				<div class="kpi-col <%= cls %>">
+				<div class="tk-kpi-col <%= cls %>">
 					<h3><%= titulo %></h3>
-					<div class="kpi-row">
+					<div class="tk-kpi-row">
 						<% lista.forEach(([clave, etiqueta, valor, ayuda, tono]) => { const cero = cls === 'act' && !valor; %>
-							<button type="button" class="kpi <%= cero ? 'zero' : tono %>" data-kpi="<%= clave %>" aria-pressed="false" title="Ver en la tabla">
+							<button type="button" class="tk-kpi <%= cero ? 'zero' : tono %>" data-kpi="<%= clave %>" aria-pressed="false" title="Ver en la tabla">
 								<span class="n"><%= valor %></span>
 								<b><%= etiqueta %></b>
 								<small><%= cero ? 'Todo en orden' : ayuda %></small>
