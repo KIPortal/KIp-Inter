@@ -38,7 +38,7 @@
 		radial-gradient(700px 500px at 10% 110%, rgba(99, 102, 241, 0.12), transparent 60%),
 		linear-gradient(135deg, #F1F5F9 0%, #EFF6FF 50%, #E0F2FE 100%);
 
-	/* Colores de gráficas (sólidos; en oscuro se suavizan con --chart-filter) */
+	/* Colores de gráficas (en oscuro: colores del sistema de macOS 27) */
 	--c-blue: #0EA5E9; --c-green: #22C55E; --c-amber: #F59E0B; --c-red: #EF4444; --c-violet: #8B5CF6;
 	--icon: #0078F0;
 	--seg-track: rgba(0, 0, 0, 0.08);
@@ -63,25 +63,22 @@
 	--chart-filter: none;
 }
 
-/* Oscuro: macOS 27 Golden Gate (docs/macos_27_dark_mode_design_system.md).
-   Colores del sistema; contenido (tarjetas, tablas, ventanas) en neutro casi opaco
-   para leer bien; Liquid Glass solo en lo que flota: barra lateral, menús, avisos y píldoras. */
+/* Oscuro: macOS Golden Gate, paleta equilibrada (menos saturada) */
 [data-theme=dark] {
 	color-scheme: dark;
 	--t1: rgba(255, 255, 255, 0.92); --t2: rgba(235, 235, 245, 0.76); --t3: rgba(235, 235, 245, 0.54);
-	--accent-t: #0A84FF; --green-t: #30D158; --orange-t: #FF9F0A; --red-t: #FF453A; --purple-t: #BF5AF2; /* ≥ 4,7:1 sobre #161B22 */
-	--accent-bg: rgba(10, 132, 255, 0.18); --green-bg: rgba(48, 209, 88, 0.15); --orange-bg: rgba(255, 159, 10, 0.15); --red-bg: rgba(255, 69, 58, 0.16); --purple-bg: rgba(191, 90, 242, 0.16);
-	--accent-ring: rgba(10, 132, 255, 0.34); --green-ring: rgba(48, 209, 88, 0.30); --orange-ring: rgba(255, 159, 10, 0.30); --red-ring: rgba(255, 69, 58, 0.32); --purple-ring: rgba(191, 90, 242, 0.32);
+	--accent-t: #7FB2E5; --green-t: #5DBB85; --orange-t: #E0A458; --red-t: #E07A74; --purple-t: #B59AE6;
+	--accent-bg: rgba(58, 127, 204, 0.22); --green-bg: rgba(93, 187, 133, 0.14); --orange-bg: rgba(224, 164, 88, 0.14); --red-bg: rgba(224, 122, 116, 0.15); --purple-bg: rgba(181, 154, 230, 0.16);
+	--accent-ring: rgba(127, 178, 229, 0.32); --green-ring: rgba(93, 187, 133, 0.28); --orange-ring: rgba(224, 164, 88, 0.28); --red-ring: rgba(224, 122, 116, 0.30); --purple-ring: rgba(181, 154, 230, 0.30);
 	--sep: rgba(255, 255, 255, 0.10); --sep2: rgba(255, 255, 255, 0.06);
-	--fill: rgba(255, 255, 255, 0.05); --control: rgba(13, 17, 23, 0.60); --well: rgba(13, 17, 23, 0.45);
+	--fill: rgba(255, 255, 255, 0.05); --control: rgba(255, 255, 255, 0.08); --well: rgba(255, 255, 255, 0.06);
 	--seg-on: rgba(255, 255, 255, 0.18); --seg-sel: rgba(255, 255, 255, 0.18);
-	--solid: #0A6CD9; --solid-hover: #095FC0; /* texto blanco ≥ 5,0:1 (AA) */
-	--danger: #D0342C; --danger-hover: #B92B24; /* texto blanco ≥ 5,0:1 (AA) */
-	--mitem-sel: #0A84FF;
-	--track: rgba(255, 255, 255, 0.08); --grid: rgba(255, 255, 255, 0.08);
-	--dialog: rgba(31, 36, 45, 0.90); --rim: rgba(255, 255, 255, 0.14);
-	--area-hd: rgba(10, 132, 255, 0.22); --area-hd-t: rgba(255, 255, 255, 0.92);
-	--focus: 0 0 0 3px rgba(10, 132, 255, 0.35);
+	--solid: #2F6FB8; --solid-hover: #2B6AB0; /* texto blanco ≥ 5,1:1 (AA) */
+	--danger: #D9574F; --danger-hover: #E07A74;
+	--mitem-sel: #2F6FB8;
+	--track: rgba(255, 255, 255, 0.09); --grid: rgba(255, 255, 255, 0.08);
+	--dialog: rgba(44, 43, 58, 0.88); --rim: rgba(255, 255, 255, 0.16);
+	--area-hd: rgba(58, 127, 204, 0.24); --area-hd-t: rgba(255, 255, 255, 0.92);
 	--map-empty: rgba(255, 255, 255, 0.08); --map-line: rgba(13, 12, 33, 0.85); --glyph: rgba(255, 255, 255, 0.85);
 	--hover: rgba(255, 255, 255, 0.08); --row-hover: rgba(255, 255, 255, 0.04);
 
@@ -92,29 +89,26 @@
 		radial-gradient(900px 650px at -5% 105%, rgba(88, 80, 190, 0.45), transparent 62%),
 		linear-gradient(118deg, transparent 38%, rgba(170, 160, 255, 0.10) 46%, transparent 54%),
 		linear-gradient(135deg, #0D0C21 0%, #1C1A40 40%, #2B2860 70%, #121128 100%);
-	--icon: #0A84FF;
+	--icon: #7FB2E5;
 	--seg-track: rgba(0, 0, 0, 0.25);
+	/* Gráficas (prueba): colores del sistema de macOS 27, sin filtro */
 	--c-blue: #0A84FF; --c-green: #30D158; --c-amber: #FF9F0A; --c-red: #FF453A; --c-violet: #BF5AF2;
 
-	/* Contenido: neutro casi opaco */
-	--glass-bg: rgba(22, 27, 34, 0.80);
-	--glass-shadow: 0 0 0 1px rgba(255, 255, 255, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 12px 32px rgba(5, 4, 20, 0.45);
-	--glass-shadow-hover: 0 0 0 1px rgba(255, 255, 255, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 16px 40px rgba(5, 4, 20, 0.55);
-	--control-shadow: 0 0 0 1px rgba(255, 255, 255, 0.10), inset 0 1px 2px rgba(0, 0, 0, 0.35);
-	/* Liquid Glass: transparente, borde de luz arriba y degradado */
-	--side-bg: linear-gradient(180deg, rgba(40, 46, 57, 0.56), rgba(24, 28, 36, 0.66));
-	--side-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), inset 0 -1px 0 rgba(255, 255, 255, 0.04), 0 0 0 0.5px rgba(255, 255, 255, 0.14), 0 16px 40px rgba(5, 4, 20, 0.45);
-	--pill-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.05));
-	--pill-shadow: 1.25px 0 0 -0.75px rgba(255, 255, 255, 0.18), -1.25px 0 0 -0.75px rgba(255, 255, 255, 0.18), 0 0 0 0.5px rgba(255, 255, 255, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 8px 15px rgba(0, 0, 0, 0.2);
-	--notif-bg: linear-gradient(180deg, rgba(52, 58, 70, 0.62), rgba(24, 28, 36, 0.66));
-	--notif-shadow: 1.25px 0 0 -0.75px rgba(255, 255, 255, 0.22), -1.25px 0 0 -0.75px rgba(255, 255, 255, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 0 0 0.5px rgba(255, 255, 255, 0.14), 0 8px 48px rgba(0, 0, 0, 0.45);
-	--menu-bg: rgba(31, 36, 45, 0.70);
-	--menu-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 0 0 0.5px rgba(255, 255, 255, 0.16), 0 14px 34px rgba(0, 0, 0, 0.5);
+	--glass-bg: rgba(38, 37, 58, 0.62);
+	--glass-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 12px 32px rgba(5, 4, 20, 0.40);
+	--glass-shadow-hover: 0 0 0 0.5px rgba(255, 255, 255, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 16px 40px rgba(5, 4, 20, 0.5);
+	--side-bg: rgba(30, 29, 40, 0.86);
+	--side-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 12px 36px rgba(5, 4, 20, 0.45);
+	--pill-bg: rgba(60, 59, 74, 0.55);
+	--pill-shadow: 1.25px 0 0 -0.75px rgba(255, 255, 255, 0.18), -1.25px 0 0 -0.75px rgba(255, 255, 255, 0.18), 0 0 0 0.5px rgba(255, 255, 255, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 8px 15px rgba(0, 0, 0, 0.2);
+	--notif-bg: linear-gradient(180deg, rgba(64, 63, 74, 0.72), rgba(30, 30, 36, 0.72));
+	--notif-shadow: 1.25px 0 0 -0.75px rgba(255, 255, 255, 0.22), -1.25px 0 0 -0.75px rgba(255, 255, 255, 0.22), 0 0 0 0.5px rgba(255, 255, 255, 0.14), 0 8px 48px rgba(0, 0, 0, 0.45);
+	--menu-bg: rgba(44, 43, 56, 0.94);
+	--menu-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.16), 0 14px 34px rgba(0, 0, 0, 0.5);
+	--control-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.14);
 	--bplus: rgba(255, 255, 255, 0.10); --bplus-hover: rgba(255, 255, 255, 0.16);
 	--chart-filter: none;
 }
-[data-theme=dark] .side { -webkit-backdrop-filter: blur(40px) saturate(180%); backdrop-filter: blur(40px) saturate(180%); }
-[data-theme=dark] .mmenu { -webkit-backdrop-filter: blur(30px) saturate(200%); backdrop-filter: blur(30px) saturate(200%); }
 
 /* ---------- 2. Base ---------- */
 *, *::before, *::after { box-sizing: border-box; }

@@ -24,18 +24,17 @@
 }
 [data-theme=dark] .tdlg-overlay {
 	--t1: rgba(255, 255, 255, 0.92); --t2: rgba(235, 235, 245, 0.76); --t3: rgba(235, 235, 245, 0.56);
-	--accent-t: #0A84FF; --green-t: #30D158; --orange-t: #FF9F0A; --red-t: #FF453A; --purple-t: #BF5AF2;
-	--accent-bg: rgba(10, 132, 255, 0.18); --green-bg: rgba(48, 209, 88, 0.15); --orange-bg: rgba(255, 159, 10, 0.15); --red-bg: rgba(255, 69, 58, 0.16); --purple-bg: rgba(191, 90, 242, 0.16);
-	--accent-ring: rgba(10, 132, 255, 0.34); --red-ring: rgba(255, 69, 58, 0.32);
+	--accent-t: #7FB2E5; --green-t: #5DBB85; --orange-t: #E0A458; --red-t: #E07A74; --purple-t: #B59AE6;
+	--accent-bg: rgba(58, 127, 204, 0.22); --green-bg: rgba(93, 187, 133, 0.14); --orange-bg: rgba(224, 164, 88, 0.14); --red-bg: rgba(224, 122, 116, 0.15); --purple-bg: rgba(181, 154, 230, 0.16);
+	--accent-ring: rgba(127, 178, 229, 0.32); --red-ring: rgba(224, 122, 116, 0.30);
 	--sep: rgba(255, 255, 255, 0.10); --sep2: rgba(255, 255, 255, 0.06);
-	--fill: rgba(255, 255, 255, 0.06); --well: rgba(13, 17, 23, 0.45); --control: rgba(13, 17, 23, 0.60);
+	--fill: rgba(255, 255, 255, 0.06); --well: rgba(255, 255, 255, 0.06); --control: rgba(255, 255, 255, 0.08);
 	--seg-on: rgba(255, 255, 255, 0.18);
-	--solid: #0A6CD9; --solid-hover: #095FC0;
-	--go: #1C7F3D; --go-hover: #16692F; /* texto blanco ≥ 5,0:1 (AA) */
-	--dialog: rgba(31, 36, 45, 0.94); --rim: rgba(255, 255, 255, 0.14);
+	--solid: #2F6FB8; --solid-hover: #2B6AB0;
+	--go: #2E8A57; --go-hover: #2A7D4F;
+	--dialog: rgba(44, 43, 58, 0.94); --rim: rgba(255, 255, 255, 0.16);
 	--note-bg: rgba(255, 204, 0, 0.10); --note-ring: rgba(255, 179, 64, 0.32);
-	--wait-bg: rgba(191, 90, 242, 0.12); --wait-ring: rgba(191, 90, 242, 0.32);
-	--focus: 0 0 0 3px rgba(10, 132, 255, 0.35);
+	--wait-bg: rgba(181, 154, 230, 0.12); --wait-ring: rgba(181, 154, 230, 0.32);
 	color-scheme: dark;
 }
 
