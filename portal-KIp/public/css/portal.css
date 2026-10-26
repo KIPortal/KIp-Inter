@@ -474,10 +474,9 @@ nav.side[data-collapsed=true] a.sideitem > span { display: none; }
 
 .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 16px; }
 .kpis .bento > div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-/* Tarjetas "Ahora": íconos de un solo color, detalles en gris; la única cifra con color
-   es "Críticos sin asignar", y solo cuando hay alguno (.kv.alerta) */
-.kpis .bento > svg { color: var(--t3); }
-.kv.alerta { color: var(--red-t); }
+.kpis .bento > svg { color: var(--c-blue); }
+.kpis .bento > svg.green { color: var(--c-green); }
+.kpis .bento > svg.red { color: var(--c-red); }
 .t-orange { color: var(--orange-t); }
 .t-red { color: var(--red-t); }
 .t-green { color: var(--green-t); }

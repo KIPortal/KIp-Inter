@@ -67,8 +67,8 @@
 				<div>
 					<span class="kv count" style="--n: <%= k.activos %>" aria-label="<%= k.activos %>"></span>
 					<p class="bt">Tickets activos</p>
-					<span class="ks t2"><%= k.sinAsignar %> sin asignar</span>
-					<% if (k.enCola) { %><span class="ks t2"><%= k.enCola %> en cola de espera</span><% } %>
+					<span class="ks <%= k.sinAsignar ? 't-orange' : 't2' %>"><%= k.sinAsignar %> sin asignar</span>
+					<% if (k.enCola) { %><span class="ks t-red"><%= k.enCola %> en cola de espera</span><% } %>
 				</div>
 			</div>
 			<div class="bento">
@@ -80,7 +80,7 @@
 				</div>
 			</div>
 			<div class="bento">
-				<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 12l3 3 5-6M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z"/></svg>
+				<svg class="green" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 12l3 3 5-6M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z"/></svg>
 				<div>
 					<span class="kv count" style="--n: <%= k.resueltosHoy %>" aria-label="<%= k.resueltosHoy %>"></span>
 					<p class="bt">Resueltos hoy</p>
@@ -88,14 +88,14 @@
 				</div>
 			</div>
 			<div class="bento">
-				<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2zM12 10v5M12 18v.5"/></svg>
+				<svg class="red" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2zM12 10v5M12 18v.5"/></svg>
 				<div>
-					<span class="kv count<%= k.criticosSinAsignar ? ' alerta' : '' %>" style="--n: <%= k.criticosSinAsignar %>" aria-label="<%= k.criticosSinAsignar %>"></span>
+					<span class="kv count" style="--n: <%= k.criticosSinAsignar %>" aria-label="<%= k.criticosSinAsignar %>"></span>
 					<p class="bt">Críticos sin asignar</p>
 					<% if (k.criticoMasAntiguo) { %>
-						<span class="ks t2"><span class="mono"><%= k.criticoMasAntiguo.codigo %></span> · <%= k.criticoMasAntiguo.edad %></span>
+						<span class="ks t-red"><span class="mono"><%= k.criticoMasAntiguo.codigo %></span> · <%= k.criticoMasAntiguo.edad %></span>
 					<% } else { %>
-						<span class="ks t2">Ninguno pendiente</span>
+						<span class="ks t-green">Ninguno pendiente</span>
 					<% } %>
 				</div>
 			</div>
