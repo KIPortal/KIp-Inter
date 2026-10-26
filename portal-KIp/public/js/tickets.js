@@ -324,8 +324,8 @@
 			const rows = visibles.filter(t => t.estado === codigo).sort(order);
 			if (!rows.length) return;
 			const grupo = h('tbody', { class: 'g-' + codigo });
-			grupo.append(h('tr', { class: 'gap', 'aria-hidden': 'true' }, h('td', { colspan: 8 })));
-			grupo.append(h('tr', { class: 'ghead' }, h('td', { colspan: 8 }, h('span', {}, titulo, h('i', { text: rows.length })))));
+			grupo.append(h('tr', { class: 'gap', 'aria-hidden': 'true' }, h('td', { colspan: 6 })));
+			grupo.append(h('tr', { class: 'ghead' }, h('td', { colspan: 6 }, h('span', {}, titulo, h('i', { text: rows.length })))));
 			rows.forEach((t, i) => grupo.append(rowOf(t, i === rows.length - 1)));
 			frag.append(grupo);
 		});
@@ -351,30 +351,48 @@
 	function rowOf(t, last) {
 		const sel = S.sel.has(t.codigo);
 		const open = panelCode === t.codigo;
-		const cls = ['qrow', last ? 'last' : '', open ? 'open' : sel ? 'sel' : (t.alerta ? 'alert' : '')].join(' ');
+		// La prioridad se ve en la franja de la fila (P1 roja, P2 ámbar) y en el código (P1 en rojo)
+		const cls = ['qrow', last ? 'last' : '', open ? 'open' : sel ? 'sel' : '', t.prioridad === 'P1' ? 'crit' : t.prioridad === 'P2' ? 'p2' : ''].join(' ');
 		const viva = ACTIVE.includes(t.estado);
+		const area = t.areaNombre + (t.subgrupoNombre ? ' · ' + t.subgrupoNombre : '');
+		const sinPrio = t.prioridad === 'SP'
+			? h('span', { class: 'tk-sp', title: 'La elige quien lo toma' + (t.sugerida ? ' (sugerida ' + t.sugerida + ' por palabras clave)' : '') }, 'sin prioridad')
+			: null;
+		const main = !t.operador && t.estado !== 'CERRADO'
+			? h('button', { type: 'button', class: 'tk-main', 'aria-label': 'Asignar ' + t.codigo, onclick: () => openAssign([t.codigo]) }, 'Asignar')
+			: t.estado === 'RESUELTO'
+				? h('button', { type: 'button', class: 'tk-main ok', 'aria-label': 'Cerrar ' + t.codigo, onclick: () => openClose(t.codigo) }, 'Cerrar')
+				: null;
 		return h('tr', { class: cls },
 			h('td', {}, h('input', {
 				type: 'checkbox', 'aria-label': 'Seleccionar ' + t.codigo, style: 'margin:0;cursor:pointer', checked: sel,
 				onchange: () => { if (S.sel.has(t.codigo)) S.sel.delete(t.codigo); else S.sel.add(t.codigo); render(); }
 			})),
-			h('td', {}, h('button', { type: 'button', class: 'code', title: 'Ver detalle', text: t.codigo, onclick: () => openPanel(t.codigo) })),
-			h('td', {}, h('span', { class: 'prio ' + t.prioridad, title: t.sugerida ? 'Sugerida ' + t.sugerida + ' por palabras clave' : null }, h('i'), PR[t.prioridad][0] + (t.sugerida ? ' · ' + t.sugerida + '?' : ''))),
-			h('td', {}, h('span', { class: 'state' }, h('i', { class: 's-' + t.estado }), STATE_NAME[t.estado])),
-			h('td', { style: 'max-width:0' }, h('button', { type: 'button', class: 'subj', title: t.asunto, onclick: () => openPanel(t.codigo) },
-				h('span', { style: 'font-weight:500', text: t.asunto }), h('span', { class: 'area', text: '  ·  ' + t.areaNombre + (t.subgrupoNombre ? ' · ' + t.subgrupoNombre : '') }))),
+			h('td', { style: 'max-width:0' }, h('div', { class: 'tk-two' },
+				h('div', { class: 'l1' },
+					h('button', { type: 'button', class: 'tk-id' + (t.prioridad === 'P1' ? ' P1' : ''), title: PR[t.prioridad][0], text: t.codigo, onclick: () => openPanel(t.codigo) }),
+					sinPrio,
+					h('button', { type: 'button', class: 'tx', title: t.asunto, text: t.asunto, onclick: () => openPanel(t.codigo) })),
+				h('div', { class: 'l2' },
+					h('span', { text: area }), h('em', { text: '·' }),
+					t.tipoCaso ? h('span', { text: t.tipoCaso }) : h('span', { class: 'none', text: 'Sin tipo de caso' })))),
+			h('td', {}, t.nivel
+				? h('span', { class: 'tk-nv n' + t.nivel, title: 'Nivel ' + t.nivel }, 'N' + t.nivel)
+				: h('span', { class: 'tk-nv none', title: 'Sin clasificar' }, '—')),
 			h('td', {}, t.operador
 				? h('span', { class: 'who' }, avatar(t.operador), t.operador.nombre)
-				: h('span', { class: 'unassigned' + (t.enCola ? ' t-red' : ''), text: t.enCola ? 'En cola de espera' : 'Sin asignar' })),
+				: h('span', { class: 'tk-free' }, t.enCola ? 'En cola de espera' : 'Sin asignar')),
 			h('td', { class: 'qtime' + (t.alerta && viva ? ' late' : ''), title: t.alerta || '' },
 				t.alerta && viva ? h('span', { icon: 'warn' }) : null, fmt(t.edadMin)),
 			h('td', {}, h('div', { class: 'acts' },
-				!t.operador && t.estado !== 'CERRADO' ? h('button', { type: 'button', class: 'ico accent', title: 'Asignar', 'aria-label': 'Asignar ' + t.codigo, icon: 'assign', onclick: () => openAssign([t.codigo]) }) : null,
-				t.operador && t.estado !== 'CERRADO' ? h('button', { type: 'button', class: 'ico', title: 'Desasignar', 'aria-label': 'Desasignar ' + t.codigo, icon: 'unassign', onclick: () => doUnassign([t.codigo]) }) : null,
-				t.estado !== 'CERRADO' ? h('button', { type: 'button', class: 'ico' + (t.estado === 'RESUELTO' ? ' ok' : ''), title: 'Cerrar', 'aria-label': 'Cerrar ' + t.codigo, icon: 'close', onclick: () => openClose(t.codigo) }) : null,
-				h('button', { type: 'button', class: 'ico', title: 'Editar', 'aria-label': 'Editar ' + t.codigo, icon: 'edit', onclick: () => openPanel(t.codigo, true) }),
-				h('button', { type: 'button', class: 'ico', title: 'Historial', 'aria-label': 'Historial ' + t.codigo, icon: 'history', onclick: () => openPanel(t.codigo) }),
-				h('button', { type: 'button', class: 'ico danger', title: 'Eliminar', 'aria-label': 'Eliminar ' + t.codigo, icon: 'trash', onclick: () => openDelete(t.codigo) }))));
+				// Las secundarias aparecen al pasar el mouse; Asignar / Cerrar quedan a la vista
+				h('span', { class: 'tk-more' },
+					t.operador && t.estado !== 'CERRADO' ? h('button', { type: 'button', class: 'ico', title: 'Desasignar', 'aria-label': 'Desasignar ' + t.codigo, icon: 'unassign', onclick: () => doUnassign([t.codigo]) }) : null,
+					t.estado !== 'CERRADO' && t.estado !== 'RESUELTO' ? h('button', { type: 'button', class: 'ico', title: 'Cerrar', 'aria-label': 'Cerrar ' + t.codigo, icon: 'close', onclick: () => openClose(t.codigo) }) : null,
+					h('button', { type: 'button', class: 'ico', title: 'Editar', 'aria-label': 'Editar ' + t.codigo, icon: 'edit', onclick: () => openPanel(t.codigo, true) }),
+					h('button', { type: 'button', class: 'ico', title: 'Historial', 'aria-label': 'Historial ' + t.codigo, icon: 'history', onclick: () => openPanel(t.codigo) }),
+					h('button', { type: 'button', class: 'ico danger', title: 'Eliminar', 'aria-label': 'Eliminar ' + t.codigo, icon: 'trash', onclick: () => openDelete(t.codigo) })),
+				main)));
 	}
 
 	function renderBatch() {
