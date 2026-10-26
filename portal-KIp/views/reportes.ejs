@@ -169,7 +169,7 @@
 			</div>
 			<div class="scroll-x">
 				<table class="rank-table rep-table" style="min-width:900px">
-					<thead><tr><th style="padding-left:24px;width:32px">#</th><th>Operador</th><th class="r" style="width:70px">Casos</th><th class="r" style="width:80px">Resueltos</th><th class="r" style="width:60px">%</th><th class="r" style="width:70px">Prom.</th><th class="r" style="width:110px">P1 / P2 / P3</th><th class="r" style="width:90px" title="Puntos activos ÷ promedio de su área, ahora">Índice de carga</th><th class="r" style="width:70px;padding-right:24px">Puntos</th></tr></thead>
+					<thead><tr><th style="padding-left:24px;width:32px">#</th><th>Operador</th><th class="r" style="width:70px">Casos</th><th class="r" style="width:80px">Resueltos</th><th class="r" style="width:60px">%</th><th class="r" style="width:70px">Prom.</th><th class="r" style="width:130px" title="Resueltos por nivel de dificultad (N1=2, N2=4, N3=8, N4=10 pts)">N1 / N2 / N3 / N4</th><th class="r" style="width:90px" title="Puntos activos ÷ promedio de su área, ahora">Índice de carga</th><th class="r" style="width:70px;padding-right:24px">Puntos</th></tr></thead>
 					<tbody data-op-rows>
 						<% v.operadores.forEach(o => { %>
 							<tr data-op data-area="<%= o.area %>" data-puntos="<%= o.puntos %>" data-resueltos="<%= o.resueltos %>" data-casos="<%= o.casos %>" data-carga="<%= o.indiceCarga === null ? -1 : o.indiceCarga %>">
@@ -179,7 +179,7 @@
 								<td class="r"><%= o.resueltos %></td>
 								<td class="r <%= o.pct === null ? 't2' : o.pctBajoMeta ? 't-orange' : 't-green' %>"><%= p(o.pct) %></td>
 								<td class="r<%= o.promSobreMeta ? ' t-orange' : '' %>"><%= h(o.promedioHoras) %></td>
-								<td class="r t2"><%= o.p1 %> / <%= o.p2 %> / <%= o.p3 %></td>
+								<td class="r t2"><%= o.niveles ? o.niveles.join(' / ') : '—' %></td>
 								<td class="r"><span class="ix<%= o.sobrecarga ? ' over' : '' %>"><%= indice(o) %></span></td>
 								<td class="r" style="padding-right:24px;font-weight:700"><%= o.puntos %></td>
 							</tr>

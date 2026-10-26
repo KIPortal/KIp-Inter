@@ -31,7 +31,7 @@ const tickets = [
     // Pendiente de ayer (arrastrado)
     ticket({ codigo_incidencia: 'INC-005', createdAt: at('16:00', '2026-10-12'), estado_actual: 'EN_PROGRESO', asignado_a_id: 'c', area_designada: 'WAN', updatedAt: at('13:00') }),
     // Resueltos hoy
-    ticket({ codigo_incidencia: 'INC-007', createdAt: at('08:00'), estado_actual: 'RESUELTO', asignado_a_id: 'a', puntos_complejidad: 8, resueltoEn: at('10:00') }),
+    ticket({ codigo_incidencia: 'INC-007', createdAt: at('08:00'), estado_actual: 'RESUELTO', asignado_a_id: 'a', puntos_complejidad: 8, nivel: 3, resueltoEn: at('10:00') }),
     ticket({ codigo_incidencia: 'INC-008', createdAt: at('09:00'), estado_actual: 'CERRADO', asignado_a_id: 'b', puntos_complejidad: 5, resueltoEn: at('13:00'), fecha_cierre: at('13:30') }),
     ticket({ codigo_incidencia: 'INC-009', createdAt: at('12:00'), estado_actual: 'CERRADO', asignado_a_id: 'd', area_designada: 'TELEFONIA', puntos_complejidad: 1, fecha_cierre: at('13:00') }),
     // Cerrado ayer: no cuenta en "hoy" pero sí en la semana
@@ -104,11 +104,11 @@ const tickets = [
         assert.strictEqual(panel.resolucion.promedioHoras, 2.3);
     });
 
-    await t('Operadores: puntos y P1/P2/P3 de lo resuelto; semana suma lo de ayer', () => {
+    await t('Operadores: puntos y N1–N4 de lo resuelto; semana suma lo de ayer', () => {
         const ana = panel.areas.find(a => a.codigo === 'WAN').operadores.find(o => o.id === 'a');
         assert.strictEqual(ana.carga, 6);
         assert.strictEqual(ana.puntos, 8);
-        assert.strictEqual(ana.p1, 1);
+        assert.deepStrictEqual([ana.n1, ana.n2, ana.n3, ana.n4], [0, 0, 1, 0], 'cuenta por el nivel del ticket');
         const semana = buildCoordinatorPanel({ tickets, operators, now: NOW, periodo: 'semana' });
         const anaSemana = semana.areas.find(a => a.codigo === 'WAN').operadores.find(o => o.id === 'a');
         assert.strictEqual(anaSemana.puntos, 13);
@@ -180,6 +180,23 @@ const tickets = [
         assert.ok(html.includes('id="panel-flujo"'));
         assert.ok(!/\bSLA\b|\bDERS\b/.test(html));
         assert.ok(html.includes('aria-current="page"'));
+    });
+
+    await t('Filtro por área: el panel se recalcula solo con esa área y la vista marca el área elegida', async () => {
+        const { filtrarPorArea } = require('../src/services/dashboardService');
+        const f = filtrarPorArea({ tickets, operators, area: 'TELEFONIA' });
+        assert.ok(f.tickets.every(t => t.area_designada === 'TELEFONIA') && f.tickets.length === 1);
+        assert.deepStrictEqual(f.operators.map(o => o.id), ['d']);
+        assert.strictEqual(filtrarPorArea({ tickets, operators, area: '' }).tickets.length, tickets.length);
+        const solo = buildCoordinatorPanel({ ...f, now: NOW });
+        assert.strictEqual(solo.kpis.activos, 0, 'las cifras salen solo de Telefonía');
+        assert.deepStrictEqual(solo.areas.map(a => a.codigo).filter(c => c === 'WAN'), []);
+        const areasFiltro = panel.areas.map(a => ({ codigo: a.codigo, nombre: a.nombre, porcentaje: a.porcentaje, abiertos: a.abiertos }));
+        const html = await ejs.renderFile(path.join(__dirname, '..', 'views', 'dashboard.ejs'), { panel: solo, areasFiltro, areaSel: 'TELEFONIA', currentUser: { nombre: 'Coord', rol: 'COORDINADOR' } });
+        assert.ok(html.includes('href="/?periodo=jornada&area=WAN"'), 'el filtro enlaza a cada área');
+        assert.ok(/data-qf="TELEFONIA" aria-current="true"/.test(html), 'marca el área elegida');
+        assert.ok(/href="\/\?periodo=semana&(amp;)?area=TELEFONIA"/.test(html), 'las pestañas de periodo conservan el área');
+        assert.ok(!html.includes('data-qf-sat'), 'Solo saturadas aparece solo con todas las áreas');
     });
 
     await t('Mapa: cuenta tickets activos por estado y deja aparte los que no tienen estado', async () => {

@@ -1,6 +1,7 @@
 <%
 	// Dashboard General del coordinador (prototipo docs/rediseno/prototipo/Main.dc.html).
-	// Solo dibuja lo que entrega dashboardService.buildCoordinatorPanel.
+	// Solo dibuja lo que entrega dashboardService.buildCoordinatorPanel; con ?area= el controlador
+	// arma el panel solo con esa área y pasa areasFiltro/areaSel para el filtro.
 	const k = panel.kpis;
 	const coma = n => String(n).replace('.', ',');
 	const nivel = pct => pct >= 60 ? 'red' : (pct >= 40 ? 'amber' : 'blue');
@@ -43,11 +44,11 @@
 			<span class="badge lg accent"><span class="dot"></span>Jornada 08:00–17:00</span>
 			<span class="grow"></span>
 			<div role="tablist" aria-label="Periodo">
-				<a role="tab" href="/?periodo=jornada" aria-selected="<%= panel.periodo === 'jornada' %>">
+				<a role="tab" href="/?periodo=jornada<%= locals.areaSel ? '&area=' + locals.areaSel : '' %>" aria-selected="<%= panel.periodo === 'jornada' %>">
 					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
 					<span>Jornada actual</span>
 				</a>
-				<a role="tab" href="/?periodo=semana" aria-selected="<%= panel.periodo === 'semana' %>">
+				<a role="tab" href="/?periodo=semana<%= locals.areaSel ? '&area=' + locals.areaSel : '' %>" aria-selected="<%= panel.periodo === 'semana' %>">
 					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
 					<span>Semana</span>
 				</a>
@@ -58,6 +59,22 @@
 				</button>
 			</div>
 		</header>
+
+		<!-- Filtro por área: el servidor recalcula todo el Dashboard (?area=) -->
+		<% const filtroAreas = locals.areasFiltro || panel.areas; const sel = locals.areaSel || ''; %>
+		<% if (filtroAreas.length > 1) { %>
+		<nav class="qf" aria-label="Filtrar el Dashboard por área">
+			<span class="qf-l">Ver</span>
+			<a class="qf-chip" href="/?periodo=<%= panel.periodo %>" data-qf="" aria-current="<%= !sel ? 'true' : 'false' %>">Todas las áreas</a>
+			<% filtroAreas.forEach(a => { %>
+				<a class="qf-chip" href="/?periodo=<%= panel.periodo %>&area=<%= a.codigo %>" data-qf="<%= a.codigo %>" aria-current="<%= sel === a.codigo ? 'true' : 'false' %>"><i class="bg-<%= nivel(a.porcentaje) %>"></i><%= a.nombre %><span><%= a.abiertos %></span></a>
+			<% }) %>
+			<% if (!sel) { %>
+				<span class="grow"></span>
+				<button type="button" class="qf-chip" data-qf-sat aria-pressed="false" title="Solo áreas con 60 % o más de saturación">Solo saturadas</button>
+			<% } %>
+		</nav>
+		<% } %>
 
 		<!-- Ahora -->
 		<div class="zone">Ahora</div>
@@ -101,14 +118,14 @@
 			</div>
 		</section>
 
-		<div class="cols">
+		<div class="cols ahora">
 			<div class="col-main">
 				<!-- Carga por área -->
 				<section class="glass card" aria-labelledby="h-areas" style="gap:4px">
 					<div class="card-head" style="padding-bottom:6px;gap:14px">
 						<h2 id="h-areas">Carga por área</h2>
 						<span class="hint">Pulsa un área para ver a sus operadores</span>
-						<button type="button" class="info" title="Saturación: puntos acumulados de la jornada (abiertos más resueltos hoy) ÷ capacidad de quienes están en turno o de guardia (fuera de turno, de todo el área). N1=2, N2=4, N3=8, N4=10 y sin clasificar=2; cada persona aguanta los puntos que fija Administración &gt; Reglas." aria-label="Saturación: puntos acumulados de la jornada (abiertos más resueltos hoy) ÷ capacidad de quienes están en turno o de guardia (fuera de turno, de todo el área). N1=2, N2=4, N3=8, N4=10 y sin clasificar=2; cada persona aguanta los puntos que fija Administración &gt; Reglas."><%- icono.info %></button>
+						<button type="button" class="info" title="Saturación: puntos acumulados de la jornada (abiertos más resueltos hoy) ÷ capacidad de quienes están en turno o de guardia (fuera de turno, de todo el área). N1=2, N2=4, N3=8, N4=10 y sin clasificar=2; cada persona aguanta los puntos que fija Administración &gt; Reglas." aria-label="Saturación: puntos acumulados de la jornada (abiertos más resueltos hoy) ÷ capacidad de quienes están en turno o de guardia."><%- icono.info %></button>
 						<span class="grow"></span>
 						<span class="legend"><i class="bg-blue"></i>Menos de 40 %</span>
 						<span class="legend"><i class="bg-amber"></i>40–59 %</span>
@@ -118,33 +135,34 @@
 						<p class="empty">Todavía no hay tickets ni operadores registrados.</p>
 					<% } else { %>
 					<div class="scroll-x">
-						<div style="min-width:620px">
-							<div class="area-grid area-headrow">
-								<span>Área</span><span>Saturación</span><span style="text-align:right">%</span><span style="text-align:right">Abiertos</span><span style="text-align:right" title="Puntos acumulados de la jornada (abiertos + resueltos hoy) / capacidad">Puntos</span><span></span>
+						<div style="min-width:680px">
+							<div class="area-grid2 colhead">
+								<span>Área</span><span>Saturación</span><span class="r">Abiertos</span><span class="r">Sin asignar</span><span class="r">En turno</span><span class="r" title="Puntos acumulados de la jornada (abiertos + resueltos hoy) / capacidad">Puntos</span><span></span>
 							</div>
 							<% panel.areas.forEach((a, i) => { const abierta = a.codigo === areaInicial; %>
-								<button type="button" class="area-row area-grid" data-area="<%= a.codigo %>" aria-pressed="<%= abierta %>" aria-controls="ops-<%= a.codigo %>" aria-label="Ver operadores de <%= a.nombre %>">
+								<button type="button" class="area-row area-grid2" data-area="<%= a.codigo %>" data-f-area="<%= a.codigo %>" aria-pressed="<%= abierta %>" aria-controls="ops-<%= a.codigo %>" aria-label="Ver operadores de <%= a.nombre %>">
 									<span class="name"><%= a.nombre %></span>
-									<div class="track" title="<%= a.porcentaje %> % de saturación · <%= a.puntos %> de <%= a.capacidad %> puntos (<%= a.puntosAbiertos %> abiertos + <%= a.puntosResueltos %> resueltos hoy) · <%= a.personas %> en turno">
-										<span class="bar-fill bg-<%= nivel(a.porcentaje) %>" style="width: <%= Math.min(a.porcentaje, 100) %>%; animation-delay: <%= i * 70 %>ms"></span>
-										<span class="tick" style="left:40%"></span><span class="tick" style="left:60%"></span>
+									<div class="satcell">
+										<div class="track" title="<%= a.porcentaje %> % de saturación · <%= a.puntos %> de <%= a.capacidad %> puntos (<%= a.puntosAbiertos %> abiertos + <%= a.puntosResueltos %> resueltos hoy) · <%= a.personas %> en turno">
+											<span class="bar-fill bg-<%= nivel(a.porcentaje) %>" style="width: <%= Math.min(a.porcentaje, 100) %>%; animation-delay: <%= i * 70 %>ms"></span>
+											<span class="tick" style="left:40%"></span><span class="tick" style="left:60%"></span>
+										</div>
+										<span class="pct <%= nivelTexto(a.porcentaje) %>"><%= a.porcentaje %> %</span>
 									</div>
-									<span class="num <%= nivelTexto(a.porcentaje) %>" style="font-weight:700"><%= a.porcentaje %>%</span>
-									<span class="num" style="font-weight:500"><%= a.abiertos %></span>
-									<span class="num t2"><%= a.puntos %>/<%= a.capacidad %></span>
+									<span class="n"><%= a.abiertos %></span>
+									<span class="n <%= a.sinAsignar ? 'warn' : 't3' %>"><%= a.sinAsignar || '—' %></span>
+									<span class="n"><%= a.personas %></span>
+									<span class="pts"><%= a.puntos %> <small>/ <%= a.capacidad %></small></span>
 									<%- icono.chev %>
 								</button>
 								<%
-									const maxV = Math.max(1, ...a.operadores.map(o => Math.max(o.carga, o.resueltos)));
+									const maxC = Math.max(1, ...a.operadores.map(o => o.carga));
+									const maxR = Math.max(1, ...a.operadores.map(o => o.resueltos));
 									const ordenados = a.operadores.slice().sort((x, y) => (y.carga - x.carga) || (y.resueltos - x.resueltos));
 								%>
-								<div class="area-ops" id="ops-<%= a.codigo %>" data-ops="<%= a.codigo %>"<% if (!abierta) { %> hidden<% } %>>
+								<div class="area-ops" id="ops-<%= a.codigo %>" data-ops="<%= a.codigo %>" data-f-area="<%= a.codigo %>"<% if (!abierta) { %> hidden<% } %>>
 									<div class="ops-head">
-										<span class="summary">
-											<%= a.operadores.length %> <%= a.operadores.length === 1 ? 'operador' : 'operadores' %> · <%= a.abiertos %> activos<% if (a.sinAsignar) { %> (<%= a.sinAsignar %> sin asignar)<% } %> · <%= a.resueltos %> resueltos <%= panel.periodo === 'semana' ? 'esta semana' : 'hoy' %> · <%= a.personas %> en turno · <%= a.porcentaje %>% de saturación
-										</span>
-										<span class="legend"><i class="bg-blue"></i>Carga actual</span>
-										<span class="legend"><i class="bg-green"></i>Resueltos</span>
+										<span class="summary"><%= a.operadores.length %> <%= a.operadores.length === 1 ? 'operador' : 'operadores' %> · <%= a.resueltos %> resueltos <%= panel.periodo === 'semana' ? 'esta semana' : 'hoy' %></span>
 										<div role="tablist" class="sm" aria-label="Ordenar operadores">
 											<button type="button" role="tab" data-sort="carga" aria-selected="true">Más carga</button>
 											<button type="button" role="tab" data-sort="resueltos" aria-selected="false">Más resueltos</button>
@@ -154,27 +172,19 @@
 										<p class="empty">El área no tiene operadores asignados.</p>
 									<% } else { %>
 									<div class="scroll-x">
-										<div style="min-width:640px;display:flex;flex-direction:column" data-op-list>
-											<div class="ops-grid hd"><span>Operador</span><span>Carga actual / Resueltos</span><span style="text-align:right">Prom.</span><span style="text-align:right">Puntos</span></div>
+										<div style="min-width:620px;display:flex;flex-direction:column" data-op-list>
+											<div class="ops-grid2 colhead"><span>Operador</span><span>Activos</span><span>Resueltos <%= panel.periodo === 'semana' ? 'semana' : 'hoy' %></span><span class="r">Promedio</span><span class="r">Puntos</span></div>
 											<% ordenados.forEach((o, j) => { %>
-												<div class="ops-grid op-row" data-carga="<%= o.carga %>" data-resueltos="<%= o.resueltos %>">
+												<div class="ops-grid2 op-row" data-carga="<%= o.carga %>" data-resueltos="<%= o.resueltos %>">
 													<div class="op-who">
 														<span class="pos" data-pos><%= j + 1 %></span>
 														<span class="avatar"><% if (o.foto) { %><img src="<%= o.foto %>" alt="" loading="lazy"><% } else { %><%= o.iniciales %><% } %><span class="st st-<%= o.estado.grupo %>"></span></span>
-														<div class="nm"><b><%= o.nombre %></b><span><%= o.estado.etiqueta %></span></div>
+														<div class="nm"><b><%= o.nombre %><% if (o.sobrecarga) { %><span class="chip-sc">Sobrecarga</span><% } %></b><span><%= o.estado.etiqueta %></span></div>
 													</div>
-													<div class="op-bars">
-														<div>
-															<div class="track"><span class="bar-fill <%= o.sobrecarga ? 'bg-amber' : 'bg-blue' %>" style="width: <%= o.carga / maxV * 100 %>%; animation-delay: <%= j * 60 %>ms"></span></div>
-															<span class="lbl"><strong class="<%= o.sobrecarga ? 't-orange' : 't-accent' %>"><%= o.carga %></strong> activos · <%= o.puntosCarga %> pts</span>
-														</div>
-														<div>
-															<div class="track"><span class="bar-fill bg-green" style="width: <%= o.resueltos / maxV * 100 %>%; animation-delay: <%= j * 60 + 120 %>ms"></span></div>
-															<span class="lbl"><strong class="t-green"><%= o.resueltos %></strong> resueltos</span>
-														</div>
-													</div>
-													<span class="t2" style="font-size:12px;text-align:right"><%= o.promedioHoras === null ? '—' : coma(o.promedioHoras) + ' h' %></span>
-													<span style="font-size:12px;text-align:right;font-weight:700"><%= o.puntos %></span>
+													<div class="mcell" title="<%= o.carga %> activos · <%= o.puntosCarga %> pts"><b class="<%= o.sobrecarga ? 't-orange' : '' %>"><%= o.carga %></b><div class="track"><span class="bar-fill <%= o.sobrecarga ? 'bg-amber' : 'bg-blue' %>" style="width: <%= o.carga / maxC * 100 %>%; animation-delay: <%= j * 60 %>ms"></span></div><small><%= o.puntosCarga %> pts</small></div>
+													<div class="mcell"><b><%= o.resueltos %></b><div class="track"><span class="bar-fill bg-green" style="width: <%= o.resueltos / maxR * 100 %>%; animation-delay: <%= j * 60 + 120 %>ms"></span></div><small></small></div>
+													<span class="r t2"><%= o.promedioHoras === null ? '—' : coma(o.promedioHoras) + ' h' %></span>
+													<span class="r" style="font-weight:700"><%= o.puntos %></span>
 												</div>
 											<% }) %>
 										</div>
@@ -186,7 +196,117 @@
 					</div>
 					<% } %>
 				</section>
+			</div>
 
+			<div class="col-side">
+				<!-- Alertas -->
+				<%
+					const alertasVer = 4;
+					const porTipo = { cola: 0, sobrecarga: 0, antiguedad: 0 };
+					panel.alertas.forEach(a => { porTipo[a.tipo] = (porTipo[a.tipo] || 0) + 1; });
+					const tipoTxt = { cola: 'En cola', sobrecarga: 'Sobrecarga', antiguedad: 'Atrasados' };
+				%>
+				<section class="glass card al2" aria-labelledby="h-alertas">
+					<div class="card-head">
+						<h2 id="h-alertas">Alertas</h2>
+						<% if (panel.alertas.length) { %>
+							<span class="badge red"><%= panel.alertas.length %></span>
+							<span class="grow"></span>
+							<a href="/tickets#tickets" class="linkbtn" style="font-size:12px;font-weight:600">Ver tickets</a>
+						<% } else { %>
+							<span class="grow"></span>
+							<span class="badge green">Sin alertas</span>
+						<% } %>
+					</div>
+					<% if (panel.alertas.length) { %>
+						<div class="al2-tipos">
+							<% Object.keys(porTipo).filter(t => porTipo[t]).forEach(t => { %>
+								<span class="al2-tipo"><i class="al2-dot <%= t %>"></i><%= tipoTxt[t] %> <b><%= porTipo[t] %></b></span>
+							<% }) %>
+						</div>
+						<div class="al2-list">
+							<% panel.alertas.forEach((a, i) => { %>
+								<div class="al2-row <%= a.nivel %>"<% if (i >= alertasVer) { %> data-al-mas hidden<% } %>>
+									<span class="al2-ico"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="<%= a.tipo === 'sobrecarga' ? icono.persona : (a.tipo === 'cola' ? icono.cola : icono.reloj) %>"/></svg></span>
+									<div class="al2-txt"><b><%= a.titulo %></b><span><%= a.detalle.replace(/\s*[·:]\s*$/, '') %></span></div>
+									<strong class="al2-val"><%= a.valor %></strong>
+								</div>
+							<% }) %>
+						</div>
+						<% if (panel.alertas.length > alertasVer) { %>
+							<button type="button" class="al2-more" data-al-toggle aria-expanded="false">Ver <%= panel.alertas.length - alertasVer %> más</button>
+						<% } %>
+					<% } else { %>
+						<p class="al2-ok"><b>Todo en orden:</b> sin sobrecarga, sin cola de espera y sin tickets fuera de tiempo.</p>
+					<% } %>
+				</section>
+
+				<!-- Estado del turno -->
+				<%
+					const jor = panel.turno.jornada;
+					const grupoDe = c => panel.turno.grupos.find(g => g.clave === c) || { personas: [] };
+				%>
+				<section class="glass card tu2" aria-labelledby="h-turno">
+					<div class="card-head">
+						<h2 id="h-turno">Estado del turno</h2>
+						<span class="grow"></span>
+						<span class="t2" style="font-size:12px;font-variant-numeric:tabular-nums"><%= jor.horario %></span>
+					</div>
+					<div class="tu2-jornada">
+						<div class="tu2-jl"><b><%= jor.porcentaje %> %</b><span><%= jor.detalle %></span></div>
+						<div class="track" role="img" aria-label="Jornada al <%= jor.porcentaje %> %"><span class="bar-fill bg-blue" style="width: <%= jor.porcentaje %>%"></span></div>
+					</div>
+					<div class="tu2-stats">
+						<% panel.turno.grupos.forEach(g => { const vis = g.personas.slice(0, 4); %>
+							<div class="tu2-stat">
+								<span class="tu2-lbl"><i class="st-<%= g.clave %>"></i><%= g.etiqueta %></span>
+								<b><%= g.personas.length %></b>
+								<span class="tu2-faces" title="<%= g.personas.map(p => p.nombre).join(', ') %>">
+									<% vis.forEach(p => { %><i><%= p.iniciales %></i><% }) %>
+									<% if (g.personas.length > vis.length) { %><i class="mas">+<%= g.personas.length - vis.length %></i><% } %>
+								</span>
+							</div>
+						<% }) %>
+					</div>
+					<button type="button" class="al2-more" data-tu-toggle aria-expanded="false" aria-controls="tu2-personas">Ver personas</button>
+					<div id="tu2-personas" class="tu2-people" hidden>
+						<% panel.turno.grupos.filter(g => g.personas.length).forEach(g => { %>
+							<div class="tu2-grp"><span class="tu2-lbl"><i class="st-<%= g.clave %>"></i><%= g.etiqueta %></span>
+								<div class="people"><% g.personas.forEach(p => { %><span class="person" title="<%= p.nombre %> · <%= p.area %>"><i><%= p.iniciales %></i><%= p.nombre %></span><% }) %></div>
+							</div>
+						<% }) %>
+					</div>
+				</section>
+			</div>
+		</div>
+
+		<!-- Tendencia -->
+		<div class="zone">Tendencia</div>
+		<div class="cols">
+			<div class="col-main">
+				<section class="glass card" aria-labelledby="h-flujo">
+			<div class="card-head" style="gap:14px">
+				<h2 id="h-flujo">Flujo por hora</h2>
+				<button type="button" class="info" title="Tickets creados, asignados y cerrados (resueltos) por hora durante el día de hoy." aria-label="Tickets creados, asignados y cerrados (resueltos) por hora durante el día de hoy."><%- icono.info %></button>
+				<span class="badge accent">Hoy</span>
+				<span class="grow"></span>
+				<span class="legend"><i class="line bg-blue"></i>Creados</span>
+				<span class="legend"><i class="line bg-green"></i>Cerrados</span>
+				<span class="legend"><i class="dash"></i>Asignados</span>
+			</div>
+			<div class="flow-grid">
+				<div class="sparks" data-sparks></div>
+				<div class="flow-chart">
+					<div class="flow-y" data-flow-y></div>
+					<div class="flow-body">
+						<div class="flow-plot" data-flow-plot></div>
+						<div class="flow-x" data-flow-x></div>
+					</div>
+				</div>
+			</div>
+		</section>
+			</div>
+			<div class="col-side">
 				<!-- Tiempo promedio de resolución por área -->
 				<section class="glass card" aria-labelledby="h-resol" style="gap:22px">
 					<div class="card-head" style="padding-bottom:6px">
@@ -200,7 +320,7 @@
 					<% } else { %>
 					<div class="res-list">
 						<% panel.resolucion.areas.forEach((r, i) => { %>
-							<button type="button" class="res-row res-grid" data-area="<%= r.codigo %>" aria-pressed="<%= r.codigo === areaInicial %>" aria-label="Ver operadores de <%= r.nombre %>">
+							<button type="button" class="res-row res-grid" data-area="<%= r.codigo %>" data-f-area="<%= r.codigo %>" aria-pressed="<%= r.codigo === areaInicial %>" aria-label="Ver operadores de <%= r.nombre %>">
 								<span class="name"><%= r.nombre %></span>
 								<div class="res-bar">
 									<div class="track" title="<%= r.nombre %>: <%= coma(r.horas) %> h"><span class="bar-fill bg-blue" style="width: <%= Math.min(r.horas / escalaHoras * 100, 100) %>%; animation-delay: <%= i * 70 + 150 %>ms"></span></div>
@@ -225,135 +345,40 @@
 					</div>
 				</section>
 			</div>
-
-			<div class="col-side">
-				<!-- Alertas -->
-				<section class="glass card" aria-labelledby="h-alertas" style="padding:18px 20px 14px;gap:6px">
-					<div class="card-head" style="padding-bottom:4px">
-						<h2 id="h-alertas">Alertas</h2>
-						<% if (panel.alertas.length) { %>
-							<span class="badge red"><%= panel.alertas.length %> <%= panel.alertas.length === 1 ? 'activa' : 'activas' %></span>
-							<span class="grow"></span>
-							<a href="/tickets#tickets" style="font-size:12px;font-weight:600">Ver tickets</a>
-						<% } else { %>
-							<span class="badge green">Sin alertas</span>
-						<% } %>
-					</div>
-					<% if (panel.alertas.length) { %>
-						<div style="display:flex;flex-direction:column">
-							<% panel.alertas.slice(0, 6).forEach((a, i) => { %>
-								<div class="alert-row" style="animation-delay: <%= i * 90 + 250 %>ms">
-									<span class="alert-ico <%= a.nivel %>"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="<%= a.tipo === 'sobrecarga' ? icono.persona : (a.tipo === 'cola' ? icono.cola : icono.reloj) %>"/></svg></span>
-									<div class="txt">
-										<b><%= a.titulo %></b>
-										<span><%= a.detalle %> <strong class="<%= a.nivel === 'rojo' ? 't-red' : 't-orange' %>"><%= a.valor %></strong></span>
-									</div>
-								</div>
-							<% }) %>
-							<% if (panel.alertas.length > 6) { %>
-								<p class="empty" style="padding-top:8px">Y <%= panel.alertas.length - 6 %> más en Tickets.</p>
-							<% } %>
-						</div>
-					<% } else { %>
-						<div class="alert-row">
-							<span class="alert-ico verde"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L19 7"/></svg></span>
-							<div class="txt"><b>Todo en orden</b><span>Sin sobrecarga, sin cola de espera y sin tickets fuera de tiempo</span></div>
-						</div>
-					<% } %>
-				</section>
-
-				<!-- Estado del turno -->
-				<section class="glass card" aria-labelledby="h-turno">
-					<h2 id="h-turno" class="card-title">Estado del turno</h2>
-					<div class="ring-wrap">
-						<svg width="84" height="84" viewBox="0 0 84 84" role="img" aria-label="Jornada al <%= panel.turno.jornada.porcentaje %>%">
-							<circle cx="42" cy="42" r="34" fill="none" style="stroke: var(--track)" stroke-width="8"/>
-							<% if (panel.turno.jornada.porcentaje > 0) { %>
-								<circle class="ring-draw" cx="42" cy="42" r="34" fill="none" style="stroke: var(--c-blue)" stroke-width="8" stroke-linecap="round" stroke-dasharray="<%= (ring * panel.turno.jornada.porcentaje / 100).toFixed(1) %> <%= ring.toFixed(1) %>" transform="rotate(-90 42 42)"/>
-							<% } %>
-							<text x="42" y="46" text-anchor="middle" font-size="16" font-weight="700"><%= panel.turno.jornada.porcentaje %>%</text>
-						</svg>
-						<div class="info-col">
-							<span style="font-weight:600">Jornada normal</span>
-							<span class="t2" style="font-variant-numeric:tabular-nums"><%= panel.turno.jornada.horario %></span>
-							<span class="t-accent" style="font-weight:600"><%= panel.turno.jornada.detalle %></span>
-						</div>
-					</div>
-					<div style="display:flex;flex-direction:column">
-						<% panel.turno.grupos.forEach(g => { %>
-							<div class="shift-group">
-								<div class="gh"><i class="st-<%= g.clave %>"></i><b><%= g.etiqueta %></b><strong><%= g.personas.length %></strong></div>
-								<% if (g.personas.length) { %>
-									<div class="people">
-										<% g.personas.forEach(p => { %><span class="person" title="<%= p.nombre %> · <%= p.area %>"><i><%= p.iniciales %></i><%= p.nombre %></span><% }) %>
-									</div>
-								<% } %>
-							</div>
-						<% }) %>
-					</div>
-				</section>
-			</div>
 		</div>
-
-		<!-- Tendencia -->
-		<div class="zone">Tendencia</div>
-		<section class="glass card" aria-labelledby="h-flujo">
-			<div class="card-head" style="gap:14px">
-				<h2 id="h-flujo">Flujo por hora</h2>
-				<button type="button" class="info" title="Tickets creados, asignados y cerrados (resueltos) por hora durante el día de hoy." aria-label="Tickets creados, asignados y cerrados (resueltos) por hora durante el día de hoy."><%- icono.info %></button>
-				<span class="badge accent">Hoy</span>
-				<span class="grow"></span>
-				<span class="legend"><i class="line bg-blue"></i>Creados</span>
-				<span class="legend"><i class="line bg-green"></i>Cerrados</span>
-				<span class="legend"><i class="dash"></i>Asignados</span>
-			</div>
-			<div class="flow-grid">
-				<div class="sparks" data-sparks></div>
-				<div class="flow-chart">
-					<div class="flow-y" data-flow-y></div>
-					<div class="flow-body">
-						<div class="flow-plot" data-flow-plot></div>
-						<div class="flow-x" data-flow-x></div>
-					</div>
-				</div>
-			</div>
-		</section>
 
 		<!-- Rendimiento -->
 		<div class="zone">Rendimiento</div>
-		<section class="glass" aria-labelledby="h-rank" style="display:flex;flex-direction:column;min-width:0;overflow:hidden">
-			<div class="card-head" style="padding:20px 24px 10px">
+		<div class="cols half">
+		<!-- Ranking de operadores: puntos de lo resuelto, en tramos por nivel (N1 claro … N4 oscuro) -->
+		<% const PTS_NIVEL = { 1: 2, 2: 4, 3: 8, 4: 10 }; %>
+		<section class="glass card" aria-labelledby="h-rank" style="gap:10px;align-self:stretch">
+			<div class="card-head">
 				<h2 id="h-rank" style="flex:1">Ranking de operadores</h2>
 				<span class="badge accent"><%= panel.periodoEtiqueta %></span>
 				<a class="pill pillbtn" href="/reportes" style="height:26px;padding:0 10px;font-size:12px;font-weight:600">Ver todos</a>
 			</div>
-			<div class="scroll-x" style="padding:0 16px 16px">
-				<% if (!panel.ranking.length) { %>
-					<p class="empty" style="padding:4px 8px 8px">Nadie ha resuelto tickets <%= panel.periodo === 'semana' ? 'esta semana' : 'hoy' %> todavía.</p>
-				<% } else { %>
-				<table class="rank-table">
-					<thead>
-						<tr><th style="width:20px">#</th><th>Operador</th><th class="r">Puntos</th><th class="r">P1 / P2 / P3</th><th class="r" title="Puntos activos ÷ promedio de su área">Índice de carga</th></tr>
-					</thead>
-					<tbody>
-						<% panel.ranking.forEach((o, i) => { %>
-							<tr>
-								<td><span class="rank-pos<%= i < 3 ? ' m' + (i + 1) : '' %>"><%= i + 1 %></span></td>
-								<td>
-									<div style="display:flex;align-items:center;gap:8px">
-										<span class="avatar sm"><% if (o.foto) { %><img src="<%= o.foto %>" alt="" loading="lazy"><% } else { %><%= o.iniciales %><% } %><span class="st st-<%= o.estado.grupo %>"></span></span>
-										<div style="display:flex;flex-direction:column"><span style="font-weight:600"><%= o.nombre %></span><span class="t2"><%= o.areaNombre %> · <%= o.estado.etiqueta %></span></div>
-									</div>
-								</td>
-								<td class="r"><span class="rank-pts"><span class="track"><span class="bar-fill bg-blue" style="width: <%= Math.round(o.puntos / maxPuntos * 100) %>%; animation-delay: <%= i * 60 + 200 %>ms"></span></span><span style="min-width:22px"><%= o.puntos %></span></span></td>
-								<td class="r t2"><%= o.p1 %> / <%= o.p2 %> / <%= o.p3 %></td>
-								<td class="r"><span class="ix<%= o.sobrecarga ? ' over' : '' %>"><%= o.indiceCarga === null ? '—' : coma(Math.round(o.indiceCarga * 10) / 10) %></span></td>
-							</tr>
-						<% }) %>
-					</tbody>
-				</table>
-				<% } %>
-			</div>
+			<% if (!panel.ranking.length) { %>
+				<p class="empty">Nadie ha resuelto tickets <%= panel.periodo === 'semana' ? 'esta semana' : 'hoy' %> todavía.</p>
+			<% } else { %>
+				<div class="rkA-legend">
+					<% [1, 2, 3, 4].forEach(n => { %><span><i class="lvA lvA<%= n %>"></i>N<%= n %></span><% }) %>
+					<span class="grow"></span><span class="t3">Puntos de lo resuelto</span>
+				</div>
+				<div class="rkA-list">
+					<% panel.ranking.forEach((o, i) => { %>
+						<div class="rkA-row" data-f-area="<%= o.area %>">
+							<span class="rank-pos<%= i < 3 ? ' m' + (i + 1) : '' %>"><%= i + 1 %></span>
+							<span class="avatar sm"><% if (o.foto) { %><img src="<%= o.foto %>" alt="" loading="lazy"><% } else { %><%= o.iniciales %><% } %><span class="st st-<%= o.estado.grupo %>"></span></span>
+							<div class="rkA-who"><b><%= o.nombre %><% if (o.sobrecarga) { %><span class="chip-sc">Sobrecarga</span><% } %></b><span><%= o.areaNombre %> · <%= o.resueltos %> <%= o.resueltos === 1 ? 'resuelto' : 'resueltos' %></span></div>
+							<div class="rkA-bar" role="img" aria-label="<%= [1, 2, 3, 4].map(n => 'N' + n + ': ' + (o['n' + n] || 0)).join(', ') %>" title="<%= [1, 2, 3, 4].map(n => 'N' + n + ': ' + (o['n' + n] || 0)).join(' · ') %>">
+								<% [1, 2, 3, 4].forEach(n => { const w = (o['n' + n] || 0) * PTS_NIVEL[n] / maxPuntos * 100; if (w) { %><span class="lvA lvA<%= n %>" style="width: <%= w %>%; animation-delay: <%= i * 60 + 200 %>ms"></span><% } }) %>
+							</div>
+							<strong class="rkA-pts"><%= o.puntos %> <small>pts</small></strong>
+						</div>
+					<% }) %>
+				</div>
+			<% } %>
 		</section>
 
 		<!-- Distribución territorial -->
@@ -361,27 +386,14 @@
 		   const mapaShapes = locals.mapaShapes || {}, mapaViewBox = locals.mapaViewBox || '0 0 1000 877';
 		   const nivelMapa = n => n === 0 ? 0 : n <= 2 ? 1 : n <= 5 ? 2 : n <= 10 ? 3 : 4;
 		   const foco = mapa.ranking[0] || null; %>
-		<section class="glass" aria-labelledby="h-mapa" style="display:flex;flex-direction:column;gap:12px;padding:20px 24px;min-width:0" data-mapa>
+		<section class="glass" aria-labelledby="h-mapa" style="display:flex;flex-direction:column;gap:12px;padding:20px 24px;min-width:0;align-self:stretch" data-mapa>
 			<div class="card-head">
 				<h2 id="h-mapa">Distribución territorial</h2>
 				<span class="hint grow"><%= mapa.resumen %></span>
 				<span class="badge accent"><%= mapa.totalActivos %> <%= mapa.totalActivos === 1 ? 'activo' : 'activos' %> con estado</span>
 				<button type="button" class="pill pillbtn" data-mapa-toggle aria-expanded="false" aria-controls="mapa-cuerpo" style="height:30px;padding:0 14px;font-size:12px;font-weight:600">Ver mapa</button>
 			</div>
-			<div id="mapa-cuerpo" class="mapa-body" hidden>
-				<div class="mapa-svgbox">
-					<svg viewBox="<%= mapaViewBox %>" role="img" aria-label="Mapa de Venezuela por estados, coloreado por tickets activos" stroke-linejoin="round">
-						<% Object.keys(mapaShapes).forEach(cod => { const e = mapa.estados[cod]; %>
-							<path d="<%= mapaShapes[cod] %>" class="mapa-estado n<%= nivelMapa(e.activos) %>" data-estado="<%= cod %>" data-nombre="<%= e.nombre %>" data-activos="<%= e.activos %>" data-pct="<%= e.porcentaje %>"></path>
-						<% }) %>
-					</svg>
-					<div class="mapa-tip" data-mapa-tip aria-live="polite">
-						<div class="mapa-tip-name"><span class="dot" data-tip-dot></span><span data-tip-nombre><%= foco ? foco.nombre : 'Sin datos' %></span></div>
-						<div class="mapa-tip-line">Tickets activos: <strong data-tip-activos><%= foco ? foco.activos : 0 %></strong></div>
-						<div class="mapa-tip-line"><span data-tip-pct><%= foco ? foco.porcentaje : 0 %></span>% del total con estado</div>
-					</div>
-				</div>
-				<div class="mapa-side">
+			<div class="mapa-side">
 					<div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;border-bottom:1px solid var(--sep)"><span class="kt">Estados con mayor carga</span><span class="t2" style="font-size:12px">Activos</span></div>
 					<% if (!mapa.ranking.length) { %>
 						<p class="empty" style="padding:8px 0">Ningún ticket activo tiene estado asignado. El estado se elige al crear o editar el ticket.</p>
@@ -401,8 +413,22 @@
 						<p class="t2" style="font-size:12px;margin:0"><%= mapa.sinEstado %> <%= mapa.sinEstado === 1 ? 'ticket activo no tiene' : 'tickets activos no tienen' %> estado y no aparece<%= mapa.sinEstado === 1 ? '' : 'n' %> en el mapa.</p>
 					<% } %>
 				</div>
+			<div id="mapa-cuerpo" class="mapa-body" hidden>
+				<div class="mapa-svgbox">
+					<svg viewBox="<%= mapaViewBox %>" role="img" aria-label="Mapa de Venezuela por estados, coloreado por tickets activos" stroke-linejoin="round">
+						<% Object.keys(mapaShapes).forEach(cod => { const e = mapa.estados[cod]; %>
+							<path d="<%= mapaShapes[cod] %>" class="mapa-estado n<%= nivelMapa(e.activos) %>" data-estado="<%= cod %>" data-nombre="<%= e.nombre %>" data-activos="<%= e.activos %>" data-pct="<%= e.porcentaje %>"></path>
+						<% }) %>
+					</svg>
+					<div class="mapa-tip" data-mapa-tip aria-live="polite">
+						<div class="mapa-tip-name"><span class="dot" data-tip-dot></span><span data-tip-nombre><%= foco ? foco.nombre : 'Sin datos' %></span></div>
+						<div class="mapa-tip-line">Tickets activos: <strong data-tip-activos><%= foco ? foco.activos : 0 %></strong></div>
+						<div class="mapa-tip-line"><span data-tip-pct><%= foco ? foco.porcentaje : 0 %></span>% del total con estado</div>
+					</div>
+				</div>
 			</div>
 		</section>
+		</div>
 	</main>
 </div>
 

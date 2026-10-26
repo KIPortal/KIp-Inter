@@ -77,6 +77,11 @@ Campo `User.atiende_tickets` (migración `20261014180000_coordinador_atiende`), 
 - `GET /api/avisos/coordinador` (coordinador, jefe o gerente; el jefe solo su área): `{ activo, porCerrar[{ codigo, asunto, operador, area, resueltoEn, hace }] }`, tickets en RESUELTO que esperan cierre (máx. 30). `activo` sale de la matriz de avisos (`resuelto`). `GET /api/cambios`: `{ sello }` para la actualización en vivo.
 - Mi panel: con subgrupo, Entrantes = los de su subgrupo + los del área sin subgrupo (+ General).
 
+## Dashboard: filtro por área y ranking por nivel (2026-10-26)
+- `GET /?periodo=jornada|semana&area=CODIGO`: con `area` (una de las áreas que la persona ve) el panel se arma solo con los tickets y las personas de esa área (`dashboardService.filtrarPorArea`), así que cifras, alertas, turno, flujo, ranking y mapa salen de esa área. La vista recibe además `areasFiltro[{ codigo, nombre, porcentaje, abiertos }]` (todas las áreas, para los botones) y `areaSel` (`''` = todas). Las pestañas de periodo conservan el área.
+- Operadores del panel (`areas[].operadores[]` y `ranking[]`): `n1…n4` = resueltos del periodo por nivel (`tipoCasoService.nivelDeTicket`); reemplazan a `p1/p2/p3`, que salían de los puntos viejos.
+- Reportes: `porOperador[]` suma `n1…n4` (además de `p1/p2/p3`, que siguen en el Excel); la pantalla muestra `N1 / N2 / N3 / N4`.
+
 ## Distribución territorial (mapa del Dashboard)
 - `Ticket.estado_ve` (opcional, código ISO sin guion: `VEA`, `VEV`...) lo elige el coordinador al crear (`estadoVe`) o editar (`estado_ve`) el ticket.
 - `panel.mapa` (`buildTerritorialMap`): `estados[codigo] = { nombre, activos, porcentaje }`, `ranking` (7 con más activos), `totalActivos`, `sinEstado`, `resumen`. Los tickets sin estado no entran al mapa.

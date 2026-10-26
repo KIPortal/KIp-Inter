@@ -22,6 +22,7 @@ const { DEFAULT_RULES, ageLimitFor, overloadOptions, prioridadDe, PRIORIDAD_RANG
 const { buildSuggestions, normalizeOperator } = require('./assignmentService');
 const { ESTADOS_VE } = require('./estadosVeService');
 const { fotoUrl } = require('./profileService');
+const { nivelDeTicket } = require('./tipoCasoService');
 
 const MINUTE_MS = 60 * 1000;
 const HOUR_MS = 60 * MINUTE_MS;
@@ -209,13 +210,12 @@ function buildCoordinatorPanel({ tickets = [], operators = [], now = new Date(),
     const porOperador = new Map();
     for (const t of resueltosPeriodo) {
         if (!t.asignado_a_id) continue;
-        const acc = porOperador.get(t.asignado_a_id) || { resueltos: 0, puntos: 0, p1: 0, p2: 0, p3: 0, tickets: [] };
-        const pts = t.puntos_complejidad || 0;
+        const acc = porOperador.get(t.asignado_a_id) || { resueltos: 0, puntos: 0, n1: 0, n2: 0, n3: 0, n4: 0, tickets: [] };
         acc.resueltos += 1;
-        acc.puntos += pts;
-        if (pts === 8) acc.p1 += 1;
-        else if (pts === 5) acc.p2 += 1;
-        else if (pts === 1) acc.p3 += 1;
+        acc.puntos += t.puntos_complejidad || 0;
+        // Resueltos por nivel de dificultad (los puntos salen del nivel: N1=2, N2=4, N3=8, N4=10)
+        const nivel = nivelDeTicket(t);
+        if (nivel) acc['n' + nivel] += 1;
         acc.tickets.push(t);
         porOperador.set(t.asignado_a_id, acc);
     }
@@ -225,7 +225,7 @@ function buildCoordinatorPanel({ tickets = [], operators = [], now = new Date(),
     };
 
     const operadores = operators.map(o => {
-        const r = porOperador.get(o.id) || { resueltos: 0, puntos: 0, p1: 0, p2: 0, p3: 0, tickets: [] };
+        const r = porOperador.get(o.id) || { resueltos: 0, puntos: 0, n1: 0, n2: 0, n3: 0, n4: 0, tickets: [] };
         const ov = overload.get(o.id) || {};
         return {
             id: o.id,
@@ -239,7 +239,7 @@ function buildCoordinatorPanel({ tickets = [], operators = [], now = new Date(),
             puntosCarga: puntosCarga.get(o.id) || 0,
             resueltos: r.resueltos,
             puntos: r.puntos,
-            p1: r.p1, p2: r.p2, p3: r.p3,
+            n1: r.n1, n2: r.n2, n3: r.n3, n4: r.n4,
             promedioHoras: avgHours(r.tickets),
             indiceCarga: ov.indiceCarga ?? null,
             sobrecarga: Boolean(ov.sobrecarga)
@@ -388,4 +388,16 @@ function ventanaDashboard({ periodo = 'jornada', now = new Date() } = {}) {
     };
 }
 
-module.exports = { buildCoordinatorPanel, ventanaDashboard, buildTerritorialMap, agingTickets, jornadaStatus, formatAge, AGE_LIMIT_MINUTES };
+/**
+ * Filtro del Dashboard por área (?area=): solo los tickets y las personas de esa área,
+ * para que buildCoordinatorPanel recalcule cifras, alertas, turno, flujo, ranking y mapa.
+ */
+function filtrarPorArea({ tickets = [], operators = [], area } = {}) {
+    if (!area) return { tickets, operators };
+    return {
+        tickets: tickets.filter(t => (t.area_designada || 'GENERAL') === area),
+        operators: operators.filter(o => (o.area_designada || 'GENERAL') === area)
+    };
+}
+
+module.exports = { buildCoordinatorPanel, filtrarPorArea, ventanaDashboard, buildTerritorialMap, agingTickets, jornadaStatus, formatAge, AGE_LIMIT_MINUTES };

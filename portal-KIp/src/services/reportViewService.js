@@ -122,6 +122,8 @@ function buildReportView(report, { periodo, fecha = null, area = null, now = new
         promedioHoras: horas(o.tiempoTotalMin),
         puntos: o.puntos,
         p1: o.p1, p2: o.p2, p3: o.p3,
+        // Por nivel; las jornadas guardadas antes de este cambio no lo traen (null)
+        niveles: [o.n1, o.n2, o.n3, o.n4].some(n => n === undefined) ? null : [o.n1, o.n2, o.n3, o.n4],
         activos: o.activos,
         indiceCarga: o.indiceCarga,
         sobrecarga: o.sobrecarga,

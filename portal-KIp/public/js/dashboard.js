@@ -261,3 +261,39 @@
 		if (refresh) refresh.addEventListener('click', () => window.location.reload());
 	});
 })();
+
+// Filtro por área: cada botón es un enlace (?area=) y el servidor recalcula el Dashboard.
+// "Solo saturadas" (con todas las áreas) oculta en la página las áreas por debajo de 60 %.
+(function () {
+	'use strict';
+	document.addEventListener('DOMContentLoaded', () => {
+		const sat = document.querySelector('[data-qf-sat]');
+		if (!sat) return;
+		const saturadas = new Set(Array.from(document.querySelectorAll('.area-row[data-f-area]'))
+			.filter(r => parseInt(r.querySelector('.pct').textContent, 10) >= 60).map(r => r.getAttribute('data-f-area')));
+		let solo = false;
+		sat.addEventListener('click', () => {
+			solo = !solo;
+			sat.setAttribute('aria-pressed', String(solo));
+			document.querySelectorAll('[data-f-area]').forEach(el => {
+				if (!solo || saturadas.has(el.getAttribute('data-f-area'))) el.removeAttribute('data-f-hide'); else el.setAttribute('data-f-hide', '');
+			});
+		});
+	});
+})();
+
+// Alertas: "Ver N más" / Estado del turno: "Ver personas"
+document.addEventListener('DOMContentLoaded', () => {
+	const al = document.querySelector('[data-al-toggle]');
+	if (al) { const txt = al.textContent; al.addEventListener('click', () => {
+		const abrir = al.getAttribute('aria-expanded') !== 'true';
+		document.querySelectorAll('[data-al-mas]').forEach(r => { r.hidden = !abrir; });
+		al.setAttribute('aria-expanded', String(abrir)); al.textContent = abrir ? 'Ver menos' : txt;
+	}); }
+	const tu = document.querySelector('[data-tu-toggle]');
+	if (tu) tu.addEventListener('click', () => {
+		const box = document.getElementById(tu.getAttribute('aria-controls'));
+		const abrir = box.hidden; box.hidden = !abrir;
+		tu.setAttribute('aria-expanded', String(abrir)); tu.textContent = abrir ? 'Ocultar personas' : 'Ver personas';
+	});
+});

@@ -69,14 +69,16 @@ function timeMetrics(resolved) {
     };
 }
 
-/** Puntos de los tickets resueltos y cuántos hubo por prioridad. */
+/** Puntos de los tickets resueltos y cuántos hubo por prioridad y por nivel de dificultad. */
 function pointsSummary(resolved) {
     const puntos = resolved.reduce((sum, t) => sum + (t.puntos_complejidad || 0), 0);
     const count = p => resolved.filter(t => priorityOfTicket(t) === p).length;
+    const nivel = n => resolved.filter(t => nivelDeTicket(t) === n).length;
     return {
         puntos,
         ptsPorTicket: resolved.length ? Math.round((puntos / resolved.length) * 10) / 10 : 0,
-        p1: count('P1'), p2: count('P2'), p3: count('P3'), sinPrioridad: count('Sin prioridad')
+        p1: count('P1'), p2: count('P2'), p3: count('P3'), sinPrioridad: count('Sin prioridad'),
+        n1: nivel(1), n2: nivel(2), n3: nivel(3), n4: nivel(4)
     };
 }
 
@@ -163,6 +165,7 @@ function buildPeriodReport({ tickets, operators, range, area }) {
             puntos: counts.puntos,
             ptsPorTicket: counts.ptsPorTicket,
             p1: counts.p1, p2: counts.p2, p3: counts.p3, sinPrioridad: counts.sinPrioridad,
+            n1: counts.n1, n2: counts.n2, n3: counts.n3, n4: counts.n4,
             activos: withLoad.find(w => w.id === o.id)?.activos ?? 0,
             puntosCarga: withLoad.find(w => w.id === o.id)?.puntosCarga ?? 0,
             ...timeMetrics(counts._resolved),

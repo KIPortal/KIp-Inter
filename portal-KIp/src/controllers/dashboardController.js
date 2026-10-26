@@ -2,7 +2,7 @@ const prisma = require('../config/prisma');
 const { ACTIVE_STATES, getDayBounds } = require('../services/metricsService');
 const { getShiftStatus, getWeekStart } = require('../services/shiftService');
 const { loadShiftData } = require('./turnoController');
-const { buildCoordinatorPanel, ventanaDashboard } = require('../services/dashboardService');
+const { buildCoordinatorPanel, filtrarPorArea, ventanaDashboard } = require('../services/dashboardService');
 const { buildQueue, ventanaCola } = require('../services/ticketQueueService');
 const { buildOperatorPanel } = require('../services/operatorPanelService');
 const { ATIENDE_WHERE, atiendeTickets, ticketWhere, personaWhere } = require('../services/roleService');
@@ -48,7 +48,7 @@ async function renderDashboard(req, res) {
                 // Sin los cerrados viejos: no cambian ninguna cifra del periodo
                 where: { AND: [ticketWhere(req.user), ventanaDashboard({ periodo: req.query.periodo, now: ahora })] },
                 select: {
-                    codigo_incidencia: true, estado_actual: true, area_designada: true, estado_ve: true, puntos_complejidad: true, prioridad: true,
+                    codigo_incidencia: true, estado_actual: true, area_designada: true, estado_ve: true, puntos_complejidad: true, nivel: true, prioridad: true,
                     asignado_a_id: true, createdAt: true, updatedAt: true, fecha_asignacion: true,
                     resueltoEn: true, fecha_cierre: true
                 }
@@ -56,8 +56,13 @@ async function renderDashboard(req, res) {
             loadOperatorsWithShift(ahora, personaWhere(req.user)),
             loadConfig(prisma)
         ]);
-        const panel = buildCoordinatorPanel({ tickets, operators: operadores, now: ahora, periodo: req.query.periodo, rules: config.reglas });
-        return res.render('dashboard', { titulo: 'Dashboard General', currentUser: req.user, panel, mapaViewBox: MAPA_VIEWBOX, mapaShapes: MAPA_SHAPES });
+        const opciones = { now: ahora, periodo: req.query.periodo, rules: config.reglas };
+        const completo = buildCoordinatorPanel({ tickets, operators: operadores, ...opciones });
+        // Filtro por área (?area=): solo áreas que la persona ve; el panel se recalcula con esa área
+        const areasFiltro = completo.areas.map(a => ({ codigo: a.codigo, nombre: a.nombre, porcentaje: a.porcentaje, abiertos: a.abiertos }));
+        const areaSel = areasFiltro.some(a => a.codigo === req.query.area) ? req.query.area : '';
+        const panel = areaSel ? buildCoordinatorPanel({ ...filtrarPorArea({ tickets, operators: operadores, area: areaSel }), ...opciones }) : completo;
+        return res.render('dashboard', { titulo: 'Dashboard General', currentUser: req.user, panel, areasFiltro, areaSel, mapaViewBox: MAPA_VIEWBOX, mapaShapes: MAPA_SHAPES });
     } catch (error) {
         console.error('Error al cargar dashboard:', error);
         return res.status(500).send('Error en el servidor');
