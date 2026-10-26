@@ -110,6 +110,15 @@ const { explicarError } = require('./graph-login');
         assert.strictEqual(t, 'token-delegado');
         assert.deepStrictEqual(llamadas.pop().silent, ['Mail.ReadWrite', 'Mail.Send', 'offline_access']);
     });
+    await prueba('Sesión sin los permisos pedidos: mensaje que dice cómo volver a iniciar sesión', async () => {
+        class PcaSinPermiso extends PcaSimulado {
+            async acquireTokenSilent() { throw Object.assign(new Error('invalid_grant: AADSTS70000: scopes unauthorized'), { errorCode: 'invalid_grant' }); }
+        }
+        await assert.rejects(() => graphAuth.tokenDelegado(new PcaSinPermiso({}), ['Mail.ReadWrite'], 'x@outlook.com'),
+            (e) => e.code === 'SIN_PERMISOS' && /--buzon=x@outlook\.com --salir/.test(e.message));
+        class PcaOtroError extends PcaSimulado { async acquireTokenSilent() { throw new Error('ECONNRESET'); } }
+        await assert.rejects(() => graphAuth.tokenDelegado(new PcaOtroError({})), /ECONNRESET/);
+    });
     await prueba('Sin tenant usa "common" (cuentas personales y de organización)', () => {
         const pca = graphAuth.crearClientePublico({ GRAPH_CLIENT_ID: 'abc' });
         assert.strictEqual(pca.config.auth.authority, 'https://login.microsoftonline.com/common');

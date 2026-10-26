@@ -38,5 +38,8 @@ portal-KIp/fotos-perfil/
 
 # Sesión de correo del modo de prueba de Graph (contiene el token de renovación)
 .graph-sesion.json
+# Una por buzón (Administración → Buzones)
+.graph-sesiones/
 # Hasta qué correo leyó el modo solo lectura de Graph
 .graph-estado.json
+.graph-estados/

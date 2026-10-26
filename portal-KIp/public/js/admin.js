@@ -557,6 +557,208 @@
 		setTimeout(() => box.querySelector('input').focus(), 30);
 	}
 
+	// ---------- Buzones de correo: cada uno (correo + carpeta) crea sus tickets en su área y subgrupo ----------
+	// Una cuenta puede tener varios buzones, uno por carpeta, con una sola sesión. Eliminar = papelera.
+	const haceCuanto = iso => {
+		const min = Math.round((Date.now() - Date.parse(iso)) / 60000);
+		return min < 1 ? 'hace un momento' : min < 60 ? 'hace ' + min + ' min' : min < 1440 ? 'hace ' + Math.round(min / 60) + ' h' : 'hace ' + Math.round(min / 1440) + ' d';
+	};
+	const fechaCorta = iso => new Date(iso).toLocaleDateString('es-VE', { day: 'numeric', month: 'short', year: 'numeric' });
+	const etiqueta = b => b.correo + (b.carpeta ? ' · ' + b.carpeta : '');
+	const destino = b => b.areaNombre + (b.subgrupoNombre ? ' · ' + b.subgrupoNombre : '');
+	const enLista = () => (D.buzones || []).filter(b => !b.eliminadoEn);
+	const buzonesFiltro = { papelera: false };
+	function estadoBuzon(b) {
+		if (!b.activo) return h('span', { class: 'tag gray', text: 'Desactivado' });
+		if (b.ultimoError) return h('span', { class: 'tag red', title: b.ultimoError, text: 'Error' });
+		if (b.sesion === false) return h('span', { class: 'tag red', title: 'npm run correo:login -- --buzon=' + b.correo, text: 'Falta iniciar sesión' });
+		if (b.ultimaRevision) return h('span', { class: 'tag green', text: 'Revisado ' + haceCuanto(b.ultimaRevision) });
+		return h('span', { class: 'tag gray', text: 'Sin revisar aún' });
+	}
+	function guardarBuzon(j) { D.buzones = (D.buzones || []).filter(x => x.id !== j.buzon.id).concat(j.buzon); renderBuzones(); }
+	function renderBuzones() {
+		const box = $('[data-panel="buzones"]');
+		if (!box) return;
+		const orden = (a, b) => a.correo.localeCompare(b.correo) || a.carpeta.localeCompare(b.carpeta);
+		const buzones = enLista().sort((a, b) => (b.activo - a.activo) || orden(a, b));
+		const papelera = (D.buzones || []).filter(b => b.eliminadoEn).sort(orden);
+		const delegado = D.correoModo === 'delegado';
+		box.replaceChildren(
+			h('div', { class: 'card-head', style: 'padding:18px 24px 14px;flex-wrap:wrap;gap:10px' },
+				h('div', { style: 'display:flex;flex-direction:column;flex:1;min-width:220px' }, h('h2', { text: 'Buzones de correo' }),
+					h('span', { class: 'hint', text: 'Los correos que llegan a cada buzón (o a su carpeta) crean tickets en su área y subgrupo. La respuesta desde el portal sale por la misma cuenta.' })),
+				h('button', { type: 'button', class: 'primary', style: 'height:30px;padding:0 14px;font-size:12px', text: '＋ Nuevo buzón', onclick: () => openBuzon(null) })),
+			delegado ? h('p', { class: 't2', style: 'padding:0 24px 12px;margin:0;font-size:12px' },
+				'Modo de prueba: cada cuenta inicia sesión una vez en el servidor con ', h('code', { text: 'npm run correo:login -- --buzon=<correo>' }), '; sirve para todas sus carpetas.') : null,
+			// Buzón del .env (o de graph-login.js sin --buzon): se lee solo mientras la lista está vacía
+			D.correoEnv && !buzones.length ? h('div', { class: 'warnbox', style: 'margin:0 24px 12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap' },
+				h('span', { style: 'flex:1;min-width:220px;font-size:13px' }, 'Ahora se lee ', h('b', { text: D.correoEnv }),
+					' (configurado en el .env): sus correos de la Bandeja de entrada entran a General. Agrégalo a la lista para elegir su área y sus carpetas; su sesión se reutiliza.'),
+				h('button', { type: 'button', class: 'primary', style: 'height:30px;padding:0 14px;font-size:12px', text: 'Agregar a la lista', onclick: () => openBuzon(null, { correo: D.correoEnv }) })) : null,
+			D.correoEnv && buzones.length && !buzones.some(b => b.correo === D.correoEnv)
+				? h('p', { class: 't3', style: 'padding:0 24px 12px;margin:0;font-size:12px', text: 'El buzón del .env (' + D.correoEnv + ') ya no se lee: con buzones en la lista solo se leen los de la lista.' }) : null,
+			!buzones.length
+				? h('p', { class: 'empty', style: 'padding:4px 24px 16px', text: D.correoEnv ? 'Aún no hay buzones en la lista.' : 'Aún no hay buzones. Mientras tanto se lee el buzón del .env (GRAPH_NOC_MAILBOX) y sus correos entran a General.' })
+				: h('div', { class: 'scroll-x' }, h('table', { class: 'rank-table' },
+					h('thead', {}, h('tr', {},
+						h('th', { style: 'padding-left:24px', text: 'Buzón' }),
+						h('th', { text: 'Sus tickets van a' }),
+						h('th', { style: 'width:170px', text: 'Estado' }),
+						h('th', { style: 'width:120px;padding-right:24px' }, h('span', { class: 'sr-only', text: 'Acciones' })))),
+					h('tbody', {}, buzones.map(b => h('tr', { class: 'row', style: b.activo ? null : 'opacity:.55' },
+						h('td', { style: 'padding:10px 8px 10px 24px' }, h('span', { style: 'display:flex;flex-direction:column' },
+							h('b', { style: 'font-size:13px' }, b.correo, b.soloLectura ? [' ', h('span', { class: 'tag purple', text: 'Solo lectura' })] : null),
+							h('span', { class: 't2', style: 'font-size:12px', text: 'Carpeta: ' + b.carpetaNombre }),
+							b.ultimoError && b.activo ? h('span', { class: 't2', style: 'font-size:12px', text: b.ultimoError }) : null)),
+						h('td', { class: 't2', text: destino(b) }),
+						h('td', {}, estadoBuzon(b)),
+						h('td', { style: 'padding-right:24px;text-align:right;white-space:nowrap' },
+							h('button', { type: 'button', class: 'ico', title: 'Otra carpeta de este correo', 'aria-label': 'Agregar otra carpeta de ' + b.correo, html: ICON.plus, onclick: () => openBuzon(null, { correo: b.correo }) }),
+							h('button', { type: 'button', class: 'ico', title: 'Editar', 'aria-label': 'Editar ' + etiqueta(b), html: ICON.edit, onclick: () => openBuzon(b.id) }),
+							h('button', { type: 'button', class: 'ico danger', title: 'Eliminar', 'aria-label': 'Eliminar ' + etiqueta(b), html: ICON.trash, onclick: () => openEliminarBuzon(b.id) }))))))),
+			papelera.length ? h('div', { style: 'padding:10px 24px 0' },
+				h('button', { type: 'button', class: 'pill pillbtn plain', style: 'height:30px;font-size:12px', 'aria-expanded': String(buzonesFiltro.papelera),
+					text: (buzonesFiltro.papelera ? 'Ocultar' : 'Ver') + ' papelera de buzones (' + papelera.length + ')',
+					onclick: () => { buzonesFiltro.papelera = !buzonesFiltro.papelera; renderBuzones(); } }),
+				buzonesFiltro.papelera ? h('div', { style: 'display:flex;flex-direction:column;margin-top:6px' }, papelera.map(b => h('div', { class: 'trashrow' },
+					h('span', { class: 'txt' }, h('b', { text: etiqueta(b) }), h('span', { text: 'Motivo: ' + (b.motivoEliminacion || '—') }),
+						h('small', { text: destino(b) + ' · eliminado ' + fechaCorta(b.eliminadoEn) })),
+					h('button', {
+						type: 'button', class: 'pill pillbtn accent', style: 'height:30px;padding:0 14px;font-size:12px', text: 'Restaurar',
+						onclick: async e => {
+							e.currentTarget.disabled = true;
+							try {
+								guardarBuzon(await send('POST', '/api/admin/buzones/' + encodeURIComponent(b.id) + '/restaurar', {}));
+								toast('Buzón restaurado', etiqueta(b) + ' vuelve a leerse', true);
+							} catch (err) { toast('No se pudo restaurar', err.message, false); renderBuzones(); }
+						}
+					})))) : null) : null,
+			h('span', { class: 't3', style: 'padding:12px 24px 16px;font-size:12px', text: 'Desactivado o en la papelera, un buzón deja de leerse; sus tickets conservan área y subgrupo. Si un correo llega a dos buzones (en copia) se crea un solo ticket. Con buzones en la lista ya no se lee el del .env.' }));
+		const sub = $('[data-sec-sub="buzones"]');
+		if (sub) sub.textContent = enLista().filter(b => b.activo).length + ' activos · área de cada buzón';
+	}
+
+	function openBuzon(id, { correo = '' } = {}) {
+		const b = id ? (D.buzones || []).find(x => x.id === id) : null;
+		const areas = D.areas.filter(a => a.activa || (b && a.codigo === b.area));
+		// Otra carpeta de un correo: parte del área del primer buzón de ese correo
+		const hermano = !b && correo ? enLista().find(x => x.correo === correo) : null;
+		const areaInicial = b ? b.area : hermano ? hermano.area : ((areas.find(a => a.codigo !== 'GENERAL') || areas[0] || {}).codigo || '');
+		const M = { correo, carpeta: b ? b.carpeta : '', area: areaInicial, subgrupo: b ? b.subgrupo : '', soloLectura: b ? b.soloLectura : false, activo: b ? b.activo : true };
+		const ov = h('div', { class: 'overlay', onclick: e => { if (e.target === ov) ov.remove(); } });
+		const box = h('div', { class: 'dialog', role: 'dialog', 'aria-modal': 'true', style: 'width:520px' });
+		ov.append(box);
+		const err = h('div', { class: 'warnbox', hidden: true });
+		const ok = h('button', { type: 'button', class: 'primary', text: b ? 'Guardar' : 'Crear buzón' });
+		const sgBox = h('label', { class: 'dsec' });
+		const paintSubgrupos = () => {
+			const info = D.areas.find(a => a.codigo === M.area) || { subgrupos: [] };
+			const subgrupos = (info.subgrupos || []).filter(g => g.activo || g.id === M.subgrupo);
+			if (!subgrupos.some(g => g.id === M.subgrupo)) M.subgrupo = '';
+			sgBox.hidden = !subgrupos.length;
+			sgBox.replaceChildren(h('b', { text: 'Subgrupo' }), h('select', { class: 'field', 'aria-label': 'Subgrupo', onchange: e => { M.subgrupo = e.target.value; } },
+				h('option', { value: '', selected: !M.subgrupo, text: 'Todo el área' }),
+				subgrupos.map(g => h('option', { value: g.id, selected: g.id === M.subgrupo, text: g.nombre + (g.activo ? '' : ' (desactivado)') }))),
+				h('span', { class: 't3', style: 'font-size:12px', text: 'Sus tickets aparecen en Entrantes de ese subgrupo.' }));
+		};
+		paintSubgrupos();
+		const areaSel = h('select', { class: 'field', 'aria-label': 'Área', onchange: e => { M.area = e.target.value; paintSubgrupos(); } },
+			areas.map(a => h('option', { value: a.codigo, selected: a.codigo === M.area, text: a.nombre + (a.activa ? '' : ' (desactivada)') })));
+		// Carpetas reales de la cuenta: se sugieren al escribir (con cuántos correos sin leer tienen)
+		const AYUDA_CARPETA = 'Como se llama en Outlook (una regla de Outlook la llena). Para una subcarpeta: FTTX/Soporte.';
+		const carpetasLista = h('datalist', { id: 'buzon-carpetas' });
+		const carpetasNota = h('span', { class: 't3', style: 'font-size:12px', text: AYUDA_CARPETA });
+		const cargarCarpetas = async () => {
+			const c = String(b ? b.correo : M.correo).trim();
+			if (!c.includes('@')) return;
+			carpetasNota.textContent = 'Buscando las carpetas de ' + c + '…';
+			try {
+				const res = await fetch('/api/admin/buzones/carpetas?correo=' + encodeURIComponent(c));
+				const j = await res.json().catch(() => ({}));
+				if (!res.ok || !j.success) throw new Error(j.error || 'Error ' + res.status);
+				carpetasLista.replaceChildren(...j.carpetas.map(f => h('option', { value: f.ruta, text: f.sinLeer + ' sin leer de ' + f.correos })));
+				carpetasNota.textContent = j.carpetas.length + ' carpetas en la cuenta: escribe o elige una. ' + AYUDA_CARPETA;
+			} catch (e) {
+				carpetasNota.textContent = 'No se pudieron ver las carpetas (' + e.message + '). ' + AYUDA_CARPETA;
+			}
+		};
+		const toggle = (key, titulo, detalle) => h('div', { class: 'rule-row', style: 'min-height:40px;border:0' },
+			h('span', { class: 'lbl', style: 'flex:1' }, h('b', { text: titulo }), h('span', { text: detalle })),
+			sw(M[key], e => { M[key] = !M[key]; e.currentTarget.setAttribute('aria-checked', String(M[key])); }, titulo));
+		box.append(
+			h('div', { class: 'dlg-head' }, h('h2', { text: b ? 'Editar buzón' : hermano ? 'Otra carpeta' : 'Nuevo buzón' }), b || correo ? h('span', { text: b ? b.correo : correo }) : null),
+			h('div', { class: 'dlg-body', style: 'gap:14px' },
+				b || correo ? null : h('label', { class: 'dsec' }, h('b', { text: 'Correo del buzón' }),
+					h('input', { class: 'field', type: 'email', maxlength: 180, placeholder: 'Ej. fttx@empresa.com', oninput: e => { M.correo = e.target.value; }, onchange: () => cargarCarpetas() }),
+					h('span', { class: 't3', style: 'font-size:12px', text: 'No se puede cambiar después: para otro correo, crea otro buzón.' })),
+				h('label', { class: 'dsec' }, h('b', { text: 'Carpeta (opcional)' }),
+					h('input', { class: 'field', maxlength: 120, value: M.carpeta, list: 'buzon-carpetas', autocomplete: 'off', placeholder: 'Vacía = Bandeja de entrada. Ej. FTTX/Soporte', oninput: e => { M.carpeta = e.target.value; } }),
+					carpetasLista, carpetasNota),
+				h('label', { class: 'dsec' }, h('b', { text: 'Área de sus tickets' }), areaSel),
+				sgBox,
+				toggle('soloLectura', 'Solo lectura', 'Solo lee: no marca los correos como leídos ni envía respuestas.'),
+				b ? toggle('activo', 'Buzón activo', 'Desactivado deja de leerse; sus tickets conservan el área.') : null,
+				err),
+			h('div', { class: 'dlg-foot' }, h('span', { class: 'note', text: 'El cambio queda en Auditoría' }), h('span', { class: 'grow' }),
+				h('button', { type: 'button', class: 'pill pillbtn plain', text: 'Cancelar', onclick: () => ov.remove() }), ok));
+		ok.addEventListener('click', async () => {
+			const body = { carpeta: M.carpeta, area: M.area, subgrupo: M.subgrupo || null, soloLectura: M.soloLectura };
+			if (b) body.activo = M.activo; else body.correo = M.correo;
+			ok.disabled = true;
+			try {
+				const j = await send(b ? 'PATCH' : 'POST', b ? '/api/admin/buzones/' + encodeURIComponent(b.id) : '/api/admin/buzones', body);
+				ov.remove();
+				guardarBuzon(j);
+				toast(b ? 'Buzón actualizado' : 'Buzón creado', etiqueta(j.buzon) + ' → ' + destino(j.buzon), true);
+			} catch (e) {
+				ok.disabled = false;
+				err.textContent = e.message;
+				err.hidden = false;
+			}
+		});
+		document.body.append(ov);
+		setTimeout(() => { const f = box.querySelector('input, select'); if (f) f.focus(); }, 30);
+		if (b || correo) cargarCarpetas();
+	}
+
+	function openEliminarBuzon(id) {
+		const b = (D.buzones || []).find(x => x.id === id);
+		if (!b) return;
+		const otras = enLista().filter(x => x.correo === b.correo && x.id !== b.id).length;
+		const ov = h('div', { class: 'overlay', onclick: e => { if (e.target === ov) ov.remove(); } });
+		const box = h('div', { class: 'dialog', role: 'dialog', 'aria-modal': 'true', style: 'width:520px' });
+		ov.append(box);
+		const err = h('div', { class: 'warnbox', hidden: true });
+		const ok = h('button', { type: 'button', class: 'dangerbtn', text: 'Eliminar', disabled: true });
+		const motivo = h('textarea', { class: 'field', rows: 3, maxlength: 300, placeholder: 'Por qué se elimina (mínimo 3 caracteres)', oninput: () => { ok.disabled = motivo.value.trim().length < 3; } });
+		box.append(
+			h('div', { class: 'dlg-head' }, h('h2', { text: 'Eliminar buzón' }), h('span', { text: etiqueta(b) + ' → ' + destino(b) })),
+			h('div', { class: 'dlg-body', style: 'gap:14px' },
+				h('p', { class: 't2', style: 'margin:0;font-size:13px', text: 'Pasa a la papelera de buzones y se puede restaurar: deja de leerse y de responder. Sus tickets conservan área y subgrupo; las respuestas salen por otro buzón de su área, si lo hay.' }),
+				h('p', { class: 't3', style: 'margin:0;font-size:12px', text: otras
+					? 'La sesión de ' + b.correo + ' se conserva: la usan sus otras ' + (otras === 1 ? 'carpeta' : otras + ' carpetas') + '.'
+					: 'La sesión de ' + b.correo + ' se conserva para poder restaurarlo.' }),
+				h('label', { class: 'dsec' }, h('b', { text: 'Motivo' }), motivo),
+				err),
+			h('div', { class: 'dlg-foot' }, h('span', { class: 'note', text: 'Queda en Auditoría' }), h('span', { class: 'grow' }),
+				h('button', { type: 'button', class: 'pill pillbtn plain', text: 'Cancelar', onclick: () => ov.remove() }), ok));
+		ok.addEventListener('click', async () => {
+			ok.disabled = true;
+			try {
+				const j = await send('DELETE', '/api/admin/buzones/' + encodeURIComponent(b.id), { motivo: motivo.value });
+				ov.remove();
+				guardarBuzon(j);
+				toast('Buzón en la papelera', etiqueta(b) + ' · se puede restaurar', true);
+			} catch (e) {
+				ok.disabled = false;
+				err.textContent = e.message;
+				err.hidden = false;
+			}
+		});
+		document.body.append(ov);
+		setTimeout(() => motivo.focus(), 30);
+	}
+
 	// ---------- Secciones ----------
 	function showSection(key) {
 		$$('[data-sec]').forEach(b => b.setAttribute('aria-current', b.dataset.sec === key ? 'page' : 'false'));
@@ -600,8 +802,9 @@
 		renderReglas();
 		renderAvisos();
 		renderTipos();
+		renderBuzones();
 		const hash = window.location.hash.slice(1);
-		if (['areas', 'tipos', 'plantillas', 'reglas', 'avisos'].includes(hash)) showSection(hash);
+		if (['areas', 'tipos', 'buzones', 'plantillas', 'reglas', 'avisos'].includes(hash)) showSection(hash);
 		paintDirty();
 		try {
 			const t = JSON.parse(sessionStorage.getItem('kip.toast') || 'null');

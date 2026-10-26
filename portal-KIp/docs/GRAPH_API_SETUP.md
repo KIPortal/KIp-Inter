@@ -2,7 +2,22 @@
 
 Esta guía detalla los pasos necesarios para conectar el **KPi-Portal** con Microsoft 365 para la lectura automatizada de correos y generación de tickets.
 
-⚠️ **Limitación Importante:** Microsoft Graph API **no permite** el uso de cuentas personales (ej. `@hotmail.com`, `@outlook.com`) para procesos automáticos de servidor en segundo plano. Se requiere obligatoriamente una **cuenta corporativa o educativa** con licencia activa de Exchange Online.
+⚠️ **Cuentas personales:** el Escenario 1 (secreto de la app, producción) necesita una cuenta corporativa con Exchange Online. El Escenario 2 (modo de prueba, delegado) **sí** funciona con cuentas personales (`@outlook.com`, `@hotmail.com`): sirve para probar sin TI.
+
+## 📬 Varios buzones (Administración → Buzones de correo)
+Cada buzón crea sus tickets en su área y, si se elige, su subgrupo (p. ej. `soporte@…` → FTTx · Soporte). La respuesta desde el portal sale por el buzón donde llegó el ticket. Un correo en copia a dos buzones crea un solo ticket.
+- Mientras la lista esté vacía se usa `GRAPH_NOC_MAILBOX` (o la sesión de `graph-login.js` sin `--buzon`) y todo entra a General. Con un buzón en la lista, el del `.env` deja de leerse.
+- **Escenario 1:** la misma app lee todos los buzones (`/users/<correo>`); pedir a TI que la restrinja a esos buzones.
+- **Escenario 2:** una sola app registrada; **cada buzón inicia sesión una vez**:
+  ```powershell
+  npm run correo:login -- --buzon=soporte-prueba@outlook.com
+  ```
+  La sesión queda en `portal-KIp/.graph-sesiones/<correo>.json` (no se sube a git). Si se entra con otra cuenta, el script no la guarda. Para borrarla: agrega `--salir`. Para un buzón en solo lectura: `--solo-lectura`.
+- En Administración se ve, por buzón, si falta iniciar sesión, la última revisión y el último error.
+- **Varias carpetas de una misma cuenta:** cada buzón es correo + carpeta. Ejemplo con reglas de Outlook que mueven los correos:
+  `fttx@…` Bandeja de entrada → FTTx · `fttx@…` carpeta `Soporte` → FTTx · Soporte · `fttx@…` carpeta `Cabecera` → FTTx · Cabecera.
+  La carpeta se busca por su nombre, primero dentro de la Bandeja de entrada y luego en el primer nivel; para una subcarpeta: `Soporte/Urgente`. Vacía (o `inbox`) = Bandeja de entrada. **Una sola sesión por cuenta** sirve para todas sus carpetas. En la lista, el botón ＋ de un buzón agrega otra carpeta de ese correo.
+- **Eliminar** un buzón lo manda a la papelera de buzones (con motivo, queda en Auditoría): deja de leerse y de responder; sus tickets conservan área y subgrupo y sus respuestas salen por otro buzón de su área. Se restaura desde la misma sección. La sesión de la cuenta se conserva.
 
 ---
 
