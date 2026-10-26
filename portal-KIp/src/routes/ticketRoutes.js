@@ -6,7 +6,7 @@ const { limitarAlArea } = require('../middlewares/areaScope');
 const conversationController = require('../controllers/conversationController');
 const upload = require('../middlewares/upload');
 
-// Adjuntos de la conversación: un error de subida responde en JSON, no en HTML
+// Adjuntos (conversación y nuevo ticket): un error de subida responde en JSON, no en HTML
 const subirAdjuntos = (req, res, next) => upload.any()(req, res, err => (
     err ? res.status(400).json({ success: false, error: 'No se pudieron subir los adjuntos (máximo 25 MB por archivo)' }) : next()
 ));
@@ -15,7 +15,8 @@ const router = express.Router();
 
 router.use(requireAuth);
 
-router.post('/', authorizeSupervisor, limitarAlArea, ticketController.createTicket);
+// Crear: el formulario puede traer adjuntos (multipart); se leen antes de revisar el área del cuerpo
+router.post('/', authorizeSupervisor, subirAdjuntos, limitarAlArea, ticketController.createTicket);
 router.post('/assign', authorizeSupervisor, limitarAlArea, ticketController.assignTicket);
 router.post('/unassign', authorizeSupervisor, limitarAlArea, ticketController.unassignTicket);
 router.post('/batch-assign', authorizeSupervisor, limitarAlArea, ticketController.batchAssignTickets);

@@ -22,6 +22,9 @@ const app = express();
 // Iniciar ingesta de correos vía Graph API
 emailIngestionService.iniciarIngesta();
 
+// Prioridad: sube un escalón si el ticket pasa su tiempo de antigüedad sin asignar (Reglas)
+require('./services/escaladoService').programarEscalado(require('./config/prisma'));
+
 // Registro de jornadas: cierre automático cada día a las 00:05 (Caracas)
 require('./services/jornadaRegistroService').programarCierre(require('./config/prisma'));
 

@@ -74,9 +74,9 @@ t('normalizeOperator: desde el operador del controlador', () => {
 });
 
 t('Reglas: valores por defecto y combinación con datos inválidos', () => {
-    assert.deepStrictEqual(DEFAULT_RULES.antiguedad, { activa: true, P1: 60, P2: 120, P3: 240, SP: 30 });
+    assert.deepStrictEqual(DEFAULT_RULES.antiguedad, { activa: true, subirPrioridad: true, P1: 60, P2: 120, P3: 240, SP: 30 });
     const r = mergeRules({ antiguedad: { P1: 45, P2: -3, SP: 'x' }, sobrecarga: { multiplicador: 2 } });
-    assert.deepStrictEqual(r.antiguedad, { activa: true, P1: 45, P2: 120, P3: 240, SP: 30 });
+    assert.deepStrictEqual(r.antiguedad, { activa: true, subirPrioridad: true, P1: 45, P2: 120, P3: 240, SP: 30 });
     assert.deepStrictEqual(r.sobrecarga, { activa: true, multiplicador: 2, minimo: 3 });
     assert.strictEqual(mergeRules({ sobrecarga: { multiplicador: 9 } }).sobrecarga.multiplicador, 3, 'tope del paso');
     assert.strictEqual(ageLimitFor('P1'), 60);

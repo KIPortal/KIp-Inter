@@ -19,6 +19,8 @@ const NIVELES = Object.freeze([1, 2, 3, 4]);
 const NIVEL_PUNTOS = Object.freeze({ 1: 2, 2: 4, 3: 8, 4: 10 });
 const NIVEL_NOMBRE = Object.freeze({ 1: 'Sencillo', 2: 'Moderado', 3: 'Complejo', 4: 'Muy complejo' });
 const FRECUENCIAS = Object.freeze(['ALTA', 'MEDIA', 'BAJA']);
+// Prioridad (urgencia) que toma el ticket al clasificarse con este tipo, si aún no tiene
+const PRIORIDADES_TIPO = Object.freeze(['P1', 'P2', 'P3']);
 const FRECUENCIA_NOMBRE = Object.freeze({ ALTA: 'Alta', MEDIA: 'Media', BAJA: 'Baja' });
 const LIMITES = Object.freeze({ nombre: [3, 120], minutos: [1, 7 * 24 * 60], dependencias: 200 });
 
@@ -78,6 +80,11 @@ function validarTipoCaso(body, { parcial = false } = {}) {
         if (d.length > LIMITES.dependencias) return { error: `Las dependencias no pueden superar ${LIMITES.dependencias} caracteres` };
         data.dependencias = d || null;
     }
+    if (has('prioridad') || !parcial) {
+        const p = texto(b.prioridad).toUpperCase() || null;
+        if (p && !PRIORIDADES_TIPO.includes(p)) return { error: 'La prioridad debe ser P1, P2 o P3' };
+        data.prioridad = p;
+    }
     if (has('activo')) {
         if (typeof b.activo !== 'boolean') return { error: 'Valor de activo no válido' };
         data.activo = b.activo;
@@ -100,6 +107,7 @@ function tipoCasoVista(t) {
         minutos: t.minutos_estimados ?? null,
         frecuencia: t.frecuencia || '',
         dependencias: t.dependencias || '',
+        prioridad: t.prioridad || '',
         activo: t.activo !== false
     };
 }
@@ -119,18 +127,19 @@ function tipoCasoDeTicket(t) {
  * Clasificación que llega al tomar o editar un ticket: { tipoCasoId } de un tipo
  * del catálogo, o { nivel } para "Otro" (caso que no está en el catálogo).
  * `tipo` es la fila de TipoCaso ya cargada (o null). Devuelve los campos del
- * ticket en { data: { tipo_caso_id, nivel, puntos_complejidad }, nombre } o { error }.
+ * ticket en { data: { tipo_caso_id, nivel, puntos_complejidad }, nombre, prioridad } o { error };
+ * La prioridad es la del tipo (P1/P2/P3 o null) para el ticket que aún no tiene.
  */
 function clasificar({ tipoCasoId, nivel, tipo, area }) {
     if (tipoCasoId) {
         if (!tipo || tipo.id !== tipoCasoId) return { error: 'Tipo de caso no encontrado' };
         if (tipo.activo === false) return { error: 'Ese tipo de caso está desactivado' };
         if (area && tipo.area_codigo !== area) return { error: 'Ese tipo de caso es de otra área' };
-        return { data: { tipo_caso_id: tipo.id, nivel: tipo.nivel, puntos_complejidad: puntosDeNivel(tipo.nivel) }, nombre: tipo.nombre };
+        return { data: { tipo_caso_id: tipo.id, nivel: tipo.nivel, puntos_complejidad: puntosDeNivel(tipo.nivel) }, nombre: tipo.nombre, prioridad: PRIORIDADES_TIPO.includes(tipo.prioridad) ? tipo.prioridad : null };
     }
     const n = Number(nivel);
     if (!esNivel(n)) return { error: 'Elige el tipo de caso, o "Otro" con su nivel (1 a 4)' };
-    return { data: { tipo_caso_id: null, nivel: n, puntos_complejidad: puntosDeNivel(n) }, nombre: 'Otro' };
+    return { data: { tipo_caso_id: null, nivel: n, puntos_complejidad: puntosDeNivel(n) }, nombre: 'Otro', prioridad: null };
 }
 
 const inRange = (value, range) => {

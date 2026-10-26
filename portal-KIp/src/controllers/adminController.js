@@ -377,6 +377,7 @@ const describirTipo = d => [
     d.nivel !== undefined ? `nivel ${d.nivel} (${NIVEL_PUNTOS[d.nivel]} pts)` : '',
     d.minutos_estimados !== undefined ? `estimado: ${d.minutos_estimados ?? '-'} min` : '',
     d.frecuencia !== undefined ? `frecuencia: ${d.frecuencia || '-'}` : '',
+    d.prioridad !== undefined ? `prioridad: ${d.prioridad || 'la elige quien lo toma'}` : '',
     d.dependencias !== undefined ? `dependencias: ${d.dependencias || '-'}` : '',
     d.subgrupo_id !== undefined ? `subgrupo: ${subgrupoName(d.subgrupo_id) || '-'}` : '',
     d.activo !== undefined ? (d.activo ? 'reactivado' : 'desactivado') : ''

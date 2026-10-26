@@ -17,18 +17,21 @@
 		guardias,
 		enPapelera,
 		siguienteCodigo,
-		usuario: { id: currentUser.id, nombre: currentUser.nombre || 'Coordinador', atiende: currentUser.atiende_tickets === true },
+		usuario: { id: currentUser.id, nombre: currentUser.nombre || 'Coordinador', atiende: currentUser.atiende_tickets === true, rol: currentUser.rol },
 		plantillas: typeof plantillas !== 'undefined' && plantillas ? plantillas : null,
 		tiposCaso: locals.tiposCaso || [],
 		niveles: locals.niveles || null
 	};
-	const tarjetas = [
-		['Activos', r.activos, ''],
-		['Sin asignar', r.sinAsignar, 't-orange'],
-		['Críticos sin asignar', r.criticosSinAsignar, 't-red'],
-		['En pausa o espera', r.pausaEspera, ''],
-		['Resueltos sin cerrar', r.resueltosSinCerrar, ''],
-		['Creados hoy', r.creadosHoy, '']
+	// [clave del filtro, etiqueta, valor, ayuda, tono]; tocar una cifra filtra la tabla (public/js/tickets.js)
+	const porAtender = [
+		['crit', 'Críticos sin asignar', r.criticosSinAsignar, 'P1 y P2 sin dueño', 'crit'],
+		['sin', 'Sin asignar', r.sinAsignar, 'Nadie los ha tomado', 'warn'],
+		['res', 'Resueltos sin cerrar', r.resueltosSinCerrar, 'Esperan cierre', 'ok']
+	];
+	const panorama = [
+		['act', 'Activos', r.activos, 'Toda la cola', ''],
+		['pau', 'En pausa o espera', r.pausaEspera, 'Pausa o terceros', ''],
+		['hoy', 'Creados hoy', r.creadosHoy, 'Llegaron hoy', '']
 	];
 %>
 <!DOCTYPE html>
@@ -70,9 +73,20 @@
 		</header>
 
 		<!-- Tarjetas fijas: total de la operación, no cambian con los filtros -->
-		<section class="glass summary" aria-label="Total de la operación">
-			<% tarjetas.forEach(([etiqueta, valor, clase]) => { %>
-				<div class="stat"><span><%= etiqueta %></span><span class="kv <%= clase %>"><%= valor %></span></div>
+		<section class="glass kpis" aria-label="Total de la operación">
+			<% [['Por atender', porAtender, 'act'], ['Panorama', panorama, 'pano']].forEach(([titulo, lista, cls]) => { %>
+				<div class="kpi-col <%= cls %>">
+					<h3><%= titulo %></h3>
+					<div class="kpi-row">
+						<% lista.forEach(([clave, etiqueta, valor, ayuda, tono]) => { const cero = cls === 'act' && !valor; %>
+							<button type="button" class="kpi <%= cero ? 'zero' : tono %>" data-kpi="<%= clave %>" aria-pressed="false" title="Ver en la tabla">
+								<span class="n"><%= valor %></span>
+								<b><%= etiqueta %></b>
+								<small><%= cero ? 'Todo en orden' : ayuda %></small>
+							</button>
+						<% }) %>
+					</div>
+				</div>
 			<% }) %>
 		</section>
 

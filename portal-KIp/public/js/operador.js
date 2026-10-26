@@ -414,9 +414,15 @@
 				delArea.map(x => h('option', { value: 'id:' + x.id, text: x.nombre + ' · N' + x.nivel + ' (' + x.puntos + ' pts)' }))) : null,
 			h('optgroup', { label: 'Otro (no está en la lista)' },
 				[1, 2, 3, 4].map(n => h('option', { value: 'n:' + n, text: 'Otro · ' + nivelTexto(n) })))) : null;
+		// El tipo de caso puede traer su prioridad (Administración → Tipos de caso): al elegirlo, la propone
+		const segBox = h('div', {});
+		const paintSeg = () => segBox.replaceChildren(seg([['P1', 'P1 Crítica'], ['P2', 'P2 Media'], ['P3', 'P3 Baja']], elegida, k => { elegida = k; }));
+		if (pideP) paintSeg();
+		const prioDeTipo = v => (v.slice(0, 3) === 'id:' ? ((TIPOS.find(x => 'id:' + x.id === v) || {}).prioridad || '') : '');
+		if (tipoSel && pideP) tipoSel.addEventListener('change', () => { const p = prioDeTipo(tipoSel.value); if (p) { elegida = p; paintSeg(); } });
 		const body = [
 			pideP ? h('span', { class: 'flabel', text: t.sugerida ? 'Prioridad sugerida por palabras clave: ' + t.sugerida + '. Confírmala o cámbiala' : 'Elige la prioridad según la urgencia del caso' }) : null,
-			pideP ? seg([['P1', 'P1 Crítica'], ['P2', 'P2 Media'], ['P3', 'P3 Baja']], elegida, k => { elegida = k; }) : null,
+			pideP ? segBox : null,
 			pideTipo ? h('span', { class: 'flabel', text: 'Tipo de caso' }) : null,
 			tipoSel,
 			h('span', { class: 't2', style: 'font-size:12px', text: pideTipo ? 'El nivel de dificultad da los puntos que suma a tu carga al resolverlo (' + [1, 2, 3, 4].map(n => 'N' + n + ' = ' + NV.puntos[n]).join(', ') + '). El coordinador puede corregirlo.' : 'El coordinador puede corregirla.' })

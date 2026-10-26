@@ -9,8 +9,9 @@
 const DEFAULT_RULES = Object.freeze({
     // Sobrecarga: activos > multiplicador × promedio del área, con un mínimo de activos
     sobrecarga: Object.freeze({ activa: true, multiplicador: 1.5, minimo: 3 }),
-    // Antigüedad máxima (minutos) sin asignar o sin movimiento, por prioridad
-    antiguedad: Object.freeze({ activa: true, P1: 60, P2: 120, P3: 240, SP: 30 }),
+    // Antigüedad máxima (minutos) sin asignar o sin movimiento, por prioridad.
+    // subirPrioridad: el ticket sin asignar que pasa su tiempo sube un escalón (escaladoService)
+    antiguedad: Object.freeze({ activa: true, subirPrioridad: true, P1: 60, P2: 120, P3: 240, SP: 30 }),
     // Asignación sugerida
     sugerencia: Object.freeze({
         incluirGuardia: true,    // incluir a quien está por entrar de guardia…
@@ -88,6 +89,7 @@ function mergeRules(saved) {
         },
         antiguedad: {
             activa: bool(an.activa, d.antiguedad.activa),
+            subirPrioridad: bool(an.subirPrioridad, d.antiguedad.subirPrioridad),
             P1: num(an.P1, d.antiguedad.P1, LIMITS.antiguedad),
             P2: num(an.P2, d.antiguedad.P2, LIMITS.antiguedad),
             P3: num(an.P3, d.antiguedad.P3, LIMITS.antiguedad),

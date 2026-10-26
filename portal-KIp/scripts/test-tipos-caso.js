@@ -40,7 +40,7 @@ const TIPO_WAN = { id: 'tp-wan', nombre: 'Movimiento de bloques', area_codigo: '
 
     await t('Validar tipo: crear exige nombre, área activa y nivel 1-4; editar acepta parciales', () => {
         const ok = tc.validarTipoCaso({ nombre: '  MAC   en Rojo ', area: 'REDES_FTTH', nivel: '1', minutos: 15, frecuencia: 'alta', dependencias: ' HE ' });
-        assert.deepStrictEqual(ok.data, { nombre: 'MAC en Rojo', area_codigo: 'REDES_FTTH', subgrupo_id: null, nivel: 1, minutos_estimados: 15, frecuencia: 'ALTA', dependencias: 'HE' });
+        assert.deepStrictEqual(ok.data, { nombre: 'MAC en Rojo', area_codigo: 'REDES_FTTH', subgrupo_id: null, nivel: 1, minutos_estimados: 15, frecuencia: 'ALTA', dependencias: 'HE', prioridad: null });
         assert.ok(tc.validarTipoCaso({ nombre: 'ab', area: 'WAN', nivel: 1 }).error, 'nombre corto');
         assert.ok(tc.validarTipoCaso({ nombre: 'Caso', area: 'NO_EXISTE', nivel: 1 }).error, 'área');
         assert.ok(tc.validarTipoCaso({ nombre: 'Caso', area: 'WAN', nivel: 5 }).error, 'nivel');
@@ -52,7 +52,7 @@ const TIPO_WAN = { id: 'tp-wan', nombre: 'Movimiento de bloques', area_codigo: '
     });
 
     await t('Clasificar: el tipo da nivel y puntos; "Otro" con su nivel; tipo de otra área o desactivado no', () => {
-        assert.deepStrictEqual(tc.clasificar({ tipoCasoId: 'tp-olt', tipo: TIPO_OLT, area: 'REDES_FTTH' }), { data: { tipo_caso_id: 'tp-olt', nivel: 4, puntos_complejidad: 10 }, nombre: 'Configuración de OLT' });
+        assert.deepStrictEqual(tc.clasificar({ tipoCasoId: 'tp-olt', tipo: TIPO_OLT, area: 'REDES_FTTH' }), { data: { tipo_caso_id: 'tp-olt', nivel: 4, puntos_complejidad: 10 }, nombre: 'Configuración de OLT', prioridad: null });
         assert.deepStrictEqual(tc.clasificar({ nivel: '2' }).data, { tipo_caso_id: null, nivel: 2, puntos_complejidad: 4 });
         assert.ok(tc.clasificar({ tipoCasoId: 'tp-olt', tipo: TIPO_OLT, area: 'WAN' }).error, 'otra área');
         assert.ok(tc.clasificar({ tipoCasoId: 'tp-olt', tipo: { ...TIPO_OLT, activo: false } }).error, 'desactivado');

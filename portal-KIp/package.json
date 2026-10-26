@@ -34,6 +34,7 @@
     "test:perfil": "node scripts/test-perfil.js",
     "test:graph": "node scripts/test-graph.js",
     "test:tipos": "node scripts/test-tipos-caso.js",
+    "test:escalado": "node scripts/test-escalado.js",
     "test:buzones": "node scripts/test-buzones.js",
     "correo:login": "node scripts/graph-login.js"
   },

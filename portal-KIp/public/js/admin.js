@@ -187,6 +187,10 @@
 					stepper(fmtMin(ag[k]), 'Límite ' + label,
 						() => changeRules(x => { x.antiguedad[k] = stepList(AGE_STEPS, x.antiguedad[k], -1); }),
 						() => changeRules(x => { x.antiguedad[k] = stepList(AGE_STEPS, x.antiguedad[k], 1); }))))),
+				h('div', { class: 'rule-row' + (ag.activa ? '' : ' off'), style: 'min-height:44px' },
+					h('span', { class: 'lbl', style: 'flex:1' }, h('b', { text: 'Subir prioridad si sigue sin asignar' }),
+						h('span', { text: 'Al pasar su tiempo sube un escalón: sin prioridad → P3 (o la sugerida), P3 → P2, P2 → P1. Queda en Auditoría.' })),
+					sw(ag.subirPrioridad, () => changeRules(x => { x.antiguedad.subirPrioridad = !x.antiguedad.subirPrioridad; }), 'Subir prioridad por tiempo sin asignar')),
 				h('div', { class: 'preview' },
 					h('b', { text: !ag.activa ? 'Alerta apagada' : hitsAg.length ? 'Con estos valores, hoy ' + (hitsAg.length === 1 ? 'aparece 1 ticket' : 'aparecen ' + hitsAg.length + ' tickets') : 'Con estos valores, hoy ningún ticket supera el límite' }),
 					hitsAg.slice(0, 8).map(t => h('span', {}, h('strong', { class: 'mono t-accent', text: t.codigo }), h('strong', { class: t.prioridad === 'P1' ? 't-red' : 't-orange', text: t.prioridad }), h('span', { class: 't2', text: t.detalle }))))),
@@ -477,6 +481,7 @@
 						h('th', { style: 'width:120px', text: 'Nivel' }),
 						h('th', { class: 'r', style: 'width:90px', text: 'Estimado' }),
 						h('th', { style: 'width:90px', text: 'Frecuencia' }),
+						h('th', { style: 'width:110px', text: 'Prioridad' }),
 						h('th', { style: 'width:56px;padding-right:24px' }, h('span', { class: 'sr-only', text: 'Acciones' })))),
 					h('tbody', {}, lista.map(t => h('tr', { class: 'row', style: t.activo ? null : 'opacity:.55' },
 						h('td', { style: 'padding:10px 8px 10px 24px' }, h('span', { style: 'display:flex;flex-direction:column' },
@@ -485,19 +490,22 @@
 						h('td', {}, nivelTag(t.nivel)),
 						h('td', { class: 'r', style: 'font-variant-numeric:tabular-nums', text: t.minutos ? fmtMin(t.minutos) : '—' }),
 						h('td', { class: 't2', text: FREC[t.frecuencia] || '—' }),
+						h('td', {}, t.prioridad ? h('span', { class: 'tag ' + PRIO_TAG[t.prioridad], text: PRIO_TXT[t.prioridad] }) : h('span', { class: 't3', text: 'La elige quien lo toma' })),
 						h('td', { style: 'padding-right:24px;text-align:right' }, h('button', { type: 'button', class: 'ico', title: 'Editar', 'aria-label': 'Editar ' + t.nombre, html: ICON.edit, onclick: () => openTipo(t.id) }))))))),
 			h('span', { class: 't3', style: 'padding:12px 24px 16px;font-size:12px', text: 'Un tipo desactivado ya no se puede elegir; los tickets que lo tienen lo conservan. El tiempo estimado se compara en Reportes con el promedio real (desde la llegada del ticket).' }));
 		const sub = $('[data-sec-sub="tipos"]');
 		if (sub) sub.textContent = tipos.filter(t => t.activo).length + ' casos comunes';
 	}
 
+	const PRIO_TXT = { P1: 'P1 Crítica', P2: 'P2 Media', P3: 'P3 Baja' };
+	const PRIO_TAG = { P1: 'red', P2: 'orange', P3: 'gray' };
 	function openTipo(id) {
 		const t = id ? (D.tiposCaso || []).find(x => x.id === id) : null;
 		const area = t ? t.area : tiposFiltro.area;
 		const areaInfo = D.areas.find(a => a.codigo === area) || { nombre: area, subgrupos: [] };
 		const M = {
 			nombre: t ? t.nombre : '', nivel: t ? t.nivel : 2, minutos: t && t.minutos ? String(t.minutos) : '',
-			frecuencia: t ? t.frecuencia : 'MEDIA', dependencias: t ? t.dependencias : '', subgrupo: t ? t.subgrupo : '', activo: t ? t.activo : true
+			frecuencia: t ? t.frecuencia : 'MEDIA', prioridad: t ? t.prioridad : '', dependencias: t ? t.dependencias : '', subgrupo: t ? t.subgrupo : '', activo: t ? t.activo : true
 		};
 		const ov = h('div', { class: 'overlay', onclick: e => { if (e.target === ov) ov.remove(); } });
 		const box = h('div', { class: 'dialog', role: 'dialog', 'aria-modal': 'true', style: 'width:520px' });
@@ -513,6 +521,9 @@
 		const frecSel = h('select', { class: 'field', 'aria-label': 'Frecuencia', onchange: e => { M.frecuencia = e.target.value; } },
 			h('option', { value: '', selected: !M.frecuencia, text: 'Sin indicar' }),
 			NV.frecuencias.map(f => h('option', { value: f, selected: M.frecuencia === f, text: FREC[f] })));
+		const prioSel = h('select', { class: 'field', 'aria-label': 'Prioridad', onchange: e => { M.prioridad = e.target.value; } },
+			h('option', { value: '', selected: !M.prioridad, text: 'La elige quien lo toma' }),
+			['P1', 'P2', 'P3'].map(p => h('option', { value: p, selected: M.prioridad === p, text: PRIO_TXT[p] })));
 		const subgrupos = (areaInfo.subgrupos || []).filter(g => g.activo || g.id === M.subgrupo);
 		const sgSel = subgrupos.length ? h('select', { class: 'field', 'aria-label': 'Subgrupo', onchange: e => { M.subgrupo = e.target.value; } },
 			h('option', { value: '', selected: !M.subgrupo, text: 'Todo el área' }),
@@ -526,6 +537,8 @@
 				h('div', { style: 'display:grid;grid-template-columns:1fr 1fr;gap:12px' },
 					h('label', { class: 'dsec' }, h('b', { text: 'Tiempo estimado (min)' }), input('minutos', { type: 'number', min: 1, max: 10080, step: 1, inputmode: 'numeric', placeholder: 'Ej. 30' })),
 					h('label', { class: 'dsec' }, h('b', { text: 'Frecuencia' }), frecSel)),
+				h('label', { class: 'dsec' }, h('b', { text: 'Prioridad' }), prioSel,
+					h('span', { class: 't3', style: 'font-size:12px', text: 'El ticket la toma al clasificarse con este tipo, si aún no tiene. Sin asignar, sube sola con el tiempo (Reglas → Antigüedad).' })),
 				h('label', { class: 'dsec' }, h('b', { text: 'Depende de (opcional)' }), input('dependencias', { maxlength: 200, placeholder: 'Otras áreas o proveedores, ej. HE, Sistemas Nacionales' })),
 				sgSel ? h('label', { class: 'dsec' }, h('b', { text: 'Subgrupo' }), sgSel) : null,
 				t ? h('div', { class: 'rule-row', style: 'min-height:40px;border:0' },
@@ -537,7 +550,7 @@
 		ok.addEventListener('click', async () => {
 			const body = {
 				nombre: M.nombre, nivel: M.nivel, minutos: M.minutos.trim() ? Number(M.minutos) : null,
-				frecuencia: M.frecuencia || null, dependencias: M.dependencias, subgrupo: M.subgrupo || null
+				frecuencia: M.frecuencia || null, prioridad: M.prioridad || null, dependencias: M.dependencias, subgrupo: M.subgrupo || null
 			};
 			if (t) body.activo = M.activo; else body.area = area;
 			ok.disabled = true;

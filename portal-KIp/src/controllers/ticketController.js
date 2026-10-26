@@ -14,6 +14,7 @@ const { parseEstadoVe } = require('../services/estadosVeService');
 const VALID_AREAS = { has: isActiveArea };
 const VALID_ORIGINS = new Set(['CORREO', 'LLAMADA', 'JEFATURA', 'COORDINADOR']);
 const VALID_PRIORITIES = new Set(['NONE', 'P1', 'P2', 'P3']);
+const MAX_ADJUNTOS_TICKET = 5;
 
 function assignmentValidationError({ operatorId, areaDesignada, prioridad }) {
     if (typeof operatorId !== 'string' || !operatorId.trim()) return 'Falta seleccionar un operador';
@@ -90,7 +91,8 @@ async function createTicket(req, res) {
         descripcion: descripcion || null,
         remitente: origenIngesta === 'CORREO' ? remitente : null,
         estado_actual: 'NUEVO',
-        prioridad: PRIORIDADES.has(prioridad) ? prioridad : null,
+        // Prioridad: la elegida al crearlo; si no, la de su tipo de caso; si no, la elige quien lo toma
+        prioridad: PRIORIDADES.has(prioridad) ? prioridad : (clasif?.prioridad || null),
         puntos_complejidad: 0,
         ...(clasif ? clasif.data : {}),
         area_designada: areaDesignada,
@@ -99,6 +101,20 @@ async function createTicket(req, res) {
         origen_ingesta: origenIngesta,
         ...(req.user?.id && !req.user.id.startsWith('temporary:') ? { creado_por_id: req.user.id } : {})
     };
+    // Adjuntos del formulario (multipart): quedan como adjuntos del ticket, sin mensaje
+    const files = Array.isArray(req.files) ? req.files : [];
+    if (files.length > MAX_ADJUNTOS_TICKET) return res.status(400).json({ success: false, error: `Máximo ${MAX_ADJUNTOS_TICKET} adjuntos por ticket` });
+    if (files.length) {
+        data.adjuntos = {
+            create: files.map(f => ({
+                nombre_original: String(f.originalname || 'archivo').slice(0, 255),
+                nombre_archivo: f.filename,
+                ruta: '/uploads/' + f.filename,
+                mimetype: f.mimetype || null,
+                peso: f.size || null
+            }))
+        };
+    }
     try {
         for (let intento = 1; ; intento++) {
             try {
@@ -317,13 +333,17 @@ async function claimTicket(req, res) {
         const sinPrioridad = !PRIORIDADES.has(ticket.prioridad);
         const sinTipo = !ticket.nivel;
         const elegida = typeof req.body?.prioridad === 'string' ? req.body.prioridad.trim().toUpperCase() : '';
-        const falta = { prioridad: sinPrioridad && !PRIORIDADES.has(elegida), tipo: false };
         let clasif = null;
+        let tipoFalta = false;
         if (sinTipo) {
             clasif = await clasificacionPedida(req.body, ticket.area_designada);
             if (clasif?.error && (req.body?.tipoCasoId || req.body?.nivel)) return res.status(400).json({ success: false, error: clasif.error });
-            falta.tipo = !clasif || Boolean(clasif.error);
+            tipoFalta = !clasif || Boolean(clasif.error);
         }
+        // Sin prioridad elegida: la del tipo de caso (Administración → Tipos de caso), si la tiene
+        const deTipo = sinPrioridad && !PRIORIDADES.has(elegida) && !tipoFalta && clasif?.prioridad ? clasif.prioridad : '';
+        const prioridadFinal = PRIORIDADES.has(elegida) ? elegida : deTipo;
+        const falta = { prioridad: sinPrioridad && !prioridadFinal, tipo: tipoFalta };
         if (falta.prioridad || falta.tipo) {
             const que = [falta.prioridad ? 'la prioridad (P1, P2 o P3)' : '', falta.tipo ? 'el tipo de caso' : ''].filter(Boolean).join(' y ');
             return res.status(422).json({
@@ -346,7 +366,7 @@ async function claimTicket(req, res) {
                 estado_actual: 'EN_PROGRESO',
                 asignado_a_id: req.user.id,
                 fecha_asignacion: new Date(),
-                ...(sinPrioridad ? { prioridad: elegida } : {}),
+                ...(sinPrioridad ? { prioridad: prioridadFinal } : {}),
                 ...(clasif ? clasif.data : {})
             }
         });
@@ -354,6 +374,7 @@ async function claimTicket(req, res) {
             return res.status(409).json({ success: false, error: 'El ticket ya no está disponible para reclamar' });
         }
         const conPrioridad = !sinPrioridad ? ''
+            : deTipo ? ` con prioridad ${deTipo} (la de su tipo de caso)`
             : ` con prioridad ${elegida}${ticket.prioridad_sugerida ? (ticket.prioridad_sugerida === elegida ? ' (la sugerida)' : ` (sugerida ${ticket.prioridad_sugerida})`) : ''}`;
         const conTipo = clasif ? `${conPrioridad ? ',' : ' con'} ${describirClasificacion(clasif.data, clasif.nombre)}` : '';
         await logAudit(req, 'TICKET_TOMADO', ticket.id, `El operador lo tomó y quedó en progreso${conPrioridad}${conTipo}`);
@@ -562,6 +583,7 @@ async function editTicket(req, res) {
             if (clasif?.error) return res.status(400).json({ success: false, error: clasif.error });
             Object.assign(data, clasif.data);
             nombreTipo = clasif.nombre || null;
+            if (clasif.prioridad && data.prioridad === undefined && !PRIORIDADES.has(ticket.prioridad)) data.prioridad = clasif.prioridad;
         }
         ['tipo_caso_id', 'nivel', 'puntos_complejidad'].forEach(k => { if (data[k] !== undefined && data[k] === (ticket[k] ?? null)) delete data[k]; });
 

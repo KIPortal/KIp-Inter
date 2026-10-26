@@ -103,6 +103,7 @@ model Ticket {
   area_designada     String        @default("GENERAL") @db.VarChar(40)
   estado_ve          String?       @db.VarChar(3) // Estado de Venezuela (VEA, VEV...); ver estadosVeService
   prioridad_sugerida String?       @db.VarChar(2) // P1/P2/P3 sugerida por palabras clave al llegar el correo
+  prioridad_subida_en DateTime?  // Última subida automática de prioridad por estar sin asignar (Reglas → Antigüedad)
   area               Area          @relation(fields: [area_designada], references: [codigo])
   subgrupo_id        String?
   subgrupo           Subgrupo?     @relation(fields: [subgrupo_id], references: [id], onDelete: SetNull)
@@ -313,6 +314,7 @@ model TipoCaso {
   minutos_estimados Int?      // tiempo de resolución estimado
   frecuencia        String?   @db.VarChar(5) // ALTA | MEDIA | BAJA (declarada por el área)
   dependencias      String?   @db.VarChar(200) // de quién depende (otras áreas, proveedores)
+  prioridad         String?   @db.VarChar(2) // P1/P2/P3 que toma el ticket al clasificarlo (si no tiene)
   activo            Boolean   @default(true)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt

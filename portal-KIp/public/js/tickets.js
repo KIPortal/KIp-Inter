@@ -47,6 +47,7 @@
 	const tipoTexto = t => (t.nivel ? (t.tipoCaso || 'Otro') + ' · N' + t.nivel + ' · ' + NV.puntos[t.nivel] + ' pts' : 'Sin tipo de caso');
 	// Valor del selector: 'id:<tipo>' (del catálogo) o 'n:<nivel>' (Otro); '' sin elegir
 	const tipoValor = t => (t.tipoCasoId ? 'id:' + t.tipoCasoId : t.nivel ? 'n:' + t.nivel : '');
+	const prioDeTipo = v => (v && v.slice(0, 3) === 'id:' ? ((TIPOS.find(x => 'id:' + x.id === v) || {}).prioridad || '') : '');
 	const tipoBody = v => (v.slice(0, 3) === 'id:' ? { tipoCasoId: v.slice(3) } : v.slice(0, 2) === 'n:' ? { nivel: Number(v.slice(2)) } : { tipoCasoId: null, nivel: null });
 	function tipoSelect(area, cur, extra, cls) {
 		const delArea = TIPOS.filter(x => x.area === area);
@@ -115,8 +116,9 @@
 	async function api(method, url, body) {
 		const res = await fetch(url, {
 			method,
-			headers: { 'Content-Type': 'application/json' },
-			body: body ? JSON.stringify(body) : undefined
+			// FormData (adjuntos): el navegador pone el tipo multipart
+			headers: body instanceof FormData ? undefined : { 'Content-Type': 'application/json' },
+			body: body instanceof FormData ? body : body ? JSON.stringify(body) : undefined
 		});
 		let json = {};
 		try { json = await res.json(); } catch (e) { /* sin cuerpo */ }
@@ -151,7 +153,16 @@
 
 	// ---------- Estado de la vista ----------
 	const DEF = { area: '', fecha: '', prio: '', estado: '', op: '' };
-	const S = { f: Object.assign({}, DEF), q: '', sel: new Set(), onlyHanded: false };
+	const S = { f: Object.assign({}, DEF), q: '', sel: new Set(), onlyHanded: false, kpi: null };
+	// Cifras de arriba (tickets.ejs): cada una filtra la tabla con la misma cuenta que muestra
+	const KPI = {
+		crit: t => !t.operador && t.estado !== 'CERRADO' && (t.prioridad === 'P1' || t.prioridad === 'P2'),
+		sin: t => !t.operador && ACTIVE.includes(t.estado),
+		res: t => t.estado === 'RESUELTO',
+		act: null,
+		pau: t => t.estado === 'EN_PAUSA' || t.estado === 'EN_ESPERA_TERCEROS',
+		hoy: t => t.diasAtras === 0
+	};
 	try {
 		const saved = JSON.parse(sessionStorage.getItem('kip.tickets.f') || 'null');
 		if (saved) Object.assign(S.f, saved);
@@ -169,6 +180,7 @@
 
 	function match(t, skip) {
 		const f = S.f;
+		if (S.kpi && KPI[S.kpi] && !KPI[S.kpi](t)) return false;
 		if (skip !== 'estado') {
 			if (f.estado ? t.estado !== f.estado : t.estado === 'CERRADO') return false;
 		} else if (t.estado === 'CERRADO') return false;
@@ -220,13 +232,13 @@
 		else if (panelCode) closePanel();
 	});
 	/**
-	 * opts: [{ value, label, hint, dot, badge: [texto, clase], sel, dis }]
+	 * opts: [{ value, label, hint, dot, badge: [texto, clase], sel, dis }] (head: true = título de grupo)
 	 */
 	function toggleMenu(btn, wrap, opts, onPick, cls) {
 		if (openMenu && openMenu.btn === btn) { closeMenu(); return; }
 		closeMenu();
 		const menu = h('div', { class: 'mmenu ' + (cls || 'right'), role: 'listbox' },
-			opts.map(o => h('button', {
+			opts.map(o => o.head ? h('div', { class: 'mgrupo', text: o.label }) : h('button', {
 				type: 'button', class: 'mitem', role: 'option', 'aria-selected': String(!!o.sel), 'data-sel': String(!!o.sel), disabled: !!o.dis,
 				onclick: ev => { ev.stopPropagation(); if (o.dis) return; closeMenu(); onPick(o.value); }
 			},
@@ -301,7 +313,8 @@
 			wrap.append(btn);
 			box.append(wrap);
 		});
-		const dirty = Object.keys(DEF).some(k => S.f[k]) || !!S.q || S.onlyHanded;
+		const dirty = Object.keys(DEF).some(k => S.f[k]) || !!S.q || S.onlyHanded || !!S.kpi;
+		document.querySelectorAll('[data-kpi]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.kpi === S.kpi)));
 		document.querySelectorAll('[data-clear-filters]').forEach(b => { b.hidden = !dirty; });
 		return dirty;
 	}
@@ -309,6 +322,7 @@
 		S.f = Object.assign({}, DEF);
 		S.q = '';
 		S.onlyHanded = false;
+		S.kpi = null;
 		$('[data-search]').value = '';
 		saveFilters();
 		render();
@@ -472,6 +486,8 @@
 				['P1', 'P2', 'P3'].map(k => h('option', { value: k, text: PR[k][0] + (t.sugerida === k ? ' (sugerida)' : ''), selected: t.sugerida === k ? true : null }))) : null;
 			// Sin tipo de caso: se elige al tomarlo; sus puntos salen del nivel
 			const tipoSel = !t.nivel ? tipoSelect(t.area, '', null, 'field sm') : null;
+			// El tipo de caso puede traer su prioridad (Administración → Tipos de caso): al elegirlo, la propone
+			if (tipoSel && prioSel) tipoSel.addEventListener('change', () => { const p = prioDeTipo(tipoSel.value); if (p) prioSel.value = p; });
 			body.append(h('div', { class: 'sugbox' },
 				h('div', { class: 'row1' }, h('b', { text: 'Tomarlo tú' }), h('span', { text: 'Pasa a En atención a tu nombre' })),
 				h('div', { class: 'row2', style: 'flex-wrap:wrap' }, h('span', { style: 'flex:1;min-width:160px;font-size:12px;color:var(--t2)', text: tipoSel ? 'Elige ' + (prioSel ? 'su prioridad y ' : '') + 'su tipo de caso: el nivel da los puntos que suma a tu carga.' : prioSel ? 'Elige su prioridad (urgencia).' : 'Lo trabajas, respondes y resuelves desde Mi panel.' }), prioSel, tipoSel,
@@ -856,15 +872,146 @@
 	}
 
 	// ---------- Nuevo ticket ----------
+	// Nuevo ticket pensado para teclado: Enter salta al siguiente campo (Asunto → Descripción → Área →
+	// Subgrupo → Tipo de caso → Asignar a → Crear); Shift+Enter hace salto de línea; Ctrl+Enter crea.
 	function openNew() {
-		const N = { asunto: '', desc: '', origen: 'COORDINADOR', area: '', subgrupo: '', remitente: '', p: 'SP', op: '', estadoVe: '' };
-		const sgSlot = sgField('fld', () => N.area, () => N.subgrupo, v => { N.subgrupo = v; });
+		const origen0 = D.usuario.rol === 'JEFE' ? 'JEFATURA' : 'COORDINADOR';
+		const N = { asunto: '', desc: '', origen: origen0, area: '', subgrupo: '', remitente: '', tipo: '', p: '', op: '', estadoVe: '' };
 		const ov = dialog(940, []);
 		const box = ov.firstElementChild;
 		const missing = h('span', { class: 'note' });
 		const ok = h('button', { type: 'button', class: 'primary', text: 'Crear ticket' });
-		const senderSlot = h('div', { class: 'fld span2' });
+		let kb = false; // la última elección del menú fue con teclado
+		box.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.classList.contains('mitem')) kb = true; }, true);
+
+		const asunto = h('input', { class: 'field', maxlength: 300, placeholder: 'Resumen del incidente', oninput: e => { N.asunto = e.target.value; sync(); } });
+		const desc = h('textarea', { class: 'field', rows: 7, style: 'flex:1;min-height:150px', placeholder: 'Síntomas, impacto y contexto técnico', oninput: e => { N.desc = e.target.value; } });
+		const remInput = h('input', { class: 'field', maxlength: 180, placeholder: 'Nombre y correo del remitente', oninput: e => { N.remitente = e.target.value; sync(); } });
+		const senderSlot = h('label', { class: 'fld span2' }, h('span', { class: 'flabel', text: 'Remitente' }), remInput);
+
+		const pick = (step, set, repaintAll) => v => { set(v); repaintAll(); sync(); if (kb) { kb = false; setTimeout(() => { const c = box.querySelector('[data-step="' + step + '"] .combo'); if (c) next(c, true); }); } };
+		const areaCombo = combo(() => (N.area ? { label: AREA_NAME[N.area] } : { label: 'Elegir área', muted: true }), () => areaOpts(N.area),
+			pick('area', v => { if (v !== N.area) { N.subgrupo = ''; N.op = ''; if (N.tipo.slice(0, 3) === 'id:') N.tipo = ''; } N.area = v; }, () => { paintSg(); paintTipo(); paintPrio(); paintOp(); }));
+		areaCombo.dataset.step = 'area';
+		const sgSlot = h('div', { class: 'fld' });
+		const paintSg = () => {
+			const lista = SUBS[N.area] || [];
+			sgSlot.hidden = !lista.length;
+			const c = lista.length ? combo(() => (N.subgrupo ? { label: SG_NAME[N.subgrupo] } : { label: 'Sin subgrupo', muted: true }),
+				() => [{ value: '', label: 'Sin subgrupo', sel: !N.subgrupo, hint: 'Lo ve todo el área' }].concat(lista.map(g => ({ value: g.id, label: g.nombre, sel: g.id === N.subgrupo }))),
+				pick('sg', v => { N.subgrupo = v; }, () => { paintOp(); })) : null;
+			if (c) c.dataset.step = 'sg';
+			sgSlot.replaceChildren(...(c ? [h('span', { class: 'flabel', text: 'Subgrupo' }), c] : []));
+		};
+		const tipoSlot = h('div', { class: 'fld span2' });
+		const tipoLabel = () => {
+			if (!N.tipo) return { label: N.area ? 'Elegir tipo de caso' : 'Elige primero el área', muted: true };
+			if (N.tipo.slice(0, 2) === 'n:') { const n = Number(N.tipo.slice(2)); return { label: 'Otro · N' + n + ' · ' + NV.puntos[n] + ' pts' }; }
+			const x = TIPOS.find(t => 'id:' + t.id === N.tipo);
+			return { label: x ? x.nombre + ' · N' + x.nivel + ' · ' + x.puntos + ' pts' : 'Tipo de caso' };
+		};
+		const paintTipo = () => {
+			const delArea = TIPOS.filter(x => x.area === N.area);
+			const c = combo(tipoLabel, () => !N.area ? [{ value: '', label: 'Elige primero el área', dis: true }] : [{ head: true, label: 'Casos comunes de ' + AREA_NAME[N.area] }]
+				.concat(delArea.length ? delArea.map(x => ({ value: 'id:' + x.id, label: x.nombre, sel: N.tipo === 'id:' + x.id, badge: ['N' + x.nivel, 'blue'], hint: x.puntos + ' pts' })) : [{ value: '', label: 'El área no tiene casos en el catálogo', dis: true }])
+				.concat([{ head: true, label: 'Otro (no está en la lista)' }], [1, 2, 3, 4].map(n => ({ value: 'n:' + n, label: 'Otro · nivel ' + n + (NV.nombres[n] ? ' · ' + NV.nombres[n] : ''), sel: N.tipo === 'n:' + n, hint: NV.puntos[n] + ' pts' }))),
+				pick('tipo', v => { N.tipo = v; }, () => paintPrio()));
+			c.dataset.step = 'tipo';
+			tipoSlot.replaceChildren(h('span', { class: 'flabel row' }, 'Tipo de caso', h('small', { text: 'Opcional · si no, lo elige quien lo toma' })), c);
+		};
+		// Prioridad opcional: sin elegirla, la toma de su tipo de caso (o la elige quien lo toma)
+		const prioSlot = h('div', { class: 'fld span2' });
+		const paintPrio = () => {
+			const pt = prioDeTipo(N.tipo);
+			const auto = pt ? 'Automática · ' + PR[pt][0] + ' (de su tipo de caso)' : 'Automática · la elige quien lo toma';
+			const c = combo(() => (N.p ? { label: PR[N.p][0], dot: PR_DOT[N.p] } : { label: auto, muted: true }),
+				() => [{ value: '', label: 'Automática', sel: !N.p, hint: pt ? PR[pt][0] + ' de su tipo' : 'La elige quien lo toma' }]
+					.concat(['P1', 'P2', 'P3'].map(k => ({ value: k, label: PR[k][0], dot: PR_DOT[k], sel: N.p === k, hint: PR[k][1] }))),
+				v => { N.p = v; paintPrio(); });
+			prioSlot.replaceChildren(h('span', { class: 'flabel row' }, 'Prioridad', h('small', { text: 'Opcional · si sigue sin asignar, sube sola con el tiempo' })), c);
+		};
 		const opSlot = h('div', { class: 'fld span2' });
+		const opOpt = (o, sugId) => {
+			const b = o.id === sugId ? ['Sugerido', 'green'] : o.estado.grupo === 'fuera' ? ['Fuera de turno', 'gray'] : o.estado.grupo === 'guardia' ? ['De guardia', 'purple'] : o.sobrecarga ? ['Sobrecarga', 'red'] : null;
+			return { value: o.id, label: o.nombre, dot: ST_COLOR[o.estado.grupo], dis: o.estado.grupo === 'fuera', sel: N.op === o.id, badge: b, hint: o.estado.grupo === 'fuera' ? '' : plural(o.carga, 'activo', 'activos') };
+		};
+		const paintOp = () => {
+			const sg = N.area ? sugOf(N.area) : null;
+			const sugId = sg ? sg.id : null;
+			const subs = SUBS[N.area] || [];
+			const pool = N.area ? opPool(N.area) : [];
+			let opts = [{ value: '', label: 'Sin asignar', sel: !N.op, hint: N.area && !sugId ? 'Entra en cola de espera' : '' }];
+			if (subs.length) {
+				// Con subgrupos: primero el subgrupo elegido; luego el resto del área, cada uno con su título
+				const orden = N.subgrupo ? [N.subgrupo].concat(subs.map(g => g.id).filter(id => id !== N.subgrupo)) : subs.map(g => g.id);
+				orden.concat(['']).forEach(id => {
+					const del = pool.filter(o => (o.subgrupo || '') === id);
+					if (del.length) opts = opts.concat([{ head: true, label: id ? SG_NAME[id] + (id === N.subgrupo ? ' · subgrupo del ticket' : '') : 'Sin subgrupo' }], del.map(o => opOpt(o, sugId)));
+				});
+			} else opts = opts.concat(pool.map(o => opOpt(o, sugId)));
+			const c = combo(() => (N.op ? { label: OPS[N.op].nombre + (OPS[N.op].subgrupoNombre ? ' · ' + OPS[N.op].subgrupoNombre : ''), dot: ST_COLOR[OPS[N.op].estado.grupo] } : { label: 'Sin asignar', muted: true }),
+				() => (N.area ? opts : [{ value: '', label: 'Elige primero el área', dis: true }]), pick('op', v => { N.op = v; }, () => paintOp()));
+			c.dataset.step = 'op';
+			opSlot.replaceChildren(
+				h('div', { class: 'flabel row' }, 'Asignar a', h('small', { text: 'Opcional' }), h('span', { style: 'flex:1' }),
+					sugId && N.op !== sugId ? h('button', { type: 'button', class: 'linkbtn', style: 'display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600', onclick: () => { N.op = sugId; paintOp(); } },
+						h('span', { class: 'tag green', text: 'Sugerido' }), OPS[sugId].nombre) : null),
+				c,
+				h('span', { class: 't3', style: 'font-size:12px', text: !N.area ? 'Elige primero el área.' : subs.length && !N.subgrupo ? 'Sin subgrupo elegido: el ticket toma el subgrupo de quien lo reciba.' : sugId ? 'Sugerido: ' + sg.motivo.toLowerCase() + '.' : 'Nadie disponible en el área: si no lo asignas, entra en cola de espera.' }));
+		};
+		const origenSeg = h('div', { class: 'seg nt-origen', role: 'radiogroup', 'aria-label': 'Origen' });
+		const paintOrigen = () => origenSeg.replaceChildren(...ORIGINS.map(o => h('button', {
+			type: 'button', role: 'radio', 'aria-checked': String(N.origen === o[0]), tabindex: '-1',
+			onclick: () => { N.origen = o[0]; paintOrigen(); senderSlot.hidden = N.origen !== 'CORREO'; sync(); }
+		}, h('span', { text: o[1] }))));
+
+		// Orden de salto con Enter (solo los campos visibles)
+		const steps = () => [asunto, desc, N.origen === 'CORREO' ? remInput : null,
+			areaCombo.querySelector('.combo'), sgSlot.hidden ? null : sgSlot.querySelector('.combo'),
+			tipoSlot.querySelector('.combo'), opSlot.querySelector('.combo'), ok].filter(Boolean);
+		function next(from, abrir) {
+			const list = steps();
+			const i = list.indexOf(from.closest('.combo') || from);
+			const el = list[i + 1];
+			if (!el) return;
+			el.focus();
+			if (abrir && el.classList.contains('combo')) el.click();
+		}
+		box.addEventListener('keydown', e => {
+			if (e.key !== 'Enter' || e.isComposing) return;
+			if (e.ctrlKey || e.metaKey) { e.preventDefault(); ok.click(); return; }
+			const t = e.target;
+			if (t === desc && e.shiftKey) return; // salto de línea
+			if (t === asunto || t === desc || t === remInput) { e.preventDefault(); next(t, true); }
+		});
+
+		// Adjuntos: arrastrar, pegar (Ctrl+V) o buscar; mismos límites que la conversación
+		const MAX_ADJ = 5, MAX_MB = 25;
+		const files = [];
+		const fileInput = h('input', { type: 'file', multiple: true, hidden: true, onchange: e => { addFiles(e.target.files); e.target.value = ''; } });
+		const fileList = h('div', { class: 'nt-files' });
+		const peso = b => (b < 1024 * 1024 ? Math.max(1, Math.round(b / 1024)) + ' KB' : (b / 1024 / 1024).toFixed(1) + ' MB');
+		const paintFiles = () => fileList.replaceChildren(...files.map((f, i) => h('span', { class: 'nt-file' },
+			h('span', { class: 'nm', text: f.name, title: f.name }), h('small', { text: peso(f.size) }),
+			h('button', { type: 'button', class: 'x', 'aria-label': 'Quitar ' + f.name, title: 'Quitar', text: '×', onclick: () => { files.splice(i, 1); paintFiles(); } }))));
+		function addFiles(lista) {
+			Array.from(lista || []).forEach(f => {
+				if (files.length >= MAX_ADJ) { toast('Máximo ' + MAX_ADJ + ' adjuntos', f.name + ' no se agregó', 'red'); return; }
+				if (f.size > MAX_MB * 1024 * 1024) { toast('Archivo muy grande', f.name + ' pasa de ' + MAX_MB + ' MB', 'red'); return; }
+				files.push(f);
+			});
+			paintFiles();
+		}
+		const drop = h('div', { class: 'nt-drop', onclick: () => fileInput.click() },
+			h('span', { class: 'clip', 'aria-hidden': 'true' }),
+			h('span', {}, 'Arrastra archivos aquí, pégalos con Ctrl+V o ', h('button', { type: 'button', class: 'linkbtn', text: 'búscalos', onclick: e => { e.stopPropagation(); fileInput.click(); } })),
+			h('small', { text: 'Hasta ' + MAX_ADJ + ' archivos · ' + MAX_MB + ' MB cada uno' }), fileInput);
+		drop.querySelector('.clip').innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.5l-8.5 8.5a5 5 0 0 1-7-7L14 5.5a3.5 3.5 0 0 1 5 5L10.5 19a2 2 0 0 1-3-3L15 8.5"/></svg>';
+		drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+		drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+		drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('over'); addFiles(e.dataTransfer.files); });
+		box.addEventListener('paste', e => { if (e.clipboardData && e.clipboardData.files.length) { e.preventDefault(); addFiles(e.clipboardData.files); } });
+
 		const sync = () => {
 			const falta = [];
 			if (!N.asunto.trim()) falta.push('asunto');
@@ -873,59 +1020,48 @@
 			missing.textContent = falta.length ? 'Falta: ' + falta.join(', ') : 'Listo para crear';
 			ok.disabled = falta.length > 0;
 		};
-		const paintSender = () => {
-			senderSlot.replaceChildren(h('span', { class: 'flabel', text: 'Remitente' }), N.origen === 'CORREO'
-				? h('input', { class: 'field', value: N.remitente, maxlength: 180, placeholder: 'Nombre y correo del remitente', oninput: e => { N.remitente = e.target.value; sync(); } })
-				: h('span', { class: 'field ro', text: 'No aplica: lo registra el coordinador' }));
-		};
-		const paintOp = () => {
-			const sg = N.area ? sugOf(N.area) : null;
-			const sugId = sg ? sg.id : null;
-			const opts = [{ value: '', label: 'Sin asignar', sel: !N.op, hint: N.area && !sugId ? 'Entra en cola de espera' : '' }].concat(N.area ? opPool(N.area).map(o => {
-				const b = o.id === sugId ? ['Sugerido', 'green'] : o.estado.grupo === 'fuera' ? ['Fuera de turno', 'gray'] : o.estado.grupo === 'guardia' ? ['De guardia', 'purple'] : o.sobrecarga ? ['Sobrecarga', 'red'] : null;
-				return { value: o.id, label: o.nombre, dot: ST_COLOR[o.estado.grupo], dis: o.estado.grupo === 'fuera', sel: N.op === o.id, badge: b, hint: o.estado.grupo === 'fuera' ? '' : plural(o.carga, 'activo', 'activos') };
-			}) : []);
-			opSlot.replaceChildren(
-				h('div', { class: 'flabel row' }, 'Asignar a', h('small', { text: 'Opcional' }), h('span', { style: 'flex:1' }),
-					sugId && N.op !== sugId ? h('button', { type: 'button', class: 'linkbtn', style: 'display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600', onclick: () => { N.op = sugId; paintOp(); } },
-						h('span', { class: 'tag green', text: 'Sugerido' }), OPS[sugId].nombre) : null),
-				combo(() => (N.op ? { label: OPS[N.op].nombre, dot: ST_COLOR[OPS[N.op].estado.grupo] } : { label: 'Sin asignar', muted: true }), () => opts, v => { N.op = v; paintOp(); }),
-				h('span', { class: 't3', style: 'font-size:12px', text: N.area ? (sugId ? 'Sugerido: ' + sg.motivo.toLowerCase() + '.' : 'Nadie disponible en el área: si no lo asignas, entra en cola de espera.') : 'Elige primero el área.' }));
-		};
+		const ahora = new Date().toLocaleString('es-VE', { timeZone: 'America/Caracas', weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 		box.append(
 			h('div', { style: 'display:flex;align-items:center;gap:12px;padding:18px 18px 14px 24px;border-bottom:1px solid var(--sep)' },
-				h('div', { class: 'dlg-head', style: 'padding:0;flex:1' }, h('h2', { text: 'Nuevo ticket' }), h('span', { text: 'Los mismos datos que trae un correo del buzón compartido' })),
+				h('div', { class: 'dlg-head', style: 'padding:0;flex:1' }, h('h2', { text: 'Nuevo ticket' }),
+					h('span', { class: 'nt-meta' }, h('span', { class: 'avatar on-solid', style: 'width:18px;height:18px;font-size:9px;background:var(--solid)', text: (D.usuario.nombre[0] || 'C').toUpperCase() }),
+						D.usuario.nombre, h('em', { text: '·' }), ahora)),
 				h('span', { style: 'display:flex;align-items:center;gap:8px' }, h('span', { class: 't3', style: 'font-size:11px', text: 'Código provisional' }), h('span', { class: 'codechip', text: D.siguienteCodigo })),
 				h('button', { type: 'button', class: 'ico', 'aria-label': 'Cerrar', title: 'Cerrar', icon: 'x', onclick: () => ov.remove() })),
 			h('div', { class: 'nt-grid' },
 				h('div', { class: 'left' },
-					h('label', {}, h('span', { class: 'flabel', text: 'Asunto' }), h('input', { class: 'field', maxlength: 300, placeholder: 'Resumen del incidente', oninput: e => { N.asunto = e.target.value; sync(); } })),
-					h('label', { style: 'flex:1' }, h('span', { class: 'flabel', text: 'Descripción' }), h('textarea', { class: 'field', rows: 7, style: 'flex:1;min-height:150px', placeholder: 'Síntomas, impacto y contexto técnico', oninput: e => { N.desc = e.target.value; } })),
-					h('div', { class: 'fld' }, h('span', { class: 'flabel', text: 'Adjuntos' }),
-						h('span', { class: 'field ro', style: 'height:auto;padding:10px', text: 'Los adjuntos se agregan desde el correo del buzón compartido. Subirlos desde aquí queda pendiente.' }))),
+					h('label', {}, h('span', { class: 'flabel', text: 'Asunto' }), asunto),
+					h('label', { style: 'flex:1' }, h('span', { class: 'flabel row' }, 'Descripción', h('small', { text: 'Shift+Enter para salto de línea' })), desc),
+					h('div', { class: 'fld' }, h('span', { class: 'flabel row' }, 'Adjuntos', h('small', { text: 'Opcional' })), drop, fileList),
+					h('div', { class: 'fld' }, h('span', { class: 'flabel', text: 'Origen' }), origenSeg),
+					senderSlot),
 				h('div', { class: 'right' },
-					h('div', { class: 'fld' }, h('span', { class: 'flabel', text: 'Origen' }),
-						combo(() => ({ label: ORIGINS.find(o => o[0] === N.origen)[1] }), () => ORIGINS.map(o => ({ value: o[0], label: o[1], sel: o[0] === N.origen })), v => { N.origen = v; paintSender(); sync(); })),
-					h('div', { class: 'fld' }, h('span', { class: 'flabel', text: 'Área' }),
-						combo(() => (N.area ? { label: AREA_NAME[N.area] } : { label: 'Elegir área', muted: true }), () => areaOpts(N.area), v => { N.area = v; N.op = ''; N.subgrupo = ''; sgSlot.repaint(); paintOp(); sync(); })),
+					h('div', { class: 'fld' }, h('span', { class: 'flabel', text: 'Área' }), areaCombo),
 					sgSlot,
-					h('div', { class: 'fld' }, h('span', { class: 'flabel row' }, 'Estado', h('small', { text: 'Opcional' })),
-						combo(() => estadoVeLabel(N.estadoVe), () => estadoVeOpts(N.estadoVe), v => { N.estadoVe = v; })),
-					senderSlot,
-					h('div', { class: 'fld' }, h('span', { class: 'flabel', text: 'Fecha de creación' }), h('span', { class: 'field ro', text: 'Al crear (ahora)' })),
-					h('div', { class: 'fld' }, h('span', { class: 'flabel', text: 'Creado por' }),
-						h('span', { class: 'field ro', style: 'color:var(--t1)' }, h('span', { class: 'avatar on-solid', style: 'width:20px;height:20px;font-size:10px;background:var(--solid)', text: (D.usuario.nombre[0] || 'C').toUpperCase() }), D.usuario.nombre)),
-					h('div', { class: 'fld span2' }, h('span', { class: 'flabel', text: 'Prioridad y puntaje' }), prioSeg(() => N.p, k => { N.p = k; })),
-					opSlot)),
-			h('div', { class: 'dlg-foot', style: 'padding-bottom:18px' }, missing, h('span', { class: 'grow' }), cancelBtn(ov), ok));
+					tipoSlot,
+					opSlot,
+					prioSlot,
+					h('div', { class: 'fld span2' }, h('span', { class: 'flabel row' }, 'Estado', h('small', { text: 'Opcional' })),
+						combo(() => estadoVeLabel(N.estadoVe), () => estadoVeOpts(N.estadoVe), v => { N.estadoVe = v; })))),
+			h('div', { class: 'dlg-foot', style: 'padding-bottom:18px' },
+				h('span', { class: 'nt-keys' }, h('kbd', { text: 'Enter' }), ' siguiente', h('kbd', { text: 'Ctrl+Enter' }), ' crear', h('kbd', { text: 'Esc' }), ' cerrar'),
+				missing, h('span', { class: 'grow' }), cancelBtn(ov), ok));
 		ok.addEventListener('click', async () => {
 			if (ok.disabled) return;
 			ok.disabled = true;
 			try {
-				const res = await api('POST', '/api/tickets', {
+				const campos = Object.assign({
 					asunto: N.asunto.trim(), descripcion: N.desc.trim(), areaDesignada: N.area, subgrupoId: N.subgrupo || undefined,
-					origenIngesta: N.origen, remitente: N.remitente.trim(), prioridad: PR_API[N.p], estadoVe: N.estadoVe || null
-				});
+					origenIngesta: N.origen, remitente: N.remitente.trim(), prioridad: N.p || PR_API.SP, estadoVe: N.estadoVe || null
+				}, N.tipo ? tipoBody(N.tipo) : {});
+				// Con adjuntos va como formulario (multipart); sin ellos, JSON
+				let cuerpo = campos;
+				if (files.length) {
+					cuerpo = new FormData();
+					Object.keys(campos).forEach(k => { if (campos[k] !== undefined && campos[k] !== null && campos[k] !== '') cuerpo.append(k, String(campos[k])); });
+					files.forEach(f => cuerpo.append('adjuntos', f, f.name));
+				}
+				const res = await api('POST', '/api/tickets', cuerpo);
 				const code = res.ticket.codigo_incidencia;
 				if (N.op) {
 					try { await api('POST', '/api/tickets/assign', { ticketCode: code, operatorId: N.op }); }
@@ -934,9 +1070,14 @@
 				done('Ticket creado', code + (N.op ? ' → ' + OPS[N.op].nombre : ' · sin asignar'), 'green');
 			} catch (e) { ok.disabled = false; showError(e); }
 		});
-		paintSender();
+		senderSlot.hidden = N.origen !== 'CORREO';
+		paintOrigen();
+		paintSg();
+		paintTipo();
+		paintPrio();
 		paintOp();
 		sync();
+		asunto.focus();
 	}
 
 	// ---------- Arranque ----------
@@ -951,6 +1092,12 @@
 		$('[data-open-trash]').addEventListener('click', openTrash);
 		$('[data-open-handoff]').addEventListener('click', () => openHandoff(null));
 		$('[data-new-ticket]').addEventListener('click', openNew);
+		// Tocar una cifra filtra la tabla; tocarla otra vez (o "Activos") quita el filtro
+		document.querySelectorAll('[data-kpi]').forEach(b => b.addEventListener('click', () => {
+			const k = b.dataset.kpi;
+			S.kpi = S.kpi === k || !KPI[k] ? null : k;
+			render();
+		}));
 		$('[data-batch-clear]').addEventListener('click', () => { S.sel.clear(); render(); });
 		$('[data-batch-assign]').addEventListener('click', () => openAssign(Array.from(S.sel)));
 		$('[data-batch-handoff]').addEventListener('click', () => openHandoff(Array.from(S.sel)));

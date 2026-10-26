@@ -88,6 +88,7 @@ function describeChanges(antes, despues) {
         cambios.push(`Sobrecarga: ${String(rd.sobrecarga.multiplicador).replace('.', ',')}× y mínimo ${rd.sobrecarga.minimo}`);
     }
     if (ra.antiguedad.activa !== rd.antiguedad.activa) cambios.push(`Antigüedad ${onOff(rd.antiguedad.activa)}`);
+    if (ra.antiguedad.subirPrioridad !== rd.antiguedad.subirPrioridad) cambios.push(`Subir prioridad por tiempo sin asignar: ${rd.antiguedad.subirPrioridad ? 'sí' : 'no'}`);
     ['P1', 'P2', 'P3', 'SP'].forEach(k => {
         if (ra.antiguedad[k] !== rd.antiguedad[k]) cambios.push(`Antigüedad ${k === 'SP' ? 'sin prioridad' : k}: ${fmtMin(rd.antiguedad[k])}`);
     });
